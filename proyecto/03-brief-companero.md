@@ -18,7 +18,24 @@ Hackathon Colosseum (track Superteam Argentina, sede Tucumán). La entrega es el
 
 ## Tu tarea: el núcleo del programa (lo que no depende de decisiones abiertas)
 
-Todavía falta cerrar la **tabla de escalones** (anticipo, tope, interés y cobertura del fiador por escalón). Por eso **nada de esos números va hardcodeado**: todo vive en `ProtocolConfig` y se carga con valores de ejemplo. El flujo de compra (`open_plan`, cuotas, mora) es la tarea siguiente, cuando cerremos esa tabla y el recorte del MVP.
+La **tabla de escalones** ya está cerrada (ver abajo), pero **ningún número va hardcodeado**: todo vive en `ProtocolConfig` y se carga con `admin_init_config` / `admin_update_config`. El flujo de compra (`open_plan`, cuotas, mora) es la tarea siguiente, cuando cerremos el recorte del MVP.
+
+### Tabla de escalones (valores iniciales de la config)
+
+Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón, y `guarantor_coverage_bps` × monto financiado ≤ `Guarantee.coverage_max`.
+
+| Escalón | `down_payment_bps` | `interest_bps` | `guarantor_coverage_bps` | `max_purchase` |
+|---|---|---|---|---|
+| Con fiador 0 | 3000 | 1000 | 10000 | 1.000 USDC |
+| Con fiador 1 | 2000 | 800 | 9000 | 1.000 USDC |
+| Con fiador 2 | 1000 | 700 | 8000 | 1.250 USDC |
+| Con fiador 3 | 0 | 600 | 7000 | 1.500 USDC |
+| Sin fiador S0 | 5000 | 1500 | 0 | 150 USDC |
+| Sin fiador S1 | 3000 | 1200 | 0 | 300 USDC |
+
+- Con fiador se sube de escalón con cada plan que cuenta, hasta el 3. Sin fiador, el techo es S1: para seguir subiendo hace falta fiador.
+- Un plan **cuenta** para subir solo si financia ≥ `min_financed_to_count` (100 USDC) y se pagó sin pasar la gracia.
+- Una mora cobrada al fiador baja un escalón.
 
 ### Stack
 
@@ -32,14 +49,14 @@ Todavía falta cerrar la **tabla de escalones** (anticipo, tope, interés y cobe
 
 | Cuenta | Seeds | Contenido |
 |---|---|---|
-| `ProtocolConfig` | `["config"]` | `admin`, `keeper` (autoridad del backend que registra fiadores y recuperos), `usdc_mint`, `fee_bps` (150), `penalty_bps` (500: 5% fijo sobre la cuota vencida), `grace_days` (5), `guarantor_charge_day` (15), `seconds_per_day` (**configurable**: en la demo, un "día" dura segundos), tabla de escalones `[TierParams; 4]` + parámetros del tramo sin fiador, `state` (`Normal / Halted / WithdrawsOnly`), `treasury`, `bump` |
+| `ProtocolConfig` | `["config"]` | `admin`, `keeper` (autoridad del backend que registra fiadores y recuperos), `usdc_mint`, `fee_bps` (150), `penalty_bps` (500: 5% fijo sobre la cuota vencida), `grace_days` (5), `guarantor_charge_day` (15), `seconds_per_day` (**configurable**: en la demo, un "día" dura segundos), `guaranteed_tiers: [TierParams; 4]`, `unguaranteed_tiers: [TierParams; 2]`, `min_financed_to_count`, `state` (`Normal / Halted / WithdrawsOnly`), `treasury`, `bump` |
 | `TierParams` (struct) | — | `down_payment_bps`, `max_purchase`, `interest_bps`, `guarantor_coverage_bps` |
 | `Pool` | `["pool", usdc_mint]` | `junior_shares`, `senior_shares`, `junior_capital`, `senior_capital`, `outstanding_credit`, `accrued_fees`, `bump` |
 | Vault del pool | token account con authority = PDA `Pool` | USDC disponible |
 | Mints LP | `["lp_junior", pool]`, `["lp_senior", pool]` | Tokens de recibo de cada tramo. Mint authority = PDA `Pool` |
 | `Merchant` | `["merchant", merchant_wallet]` | `owner`, `settlement_ata`, `active`, `plans_count`, `bump` |
-| `Reputation` | `["reputation", student_wallet]` | `tier` (0-3), `plans_completed`, `late_count` (moras), `active_exposure`, `bump` |
-| `Guarantee` | `["guarantee", student_wallet]` | `coverage_max` (USDC), `mandate_hash: [u8; 32]` (hash del PDF de la fianza), `active`, `registered_at`, `bump`. **El fiador no tiene wallet**: esta cuenta la crea y modifica solo el `keeper` |
+| `Reputation` | `["reputation", student_wallet]` | `tier` (0-3), `plans_completed` (solo los que cuentan), `late_count` (moras), `active_exposure`, `bump` |
+| `Guarantee` | `["guarantee", student_wallet]` | `max_purchase` (tope de compras que eligió el fiador), `coverage_max` (USDC, monto máximo de la fianza, calculado fuera de la cadena), `mandate_hash: [u8; 32]` (hash del PDF de la fianza), `active`, `registered_at`, `bump`. **El fiador no tiene wallet**: esta cuenta la crea y modifica solo el `keeper` |
 
 ### Instrucciones de esta tarea
 
@@ -48,7 +65,7 @@ Todavía falta cerrar la **tabla de escalones** (anticipo, tope, interés y cobe
 - `admin_apply_loss(amount)`: aplica una pérdida **primero al junior** y, si el junior se agota, después al senior. Sirve para probar la cascada de pérdidas antes de tener el flujo de mora. Las ganancias se reparten de forma proporcional al capital de cada tramo; si te parece mal, avisá.
 - `merchant_register` (la firma el admin).
 - `student_init_reputation` (arranca en el escalón 0).
-- `keeper_register_guarantee(student, coverage_max, mandate_hash)` y `keeper_revoke_guarantee`.
+- `keeper_register_guarantee(student, max_purchase, coverage_max, mandate_hash)` y `keeper_revoke_guarantee`.
 
 ### Reglas
 

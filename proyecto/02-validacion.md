@@ -238,3 +238,34 @@ Pendiente para la ronda 2: cuándo y cómo se libera al fiador; flujo de mora (g
 | Q10 | "Integraciones a los métodos de pago" | Que **los comercios puedan ofrecerlo** como medio de pago en sus plataformas (Tiendanube, WooCommerce). La demo es la tienda propia con nuestro botón. El alcance de la integración se define en `/solana-tuc-mvp` |
 
 Pendiente para la ronda 4: **la tabla final de escalones** (anticipo, tope, interés y cobertura exigida al fiador por escalón; tramo sin fiador).
+
+## Decisiones de diseño (`/grill-me`, ronda 4, 2026-10-03): tabla final de escalones
+
+Se aplican dos condiciones a cada compra: **precio ≤ tope absoluto del escalón** y **cobertura exigida × monto financiado ≤ monto máximo de la fianza**. Hay 3 cuotas mensuales fijas y el interés se calcula sobre lo financiado.
+
+**Con fiador (tarjeta de crédito, el fiador nunca se libera):**
+
+| Escalón | Planes que cuentan | Anticipo | Interés | Cobertura exigida | Tope absoluto | Costo real del estudiante | Mora de equilibrio del pool* |
+|---|---|---|---|---|---|---|---|
+| 0 | 0 | 30% | 10% | 100% | US$1.000 | +7,0% | ~65% |
+| 1 | 1 | 20% | 8% | 90% | US$1.000 | +6,4% | ~42% |
+| 2 | 2 | 10% | 7% | 80% | US$1.250 | +6,3% | ~30% |
+| 3 | 3+ | 0% | 6% | 70% | US$1.500 | +6,0% | ~23% |
+
+**Sin fiador (escalera corta; para seguir subiendo hace falta fiador):**
+
+| Escalón | Planes que cuentan | Anticipo | Interés | Tope absoluto | Costo real |
+|---|---|---|---|---|---|
+| S0 | 0 | 50% | 15% | US$150 | +7,5% |
+| S1 | 1+ | 30% | 12% | US$300 | +8,4% |
+
+\* Calculado con la fórmula de research d (r=80%, π=5%, k=1, c=1,5%, sin κ). Hipótesis a medir en el piloto: la mora baja a medida que sube el escalón. Si en el escalón 3 la mora se acerca al 30%, se sube la cobertura exigida.
+
+| # | Decisión | Elegido |
+|---|---|---|
+| Q11 | Tabla con fiador | La tabla de arriba. Caso de la PC: escalón 0, precio 1.000, anticipo 300, financiado 700, 3 cuotas de 256,67, total 1.070 (en MP, ~1.290 reales) |
+| Q12 | Tramo sin fiador | Escalera corta S0 → S1 (tabla de arriba). Es costo de adquisición acotado (~US$100 de pérdida máxima por persona) |
+| Q13 | Qué plan cuenta para subir | Solo los que financian **≥ US$100** y se pagaron sin pasar la gracia (`min_financed_to_count`) |
+| Q14 | Tope del fiador | **El fiador elige un tope de compras** (precio máximo por compra) de una lista. El monto máximo de la fianza (art. 1578 CCyC) se deriva de ese tope: lo financiado en el peor escalón + interés + punitorio. La pantalla le muestra que, con la misma firma, a medida que el estudiante sube de escalón él arriesga menos por compra |
+
+**Árbol de diseño cerrado** (rondas 1-4). Próximo paso: `/solana-tuc-mvp`.
