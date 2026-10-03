@@ -10,3 +10,6 @@ id.json
 .agents/skills/impeccable/scripts/bin/
 .vercel
 .next/
+.impeccable/questions/
+.impeccable/review/
+.scratch/**/*.log
