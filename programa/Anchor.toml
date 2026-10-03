@@ -1,0 +1,26 @@
+skip_local_validator = true
+
+[toolchain]
+anchor_version = "1.2.0"
+solana_version = "3.1.14"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+cuotas = "E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ"
+
+[programs.devnet]
+cuotas = "E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+# Host math unit tests + the independent LiteSVM acceptance suite.
+# Never runs a local validator and never deploys.
+test = "cargo test -p cuotas --lib && cargo test --manifest-path tests/Cargo.toml --no-fail-fast"
+
+[hooks]
