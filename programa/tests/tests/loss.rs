@@ -43,7 +43,7 @@ fn waterfall_junior_absorbs_first() {
     // cash-simulation: the loss amount physically left the vault
     assert_eq!(env.token_balance(&p.vault), 800 * USDC);
     assert_eq!(env.token_balance(&treasury_ata), 200 * USDC);
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after loss");
 }
 
 #[test]
@@ -61,7 +61,7 @@ fn waterfall_spills_to_senior_after_junior_exhausted() {
     assert_eq!(pool.senior_capital, 500 * USDC, "senior takes the rest");
     assert_eq!(env.token_balance(&p.vault), 500 * USDC);
     assert_eq!(env.token_balance(&treasury_ata), 500 * USDC);
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after loss");
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn loss_moves_cash_to_treasury_and_preserves_credit() {
     assert_eq!(pool.senior_capital, 700 * USDC, "100 spilled to senior");
     assert_eq!(env.token_balance(&p.vault), 200 * USDC);
     assert_eq!(env.token_balance(&treasury_ata), 300 * USDC);
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after loss");
 }
 
 #[test]
@@ -182,6 +182,7 @@ fn loss_allowed_when_halted_documented() {
     assert_eq!(env.pool().junior_capital, 90 * USDC);
 }
 
-// The vault-invariant consequence of apply_loss (counter-only, OC==0) is
-// encoded as a failing regression in `tests/regressions.rs` — R1 — per
-// reviewer request. Do not re-add a "documented" passing variant here.
+// The vault-invariant consequence of apply_loss is encoded in
+// `tests/regressions.rs` — R1 — and the conservation test in
+// adversarial.rs. The sweep is provisional cash-sim behavior pending a
+// business decision (see TEST_REPORT.md).

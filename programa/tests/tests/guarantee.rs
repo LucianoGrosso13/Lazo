@@ -213,6 +213,67 @@ fn keeper_lifecycle_state_gates() {
 }
 
 #[test]
+fn update_rejects_unchanged_mandate_hash() {
+    // Post-R4 fix: reactivating a revoked guarantee (or rewriting terms)
+    // with the SAME mandate_hash must fail — a revoked mandate is dead.
+    let mut env = Env::new();
+    env.bootstrap();
+    let student = env.actors.alice.pubkey();
+    let keeper = env.actors.keeper.insecure_clone();
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
+    let revoked = [7u8; 32];
+    register(&keeper, &mut env, &student, 100 * USDC, 50 * USDC, revoked).expect_ok("register");
+    let registered_at = env.decode::<Guarantee>(&pda::guarantee(&student).0).registered_at;
+    revoke(&keeper, &mut env, &student).expect_ok("revoke");
+
+    env.warp_secs(120);
+    // same hash on the revoked guarantee -> MandateHashUnchanged, and the
+    // account must be untouched: terms, active=false, original timestamp
+    let out = update(&keeper, &mut env, &student, 200 * USDC, 80 * USDC, revoked);
+    expect_cuotas_err(&out, CuotasError::MandateHashUnchanged, "stale mandate");
+    let g: Guarantee = env.decode(&pda::guarantee(&student).0);
+    assert_eq!(g.mandate_hash, revoked);
+    assert!(!g.active, "must stay revoked");
+    assert_eq!(g.max_purchase, 100 * USDC);
+    assert_eq!(g.coverage_max, 50 * USDC);
+    assert_eq!(g.registered_at, registered_at, "timestamp untouched");
+
+    // also rejected on an ACTIVE guarantee (no-op updates are forbidden)
+    let fresh = [8u8; 32];
+    update(&keeper, &mut env, &student, 200 * USDC, 80 * USDC, fresh).expect_ok("fresh reactivation");
+    let out = update(&keeper, &mut env, &student, 999 * USDC, 999 * USDC, fresh);
+    expect_cuotas_err(&out, CuotasError::MandateHashUnchanged, "same hash on active");
+}
+
+#[test]
+fn update_rejects_reputation_of_another_student() {
+    // The exposure gate must read THE SAME student's reputation: swapping
+    // in a different student's reputation PDA fails the seed binding even
+    // when that other account exists and shows no exposure.
+    let mut env = Env::new();
+    env.bootstrap();
+    let student = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    let keeper = env.actors.keeper.insecure_clone();
+    for kp in [env.actors.alice.insecure_clone(), env.actors.bob.insecure_clone()] {
+        let i = ix::student_init_reputation(&kp.pubkey());
+        env.send(&[i], &kp, &[]).expect_ok("init rep");
+    }
+    register(&keeper, &mut env, &student, 1, 1, [1u8; 32]).expect_ok("register");
+
+    // bob's canonical reputation where alice's belongs -> seeds mismatch
+    let mut i = ix::keeper_update_guarantee(&keeper.pubkey(), &student, 1, 1, [2u8; 32]);
+    i.accounts[4].pubkey = pda::reputation(&bob).0;
+    let out = env.send(&[i], &keeper, &[]);
+    expect_instruction_failure(out.expect_err("foreign reputation pda"), "reputation seeds");
+
+    // alice's guarantee is untouched
+    let g: Guarantee = env.decode(&pda::guarantee(&student).0);
+    assert_eq!(g.mandate_hash, [1u8; 32]);
+}
+
+#[test]
 fn update_blocked_while_student_has_exposure() {
     // Rewriting terms under an active plan is forbidden: GuaranteeTermsLocked
     // while reputation.active_exposure > 0. No instruction produces exposure

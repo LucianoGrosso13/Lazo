@@ -205,7 +205,11 @@ fn deposit_rejects_zero_amount() {
 }
 
 #[test]
-fn deposit_too_small_to_mint_shares_rejected() {
+fn deposit_rejects_fractional_share_mint() {
+    // Post-I-05 policy: non-bootstrap deposits must mint WHOLE shares —
+    // amount*supply exactly divisible by capital — so rounding can never
+    // move value to incumbents. DepositTooSmall is unreachable under this
+    // rule (exactness implies shares>0 whenever amount>0).
     let mut env = Env::new();
     let p = env.bootstrap();
     let alice = env.actors.alice.pubkey();
@@ -216,8 +220,41 @@ fn deposit_too_small_to_mint_shares_rejected() {
     // (only reachable today via synthetic state: set capital >> shares).
     env.edit_pool(|pool| pool.junior_capital = 1_000_000 * USDC);
     let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10);
-    // floor(10 * 1_000_000_000 / 1_000_000_000_000) = 0 -> DepositTooSmall
-    expect_cuotas_err(&out, CuotasError::DepositTooSmall, "dust deposit");
+    // 10 * 1_000_000_000 % 1_000_000_000_000 != 0 -> UnrepresentableDeposit
+    expect_cuotas_err(&out, CuotasError::UnrepresentableDeposit, "fractional shares");
+}
+
+#[test]
+fn deposit_requires_exact_share_pricing() {
+    // Benign case: at an elevated NAV, only amounts that divide evenly are
+    // accepted — everything else fails BEFORE any token CPI, leaving the
+    // depositor's balance and pool state untouched.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    let (usdc_b, _) = lp_ready(&mut env, &bob, 5_000 * USDC, &p.lp_junior);
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("seed");
+    let admin = env.actors.admin.pubkey();
+    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 250 * USDC);
+    env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
+    // NAV = 0.75: capital 750 USDC, shares 1e9. Exact deposit requires
+    // amount * 1e9 divisible by 750e6, i.e. amount ≡ 0 (mod 3) base units.
+
+    // non-exact: 1_000_001 base units, 1_000_001 % 3 = 2 -> rejected
+    let before_pool = env.account_data(&p.pool);
+    let before_usdc = env.token_balance(&usdc_b);
+    let out = deposit(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Junior, USDC + 1);
+    expect_cuotas_err(&out, CuotasError::UnrepresentableDeposit, "non-exact deposit");
+    assert_eq!(env.account_data(&p.pool), before_pool, "pool state rolled back");
+    assert_eq!(env.token_balance(&usdc_b), before_usdc, "no CPI happened");
+    assert_eq!(env.mint_supply(&p.lp_junior), 1_000 * USDC, "no shares minted");
+
+    // exact: 333 USDC * 1e9 / 750e6 = 444e6 shares, accepted at NAV 0.75
+    deposit(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Junior, 333 * USDC).expect_ok("exact deposit");
+    assert_eq!(env.pool().junior_capital, 1_083 * USDC);
+    assert_eq!(env.pool().junior_shares, 1_444 * USDC);
 }
 
 #[test]
@@ -669,14 +706,128 @@ fn withdraw_blocked_by_illiquidity() {
     lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
     deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("d");
 
-    // Model capital advanced out of the vault (e.g. to plans): vault balance
-    // drops below the LP claim while pool counters still show full capital.
+    // Consistent credit model: 600 lent out to plans -> vault holds 400,
+    // outstanding_credit 600, capital still 1000. V + O == J + S holds.
+    env.edit_pool(|pool| pool.outstanding_credit = 600 * USDC);
     env.set_token_amount(&p.vault, 400 * USDC);
+    assert_eq!(env.accounting_delta(), 0, "modeled credit is consistent");
+
+    // claim of 1000 exceeds the liquid 400 -> rejected
     let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC);
     expect_cuotas_err(&out, CuotasError::InsufficientLiquidity, "illiquidity");
 
-    // a smaller claim within remaining liquidity still succeeds
-    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 300 * USDC).expect_ok("partial w");
+    // a claim within vault liquidity succeeds — outstanding credit is NOT
+    // subtracted from availability a second time (it is already absent cash)
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 400 * USDC).expect_ok("partial w");
+}
+
+#[test]
+fn informational_fees_never_gate_liquidity() {
+    // accrued_fees is cumulative information about recognized gains, not a
+    // treasury liability or liquidity reserve: it must not reduce what an
+    // LP can withdraw, and no instruction touches it.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("d");
+
+    // Model recognized gains already folded into capital (host-only
+    // book_gain has no on-chain instruction): +200 junior capital from
+    // income, tracked by the informational counter, cash already in vault.
+    env.set_token_amount(&p.vault, 1_200 * USDC);
+    env.edit_pool(|pool| {
+        pool.junior_capital = 1_200 * USDC;
+        pool.accrued_fees = 200 * USDC;
+    });
+    assert_eq!(env.accounting_delta(), 0);
+
+    // Full NAV exit pays 1200 even with a large accrued_fees counter —
+    // the fee figure is informational and never reserved against LPs.
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC)
+        .expect_ok("full NAV exit despite accrued_fees");
+    assert_eq!(env.pool().junior_capital, 0);
+    assert_eq!(env.pool().accrued_fees, 200 * USDC, "counter is informational, ops don't touch it");
+    assert_eq!(env.accounting_delta(), 0);
+}
+
+#[test]
+fn unsolicited_donations_stay_outside_lp_nav() {
+    // Tokens sent straight into the vault (outside any instruction) are
+    // unallocated surplus: they do not dilute, boost or get claimed by LPs.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    let (usdc_a, lp_a) = lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    let (_, lp_b) = lp_ready(&mut env, &bob, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("d");
+
+    // bob donates 500 straight into the vault via raw SPL transfer —
+    // no program instruction, vault.amount rises, pool counters unchanged.
+    let donate = spl::transfer_ix(
+        &spl::ata(&bob, &{env.usdc_mint}, &spl::TOKEN_PROGRAM_ID),
+        &p.vault,
+        &bob,
+        500 * USDC,
+    );
+    env.send(&[donate], &{env.actors.bob.insecure_clone()}, &[]).expect_ok("donation");
+    assert_eq!(env.token_balance(&p.vault), 1_500 * USDC);
+    assert_eq!(env.accounting_delta(), (500 * USDC).into(), "donation is unallocated surplus");
+
+    // bob's later deposit is still priced on tracked capital, not the
+    // inflated vault balance: 1000 * 1000/1000 = 1000 shares exactly.
+    deposit(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("deposit");
+    assert_eq!(env.token_balance(&lp_b), 1_000 * USDC, "NAV ignores donations");
+
+    // alice exits for her full tracked NAV — the donation is never
+    // distributed to LPs through NAV pricing.
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("alice exits");
+    assert_eq!(env.token_balance(&usdc_a), 5_000 * USDC, "alice gets exactly her capital back");
+    assert_eq!(env.token_balance(&lp_a), 0);
+    // bob exits his 1000; the donated 500 stays in the vault unclaimed
+    withdraw(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("bob exits");
+    assert_eq!(env.token_balance(&p.vault), 500 * USDC, "surplus survives full exit");
+    assert_eq!(env.accounting_delta(), (500 * USDC).into());
+}
+
+#[test]
+fn lp_mint_state_tampering_rejected() {
+    // The LP mint slots are seed-pinned, so substitution is impossible —
+    // but the explicit mint::authority / mint::decimals / token-program
+    // constraints must still fire if the canonical mint's state is wrong.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let attacker = env.actors.attacker.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC).expect_ok("seed");
+
+    // 1) mint authority moved off the pool PDA
+    env.rewrite_mint(&p.lp_junior, Some(&attacker), 6);
+    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    expect_instruction_failure(out.expect_err("foreign mint authority"), "mint authority");
+
+    // 2) wrong decimals
+    env.rewrite_mint(&p.lp_junior, Some(&p.pool), 8);
+    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    expect_instruction_failure(out.expect_err("8-decimal lp mint"), "mint decimals");
+
+    // 3) mint account owned by Token-2022 instead of classic SPL
+    env.rewrite_mint(&p.lp_junior, Some(&p.pool), 6);
+    env.set_account_owner(&p.lp_junior, spl::TOKEN_2022_PROGRAM_ID);
+    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    expect_instruction_failure(out.expect_err("token-2022 lp mint"), "mint owner");
+
+    // restore sanity: same mutations on the withdraw path
+    env.rewrite_mint(&p.lp_junior, Some(&p.pool), 6);
+    env.set_account_owner(&p.lp_junior, spl::TOKEN_PROGRAM_ID);
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 50 * USDC)
+        .expect_ok("withdraw works on restored mint");
+
+    env.rewrite_mint(&p.lp_junior, Some(&attacker), 6);
+    let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    expect_instruction_failure(out.expect_err("withdraw w/ tampered mint"), "mint authority on withdraw");
 }
 
 #[test]

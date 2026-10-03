@@ -104,6 +104,36 @@ fn init_rejects_wrong_program_data() {
 }
 
 #[test]
+fn init_rejects_unrelated_wellformed_program_data() {
+    // A REAL ProgramData account — correct variant layout, owned by the
+    // upgradeable loader, naming the admin as upgrade authority — but at
+    // an address that is NOT this program's programdata PDA. Substitution
+    // must fail the program -> programdata_address binding, not just the
+    // type check.
+    let mut env = Env::new();
+    let admin = env.actors.admin.pubkey();
+    let foreign_pd = env.write_unrelated_program_data(&admin);
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+    let mut i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    i.accounts[2].pubkey = foreign_pd;
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_cuotas_err(&out, CuotasError::NotUpgradeAuthority, "unrelated ProgramData");
+}
+
+#[test]
+fn init_rejects_when_program_is_immutable() {
+    // ProgramData with upgrade_authority = None: the program is immutable,
+    // no signer can ever bootstrap the config.
+    let mut env = Env::new();
+    env.clear_upgrade_authority();
+    let admin = env.actors.admin.pubkey();
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+    let i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_cuotas_err(&out, CuotasError::NotUpgradeAuthority, "immutable program");
+}
+
+#[test]
 fn init_rejects_signer_that_is_not_upgrade_authority() {
     // With the ProgramData authority pointing at someone else, the fixture
     // admin is just another key and bootstrap must refuse it.

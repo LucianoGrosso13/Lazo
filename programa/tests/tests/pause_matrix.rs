@@ -2,7 +2,8 @@
 //! WithdrawsOnly. Expected behavior comes from the spec:
 //!   - origination + deposits + merchant/guarantee registration only in Normal
 //!   - withdrawals allowed in Normal and WithdrawsOnly, blocked in Halted
-//!   - admin_apply_loss, pool_init and keeper_revoke carry no state gate
+//!   - pool_init requires Normal (new in this build)
+//!   - admin_apply_loss and keeper_revoke carry no state gate
 //!     (pinned from source, see TEST_REPORT)
 
 use cuotas::{CuotasError, ProtocolState, Tranche};
@@ -191,6 +192,34 @@ fn halted_blocks_everything_user_facing() {
     let i = ix::lp_withdraw(&alice, &{env.usdc_mint}, Tranche::Junior, 1);
     let out = env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]);
     out.expect_err("withdraw in Halted");
+}
+
+#[test]
+fn pool_init_requires_normal_state() {
+    // pool_init sits outside setup()'s matrix because the pool already
+    // exists there; the state gate is checked on a config-only env.
+    for st in [ProtocolState::Normal, ProtocolState::Halted, ProtocolState::WithdrawsOnly] {
+        let mut env = Env::new();
+        env.init_config().expect_ok("init config");
+        if !matches!(st, ProtocolState::Normal) {
+            set(&mut env, st);
+        }
+        let out = env.init_pool();
+        match st {
+            ProtocolState::Normal => {
+                out.expect_ok("pool_init in Normal");
+            }
+            _ => {
+                let f = out.expect_err(&format!("pool_init in {st:?}"));
+                let code = cuotas_tests::err::custom_code(f, 0);
+                assert_eq!(
+                    code,
+                    Some(cuotas_tests::err::cuotas_code(CuotasError::ProtocolNotNormal)),
+                    "pool_init in {st:?}"
+                );
+            }
+        }
+    }
 }
 
 #[test]

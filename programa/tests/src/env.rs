@@ -139,6 +139,46 @@ impl Env {
         self.svm.set_account(pd, pd_acct).unwrap();
     }
 
+    /// Make the loaded program immutable: ProgramData authority = None.
+    /// Bootstrap must reject every signer — there is no upgrade authority
+    /// to bind to.
+    pub fn clear_upgrade_authority(&mut self) {
+        let pd = pda::program_data().0;
+        let mut pd_acct = self.svm.get_account(&pd).expect("programdata account");
+        pd_acct.data[12] = 0;
+        pd_acct.data[13..45].fill(0);
+        self.svm.set_account(pd, pd_acct).unwrap();
+    }
+
+    /// Write a WELL-FORMED ProgramData account (correct variant layout,
+    /// owned by the upgradeable loader, authority = `who`) at an address
+    /// unrelated to this program. admin_init_config must reject it: the
+    /// program's `programdata_address()` resolves to the real ProgramData
+    /// PDA, not an arbitrary lookalike. Returns the written address.
+    pub fn write_unrelated_program_data(&mut self, who: &Address) -> Address {
+        let real_pd = pda::program_data().0;
+        let real = self.svm.get_account(&real_pd).expect("programdata account");
+        let foreign = Address::new_unique();
+        self.svm
+            .set_account(
+                foreign,
+                Account {
+                    lamports: real.lamports,
+                    data: {
+                        let mut d = real.data.clone();
+                        d[12] = 1;
+                        d[13..45].copy_from_slice(who.as_ref());
+                        d
+                    },
+                    owner: solana_sdk_ids::bpf_loader_upgradeable::id(),
+                    executable: false,
+                    rent_epoch: real.rent_epoch,
+                },
+            )
+            .expect("failed to write foreign ProgramData");
+        foreign
+    }
+
     /// Build, sign and execute a transaction with the given instructions.
     /// `payer` pays fees; `signers` must include every required signer
     /// (payer is prepended automatically if missing).
@@ -340,14 +380,17 @@ impl Env {
         self.decode::<cuotas::ProtocolConfig>(&pda::config().0)
     }
 
-    /// Deviation from the pool accounting invariant
-    /// `vault + outstanding_credit == junior_capital + senior_capital + accrued_fees`.
-    /// 0 when accounted claims exactly match assets.
+    /// Unallocated surplus: deviation from the recognized accounting
+    /// invariant `vault + outstanding_credit == junior_capital + senior_capital`.
+    /// 0 when assets exactly match recognized claims; positive when tokens
+    /// sit in the vault with no claim attributed (e.g. unsolicited donations).
+    /// `accrued_fees` is deliberately absent — it is an informational
+    /// counter of gains already included in LP capital, not a liability.
     pub fn accounting_delta(&self) -> i128 {
         let p = self.protocol();
         let pool = self.pool();
         (self.token_balance(&p.vault) as i128 + pool.outstanding_credit as i128)
-            - (pool.junior_capital + pool.senior_capital + pool.accrued_fees) as i128
+            - (pool.junior_capital + pool.senior_capital) as i128
     }
 
     /// Overwrite Pool state fields directly in the SVM. Models states the
@@ -385,6 +428,25 @@ impl Env {
         let mut acc = self.svm.get_account(mint).unwrap();
         acc.data[36..44].copy_from_slice(&supply.to_le_bytes());
         self.svm.set_account(*mint, acc).unwrap();
+    }
+
+    /// Repack an existing mint's data preserving its supply. Exercises the
+    /// explicit `mint::authority`/`mint::decimals`/`mint::token_program`
+    /// constraints on the canonical LP mints (seeds pin the address, so only
+    /// state mutation reaches those checks).
+    pub fn rewrite_mint(&mut self, mint: &Address, authority: Option<&Address>, decimals: u8) {
+        let supply = self.mint_supply(mint);
+        let mut acc = self.svm.get_account(mint).unwrap();
+        acc.data = spl::pack_mint(authority, supply, decimals, None);
+        self.svm.set_account(*mint, acc).unwrap();
+    }
+
+    /// Change an account's owner field in place (e.g. point the canonical
+    /// LP-mint account at Token-2022) without touching its data.
+    pub fn set_account_owner(&mut self, at: &Address, owner: Address) {
+        let mut acc = self.svm.get_account(at).unwrap();
+        acc.owner = owner;
+        self.svm.set_account(*at, acc).unwrap();
     }
 }
 

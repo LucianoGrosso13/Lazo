@@ -1,16 +1,17 @@
 //! REGRESSION suite: tests that encode invariants the program is REQUIRED
 //! to satisfy, each named after the defect it originally tracked (see
-//! TEST_REPORT.md). R1–R3 went green when the reviewer-requested fixes
-//! landed; R4 remains RED — no fresh-mandate check exists yet.
+//! TEST_REPORT.md). All five regressions are GREEN on source b7833ac.
 //!
 //!   R1  apply_loss stranded vault tokens        → FIXED (cash sweep)
 //!   R2  external LP burn → phantom shares       → FIXED (reconcile_shares)
 //!   R3  admin_init_config by any signer         → FIXED (ProgramData check)
-//!   R4  keeper_update reactivates stale mandate → OPEN
+//!   R4  keeper_update reactivates stale mandate → FIXED (MandateHashUnchanged)
+//!   R5  external burn inflates LP NAV/share     → FIXED (UnrepresentableDeposit,
+//!       adversarial.rs::external_burn_inflation_attack_rejected)
 
 use cuotas::{CuotasError, Tranche};
 use cuotas_tests::env::{Env, USDC};
-use cuotas_tests::err::{expect_cuotas_err, expect_instruction_failure};
+use cuotas_tests::err::expect_cuotas_err;
 use cuotas_tests::{ix, spl};
 use solana_signer::Signer;
 
@@ -127,10 +128,10 @@ fn regression_init_config_must_verify_upgrade_authority() {
     expect_cuotas_err(&out, CuotasError::NotUpgradeAuthority, "attacker bootstrap");
 }
 
-/// R4 (OPEN): a revoked guarantee may only be reactivated with a FRESH
-/// mandate (different hash). keeper_update_guarantee still reactivates with
-/// the very hash that was revoked — the exposure gate landed, the
-/// fresh-mandate check did not.
+/// R4 (FIXED — MandateHashUnchanged): a revoked guarantee may only be
+/// reactivated with a FRESH mandate. Reusing the revoked hash fails with
+/// the explicit error and leaves terms/active/timestamp untouched; a new
+/// nonzero hash reactivates normally.
 #[test]
 fn regression_guarantee_update_requires_fresh_mandate() {
     let mut env = Env::new();
@@ -149,21 +150,39 @@ fn regression_guarantee_update_requires_fresh_mandate() {
         revoked_hash,
     );
     env.send(&[i], &keeper, &[]).expect_ok("register");
+    let before: cuotas::Guarantee = env.decode(&cuotas_tests::pda::guarantee(&student).0);
     let i = ix::keeper_revoke_guarantee(&keeper.pubkey(), &student);
     env.send(&[i], &keeper, &[]).expect_ok("revoke");
 
-    // reactivating with the SAME revoked mandate must fail
+    // reactivating with the SAME revoked mandate must fail explicitly
     let i = ix::keeper_update_guarantee(
         &keeper.pubkey(),
         &student,
-        100 * USDC,
-        50 * USDC,
+        200 * USDC,
+        80 * USDC,
         revoked_hash,
     );
     let out = env.send(&[i], &keeper, &[]);
-    let f = out.expect_err(
-        "R4 REGRESSION: update reactivated a revoked guarantee with the same \
-         mandate_hash — a fresh mandate must be required",
+    expect_cuotas_err(&out, CuotasError::MandateHashUnchanged, "stale mandate reactivation");
+
+    // nothing changed: terms, active=false and the original timestamp
+    let g: cuotas::Guarantee = env.decode(&cuotas_tests::pda::guarantee(&student).0);
+    assert!(!g.active);
+    assert_eq!(g.mandate_hash, revoked_hash);
+    assert_eq!(g.max_purchase, before.max_purchase);
+    assert_eq!(g.coverage_max, before.coverage_max);
+    assert_eq!(g.registered_at, before.registered_at);
+
+    // a different, nonzero mandate hash reactivates cleanly
+    let i = ix::keeper_update_guarantee(
+        &keeper.pubkey(),
+        &student,
+        200 * USDC,
+        80 * USDC,
+        [8u8; 32],
     );
-    expect_instruction_failure(f, "stale mandate reactivation");
+    env.send(&[i], &keeper, &[]).expect_ok("fresh mandate reactivates");
+    let g: cuotas::Guarantee = env.decode(&cuotas_tests::pda::guarantee(&student).0);
+    assert!(g.active);
+    assert_eq!(g.mandate_hash, [8u8; 32]);
 }

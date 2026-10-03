@@ -59,20 +59,29 @@ pub fn spec_params(keeper: &Address, treasury: &Address) -> ConfigParams {
     }
 }
 
-/// Independent (spec-side) share math for a deposit: shares = floor(
-/// amount * total_shares / tranche_capital ), 1:1 on an empty tranche.
-/// Returns the shares the spec demands the program mint.
+/// Independent (spec-side) share math for a deposit, matching the approved
+/// exact-deposit policy: non-bootstrap deposits must mint WHOLE shares —
+/// `amount * shares` exactly divisible by `capital` — so no value can be
+/// transferred to existing holders through rounding. 1:1 on an empty
+/// tranche (shares AND capital zero). Returns None for every rejection the
+/// spec demands (zero amount, orphan capital, wiped tranche, non-exact).
 pub fn spec_shares_for_deposit(capital: u64, shares: u64, amount: u64) -> Option<u64> {
     if amount == 0 {
         return None;
     }
     if shares == 0 {
-        return Some(amount);
+        return if capital == 0 { Some(amount) } else { None }; // OrphanedCapital
     }
-    let s = (amount as u128) * (shares as u128) / (capital as u128);
-    let s = u64::try_from(s).ok()?;
+    if capital == 0 {
+        return None; // TrancheWipedOut
+    }
+    let n = (amount as u128).checked_mul(shares as u128)?;
+    if n % (capital as u128) != 0 {
+        return None; // UnrepresentableDeposit
+    }
+    let s = u64::try_from(n / capital as u128).ok()?;
     if s == 0 {
-        return None; // DepositTooSmall
+        return None; // DepositTooSmall (unreachable under exactness)
     }
     Some(s)
 }

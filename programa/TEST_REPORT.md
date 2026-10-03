@@ -1,239 +1,234 @@
-# Cuotas — Acceptance Test Report
+# Cuotas — LiteSVM Acceptance Test Report
 
-**Status: INTERIM — acceptance is NOT final.** One regression remains
-deliberately RED (R4: `keeper_update_guarantee` reactivates a revoked
-guarantee with the same stale `mandate_hash` — no fresh-mandate check
-exists yet). Final acceptance is blocked on that fix plus the pending
-business decision on loss cash accounting (the program now ships the
-"cash simulation" variant: `admin_apply_loss` moves real USDC from the
-vault to the treasury ATA; see finding 1).
+**Result: 97/97 in-process LiteSVM tests GREEN + 29/29 host unit tests
+GREEN. Zero failures, zero ignored, zero deliberately-red tests.**
 
-Program under test: `programs/cuotas` compiled to `target/deploy/cuotas.so`
-(post-reviewer ABI, rebuilt 17:39 UTC — includes the `ProgramData`
-upgrade-authority check, `reconcile_shares`, orphaned-capital guard,
-exposure gate on guarantee updates, and the loss cash sweep) and executed
-**in-process inside LiteSVM 0.16** — no mocks, no stubs, no network.
+**Acceptance is NOT final business sign-off.** The technical suite passes
+against the final source, but two items remain explicitly pending the user:
+(1) the business choice between provisional *cash-simulation* loss
+accounting and a strict credit write-off, and (2) devnet deployment + real
+mint creation. This report proves what the compiled artifact does; it does
+not approve deployment or real funds.
 
-Everything lives in `programa/tests/` (owned by the test worker): a standalone
-crate with its own `[workspace]`, so **zero changes to core manifests, source,
-or scripts** were required. The suite binds to the real ABI by importing
-`cuotas` as a path dependency: instruction discriminators, account layouts and
-error codes can never silently drift from the `.so`.
+## Program under test
+
+| item | value |
+|---|---|
+| source commit | `b7833ac653d5de3872d5c58982915d9aabf61f72` (clean tree) |
+| SBF artifact | `target/deploy/cuotas.so`, 469824 bytes |
+| artifact SHA256 | `8d05b07fd749c950d87d32396470402c5ae28749e53ab3e7079710269b7b2476` |
+| IDL | `target/idl/cuotas.json`, 52823 bytes |
+| IDL SHA256 | `f0231f0a67332d698cc14d0b17b8bd9e80202e218cdd3066eee90a78b2284774` |
+| build | `NO_DNA=1 anchor build --arch v1` (reproduces the same hash) |
+| runtime | LiteSVM 0.16 in-process — no mocks, no stubs, no network, no `anchor test`, no deploy |
+
+The path-dependency on `programs/cuotas` keeps discriminators/layouts/error
+variants in sync with source, but path-dep alone does NOT prove the `.so`
+is fresh — the SHA256 above is the binding evidence that tests ran against
+compiled `b7833ac`, not a stale artifact.
 
 ## How to run
 
 ```sh
-# build the program artifact first (core-owned workspace)
-cd programa && NO_DNA=1 anchor build
+# SBF artifact (evidence build, already verified):
+cd programa && NO_DNA=1 anchor build --arch v1
 
-# run the acceptance suite
+# in-process acceptance suite (all 97 tests):
 cd programa/tests && cargo test
-# or from repo root:
-cargo test --manifest-path programa/tests/Cargo.toml
+
+# host-only unit tests of the program crate (serial, 29 tests):
+cd programa && cargo test -p cuotas --lib
 ```
 
-Environment override: `CUOTAS_SO=/path/to/cuotas.so` changes which artifact is
-loaded; default is `../target/deploy/cuotas.so` relative to the crate.
+`CUOTAS_SO=/path/to/cuotas.so` overrides which artifact the suite loads
+(default `../target/deploy/cuotas.so`). Never run `anchor test` (it would
+deploy); the suite is in-process only.
 
-## Results
-
-Latest full run (post-reviewer ABI, `cuotas.so` rebuilt 17:39 UTC):
+## Results — suite executed against the verified artifact
 
 ```
-admin_config.rs        16 passed  (init w/ ProgramData check incl. program /
-                                    program_data slot substitution, foreign
-                                    authority + positive binding, update,
-                                    set_state)
-pool_lp.rs             29 passed  (pool_init, deposits, withdrawals, NAV,
-                                    OrphanedCapital + LpSupplyMismatch on BOTH
-                                    tranches, LP-ATA variants: non-canonical /
-                                    cross-tranche / foreign-owner, wiped-
-                                    tranche retire + recapitalize)
-loss.rs                 9 passed  (waterfall, bounds, cash sweep to treasury,
-                                    OC preserved, loss bounded by vault cash)
-merchant_reputation.rs  7 passed  (merchant register, student reputation)
-guarantee.rs           11 passed  (lifecycle, GuaranteeTermsLocked exposure
-                                    gate, zero-hash rejection, role separation)
-pause_matrix.rs         4 passed  (op x state matrix, WithdrawsOnly exit)
-adversarial.rs          6 passed  (authority matrix, external burn forfeit,
-                                    post-burn deposit priced on reconciled
-                                    supply, total-burn → OrphanedCapital via
-                                    real instructions, conservation)
-regressions.rs          4 passed / 1 RED BY DESIGN (R4, see below)
--------------------------
-TOTAL                  86 green + 1 tracked regression   (~9 s wall, in-process)
+admin_config.rs        18 passed   bootstrap + ProgramData matrix below
+pool_lp.rs             33 passed   deposits, withdrawals, NAV, edge states
+loss.rs                 9 passed   waterfall, bounds, provisional cash sweep
+merchant_reputation.rs  7 passed   merchant + reputation registration
+guarantee.rs           13 passed   lifecycle, mandate freshness, exposure
+pause_matrix.rs         5 passed   op x state matrix incl. pool_init gate
+adversarial.rs          7 passed   I-05 inflation attack, burns, conservation
+regressions.rs          5 passed   R1–R5 all GREEN (table below)
+--------------------------------------
+TOTAL                  97 passed / 0 failed / 0 ignored   (~19 s in-process)
++ cargo test -p cuotas --lib: 29/29 host unit tests pass (exact-divisibility,
+  inflation rejection, gain conservation, orphan/wipe handling)
 ```
 
-All 12 instruction builders in `ix.rs` were additionally cross-checked
-account-by-account against `target/idl/cuotas.json` (name, order,
-writable/signer flags) — exact match, no drift.
+All 12 instruction builders in `ix.rs` match `target/idl/cuotas.json`
+account-by-account (names, order, writable/signer flags): no ABI drift.
 
-ABI deltas absorbed by the harness since the previous run:
+## Regressions — all resolved on this source
 
-- `admin_init_config` now takes `program` + `program_data` accounts and
-  requires the signer to be the program's upgrade authority. LiteSVM loads
-  the `.so` as upgradeable but writes `upgrade_authority_address = None`;
-  the harness patches it to the fixture admin (bytes 12..45 of the
-  ProgramData account) so the positive path is real, not mocked.
-- `admin_apply_loss` takes `treasury_ata` + `token_program` and performs a
-  real `transfer_checked` vault → treasury ("cash simulation" mode).
-  `env.bootstrap()` now creates the treasury ATA.
-- `keeper_update_guarantee` takes the student's `reputation` account and
-  rejects rewrites while `active_exposure > 0` (`GuaranteeTermsLocked`).
-- `lp_deposit`/`lp_withdraw` call `pool.reconcile_shares(tranche,
-  lp_mint.supply)` before pricing: counters sync DOWN to live supply after
-  external burns, and supply > shares fails `LpSupplyMismatch`.
-- `keeper_register_guarantee`/`update` now require `mandate_hash != 0`.
-- Zero-payout withdrawals are ALLOWED (worthless shares retire for 0 — the
-  wiped-tranche clean-slate path). `WithdrawYieldsZero` was removed;
-  `OrphanedCapital`, `LpSupplyMismatch`, `GuaranteeTermsLocked`,
-  `NotUpgradeAuthority`, `InvalidTokenProgram` were added (error ordinals
-  shifted — the harness maps variants, not numbers).
-
-## Known-failing regressions (`tests/regressions.rs`)
-
-Each test asserts the REQUIRED invariant and names the defect it tracks.
-
-| # | test | required behavior | status |
-|---|---|---|---|
-| R1 | `regression_apply_loss_breaks_vault_invariant` | `vault + outstanding_credit == J + S + accrued_fees` after every op | **GREEN** — cash sweep to treasury ATA landed |
-| R2 | `regression_external_burn_creates_phantom_shares` | external burn → shares reconcile to supply, forfeited NAV accrues to remaining holders, full drain | **GREEN** — `reconcile_shares` landed |
-| R3 | `regression_init_config_must_verify_upgrade_authority` | `admin_init_config` binds to the program's upgrade authority | **GREEN** — ProgramData check landed |
-| R4 | `regression_guarantee_update_requires_fresh_mandate` | revoked guarantee may only reactivate with a NEW `mandate_hash` | **RED** — update still accepts the same revoked hash (tx succeeds; exposure gate landed but hash-freshness did not) |
-
-Plus the green baseline `invariant_holds_across_deposits_and_withdraws`
-proving `V + OC = J + S + AF` holds for all ops that do not involve losses.
-
-## Dependency versions (test crate only)
-
-| crate | version | why |
+| # | defect originally found | fix verified by |
 |---|---|---|
-| `cuotas` | path `../programs/cuotas` | real ABI: ix data, state, errors |
-| `litesvm` | `0.16.0` | in-process SVM, Agave 4.2 lineage |
-| `anchor-lang` | `1.2.0` | matches the program's anchor version |
-| `solana-*` (address/instruction/message/transaction/keypair/signer/account/clock/rent/sdk-ids/instruction-error/transaction-error) | `~2.6`–`~4.x` | pinned to the same versions litesvm uses internally so types unify |
-| `solana-pubkey` | `~3.0.0` | anchor-side `Pubkey` (solana-address 1.x lineage), converted via `[u8;32]` shims |
+| R1 | `apply_loss` stranded vault tokens → invariant broken | cash sweep `vault→treasury` keeps `V+OC=J+S`; `regression_apply_loss_breaks_vault_invariant` GREEN |
+| R2 | external LP burn → phantom shares / stranded NAV | `reconcile_shares` syncs counters to live supply, forfeits burned NAV pro-rata; `regression_external_burn_creates_phantom_shares` GREEN |
+| R3 | `admin_init_config` callable by any signer | `program.programdata_address` + `upgrade_authority == admin` checked on-chain; `regression_init_config_must_verify_upgrade_authority` GREEN |
+| R4 | revoked guarantee reactivated with the same `mandate_hash` | `MandateHashUnchanged` (6025) rejects stale hash; terms/`active`/`registered_at` verified untouched; `regression_guarantee_update_requires_fresh_mandate` GREEN |
+| R5 | external burn → 1 unit of supply inflates NAV/share for the incumbent | exact-deposit guard `UnrepresentableDeposit` (6024) before any token CPI; `external_burn_inflation_attack_rejected` GREEN |
 
-Type lineages: `solana_address::Address` (litesvm, 2.x) and
-`solana_pubkey::Pubkey` (anchor 1.2, 1.x lineage) are distinct types wrapping
-`[u8;32]`; `env::addr()`/`env::pk()` convert byte-exactly.
+## Accounting model asserted by the suite
 
-## Acceptance matrix
+**Invariant: `vault.amount + outstanding_credit == junior_capital +
+senior_capital`** (`env.accounting_delta() == 0`) in every consistent
+fixture and after every executed op: deposits, withdrawals, losses.
 
-Positive coverage (state + token-balance assertions):
+- `accrued_fees` is a **cumulative informational counter** for recognized
+  gains already folded into LP capital — NOT a treasury liability and NOT
+  a liquidity reserve. `informational_fees_never_gate_liquidity` proves a
+  large `F` never reduces what an LP can withdraw and no instruction
+  touches it.
+- Direct unsolicited token transfers into the vault are **unallocated
+  surplus**: `unsolicited_donations_stay_outside_lp_nav` proves they do
+  not dilute or enrich LPs (delta `+donation`, full exit leaves the surplus
+  in the vault).
+- `Pool::gain_allocation` / `book_gain` are **host-only helpers** — no
+  instruction exposes them; the suite attributes no SBF behavior to them.
+- Loss is **PROVISIONAL CASH SIMULATION** (see limitations).
 
-| instruction | positives | key negatives covered |
-|---|---|---|
-| `admin_init_config` | spec config persisted incl. both tier tables, bump; upgrade-authority bootstrap verified via program+ProgramData; whoever holds the authority captures admin (positive binding with foreign fixture) | non-authority signer → `NotUpgradeAuthority` (R3), admin≠authority → `NotUpgradeAuthority`, dup init, wrong config PDA, non-executable/foreign-loader `program` slot, wrong `program_data`, 8-decimal mint, token-account-as-mint, token-2022 mint, 11 config-param mutants → `InvalidConfig` |
-| `admin_update_config` | params replaced, keeper rotation honored immediately | attacker/keeper/student → `NotAdmin`, invalid params → `InvalidConfig` |
-| `admin_set_state` | Normal→Halted→WithdrawsOnly→Normal round trip | attacker, keeper → `NotAdmin` |
-| `pool_init` | vault (authority=pool), both LP mints (6 dec, authority=pool, supply 0), zeroed counters | non-admin → `NotAdmin`, foreign mint → `InvalidUsdcMint`, token-2022 program id, swapped LP mints, duplicate |
-| `lp_deposit` | first-deposit 1:1, tranche independence, NAV deposit after loss (500 capital / 1000 shares → 100→200 shares), post-burn reconcile, post-burn deposit priced on reconciled supply (elevated NAV paid, no free re-mint) | zero → `ZeroAmount`, dust under `capital>>shares` → `DepositTooSmall`, insolvent tranche → `TrancheWipedOut`, capital>0+shares=0 → `OrphanedCapital` (both tranches, surgical + total-burn natural path), supply>shares → `LpSupplyMismatch` (both tranches), foreign mint → `InvalidUsdcMint`, wrong pool/config/vault/LP-mint/USDC-ATA (8 substitutions), LP-ATA variants: non-canonical account → `NotCanonicalAta`, cross-tranche ATA, foreign-owner ATA, insufficient balance, missing LP ATA, forged signer (2 arms), bad tranche discriminant, gated in Halted + WithdrawsOnly → `ProtocolNotNormal` |
-| `lp_withdraw` | partial pro-rata payout, NAV after loss (0.6/share), WithdrawsOnly exit, second-LP pro-rata, worthless shares retire for 0 + recapitalize | zero → `ZeroShares`, over supply → `InsufficientShares`, over own balance → burn failure, illiquid vault → `InsufficientLiquidity`, supply>shares → `LpSupplyMismatch`, account substitution ×3, Halted → `ProtocolHalted` |
-| `admin_apply_loss` | waterfall junior-first, spill to senior, wipe-to-zero, cash sweep vault→treasury, OC preserved, halted bookkeeping OK | non-admin incl. keeper → `NotAdmin`, zero → `ZeroAmount`, loss>total → `LossExceedsCapital`, loss>vault-cash → spl failure, empty pool |
-| `merchant_register` | owner/settlement/active/plans_count/bump persisted; merchant wallet needn't sign | keeper/attacker/student → `NotAdmin`, foreign/other-mint/non-ATA settlement → `NotCanonicalAta`, foreign mint → `InvalidUsdcMint`, wrong merchant PDA, duplicate |
-| `student_init_reputation` | tier 0, counters 0, bump | foreign reputation PDA, duplicate, gated Halted + WithdrawsOnly → `ProtocolNotNormal` |
-| `keeper_register_guarantee` | terms/hash/active/registered_at/bump | admin/attacker/student → `NotKeeper`, mp=0 or cm=0 or hash=0 → `InvalidGuaranteeParams`, foreign guarantee PDA, duplicate, gated → `ProtocolNotNormal` |
-| `keeper_update_guarantee` | terms updated, reactivates revoked, timestamp refreshed | non-keeper → `NotKeeper`, zero params/hash → `InvalidGuaranteeParams`, unregistered student, `active_exposure>0` → `GuaranteeTermsLocked`, gated in Halted → `ProtocolNotNormal`; **R4 RED**: same-hash reactivation still accepted |
-| `keeper_revoke_guarantee` | active=false, terms retained, idempotent, allowed while Halted | admin/attacker → `NotKeeper`, re-register after revoke fails (update-only reactivation) |
+## Exact-deposit guard (I-05 fix)
 
-### Pause matrix (op × state) — `pause_matrix.rs`
+`shares_for_deposit` requires `amount * reconciled_supply` to divide
+`capital` exactly (`UnrepresentableDeposit`, checked BEFORE any token CPI,
+supply reconciled to the live mint first). Verified:
+
+- **Attack executed for real** (`external_burn_inflation_attack_rejected`):
+  attacker deposits 1e9, raw-burns 999999999 LP keeping 1 unit; victim's
+  1.5e9 deposit is rejected atomically — pool bytes, victim balances and
+  mint supply byte-identical before/after — and the attacker exits with
+  exactly what he put in. Profit = 0.
+- Benign case (`deposit_requires_exact_share_pricing`): at NAV 0.75 a
+  non-exact amount fails with full rollback, the exact amount succeeds.
+- `OrphanedCapital` (capital>0, supply=0) and `TrancheWipedOut`
+  (capital=0, supply>0) reject deposits on both tranches; zero-NAV shares
+  may be retired for 0 payout and the tranche recapitalized once empty.
+- `LpSupplyMismatch` (supply > recorded shares, only possible via tamper)
+  rejects on both tranches.
+
+## Bootstrap / upgrade-authority matrix (`admin_init_config`)
+
+Constraint: `program.programdata_address() == Some(program_data.key())`
+and `program_data.upgrade_authority_address == Some(admin)`.
+
+| case | result |
+|---|---|
+| real program + its ProgramData + upgrade authority signs | OK — that authority becomes `config.admin` |
+| attacker signer (authority = admin) | `NotUpgradeAuthority` |
+| foreign authority patched in, admin signs | `NotUpgradeAuthority` |
+| `program_data` = unrelated well-formed ProgramData (correct loader-owned layout, authority = admin, WRONG address) | `NotUpgradeAuthority` — binds address, not just type |
+| `upgrade_authority_address = None` (immutable program) | `NotUpgradeAuthority` — nobody can bootstrap |
+| `program` = non-executable data account / foreign-loader program | rejected |
+| `program_data` = token/garbage account | rejected (deserialize fails) |
+| 8-decimal mint, token-account-as-mint, Token-2022 mint | rejected |
+
+Harness note: LiteSVM writes the loaded ProgramData with
+`upgrade_authority_address = None`; `env` patches bytes 12..45 so the real
+constraint is exercised both ways — nothing is mocked.
+
+## Guarantee mandate freshness (`keeper_update_guarantee`)
+
+Requires: configured keeper + Normal state + same-student reputation PDA
+with `active_exposure == 0` + nonzero `mandate_hash != stored`.
+
+- same hash on a revoked guarantee → `MandateHashUnchanged`, and
+  `terms`/`active=false`/`registered_at` verified byte-identical after;
+- same hash on an ACTIVE guarantee → also `MandateHashUnchanged`;
+- different nonzero hash → reactivates cleanly (active=true, new ts);
+- another student's canonical reputation PDA → seeds mismatch;
+- `active_exposure > 0` → `GuaranteeTermsLocked`; Halted →
+  `ProtocolNotNormal`. `keeper_revoke_guarantee` intentionally has no
+  state gate.
+
+## LP mint / token-account integrity
+
+`lp_mint_state_tampering_rejected` mutates the canonical mint in place
+(seeds prevent substitution): mint authority ≠ pool → rejected; decimals ≠
+6 → rejected; account owner = Token-2022 → rejected; on deposit AND
+withdraw paths. LP-ATA slot variants verified: non-canonical token account
+→ `NotCanonicalAta`, cross-tranche ATA, foreign-owner ATA, missing ATA,
+Token-2022-derived address. USDC-ATA / vault / pool / config substitutions
+and forged signers covered in `pool_lp.rs`/`adversarial.rs`.
+
+## Pause matrix (op × protocol state)
 
 | op | Normal | Halted | WithdrawsOnly |
 |---|---|---|---|
 | `lp_deposit` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
 | `lp_withdraw` | ok | `ProtocolHalted` | ok (full exit verified) |
-| `admin_apply_loss` | ok | ok | ok |
+| `admin_apply_loss` | ok | ok | ok (no gate — pinned from source) |
 | `merchant_register` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
 | `student_init_reputation` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
 | `keeper_register_guarantee` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
 | `keeper_update_guarantee` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
-| `keeper_revoke_guarantee` | ok | ok | ok |
-| `pool_init` | ok | ok | ok (no gate — bootstrap op) |
+| `keeper_revoke_guarantee` | ok | ok | ok (no gate — pinned) |
+| `pool_init` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` (new gate) |
 
-## Economic / adversarial findings
+## Loss waterfall — PROVISIONAL cash simulation
 
-1. **`admin_apply_loss` is now "cash simulation" mode — RESOLVED (R1
-   green).** The instruction performs a real `transfer_checked` of `amount`
-   from the vault to the canonical treasury ATA, so
-   `vault + outstanding_credit == J + S + accrued_fees` holds.
-   `outstanding_credit` is deliberately untouched (a "credit write-off"
-   mode would only change this handler, per the source comment). Two
-   boundary tests pin the semantics: `loss_moves_cash_to_treasury_and_
-   preserves_credit` (OC=500 modeled + consistent vault) and
-   `loss_is_bounded_by_vault_cash_not_just_capital` (a loss that fits in
-   capital but exceeds remaining vault cash fails at the SPL transfer —
-   the cash-mode boundary when capital is lent out).
+`admin_apply_loss(amount)` reduces tranche capital junior-first then
+senior AND performs a real `transfer_checked` of `amount` from the vault
+to the canonical treasury ATA. `outstanding_credit` is untouched.
+Verified: junior-first cascade, senior spillover, exact total loss,
+zero loss, `loss > total capital` → `LossExceedsCapital`, `loss > vault
+cash` → rejected at the SPL transfer with full rollback, OC preserved,
+`V+OC=J+S` after loss, treasury balance included in token conservation,
+no state gate.
 
-2. **External LP burn forfeits NAV pro-rata — RESOLVED (R2 green).**
-   `reconcile_shares` syncs the recorded counter down to live mint supply
-   before every NAV pricing, so burned claims are forfeited (not stranded):
-   in the tested sequence the burner loses 200 shares worth of NAV, the
-   survivor exits with 625 (500 + forfeited 125), and the pool drains to
-   exact zero. Supply ABOVE recorded shares fails `LpSupplyMismatch`
-   (exercised via direct mint-supply edit). Two follow-on cases pin the
-   economics end-to-end: a NEW depositor after a partial burn is priced on
-   the reconciled supply (pays the elevated 2.0 NAV — the forfeited claim
-   is never re-minted), and a 100% external burn is the only instruction-
-   level path to `capital>0 && supply==0`, which trips `OrphanedCapital`
-   on the next deposit instead of minting free shares.
+**Trusted-admin limitation (must be read before any real-funds use):**
+the admin both chooses `treasury_ata` and triggers the sweep, so a
+compromised or malicious admin could move pool cash to an arbitrary
+canonical treasury account. Cash mode also cannot write off *non-liquid*
+outstanding credit — it can only sweep cash that is physically in the
+vault. This is a **devnet test simulation** of loss, not a safe design
+for real funds; the cash-vs-strict-credit-writeoff business decision is
+still pending the user.
 
-3. **Attacker cannot mint LP tokens** (`attacker_cannot_mint_lp_tokens`):
-   mint authority is the pool PDA; a raw spl `MintTo` signed by an attacker
-   fails inside the token program.
+## What remains unverified / pending
 
-4. **USDC conservation verified** (`token_conservation_across_full_sequence`):
-   across deposit×2 + withdraw + loss, `vault + user ATAs == initial USDC` —
-   the program never mints or burns USDC; LP mint supplies always equal the
-   on-chain share counters.
-
-5. **Insolvent-tranche guardrail confirmed**: when losses wipe a tranche
-   (`capital==0, shares>0`), further deposits fail with `TrancheWipedOut`
-   (6000+17) — no free-share minting.
-
-6. **Signer forgery is dead on arrival** (`deposit_forged_signer_fails`): a
-   transaction naming victim as `depositor` cannot be built without the
-   victim's key (`NotEnoughSigners` at construction), and a transaction with
-   the attacker's signature injected into the victim's slot dies in the
-   runtime's signature verification (`SignatureFailure`) before the program
-   runs.
-
-7. **Error variants observed-but-unreachable**: `WrongLpMint`,
-   `TokenAccountMismatch` are shadowed by seeds/token constraints that fail
-   earlier; documented, not a defect.
+- Business acceptance: cash-sim vs strict credit write-off for losses —
+  **pending user decision**; this suite does not bless either.
+- Devnet deployment and real `devUSDC` mint creation — **not done here**.
+  Mint runbook when approved: classic SPL Token (not Token-2022), 6
+  decimals, freeze authority `None`.
+- `gain_allocation`/`book_gain` are exercised only by host unit tests
+  (29/29); no on-chain instruction calls them, so they are out of SBF
+  scope by construction.
+- `originate_plan`/`pay_installment`/`default_plan` do not exist yet —
+  credit lifecycle is modeled via `edit_pool`/`edit_reputation` fixtures
+  (states unreachable by current instructions), clearly marked where used.
 
 ## Harness notes
 
-- SPL state (mints, token accounts, ATAs) is packed by hand into the SVM
-  account store (`spl.rs`, classic spl-token wire layout) — deterministic
-  fixtures without setup transactions.
-- `env.edit_pool`/`set_token_amount` write protocol/token-account state
-  directly to model conditions the current instruction set cannot produce
-  (outstanding credit, capital≫shares, vault liquidity < claims), so the
-  *program's* liquidity/waterfall checks are exercised for real.
-- Every `send` expires the blockhash afterwards so byte-identical retries
-  (duplicate-init tests) get fresh signatures instead of a false
-  `AlreadyProcessed`.
-- The harness patches the ProgramData account LiteSVM creates for the
-  loaded program (`upgrade_authority_address = None` → fixture admin) so
-  the new `admin_init_config` upgrade-authority check exercises the real
-  constraint, both ways.
-- `env.edit_reputation`/`set_mint_supply` extend the direct-state modeling
-  to `active_exposure` and mint-supply anomalies no instruction can produce.
-- One flake observed: the shared `target/deploy/cuotas.so` was rebuilt by the
-  core worker mid-run; rerun was green. Rebuild-before-test is recommended.
+- SPL state (mints/token accounts) hand-packed to exact classic wire
+  layout (`spl.rs`): `COption<Pubkey>` = 36 B, `COption<u64>` = 12 B,
+  token account = 165 B, mint = 82 B.
+- `env.edit_pool`/`edit_reputation`/`set_token_amount`/`set_mint_supply`/
+  `rewrite_mint`/`set_account_owner` model states no instruction produces
+  (outstanding credit, capital≫shares, tampered mints); the program's own
+  checks run for real against them.
+- Each `send` expires the blockhash afterwards so byte-identical retries
+  get fresh signatures (duplicate-init tests).
+- Rebuild-before-test is recommended: the artifact hash above, not the
+  path dependency, is the freshness proof.
 
-## Owned files
+## Owned files (test worker only)
 
 ```
 programa/tests/Cargo.toml      standalone crate, path-dep on programs/cuotas
 programa/tests/src/lib.rs      harness docs
-programa/tests/src/env.rs      LiteSVM boot, actors, ATA/mint fixtures, send/simulate
+programa/tests/src/env.rs      LiteSVM boot, actors, fixtures, ProgramData patching
 programa/tests/src/err.rs      TxOutcome, custom-error extraction, CuotasError→code
 programa/tests/src/ix.rs       instruction builders bound to #[derive(Accounts)]
-programa/tests/src/pda.rs      PDA derivations from the spec
-programa/tests/src/spec.rs     spec parameters + independent NAV math
-programa/tests/src/spl.rs      SPL layouts, ATA derivation, raw token ixs
-programa/tests/tests/*.rs      6 acceptance suites + this report
+programa/tests/src/pda.rs      PDA derivations
+programa/tests/src/spec.rs     spec parameters + independent exact-share math
+programa/tests/src/spl.rs      SPL wire layouts, ATA derivation, raw token ixs
+programa/tests/tests/*.rs      8 acceptance suites (97 tests)
 programa/TEST_REPORT.md        this file
 ```

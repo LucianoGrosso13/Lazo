@@ -167,6 +167,62 @@ fn deposit_after_external_burn_prices_on_reconciled_supply() {
 }
 
 #[test]
+fn external_burn_inflation_attack_rejected() {
+    // THE I-05 attack, executed for real: the attacker mints a huge position,
+    // burns all but ONE base unit of LP supply, and waits for a victim to
+    // deposit at the inflated NAV so floor-rounding hands the incumbent a
+    // profit. The exact-deposit guard must reject the victim's deposit
+    // atomically — before any token CPI — and the attacker must leave with
+    // exactly what he put in.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let attacker = env.actors.attacker.pubkey();
+    let bob = env.actors.bob.pubkey();
+    let (usdc_atk, lp_atk) = lp_ready_full(&mut env, &attacker, 3_000_000_000, &p.lp_junior);
+    let (usdc_b, lp_b) = lp_ready_full(&mut env, &bob, 3_000_000_000, &p.lp_junior);
+
+    deposit(&{env.actors.attacker.insecure_clone()}, &mut env, Tranche::Junior, 1_000_000_000);
+    assert_eq!(env.token_balance(&lp_atk), 1_000_000_000);
+
+    // attacker burns 999,999,999 of his own LP tokens via raw SPL — keeps 1
+    let burn = spl::burn_ix(&lp_atk, &p.lp_junior, &attacker, 999_999_999);
+    env.send(&[burn], &{env.actors.attacker.insecure_clone()}, &[]).expect_ok("inflation burn");
+    assert_eq!(env.mint_supply(&p.lp_junior), 1, "supply collapsed to 1");
+    assert_eq!(env.pool().junior_shares, 1_000_000_000, "counter still stale pre-op");
+
+    // victim deposits 1.5e9: reconcile drops recorded shares to 1, then
+    // N = 1.5e9 * 1, N % 1e9 != 0 -> UnrepresentableDeposit, full rollback
+    let before_pool = env.account_data(&p.pool);
+    let before_bob_usdc = env.token_balance(&usdc_b);
+    let i = ix::lp_deposit(&bob, &{env.usdc_mint}, Tranche::Junior, 1_500_000_000);
+    let out = env.send(&[i], &{env.actors.bob.insecure_clone()}, &[]);
+    expect_cuotas_err(&out, CuotasError::UnrepresentableDeposit, "inflation deposit");
+
+    // nothing moved: pool counters (incl. the reconciled write inside the
+    // failed tx), vault, victim balances, mint supply — all unchanged
+    assert_eq!(env.account_data(&p.pool), before_pool, "pool untouched");
+    assert_eq!(env.token_balance(&usdc_b), before_bob_usdc, "victim never paid");
+    assert_eq!(env.token_balance(&lp_b), 0);
+    assert_eq!(env.mint_supply(&p.lp_junior), 1);
+
+    // the attacker's sole remaining share redeems exactly his capital —
+    // the burn inflated NAV but there is no victim to extract it from
+    let i = ix::lp_withdraw(&attacker, &{env.usdc_mint}, Tranche::Junior, 1);
+    env.send(&[i], &{env.actors.attacker.insecure_clone()}, &[]).expect_ok("attacker exits");
+    assert_eq!(
+        env.token_balance(&usdc_atk),
+        3_000_000_000,
+        "attacker profits exactly zero"
+    );
+    assert_eq!(env.accounting_delta(), 0);
+}
+
+/// `lp_ready` variant funding arbitrary base-unit amounts (not just *USDC).
+fn lp_ready_full(env: &mut Env, who: &Address, usdc: u64, lp_mint: &Address) -> (Address, Address) {
+    (env.make_ata(who, &{env.usdc_mint}, usdc), env.make_ata(who, lp_mint, 0))
+}
+
+#[test]
 fn external_full_burn_creates_orphaned_capital() {
     // A 100% external burn is the ONLY instruction-level path to
     // capital>0 with supply==0: the pool cannot claw back alice's capital
@@ -200,6 +256,7 @@ fn external_full_burn_creates_orphaned_capital() {
 fn token_conservation_across_full_sequence() {
     let mut env = Env::new();
     let p = env.bootstrap();
+    let treasury_ata = env.treasury_ata();
     let alice = env.actors.alice.pubkey();
     let bob = env.actors.bob.pubkey();
     lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
@@ -211,20 +268,32 @@ fn token_conservation_across_full_sequence() {
     let total_usdc = env.token_balance(&usdc_a) + env.token_balance(&usdc_b);
 
     deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC);
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after deposit");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after deposit");
     deposit(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Senior, 800 * USDC);
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after deposit");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after deposit");
     let i = ix::lp_withdraw(&alice, &{env.usdc_mint}, Tranche::Junior, 300 * USDC);
     env.send(&[i], &env.actors.alice.insecure_clone(), &[]).expect_ok("partial withdraw");
-    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after withdraw");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after withdraw");
 
-    // USDC is never minted/burned by the program — deposits and payouts are
-    // the only token movements, so the sum over vault + user ATAs is constant.
-    let held = env.token_balance(&p.vault) + env.token_balance(&usdc_a) + env.token_balance(&usdc_b);
+    // cash-sim loss: 400 USDC physically moves vault -> treasury and
+    // capital falls junior-first; physical conservation must include the
+    // treasury ATA.
+    let i = ix::admin_apply_loss(&env.actors.admin.pubkey(), &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 400 * USDC);
+    env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S after loss");
+    assert_eq!(env.token_balance(&treasury_ata), 400 * USDC);
+
+    // USDC is never minted/burned by the program — deposits, payouts and
+    // the loss sweep are the only token movements, so the sum over vault +
+    // treasury + user ATAs is constant.
+    let held = env.token_balance(&p.vault)
+        + env.token_balance(&treasury_ata)
+        + env.token_balance(&usdc_a)
+        + env.token_balance(&usdc_b);
     assert_eq!(held, total_usdc, "USDC conservation violated");
 
     // LP supply always equals the on-chain share counters, and accounted
-    // claims equal assets: vault + outstanding = J + S + accrued_fees
+    // claims equal assets: vault + outstanding = J + S (F is informational)
     let pool = env.pool();
     assert_eq!(env.mint_supply(&p.lp_junior), pool.junior_shares);
     assert_eq!(env.mint_supply(&p.lp_senior), pool.senior_shares);
