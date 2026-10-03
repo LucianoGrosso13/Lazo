@@ -8,6 +8,7 @@ import {
   WalletReadyGate,
 } from "@solana/kit-plugin-wallet/react";
 import { useClient } from "@solana/react";
+import { useSyncExternalStore } from "react";
 import type { AppClient } from "@/app/providers";
 import { common } from "@/i18n/dictionaries/common";
 import { useT } from "@/i18n/locale";
@@ -44,9 +45,15 @@ function WalletButtonInner() {
   );
 }
 
+const noopSubscribe = () => () => {};
+
 export function WalletButton() {
   const client = useClient<AppClient>();
   const t = useT(common).wallet;
+  // La detección de wallets solo existe en el navegador: en el servidor y en la
+  // hidratación se muestra el estado de carga para que el HTML coincida.
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  if (!mounted) return <span className="wallet-btn opacity-60">{t.loading}</span>;
   return (
     <WalletReadyGate client={client} fallback={<span className="wallet-btn opacity-60">{t.loading}</span>}>
       <WalletButtonInner />
