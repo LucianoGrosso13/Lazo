@@ -1,0 +1,467 @@
+/* Checkout de Lazo: el desglose es el prisma visto de cerca.
+   La luz se mueve, el vidrio no. */
+
+.page {
+  --pad: clamp(1.25rem, 4vw, 4rem);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.wrap {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(3rem, 6vw, 5rem);
+  display: grid;
+  gap: clamp(1.4rem, 2.6vw, 2.25rem);
+}
+
+.back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-num);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  transition: color 0.35s var(--ease);
+}
+
+.back:hover {
+  color: var(--color-beam);
+}
+
+/* ---------- Cabecera: producto y precio ---------- */
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+}
+
+.headTitle {
+  font-size: clamp(1.9rem, 4vw, 3.25rem);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variation-settings: "wdth" 92, "opsz" 72;
+  color: var(--color-beam);
+  text-wrap: balance;
+}
+
+.headBlurb {
+  margin-top: 0.6rem;
+  max-width: 30rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+.headPrice {
+  display: grid;
+  justify-items: end;
+  gap: 0.3rem;
+  padding-bottom: 0.15rem;
+}
+
+.headKey {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Rejilla: prisma + panel ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+
+.stageCol {
+  min-width: 0;
+}
+
+/* En pantallas angostas el abanico crece y las etiquetas quedan fuera de
+   cuadro: el vidrio se ve de cerca y los números viven en el desglose. */
+.stageCrop {
+  position: relative;
+}
+
+.stageWide {
+  width: 100%;
+}
+
+@media (max-width: 680px) {
+  .stageCrop {
+    overflow: hidden;
+  }
+
+  .stageWide {
+    width: 128%;
+  }
+}
+
+.stageSkeleton {
+  aspect-ratio: 960 / 560;
+  border-radius: 1rem;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.02),
+    rgb(255 255 255 / 0.05),
+    rgb(255 255 255 / 0.02)
+  );
+}
+
+.stageNote {
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Panel: vidrio grueso ---------- */
+
+.panel {
+  padding: clamp(1.25rem, 2.4vw, 1.9rem);
+  display: grid;
+  gap: 1.05rem;
+  align-content: start;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.panelTitle {
+  font-size: 1.1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-beam);
+}
+
+.guarantor {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  background: rgb(196 163 255 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(196 163 255 / 0.18);
+}
+
+.previewNote {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Filas del desglose ---------- */
+
+.rows {
+  display: grid;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgb(244 241 255 / 0.07);
+}
+
+.rowKey {
+  font-size: 0.95rem;
+  color: var(--color-ink-2);
+}
+
+.due {
+  margin-left: 0.5rem;
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-3);
+}
+
+.rowVal {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: var(--color-beam);
+  white-space: nowrap;
+}
+
+.rowFirst .rowVal {
+  font-size: 1.15rem;
+  color: var(--color-violet);
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.4rem;
+}
+
+.totalKey {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--color-beam);
+}
+
+.totalVal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.merchant {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Bloqueo: vidrio rajado ---------- */
+
+.blocked {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(160deg, rgb(255 84 112 / 0.07), transparent 60%),
+    rgb(255 84 112 / 0.035);
+  box-shadow: inset 0 0 0 1px rgb(255 84 112 / 0.22);
+}
+
+.blockedTitle {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--color-beam);
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.reasonT {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-beam);
+}
+
+.reasonD {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+.reasonNext {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-ink-3);
+}
+
+.reasonCta {
+  margin-top: 0.45rem;
+}
+
+/* ---------- Conectar wallet ---------- */
+
+.connect {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 0.9rem 1rem;
+  border-radius: 0.85rem;
+  background: rgb(0 194 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(0 194 255 / 0.18);
+}
+
+.connectT {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--color-beam);
+}
+
+.connectD {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* ---------- CTA ---------- */
+
+.ctaWrap {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: stretch;
+}
+
+.ctaWrap :global(.btn) {
+  width: 100%;
+  padding-block: 0.8rem;
+}
+
+.ctaHint {
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-ink-ghost);
+}
+
+.demoNote {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+/* ---------- Comparación Lazo vs MP ---------- */
+
+.compare {
+  display: grid;
+  gap: 0.9rem;
+  padding-top: clamp(1.25rem, 2.5vw, 2rem);
+  border-top: 1px solid rgb(244 241 255 / 0.09);
+}
+
+.compareTitle {
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--color-beam);
+}
+
+.compareRows {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.compareRow {
+  display: grid;
+  grid-template-columns: minmax(8rem, 15rem) minmax(0, 1fr) minmax(9rem, auto);
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.compareWho {
+  font-size: 0.92rem;
+  color: var(--color-ink-2);
+}
+
+.compareTrack {
+  position: relative;
+  height: 10px;
+}
+
+.beamLazo,
+.beamAlt {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 99px;
+}
+
+.beamLazo {
+  background: linear-gradient(90deg, #9945ff, #6c63ff, #00c2ff, #19fb9b);
+  box-shadow: 0 0 22px rgb(108 99 255 / 0.55);
+  transition: width 0.6s var(--ease);
+}
+
+.beamAlt {
+  width: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-ash-2) 0 14px,
+    rgb(86 93 116 / 0.55) 14px 18px
+  );
+}
+
+.compareNum {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-beam);
+}
+
+.compareNum small {
+  margin-left: 0.35rem;
+  color: var(--color-ink-3);
+  font-size: 0.72rem;
+}
+
+.savings {
+  justify-self: end;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.savingsNum {
+  color: var(--color-green);
+}
+
+@media (max-width: 640px) {
+  .compareRow {
+    grid-template-columns: 1fr auto;
+  }
+
+  .compareTrack {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .compareNum {
+    text-align: left;
+  }
+
+  .savings {
+    justify-self: start;
+  }
+}
+
+/* ---------- Esqueleto de carga ---------- */
+
+.sk {
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.03),
+    rgb(255 255 255 / 0.07),
+    rgb(255 255 255 / 0.03)
+  );
+  background-size: 200% 100%;
+  animation: sk-slide 1.6s linear infinite;
+}
+
+@keyframes sk-slide {
+  to {
+    background-position: -200% 0;
+  }
+}
