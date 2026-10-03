@@ -1,0 +1,30 @@
+{
+  "id": "90226703-7f3c-4cd7-901c-540b629868d4",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_34f03fa6978b",
+      "run_id": "run_fa4df6a795be",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_6a23fe28-b133-4cd7-98c5-6b00490d5046",
+      "created_by_pane_key": "1d7e2a3f-530b-4dc6-8ee4-885eea69e652:17c3bd05-511b-49b6-b46a-e044413a6cec",
+      "created_by_process_incarnation": "b9c80886-df69-4bc2-b4d4-e7f37f26adce::/Users/lucianogrosso/orca/workspaces/Hackaton Solana/app-cuentas@@807864f0:31611c57-e424-4538-9088-5fff3ce09b26",
+      "created_by_run_generation": 1,
+      "task_title": "Fiador: invitación y seguimiento",
+      "display_name": "Fiador: invitación y seguimiento",
+      "spec": "Aprobación registrada: .scratch/app-cuentas/approval.md. Leé AGENTS.md, app/AGENTS.md, PRODUCT.md, spec.md, account-api.md, /tmp/app-cuentas-supervisor-notes.md y ticket propio. Solo devnet. Datos/acciones vía export cuotas, getCuotas + getAccountCuotas; mismo estado financiero de A. No commits/git add/push; no package/lock/config ni mocks internos privados. Tests sólo rutas públicas e2e, UN test tracer por ciclo red→mínimo green, no batch horizontal. Node24 PATH=/Users/lucianogrosso/.nvm/versions/node/v24.13.0/bin:$PATH. Coordinador server3012 y Playwright listos. Docs locales Next16 antes de escribir APIs. Impeccable craft-floor y brief Prisma; no esperar diseño, componentes accesibles mobile/desktop e idioma ES/EN. No claves/tarjeta sensible ni firmas/envíos reales; mode real si falta programa/backend: error honesto. No Explorer mock aunque signature base58. No cambios al mock financiero owned A. Scope disjunto, fuera de scope ask coordenador; check followups al empezar archivo y después tests; worker_done preamble exacto.\nTARGET EXCLUSIVO: app/src/app/fiador/[token]/page.tsx; components/cuenta/fiador.tsx o fiador/**; components/cuenta/invitar-fiador.tsx (export InviteGuarantor({student:string})); diccionarios fiador-cuenta.ts/invitacion-cuenta.ts; app/e2e/fiador.spec.ts. Documento descargable de demo se genera desde componente o lib exclusiva nueva fiador-document.ts exportada desde cuotas sólo si coord aprueba (hash crypto API, sin paquete/lock). No editar page estudiante, account-api módulo ni mocks A.\nCHANGE: desde InviteGuarantor crear/enlazar/copiar/WhatsApp invitación mock con getAccountCuotas. Fiador sin wallet por token válida, vuelta panel igual link, inválido no expose info. Alta paso a paso resumen tope de config existentes (sin inventar lista); KYC mock, aceptación de documento demo con máximo y hash, tarjeta CRÉDITO mock (selección de ejemplo, jamás PAN/CVV), luego completeGuarantor delega garantía base. Panel seguimiento, saldo de planes pendientes, cobertura requerida/máximo fianza distintos, avisos/cargos de Activity/PoolEvent receipt. Documento legal real/HMAC backend no implementados→bloquear explícitamente real, no ficción legal. Q1 fórmula de máximo está pendiente con supervisor: avanzá UI, navegación, token validation y lectura independientes; no inventar negocio. Cada test e2e tracer uno por ciclo. Método/api ya documentados; reporte export y screenshots.\nAceptación: invitar desde estudiante, abrir sin wallet, alta mock consistente, mismo enlace recarga panel, invalid token no leaks, sin Explorer mock ni KYC/card real afirmados.",
+      "status": "pending",
+      "deps": "[\"task_5083189e7220\"]",
+      "result": null,
+      "created_at": "2026-10-03 20:25:57",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "e4425a69-14ef-431b-b804-54e5ece6e2c1",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "66937b15-cd1b-4cee-8e94-35382000affc"
+  }
+}

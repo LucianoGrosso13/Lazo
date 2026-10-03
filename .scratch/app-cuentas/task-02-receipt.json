@@ -1,0 +1,30 @@
+{
+  "id": "c545d89c-ec7d-4580-8dcc-a7c746226c0d",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_95abf6e70366",
+      "run_id": "run_fa4df6a795be",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_6a23fe28-b133-4cd7-98c5-6b00490d5046",
+      "created_by_pane_key": "1d7e2a3f-530b-4dc6-8ee4-885eea69e652:17c3bd05-511b-49b6-b46a-e044413a6cec",
+      "created_by_process_incarnation": "b9c80886-df69-4bc2-b4d4-e7f37f26adce::/Users/lucianogrosso/orca/workspaces/Hackaton Solana/app-cuentas@@807864f0:31611c57-e424-4538-9088-5fff3ce09b26",
+      "created_by_run_generation": 1,
+      "task_title": "Estudiante: deuda y pago",
+      "display_name": "Estudiante: deuda y pago",
+      "spec": "Aprobación registrada: .scratch/app-cuentas/approval.md. Leé AGENTS.md, app/AGENTS.md, PRODUCT.md, spec.md, account-api.md, /tmp/app-cuentas-supervisor-notes.md y ticket propio. Solo devnet. Datos/acciones vía export cuotas, getCuotas + getAccountCuotas; mismo estado financiero de A. No commits/git add/push; no package/lock/config ni mocks internos privados. Tests sólo rutas públicas e2e, UN test tracer por ciclo red→mínimo green, no batch horizontal. Node24 PATH=/Users/lucianogrosso/.nvm/versions/node/v24.13.0/bin:$PATH. Coordinador server3012 y Playwright listos. Docs locales Next16 antes de escribir APIs. Impeccable craft-floor y brief Prisma; no esperar diseño, componentes accesibles mobile/desktop e idioma ES/EN. No claves/tarjeta sensible ni firmas/envíos reales; mode real si falta programa/backend: error honesto. No Explorer mock aunque signature base58. No cambios al mock financiero owned A. Scope disjunto, fuera de scope ask coordenador; check followups al empezar archivo y después tests; worker_done preamble exacto.\nTARGET EXCLUSIVO: app/src/app/(cuenta)/app/estudiante/page.tsx; app/src/components/cuenta/estudiante.tsx o estudiante/**; diccionario estudiante-cuenta.ts; app/e2e/estudiante.spec.ts. No archivos layout/shared/accounts ni fiador. Owner03 crea InviteGuarantor(student) en components/cuenta/invitar-fiador.tsx; consumilo después de publicado sin editarlo (podés placeholder hasta integrar).\nCHANGE: la próxima deuda arriba, vencimiento y contador usando getClock, estados sin solo color; revisión inline de pago con monto, destino, token, red y comisiones, cancelar/fallo no muta; confirmación mock paga vía base.payInstallment. Plan con precio/anticipo/cuotas conservando total entero; escalera actual/próxima desde config; bloqueo/mora; fiador/beneficio referencia e historial sin Explorer mock. No plan activo → CTA tienda. Activo/resuelto coherente y queries revalidadas subscribe. Si getConfig/getPlans incompletos error con recuperación sin datos fabricados. Real falta implementacion→acción bloqueada con explicación. Tipos/e2e públicos y capturas cuando base A funcional, reportar pendientes.",
+      "status": "pending",
+      "deps": "[\"task_5083189e7220\"]",
+      "result": null,
+      "created_at": "2026-10-03 20:25:57",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "28da77d4-c550-4f50-9a5f-dcb8ce07e018",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "66937b15-cd1b-4cee-8e94-35382000affc"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "35f60d0f-06c4-4607-8162-1168fbec7343",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_5083189e7220",
+      "run_id": "run_fa4df6a795be",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_6a23fe28-b133-4cd7-98c5-6b00490d5046",
+      "created_by_pane_key": "1d7e2a3f-530b-4dc6-8ee4-885eea69e652:17c3bd05-511b-49b6-b46a-e044413a6cec",
+      "created_by_process_incarnation": "b9c80886-df69-4bc2-b4d4-e7f37f26adce::/Users/lucianogrosso/orca/workspaces/Hackaton Solana/app-cuentas@@807864f0:31611c57-e424-4538-9088-5fff3ce09b26",
+      "created_by_run_generation": 1,
+      "task_title": "01 Entrada + contrato aditivo (owner exclusivo)",
+      "display_name": "01 Entrada + contrato aditivo (owner exclusivo)",
+      "spec": "Ticket 01 y prefactor aditivo de cuentas Lazo. Run aprobado run_fa4df6a795be. Trabajás en el worktree actual app-cuentas, no en checkout principal. Leé AGENTS.md, app/AGENTS.md, PRODUCT.md, .scratch/app-cuentas/{spec,contracts}.md, issues/01-entrada-y-roles.md y .scratch/lazo-front/issues/03-06 para preservar el owner financiero A. No commits/git add/push ni package/lock: coordinador integra y commitea. Modelo requerido SWE-2 Max.\nTARGET/OWNERSHIP EXCLUSIVO: app/src/lib/roles.ts; nuevo app/src/lib/cuotas/accounts.ts y/o accounts-types.ts (metadatos de cuenta, nunca duplicar planes/pool/reloj financieros); adición export mínima a app/src/lib/cuotas.ts; app/src/components/cuenta/account-context.tsx, account-shell.tsx y evidencia.tsx; app/src/app/(cuenta)/app/layout.tsx y page.tsx; nuevo diccionario cuentas.ts; e2e/entry.spec.ts. No editar mock.ts ni módulos mock/**, real.ts, tipos financieros existentes sin pedirlo por ask, diseño global, checkout/tienda/landing. Sesión A sigue implementando getCuotas().\nCHANGE: entrada /app reutiliza WalletButton/useWalletAddress y locale; rol admin por configuración (si falta autoridad en config usar solo fixtures mock explícitos; real falla cerrado), comercio por cuenta existente (not_found distinto de fallo), estudiante; selector demo persistido solo mock. Shell/navigation responsive con devnet explicado, saldo mock derivado de los planes compartidos o indisponibilidad real, 4 cuentas y público pool/comercio. No esperar diseño: expandir dirección Prisma existente con tokens y Tailwind, scoped CSS si hace falta; no reescribir PRODUCT/DESIGN.\nCONTRATO ADITIVO que deben consumir otros owners: exportar desde cuotas.ts getAccountCuotas() y tipos de apoyo, preservando getCuotas() original y financiero. Métodos account metadata/config, getBalance(student), createInvitation(student), resolveInvitation(token), completeGuarantor(token,args), adminSetState(actor,state), adminRegisterMerchant(actor,args), getAdminSnapshot(actor) según sea necesario. TODO monto negocio desde getConfig/config extension; demo admin/student/merchant ids públicos como datos de prueba, sin presentarlos como direcciones devnet reales. Invitaciones solo metadata token->student persistida versionada y válida; completar usa base.registerGuarantee, nunca otro store Guarantee. En real token y acciones no implementadas rechazan explícitamente; no simular HMAC/autorización. Admin operaciones mock autorizan actor y cambian config/merchant de modo consistente con base: si necesitan hook financiero pedilo al coordinador, no editar mock A por cuenta propia. Nunca inventar firmas ni Explorer, evidencia mode mock identificada. UI de saldo no fabrica saldo real ni faucet ajeno.\nAntes de implementar extensión, ESCRIBÍ .scratch/app-cuentas/account-api.md con exports/tipos concretos y cualquier hook requerido de sesión A; avisá por orchestration send al coordinador. Después implementá entrada/contrato sin esperar respuesta salvo duda bloqueante. Funciones que todavía requieran hook A fallan explícitamente con not_implemented y quedan identificadas; contrato disponible para workers.\nACCEPTANCE: TDD frontera aprobada e2e ruta /app y selector mock, real sin selector; test falla antes del código y luego pasa para entrada. npm run typecheck con PATH Node24 /Users/lucianogrosso/.nvm/versions/node/v24.13.0/bin; lint puntual y prueba e2e cuando harness esté disponible. Local docs Next en node_modules/next/dist/docs antes de APIs. Leé impeccable craft-floor, brief Prisma. Solo devnet, sin firmas/envíos reales ni claves. Reportá archivos, checks, blockers, contract exports. Workers deben check followups y worker_done exactamente como preamble; no cambiar ticket a done si acceptance depende de mock todavía ausente.",
+      "status": "ready",
+      "deps": "[]",
+      "result": null,
+      "created_at": "2026-10-03 20:15:00",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "59829ca8-503a-4aa0-bae9-3b8d17661c8e",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "66937b15-cd1b-4cee-8e94-35382000affc"
+  }
+}

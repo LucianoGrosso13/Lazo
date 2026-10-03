@@ -1,0 +1,30 @@
+{
+  "id": "40d2b46f-eaec-4e5f-99da-9e747b87e4f2",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_dd2d5e3c43b6",
+      "run_id": "run_fa4df6a795be",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_6a23fe28-b133-4cd7-98c5-6b00490d5046",
+      "created_by_pane_key": "1d7e2a3f-530b-4dc6-8ee4-885eea69e652:17c3bd05-511b-49b6-b46a-e044413a6cec",
+      "created_by_process_incarnation": "b9c80886-df69-4bc2-b4d4-e7f37f26adce::/Users/lucianogrosso/orca/workspaces/Hackaton Solana/app-cuentas@@807864f0:31611c57-e424-4538-9088-5fff3ce09b26",
+      "created_by_run_generation": 1,
+      "task_title": "05 Admin y reloj compartido",
+      "display_name": "05 Admin y reloj compartido",
+      "spec": "Ticket05 Admin y mora: API cuentas ya disponible en accounts.ts y account-context.tsx; A publicó mock lectura/apertura/pago, mora todavía por publicar. Aprobación en .scratch/app-cuentas/approval.md. Leé AGENTS.md, app/AGENTS.md, PRODUCT.md, spec.md, issues/05-admin-mora.md, account-api.md, /tmp/app-cuentas-supervisor-notes.md, Prisma brief y craft-floor. Modelo SWE-2 Max; solo devnet. No commits/git add/push ni package/lock/config. Node24 PATH=/Users/lucianogrosso/.nvm/versions/node/v24.13.0/bin:$PATH. Coordinador dueño server3012. Docs locales Next antes de APIs.\nTARGET EXCLUSIVO: app/src/app/(cuenta)/app/admin/page.tsx, app/src/components/cuenta/admin.tsx o admin/**, diccionario admin-cuenta.ts, app/e2e/admin.spec.ts. No editar account API/context/layout/shared, estudiante/fiador/comercio/pool, mock financiero ni types/config de A. Coordinador único integra. Los hooks admin setProtocolState/registerMerchantAccount fueron pedidos a A; si faltan error honesto y reporte concreto, no overlay financiero. Scope disjunto con workers01/04.\nCHANGE: panel admin por useAccount + getAccountCuotas.getAdminSnapshot, autoriza al actor en API ejecutora. Consultar pool/NAV/tramos/utilización/capital/crédito, eventos del keeper/recuperos/hashes vía getCuotas. Config de escalones readonly. Cambiar estado con revisión inline y confirmación explícita, registrar comercio owner/name con revisión. Todo mock declarado. Actor no-admin en /app/admin sin controles/revela error; real sin autoridad/programa falla cerrado y sin reloj. Reloj SOLO mock admin, botones avanzar días y reset con revisión, usa base.advanceDays/resetDemo (mismo estado) y subscribe; nunca crear keeper paralelo. UI tiempos desde config, mostrar avisos/punitorio/primer y segundo cargo si datos A disponibles. Comprobantes mock sin Explorer aunque firma base58; Evidence común si disponible. Reusar Prisma componentes/tokens; mobile accesible, ES/EN.\nACCEPTANCE: e2e por rutas públicas del navegador, UN tracer comportamiento por ciclo (red antes de implementar ese comportamiento, mínimo green, recién luego siguiente). No unit tests ni mocks internos. Autorización student URL admin, panel admin demo, revisión cancelable mutación sin alterar state al cancelar, avance reloj y recarga consistente. La mora se acepta tras integrar método A publicado; no afirmar éxito si not_implemented. Checks tipo/lint propios y reporte archivos/limitaciones/capturas. Check followups antes de archivo, tras tests y antes worker_done. Nunca pregunta TUI; ask al coordinator por CLI. La entrada y API pueden recibir ajustes owner01, coordiná import exacto sin editarlos.",
+      "status": "ready",
+      "deps": "[]",
+      "result": null,
+      "created_at": "2026-10-03 20:32:42",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "a1df0656-c502-4da7-b5a3-47562f4d4b21",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "66937b15-cd1b-4cee-8e94-35382000affc"
+  }
+}

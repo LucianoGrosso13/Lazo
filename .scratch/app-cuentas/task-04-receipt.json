@@ -1,0 +1,30 @@
+{
+  "id": "78c3a67d-ee1c-4304-9143-2690120c6381",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_3f7c6b329405",
+      "run_id": "run_fa4df6a795be",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_6a23fe28-b133-4cd7-98c5-6b00490d5046",
+      "created_by_pane_key": "1d7e2a3f-530b-4dc6-8ee4-885eea69e652:17c3bd05-511b-49b6-b46a-e044413a6cec",
+      "created_by_process_incarnation": "b9c80886-df69-4bc2-b4d4-e7f37f26adce::/Users/lucianogrosso/orca/workspaces/Hackaton Solana/app-cuentas@@807864f0:31611c57-e424-4538-9088-5fff3ce09b26",
+      "created_by_run_generation": 1,
+      "task_title": "04 Comercio y pool públicos",
+      "display_name": "04 Comercio y pool públicos",
+      "spec": "Implementar ticket 04 de cuentas Lazo en app-cuentas, aprobación registrada. Leé AGENTS.md, PRODUCT.md, .scratch/app-cuentas/spec.md, issues/04-comercio-pool.md, /tmp/app-cuentas-supervisor-notes.md, brief Prisma y impeccable craft-floor; docs locales Next16 antes de APIs.\nTARGET/OWNERSHIP EXCLUSIVO: app/src/app/(cuenta)/app/comercio/page.tsx; app/src/app/comercio/page.tsx y [direccion]/page.tsx; app/src/app/pool/page.tsx; app/src/components/cuenta/comercio.tsx y pool.tsx (o directorios propios comercio/** pool/**); diccionarios comercio-cuenta.ts y pool-cuenta.ts; app/e2e/comercio-pool.spec.ts. No tocar layout/entrada/shared components ni account API/roles/mock/cuotas/store/tipos/dependencias/global CSS/header/tienda/checkout/landing. Coordinador integra/git, no commits ni git add. Un worker de entrada crea shell y contratos comunes en paralelo: evitá depender de exports no publicados; podés componer views con API ya existente. No esperar diseño; Tailwind y dirección Prisma, jerarquía funcional/mobile sin tarjetas repetidas genéricas.\nCHANGE: cuenta comercio lee wallet actual/selección demo si API común disponible; público /comercio/[direccion] y /pool nunca exigen wallet. /comercio preserva header con vista demo/pública o entrada apropiada. Usar solo getCuotas/useCuotasQuery desde cuotas; getMerchant.getPool y config; los getters ahora pueden not_implemented, manejar carga/error/reintento y estado vacío honesto, no poner datos financieros fake locales. Mock de A llegará por commits. Cobros/saldo/comisiones/ref alternativas desde config/reference figures; si referencia no exportada no importar archivo inexistente: UI indisponible/rotulada y coordinar adición cuando llega. Una misma compra cambia todos los views con subscribe. Links Explorer SOLO mode real y signature real, nunca mock aunque firma base58 simulada. Link checkout usa catálogo existente y ruta publicada por A; integraciones como roadmap. NAV/tramos/utilización/deuda/movimientos y rendimiento referencia sin garantías. No operaciones depósito ni firmas.\nTEST/ACCEPTANCE: escribir primero e2e de ruta pública sin wallet y mock evidencia sin Explorer; test falla por ruta inexistente luego verificar. Harness playwright config y scripts coordinador. PATH Node24 /Users/lucianogrosso/.nvm/versions/node/v24.13.0/bin para typecheck/lint y e2e. Reportar UI implementada y checks; finanzas no funcionando todavía se registra blocker concreto, no inventar success. Responsabilidad aceptar vertical luego integración con A. Leé seguimientos orchestration antes de nuevos archivos y antes de worker_done, usar IDs/capability exactos del preamble. No preguntas TUI; ask al coordinador si fuera-scope necesario.",
+      "status": "ready",
+      "deps": "[]",
+      "result": null,
+      "created_at": "2026-10-03 20:16:32",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "bf59b866-f40e-49b4-8c9b-6acd83b70afc",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "66937b15-cd1b-4cee-8e94-35382000affc"
+  }
+}
