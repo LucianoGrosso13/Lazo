@@ -12,6 +12,7 @@ import { useSyncExternalStore } from "react";
 import type { AppClient } from "@/app/providers";
 import { common } from "@/i18n/dictionaries/common";
 import { useT } from "@/i18n/locale";
+import { buttonClasses } from "@/components/ui/button";
 
 const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
@@ -25,21 +26,39 @@ function WalletButtonInner() {
 
   if (connected) {
     return (
-      <button type="button" className="wallet-btn" onClick={() => disconnect()} title={t.disconnect}>
-        <span className="font-mono">{short(connected.account.address)}</span>
+      <button
+        type="button"
+        className={buttonClasses("secondary", "sm")}
+        onClick={() => disconnect()}
+        title={t.disconnect}
+      >
+        <span
+          aria-hidden
+          className="inline-block h-1.5 w-1.5 rounded-full bg-green shadow-[0_0_6px_var(--color-green)]"
+        />
+        <span className="font-num text-[0.8125rem]">{short(connected.account.address)}</span>
       </button>
     );
   }
   if (wallets.length === 0) {
     return (
-      <a className="wallet-btn" href="https://phantom.com/download" target="_blank" rel="noreferrer">
+      <a
+        className={buttonClasses("secondary", "sm")}
+        href="https://phantom.com/download"
+        target="_blank"
+        rel="noreferrer"
+      >
         {t.none}
       </a>
     );
   }
   const preferred = wallets.find((w) => w.name === "Phantom") ?? wallets[0];
   return (
-    <button type="button" className="wallet-btn" onClick={() => connect(preferred)}>
+    <button
+      type="button"
+      className={buttonClasses("secondary", "sm")}
+      onClick={() => connect(preferred)}
+    >
       {t.connect}
     </button>
   );
@@ -55,7 +74,10 @@ export function WalletButton() {
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
   if (!mounted) return <span className="wallet-btn opacity-60">{t.loading}</span>;
   return (
-    <WalletReadyGate client={client} fallback={<span className="wallet-btn opacity-60">{t.loading}</span>}>
+    <WalletReadyGate
+      client={client}
+      fallback={<span className={`${buttonClasses("ghost", "sm")} opacity-60`}>{t.loading}</span>}
+    >
       <WalletButtonInner />
     </WalletReadyGate>
   );
