@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { toMicro, formatUsdc, type TierIndex } from "@/lib/cuotas";
 import { CATALOG } from "@/lib/catalog";
 import { useCuotasQuery } from "@/lib/use-cuotas";
@@ -12,6 +12,8 @@ import { BigNumber } from "@/components/ui/big-number";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipButton, SegmentedControl } from "@/components/ui/chip";
 import { DevnetBadge, ExplorerLink, ReferenceTag } from "@/components/ui/badges";
+import { Prism } from "@/components/prism/prism";
+import type { BandMark } from "@/components/prism/layout";
 import { demoSplit } from "./split";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -37,18 +39,38 @@ function Swatch({ name, className = "", style }: { name: string; className?: str
 
 const MARKS: MarkState[] = ["dim", "lit", "etched", "cracked", "refilled"];
 const MOCK_SIG = "5uHGv8sP3xLazoDemoFakeSignature9kQmNw4rTy2";
+/** Cifra de terceros (PRODUCT.md): ~1.290 por cada 1.000. Va con ReferenceTag. */
+const MP_TOTAL_FACTOR = 1.29;
 
 export function DesignPage() {
   const t = useT(design);
   const { locale } = useLocale();
   const [tier, setTier] = useState<TierIndex>(0);
+  const [priceUsd, setPriceUsd] = useState(1000);
+  const [q2Mark, setQ2Mark] = useState<"none" | BandMark>("none");
   const [chipDemo, setChipDemo] = useState(false);
   const { data: config } = useCuotasQuery(["config"], (c) => c.getConfig());
 
-  const price = toMicro(1000);
+  const price = toMicro(priceUsd);
   const split = config
     ? demoSplit(price, config.guaranteedTiers[tier], config.installmentsCount)
     : null;
+
+  const prismBands = useMemo(
+    () =>
+      split
+        ? [
+            { id: "down", label: t.prism.down, amount: split.down, kind: "down" as const },
+            ...split.installments.map((amount, i) => ({
+              id: `q${i + 1}`,
+              label: `${t.prism.installment} ${i + 1}`,
+              amount,
+              kind: "installment" as const,
+            })),
+          ]
+        : [],
+    [split, t],
+  );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-10 sm:px-6">
@@ -238,7 +260,62 @@ export function DesignPage() {
         </div>
       </Section>
 
-      {/* La sección del prisma la agrega el ticket 08. */}
+      {/* -------------------------- El prisma --------------------------- */}
+      <Section title={t.sections.prism}>
+        <p className="mb-6 max-w-2xl text-ink-3">{t.prism.demoNote}</p>
+        {split && (
+          <>
+            <Prism
+              input={{ label: t.prism.input, amount: price }}
+              bands={prismBands}
+              comparison={{ label: t.prism.comparison, amount: Math.round(price * MP_TOTAL_FACTOR) }}
+              state={q2Mark === "none" ? {} : { q2: q2Mark }}
+              summary={t.prism.ariaSummary}
+            />
+            <div className="mt-10 flex flex-wrap items-end gap-x-10 gap-y-6">
+              <label className="block min-w-0">
+                <span className="font-num text-measure uppercase text-ink-3">{t.prism.price}</span>
+                <span className="ml-3 font-num text-beam">US$ {formatUsdc(price, locale, 0)}</span>
+                <input
+                  type="range"
+                  min={120}
+                  max={1500}
+                  step={10}
+                  value={priceUsd}
+                  onChange={(e) => setPriceUsd(Number(e.target.value))}
+                  aria-label={t.prism.price}
+                  className="mt-3 block w-56 max-w-full accent-[#00C2FF]"
+                />
+              </label>
+              <SegmentedControl
+                label={t.prism.tier}
+                value={String(tier)}
+                onChange={(v) => setTier(Number(v) as TierIndex)}
+                options={[
+                  { value: "0", label: "0 · 30%" },
+                  { value: "1", label: "1 · 20%" },
+                  { value: "2", label: "2 · 10%" },
+                  { value: "3", label: "3 · 0%" },
+                ]}
+              />
+              <SegmentedControl
+                label={t.prism.state}
+                value={q2Mark}
+                onChange={(v) => setQ2Mark(v as "none" | BandMark)}
+                options={[
+                  { value: "none", label: t.prism.marks.none },
+                  { value: "cracked", label: t.prism.marks.cracked },
+                  { value: "refilled", label: t.prism.marks.refilled },
+                  { value: "etched", label: t.prism.marks.etched },
+                ]}
+              />
+              <p className="max-w-xs text-[0.8125rem] leading-relaxed text-ink-3">
+                {t.prism.comparisonNote} <ReferenceTag />
+              </p>
+            </div>
+          </>
+        )}
+      </Section>
 
       <p className="mt-16 font-num text-measure uppercase text-ink-ghost">{t.footerNote}</p>
     </div>
