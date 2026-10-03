@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Martian_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
+import { DemoClock } from "@/components/demo-clock/demo-clock";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <AppHeader />
           <main className="flex-1">{children}</main>
+          <DemoClock />
         </Providers>
       </body>
     </html>

@@ -4,12 +4,12 @@
 
 **Blocked by:** 06, 07
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos tuyos:** `app/src/components/demo-clock/**`, `app/src/i18n/dictionaries/demo-clock.ts`, una línea en `app/src/app/layout.tsx` para montarlo.
 
-- [ ] Llama a `advanceDays(n)` y `resetDemo()`; se oculta si `getCuotas().mode === "real"`
-- [ ] Muestra días adelantados y, si hay un plan con atraso, en qué tramo de la mora está (gracia / aviso / punitorio / cobro al fiador) con los días de la config
-- [ ] Colapsable, no tapa CTAs en 390 px; accesible por teclado
-- [ ] ES/EN
-- [ ] typecheck, lint, test y build pasan
+- [x] Llama a `advanceDays(n)` y `resetDemo()`; se oculta si `getCuotas().mode === "real"`
+- [x] Muestra días adelantados y, si hay un plan con atraso, en qué tramo de la mora está (gracia / aviso / punitorio / cobro al fiador) con los días de la config
+- [x] Colapsable, no tapa CTAs en 390 px; accesible por teclado
+- [x] ES/EN
+- [x] typecheck, lint, test y build pasan
