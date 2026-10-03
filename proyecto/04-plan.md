@@ -60,7 +60,8 @@ Calendario (hora Argentina):
 | T1.5 | Interfaz `app/src/lib/cuotas.ts` (`openPlan`, `payInstallment`, `getPlan`, `getReputation`, `getPool`), **primero mock** y después con el cliente real | L | Las pantallas funcionan con el mock y se pasa al real cambiando un flag | "Creá `lib/cuotas.ts` con una interfaz y dos implementaciones: mock en memoria y real con el cliente Codama." |
 | T1.6 | Tienda demo: catálogo de 3 productos (PC US$1.000, notebook, curso) y checkout "3 cuotas sin interés, sin tarjeta" con el desglose (anticipo, cuotas, lo que recibe el comercio, comparación con el CFT de MP) | L | Se ve el desglose correcto para el escalón del usuario | "Armá `/tienda` y `/checkout/[producto]` usando `lib/cuotas.ts`." |
 | T1.7 | Panel del estudiante: plan activo, cuotas, botón pagar, escalón y qué gana en el siguiente | L | Pago una cuota y el progreso se actualiza | "Armá `/panel` con el plan activo y el pago de la cuota." |
-| T1.8 | Panel del comercio: saldo de su ATA y ventas recibidas | L | Después de la compra, el saldo del comercio sube al instante | — |
+| T1.8 | Panel del comercio: saldo de su ATA, ventas recibidas y **cuánto pagó de comisión frente a Cuota Simple y MP** | L | Después de la compra, el saldo del comercio sube al instante y se ve la comparación | — |
+| T1.9 | Panel del pool `/pool` (solo lectura): NAV, tramos junior y senior, préstamos activos, pagos y recuperos con links a Explorer, rendimiento esperado contra Kamino y Jupiter | L | Se ve cada movimiento del guion | — |
 
 **Al final de B1:** compra de punta a punta en devnet con el programa real.
 
@@ -78,7 +79,7 @@ Calendario (hora Argentina):
 
 | ID | Tarea | Quién | Listo cuando |
 |---|---|---|---|
-| T3.1 | Panel del pool `/pool`: NAV, tramos junior y senior, préstamos, recuperos y links a Explorer | L | Se ve cada movimiento del guion |
+| T3.1 | Depósito senior desde `/pool` | L | Una wallet de prueba deposita y ve sus shares |
 | T3.2 | Reloj de demo (adelantar días) visible solo en el modo demo | L | El paso 4 del guion dura menos de 60 s |
 | T3.3 | Datos de ejemplo: un estudiante en el escalón 3, pool fondeado, comercio registrado (script `scripts/seed.ts`) | C | Un comando deja la demo lista desde cero |
 | T3.4 | UX: textos, estados vacíos, errores y diseño con la skill `impeccable` | L | Lo usan 5 personas de afuera sin ayuda |
@@ -129,12 +130,13 @@ Calendario (hora Argentina):
 - [ ] T1.6 Tienda + checkout
 - [ ] T1.7 Panel del estudiante
 - [ ] T1.8 Panel del comercio
+- [ ] T1.9 Panel del pool
 - [ ] T2.1 Mora en el programa
 - [ ] T2.2 Pérdida al junior
 - [ ] T2.3 Onboarding del fiador
 - [ ] T2.4 Keeper
 - [ ] T2.5 Invitación al fiador
-- [ ] T3.1 Panel del pool
+- [ ] T3.1 Depósito senior
 - [ ] T3.2 Reloj de demo
 - [ ] T3.3 Seed
 - [ ] T3.4 UX

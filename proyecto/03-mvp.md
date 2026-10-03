@@ -6,6 +6,16 @@ Sesión del 2026-10-03. Skill: `/solana-tuc-mvp`. Borrador armado de corrido a p
 
 **Equipo y horas:** 2 personas. Luciano hace el front y lo off-chain (tienda, checkout, fiador, keeper). El compañero hace el programa Anchor (`proyecto/03-brief-companero.md`). Horas reales hasta el 12/10: **a confirmar**. El plan asume ~9 días de trabajo parcial de los dos.
 
+## Los tres beneficios que la demo tiene que dejar claros (pedido del equipo, 2026-10-03)
+
+Cada pantalla clave muestra uno de estos tres beneficios con números, siempre al lado de la alternativa:
+
+| Para quién | Beneficio | Número a mostrar | Dónde se ve |
+|---|---|---|---|
+| **Estudiante** | 3 cuotas **sin interés**, sin tarjeta propia y sin usar el límite del familiar. Cada plan pagado baja el anticipo y sube el tope | PC de US$1.000: paga 1.000 en total (300 + 3 × 233,33) contra ~1.290 reales en MP (CFTEA 61-388%). Muestra cuánto baja el anticipo en el escalón siguiente | Checkout y panel del estudiante |
+| **Comercio** | Cobra **al instante** y vende a clientes sin tarjeta, sin riesgo de mora (el riesgo es del pool) | Costo: 7% de lo financiado = **4,9% del precio** en el escalón 0, contra 5,41% de Cuota Simple y ~12,49% de MP por 3 cuotas sin interés. GOcuotas paga a 22 días hábiles | Panel del comercio |
+| **Pool / inversor** | Rendimiento en USD respaldado por fiadores, con tramos, y **cada préstamo, pago y recupero es verificable onchain** | Rendimiento esperado del tramo senior ~8% (Kamino ~6%, Jupiter ~5%). El junior absorbe la primera pérdida. Mora de equilibrio ~44% en el escalón 0 | Panel del pool |
+
 ## Usuario, momento wow y guion de demo
 
 **Usuario:** Luciano, estudiante de la UNT. Quiere una PC de US$1.000 en 3 cuotas, no tiene tarjeta propia, y en Mercado Pago le cobran un CFTEA de 61% a 388%. Su mamá tiene tarjeta de crédito, pero no quiere prestarla para cada compra.
@@ -43,11 +53,11 @@ Sesión del 2026-10-03. Skill: `/solana-tuc-mvp`. Borrador armado de corrido a p
 | # | Función | Esfuerzo | Quién |
 |---|---|---|---|
 | 1 | **Programa:** pool con tramos, `open_plan`, `pay_installment`, mora (`crank_mark_late`, `crank_charge_guarantor`), `registrar_recupero`, reputación y garantía | L | Compañero |
-| 2 | **Tienda demo + checkout + panel del estudiante** (Next.js, Phantom devnet), con un reloj de demo para adelantar el tiempo | M-L | Luciano |
+| 2 | **Front de los tres beneficios:** tienda demo + checkout, panel del estudiante, panel del comercio y panel del pool (solo lectura), con un reloj de demo para adelantar el tiempo (Next.js, Phantom devnet) | L | Luciano |
 | 3 | **Fiador real en sandbox:** link de invitación → Didit → fianza (PDF + hash) → tarjeta en Mobbex → keeper que cobra y registra el recupero | M | Luciano |
 
 **Después (si sobra tiempo, en este orden):**
-1. Panel del pool (NAV, tramos, préstamos), solo lectura + depósito senior.
+1. Depósito senior desde la UI del pool (el panel de solo lectura ya entra).
 2. Débito automático con delegate SPL (`crank_collect`).
 3. "Pagar la cuota en pesos" simulado (pantalla de CVU).
 4. Login con Google (Phantom embedded) en vez de la extensión.
