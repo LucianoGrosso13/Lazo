@@ -10,9 +10,9 @@ export const landingSections = defineDict({
       cap: "tope",
       coverage: "cobertura del garante",
       example: (price: string, down: string, inst: string, count: number) =>
-        `US$ ${price}: hoy US$ ${down} + ${count} cuotas de US$ ${inst} del saldo`,
+        `US$ ${price}: hoy US$ ${down} + ${count} cuotas de US$ ${inst} del saldo`,
       exampleNoDown: (price: string, inst: string, count: number) =>
-        `US$ ${price}: sin anticipo, ${count} cuotas de US$ ${inst}`,
+        `US$ ${price}: sin anticipo, ${count} cuotas de US$ ${inst}`,
       start: "Acá arrancás",
       top: "Sin anticipo",
     },
@@ -80,7 +80,7 @@ export const landingSections = defineDict({
       modeReal: "El modo real está activado pero el programa aún no está integrado: nada de esto llegó a la cadena.",
     },
     close: {
-      title: "Probalo con una PC de US$ 1.000",
+      title: "Probalo con una PC de US$ 1.000",
       cta: "Ir a la tienda",
       foot: "Hecho para Colosseum Crypto World's Fair · Superteam Argentina. Corre en Solana devnet.",
     },
@@ -95,9 +95,9 @@ export const landingSections = defineDict({
       cap: "limit",
       coverage: "guarantor coverage",
       example: (price: string, down: string, inst: string, count: number) =>
-        `US$ ${price}: US$ ${down} today + ${count} installments of US$ ${inst} on the balance`,
+        `US$ ${price}: US$ ${down} today + ${count} installments of US$ ${inst} on the balance`,
       exampleNoDown: (price: string, inst: string, count: number) =>
-        `US$ ${price}: no down payment, ${count} installments of US$ ${inst}`,
+        `US$ ${price}: no down payment, ${count} installments of US$ ${inst}`,
       start: "You start here",
       top: "No down payment",
     },
@@ -165,7 +165,7 @@ export const landingSections = defineDict({
       modeReal: "Real mode is on but the program isn't integrated yet: nothing here reached the chain.",
     },
     close: {
-      title: "Try it with a US$ 1,000 PC",
+      title: "Try it with a US$ 1,000 PC",
       cta: "Go to the store",
       foot: "Built for Colosseum Crypto World's Fair · Superteam Argentina. Runs on Solana devnet.",
     },
