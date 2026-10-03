@@ -7,3 +7,6 @@ test-ledger/
 .env.*
 *-keypair.json
 id.json
+.agents/skills/impeccable/scripts/bin/
+.vercel
+.next/
