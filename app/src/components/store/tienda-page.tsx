@@ -1,0 +1,237 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { useClient } from "@solana/react";
+import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
+import type { AppClient } from "@/app/providers";
+import { CATALOG } from "@/lib/catalog";
+import {
+  DEMO_MERCHANT,
+  formatUsdc,
+  getCuotas,
+  type Guarantee,
+  type Micro,
+  type ProtocolConfig,
+  type Quote,
+} from "@/lib/cuotas";
+import { DEMO_CONFIG } from "@/lib/cuotas/demo-config";
+import { splitPurchase } from "@/components/landing/split";
+import { useCuotasQuery } from "@/lib/use-cuotas";
+import { tienda } from "@/i18n/dictionaries/tienda";
+import { useLocale, useT } from "@/i18n/locale";
+import { useWalletAddress, WalletButton } from "@/components/wallet-button";
+import { GlassPanel } from "@/components/ui/glass";
+import { ReferenceTag } from "@/components/ui/badges";
+import { Chip } from "@/components/ui/chip";
+import { Button } from "@/components/ui/button";
+import { StateMark } from "@/components/ui/state-mark";
+import { ProductCard, type ProductTerms } from "./product-card";
+import styles from "./store.module.css";
+
+const noopSubscribe = () => () => {};
+const useMounted = () => useSyncExternalStore(noopSubscribe, () => true, () => false);
+
+interface WalletView {
+  guarantee: Guarantee | null;
+  quotes: Record<string, Quote>;
+}
+
+type Dict = (typeof tienda)["es"];
+
+/** Texto del badge de bloqueo: el motivo de `quote()` traducido. */
+function badgeText(
+  quote: Quote | null,
+  withinTier: boolean,
+  guarantee: Guarantee | null,
+  config: ProtocolConfig,
+  t: Dict,
+  fmt: (m: Micro, d?: number) => string,
+): string | null {
+  const reason = quote?.reasons[0] ?? (withinTier ? null : "exceeds_tier_max");
+  switch (reason) {
+    case null:
+      return null;
+    case "exceeds_tier_max": {
+      const tier = quote?.tier ?? 0;
+      return t.reasons.exceeds_tier_max(fmt(config.guaranteedTiers[tier].maxPurchase, 0));
+    }
+    case "exceeds_guarantor_max_purchase":
+      return guarantee
+        ? t.reasons.exceeds_guarantor_max_purchase(fmt(guarantee.maxPurchase, 0))
+        : t.reasons.exceeds_guarantee_coverage;
+    case "exceeds_guarantee_coverage":
+      return t.reasons.exceeds_guarantee_coverage;
+    case "no_guarantee":
+      return t.reasons.no_guarantee;
+    case "blocked_after_default":
+      return t.reasons.blocked_after_default;
+    case "has_active_plan":
+      return t.reasons.has_active_plan;
+    case "protocol_halted":
+      return t.reasons.protocol_halted;
+  }
+}
+
+export function TiendaPage() {
+  const t = useT(tienda);
+  const { locale } = useLocale();
+  const client = useClient<AppClient>();
+  const status = useWalletStatus(client);
+  const address = useWalletAddress();
+  const mounted = useMounted();
+  const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
+
+  const configQ = useCuotasQuery(["config"], (c) => c.getConfig());
+  // En mock arranca con la config de demo para el primer render (como use-config).
+  const config = configQ.data ?? (getCuotas().mode === "mock" ? DEMO_CONFIG : undefined);
+
+  const merchantQ = useCuotasQuery(["merchant"], (c) => c.getMerchant(DEMO_MERCHANT));
+
+  const walletQ = useCuotasQuery(
+    mounted && address ? ["tienda", address] : null,
+    async (c): Promise<WalletView> => {
+      // La key solo se activa con una wallet conectada: address no es null acá.
+      const student = address ?? "";
+      const [guarantee, ...quotes] = await Promise.all([
+        c.getGuarantee(student),
+        ...CATALOG.map((p) => c.quote(p.price, student)),
+      ]);
+      return {
+        guarantee,
+        quotes: Object.fromEntries(CATALOG.map((p, i) => [p.id, quotes[i]])),
+      };
+    },
+  );
+
+  const warming =
+    status === "pending" || status === "connecting" || status === "reconnecting";
+  const error = configQ.error ?? merchantQ.error ?? walletQ.error ?? null;
+  const loading =
+    !mounted ||
+    warming ||
+    !config ||
+    (address != null && walletQ.data == null && walletQ.error == null);
+
+  const retry = () => {
+    void configQ.mutate();
+    void merchantQ.mutate();
+    void walletQ.mutate();
+  };
+
+  const termsFor = (id: string, price: Micro): { terms: ProductTerms; badge: string | null } | null => {
+    if (!config) return null;
+    if (address && walletQ.data) {
+      const q = walletQ.data.quotes[id];
+      if (!q) return null;
+      return {
+        terms: { tier: q.tier, downPayment: q.downPayment, installments: q.installments, blocked: q.reasons[0] ?? null },
+        badge: badgeText(q, true, walletQ.data.guarantee, config, t, fmt),
+      };
+    }
+    // Sin wallet: cotiza el escalón 0 (la misma cuenta que `quote()`).
+    const s = splitPurchase(config, price, 0);
+    return {
+      terms: { tier: 0, downPayment: s.downPayment, installments: s.installments, blocked: s.withinTier ? null : "exceeds_tier_max" },
+      badge: badgeText(null, s.withinTier, null, config, t, fmt),
+    };
+  };
+
+  const [featured, ...rest] = CATALOG;
+  const tier = walletQ.data?.quotes[featured.id]?.tier;
+
+  return (
+    <div className={styles.page}>
+      <p className={styles.banner} role="note">
+        {t.demoBanner}
+        <span className={styles.merchant}>
+          {t.merchantLabel} <b>{merchantQ.data?.name ?? "…"}</b>
+          <ReferenceTag>{t.simulated}</ReferenceTag>
+        </span>
+      </p>
+
+      <header className={styles.head}>
+        <div className={styles.headText}>
+          <h1 className={styles.title}>{t.title}</h1>
+          <p className={styles.lede}>{t.lede}</p>
+        </div>
+        {mounted && address && tier !== undefined ? (
+          <Chip on className={styles.tierChip}>
+            {t.yourTier(tier)}
+          </Chip>
+        ) : null}
+      </header>
+
+      {mounted && !warming && !address ? (
+        <GlassPanel className={`glass-deep ${styles.guest}`}>
+          <p className={styles.guestText}>
+            <b>{t.guestTier}</b>
+            <span>{t.guestHint}</span>
+          </p>
+          <span className={styles.guestCta}>
+            <WalletButton />
+          </span>
+        </GlassPanel>
+      ) : null}
+
+      {error ? (
+        <GlassPanel className={styles.error} role="alert">
+          <StateMark state="cracked" />
+          <h2 className={styles.errorTitle}>{t.errorTitle}</h2>
+          <p className={styles.errorBody}>{t.errorBody}</p>
+          <Button variant="secondary" onClick={retry}>
+            {t.retry}
+          </Button>
+        </GlassPanel>
+      ) : loading ? (
+        <Skeleton t={t} />
+      ) : (
+        <div className={styles.grid}>
+          {(() => {
+            const f = termsFor(featured.id, featured.price);
+            return f ? (
+              <ProductCard product={featured} terms={f.terms} badge={f.badge} featured t={t} />
+            ) : null;
+          })()}
+          <div className={styles.side}>
+            {rest.map((p) => {
+              const v = termsFor(p.id, p.price);
+              return v ? (
+                <ProductCard key={p.id} product={p} terms={v.terms} badge={v.badge} t={t} />
+              ) : null;
+            })}
+          </div>
+        </div>
+      )}
+
+      <p className={styles.foot}>{t.footer}</p>
+    </div>
+  );
+}
+
+/** Skeleton del mundo: paneles de vidrio esperando la luz. */
+function Skeleton({ t }: { t: Dict }) {
+  return (
+    <div className={styles.grid} role="status" aria-label={t.loadingAria} aria-busy="true">
+      <div className={`glass ${styles.card} ${styles.skel}`}>
+        <div className={styles.skelMedia} />
+        <div className={styles.skelBody}>
+          <div className={styles.skelLine} style={{ width: "42%" }} />
+          <div className={styles.skelNum} />
+          <div className={styles.skelBeam} />
+          <div className={styles.skelLine} style={{ width: "58%" }} />
+        </div>
+      </div>
+      <div className={styles.side}>
+        {[0, 1].map((i) => (
+          <div key={i} className={`glass ${styles.card} ${styles.skel}`}>
+            <div className={styles.skelBody}>
+              <div className={styles.skelLine} style={{ width: "48%" }} />
+              <div className={styles.skelNum} />
+              <div className={styles.skelBeam} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="spec" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9945FF"/>
+      <stop offset="0.52" stop-color="#00C2FF"/>
+      <stop offset="1" stop-color="#19FB9B"/>
+    </linearGradient>
+    <linearGradient id="specV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9945FF"/>
+      <stop offset="0.55" stop-color="#00C2FF"/>
+      <stop offset="1" stop-color="#19FB9B"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.44" r="0.62">
+      <stop offset="0" stop-color="#9945FF" stop-opacity="0.36"/>
+      <stop offset="0.55" stop-color="#00C2FF" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#00C2FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="floor" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#00C2FF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#00C2FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur18" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="blur6" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="900" fill="#0b0817"/>
+  <rect width="1200" height="900" fill="url(#halo)"/>
+  <ellipse cx="600" cy="752" rx="430" ry="90" fill="url(#floor)"/>
+
+  <!-- luz ambiental detrás del monitor -->
+  <rect x="330" y="205" width="540" height="372" rx="26" fill="none" stroke="url(#spec)" stroke-width="10" filter="url(#blur18)" opacity="0.55"/>
+
+  <!-- monitor -->
+  <rect x="330" y="205" width="540" height="372" rx="26" fill="#0e0b1a" fill-opacity="0.9" stroke="url(#spec)" stroke-width="5"/>
+  <rect x="352" y="227" width="496" height="328" rx="16" fill="none" stroke="#f4f1ff" stroke-opacity="0.14" stroke-width="2"/>
+
+  <!-- glifo: el haz entra, el prisma lo parte -->
+  <g stroke-linecap="round" fill="none">
+    <line x1="396" y1="391" x2="498" y2="391" stroke="#f4f1ff" stroke-width="9"/>
+    <path d="M512 322 L512 460 L614 391 Z" stroke="#f4f1ff" stroke-width="6" stroke-linejoin="round" fill="#f4f1ff" fill-opacity="0.05"/>
+    <path d="M620 376 L800 316" stroke="#9945FF" stroke-width="9" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M620 391 L800 391" stroke="#00C2FF" stroke-width="9" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M620 406 L800 466" stroke="#19FB9B" stroke-width="9" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M620 376 L800 316" stroke="#9945FF" stroke-width="5"/>
+    <path d="M620 391 L800 391" stroke="#00C2FF" stroke-width="5"/>
+    <path d="M620 406 L800 466" stroke="#19FB9B" stroke-width="5"/>
+  </g>
+
+  <!-- pie y base -->
+  <path d="M552 577 L648 577 L666 668 L534 668 Z" fill="#141026" stroke="url(#specV)" stroke-width="4" stroke-opacity="0.8"/>
+  <rect x="452" y="668" width="296" height="28" rx="14" fill="#141026" stroke="url(#spec)" stroke-width="4"/>
+
+  <!-- teclado -->
+  <rect x="330" y="742" width="540" height="40" rx="20" fill="#0e0b1a" stroke="#f4f1ff" stroke-opacity="0.22" stroke-width="3"/>
+  <g stroke="#f4f1ff" stroke-opacity="0.3" stroke-width="3" stroke-linecap="round">
+    <line x1="362" y1="762" x2="392" y2="762"/>
+    <line x1="408" y1="762" x2="438" y2="762"/>
+    <line x1="454" y1="762" x2="484" y2="762"/>
+    <line x1="500" y1="762" x2="530" y2="762"/>
+    <line x1="546" y1="762" x2="654" y2="762"/>
+    <line x1="670" y1="762" x2="700" y2="762"/>
+    <line x1="716" y1="762" x2="746" y2="762"/>
+    <line x1="762" y1="762" x2="792" y2="762"/>
+    <line x1="808" y1="762" x2="838" y2="762"/>
+  </g>
+</svg>
