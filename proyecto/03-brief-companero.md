@@ -10,8 +10,8 @@ Hackathon Colosseum (track Superteam Argentina, sede Tucumán). La entrega es el
 
 **Cómo se mueve la plata en un plan:**
 1. El estudiante compra por P. Paga el anticipo (P × anticipo%) directo al comercio.
-2. El pool adelanta el resto (A) al comercio, menos una comisión de 1,5% sobre A.
-3. El estudiante devuelve A + interés en **3 cuotas mensuales**.
+2. El pool adelanta el resto (A) al comercio, menos una comisión de 7% sobre A.
+3. El estudiante devuelve A **sin interés** en **3 cuotas mensuales fijas en USDC**. El costo lo paga el comercio con la comisión.
 4. Si no paga, el backend (keeper) le cobra al fiador fuera de la cadena (tarjeta en el sandbox de Mobbex). Después deposita ese recupero en el pool con la instrucción `registrar_recupero` y deja el hash del comprobante.
 
 **Pool:** en el MVP es plata del equipo en devnet. Tiene **dos tramos**: el **junior**, que es del equipo y absorbe primero las pérdidas, y el **senior**, que fondean wallets de prueba. Nunca se ofrece a inversores reales.
@@ -22,16 +22,16 @@ La **tabla de escalones** ya está cerrada (ver abajo), pero **ningún número v
 
 ### Tabla de escalones (valores iniciales de la config)
 
-Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón, y `guarantor_coverage_bps` × monto financiado ≤ `Guarantee.coverage_max`.
+El interés es 0% en todos los escalones (decisión del 2026-10-03), pero `interest_bps` queda en la config por si cambia. Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón, y `guarantor_coverage_bps` × monto financiado ≤ `Guarantee.coverage_max`.
 
 | Escalón | `down_payment_bps` | `interest_bps` | `guarantor_coverage_bps` | `max_purchase` |
 |---|---|---|---|---|
-| Con fiador 0 | 3000 | 1000 | 10000 | 1.000 USDC |
-| Con fiador 1 | 2000 | 800 | 9000 | 1.000 USDC |
-| Con fiador 2 | 1000 | 700 | 8000 | 1.250 USDC |
-| Con fiador 3 | 0 | 600 | 7000 | 1.500 USDC |
-| Sin fiador S0 | 5000 | 1500 | 0 | 150 USDC |
-| Sin fiador S1 | 3000 | 1200 | 0 | 300 USDC |
+| Con fiador 0 | 3000 | 0 | 10000 | 1.000 USDC |
+| Con fiador 1 | 2000 | 0 | 9000 | 1.000 USDC |
+| Con fiador 2 | 1000 | 0 | 8000 | 1.250 USDC |
+| Con fiador 3 | 0 | 0 | 7000 | 1.500 USDC |
+| Sin fiador S0 | 5000 | 0 | 0 | 150 USDC |
+| Sin fiador S1 | 3000 | 0 | 0 | 300 USDC |
 
 - Con fiador se sube de escalón con cada plan que cuenta, hasta el 3. Sin fiador, el techo es S1: para seguir subiendo hace falta fiador.
 - Un plan **cuenta** para subir solo si financia ≥ `min_financed_to_count` (100 USDC) y se pagó sin pasar la gracia.
@@ -49,7 +49,7 @@ Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón
 
 | Cuenta | Seeds | Contenido |
 |---|---|---|
-| `ProtocolConfig` | `["config"]` | `admin`, `keeper` (autoridad del backend que registra fiadores y recuperos), `usdc_mint`, `fee_bps` (150), `penalty_bps` (500: 5% fijo sobre la cuota vencida), `grace_days` (5), `guarantor_charge_day` (15), `seconds_per_day` (**configurable**: en la demo, un "día" dura segundos), `guaranteed_tiers: [TierParams; 4]`, `unguaranteed_tiers: [TierParams; 2]`, `min_financed_to_count`, `state` (`Normal / Halted / WithdrawsOnly`), `treasury`, `bump` |
+| `ProtocolConfig` | `["config"]` | `admin`, `keeper` (autoridad del backend que registra fiadores y recuperos), `usdc_mint`, `fee_bps` (700, sobre lo financiado), `penalty_bps` (500: 5% fijo sobre la cuota vencida), `grace_days` (5), `guarantor_charge_day` (15), `seconds_per_day` (**configurable**: en la demo, un "día" dura segundos), `guaranteed_tiers: [TierParams; 4]`, `unguaranteed_tiers: [TierParams; 2]`, `min_financed_to_count`, `state` (`Normal / Halted / WithdrawsOnly`), `treasury`, `bump` |
 | `TierParams` (struct) | — | `down_payment_bps`, `max_purchase`, `interest_bps`, `guarantor_coverage_bps` |
 | `Pool` | `["pool", usdc_mint]` | `junior_shares`, `senior_shares`, `junior_capital`, `senior_capital`, `outstanding_credit`, `accrued_fees`, `bump` |
 | Vault del pool | token account con authority = PDA `Pool` | USDC disponible |

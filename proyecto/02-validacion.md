@@ -269,3 +269,27 @@ Se aplican dos condiciones a cada compra: **precio ≤ tope absoluto del escaló
 | Q14 | Tope del fiador | **El fiador elige un tope de compras** (precio máximo por compra) de una lista. El monto máximo de la fianza (art. 1578 CCyC) se deriva de ese tope: lo financiado en el peor escalón + interés + punitorio. La pantalla le muestra que, con la misma firma, a medida que el estudiante sube de escalón él arriesga menos por compra |
 
 **Árbol de diseño cerrado** (rondas 1-4). Próximo paso: `/solana-tuc-mvp`.
+
+## Decisiones de precio (2026-10-03, después de la ronda 4)
+
+Reemplazan la Q4 de la ronda 1 (interés explícito) y la columna de interés de la tabla de la ronda 4.
+
+| # | Decisión | Elegido |
+|---|---|---|
+| Q15 | Quién paga el costo de las cuotas | **0% de interés para el estudiante. El comercio paga 7% sobre lo financiado** (con anticipo de 30% es 4,9% del precio). Razón del equipo: las cuotas con interés en dólares no tienen sentido frente a la tarjeta de un familiar |
+| Q16 | Moneda de la cuota | **Fija en USDC.** El estudiante puede pagar en pesos al tipo del día. El riesgo cambiario de 3 meses se muestra claro en el checkout. Cuotas fijas en pesos: roadmap (necesita oráculo ARS/USD y que el pool absorba el riesgo) |
+
+**Comparación para el comercio** (3 cuotas sin interés; fuentes secundarias, **sin verificar** en la fuente oficial):
+- Cuota Simple (solo pymes): 5,41% del precio, actualización de enero 2026 ([CAME](https://www.redcame.org.ar/novedades/14111/nuevas-tasas-directas-del-programa-cuota-simple), [argentina.gob.ar](https://www.argentina.gob.ar/economia/comercio/cuota-simple/comerciantes)).
+- Mercado Pago / Mercado Libre: ~12,49% del precio desde abril 2026 ([Base](https://base.com/es-AR/blog/cuotas-sin-interes-mercado-libre/), [Modal de pagos ML](https://www.mercadolibre.com.ar/payments-methods?view=conditions)).
+- Nosotros: 7% sobre lo financiado = 4,9% del precio en el escalón 0 y 7% en el escalón 3 (anticipo 0%).
+
+**Números nuevos del pool** (fórmula de research d, r=80%, π=5%, k=1, sin interés, c=7%):
+
+| Escalón | Mora de equilibrio |
+|---|---|
+| Con fiador 0 (cobertura 100%) | ~44% |
+| Con fiador 3 (cobertura 70%) | ~22% |
+| Sin fiador | ~10% |
+
+Con 30% de mora, el escalón 0 rinde ~+10% anual. El tramo sin fiador pierde, y se acepta como costo de adquisición con tope chico (US$150-300). Si el comercio paga 7% sobre lo financiado, **el escalón 3 (anticipo 0%) le cuesta más al comercio que el escalón 0**. A revisar con comercios reales.
