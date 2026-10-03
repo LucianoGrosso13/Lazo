@@ -118,17 +118,25 @@ impl Env {
         .expect("failed to write devUSDC mint");
 
         // LiteSVM loads the program as upgradeable but writes ProgramData
-        // with upgrade_authority_address = None. admin_init_config now binds
+        // with upgrade_authority_address = None. admin_init_config binds
         // the bootstrap signer to the upgrade authority, so patch it to the
-        // fixture admin. ProgramData layout: tag u32 | slot u64 |
-        // Option<Pubkey> tag u8 | pubkey 32B.
-        let pd = pda::program_data().0;
-        let mut pd_acct = svm.get_account(&pd).expect("programdata account");
-        pd_acct.data[12] = 1;
-        pd_acct.data[13..45].copy_from_slice(actors.admin.pubkey().as_ref());
-        svm.set_account(pd, pd_acct).unwrap();
+        // fixture admin.
+        let admin_pk = actors.admin.pubkey();
+        let mut env = Self { svm, actors, usdc_mint };
+        env.set_upgrade_authority(&admin_pk);
+        env
+    }
 
-        Self { svm, actors, usdc_mint }
+    /// Overwrite the ProgramData `upgrade_authority_address` field. LiteSVM
+    /// leaves it `None`; `admin_init_config` requires it to equal the signer.
+    /// ProgramData layout: tag u32 | slot u64 | Option<Pubkey> tag u8 |
+    /// pubkey 32B.
+    pub fn set_upgrade_authority(&mut self, who: &Address) {
+        let pd = pda::program_data().0;
+        let mut pd_acct = self.svm.get_account(&pd).expect("programdata account");
+        pd_acct.data[12] = 1;
+        pd_acct.data[13..45].copy_from_slice(who.as_ref());
+        self.svm.set_account(pd, pd_acct).unwrap();
     }
 
     /// Build, sign and execute a transaction with the given instructions.

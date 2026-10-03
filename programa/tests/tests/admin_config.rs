@@ -68,6 +68,71 @@ fn init_with_wrong_config_pda_fails() {
 }
 
 #[test]
+fn init_rejects_program_slot_substitution() {
+    // `program` must be the cuotas executable itself — it is the anchor of
+    // the upgrade-authority proof, so nothing else may sit in that slot.
+    let mut env = Env::new();
+    let admin = env.actors.admin.pubkey();
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+
+    // a non-executable PDA where the program belongs
+    let mut i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    i.accounts[1].pubkey = pda::config().0;
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_instruction_failure(out.expect_err("pda as program"), "non-executable program");
+
+    // a real executable program owned by the WRONG loader (classic bpf,
+    // not upgradeable) still fails the Program<Cuotas> check
+    let mut i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    i.accounts[1].pubkey = spl::TOKEN_PROGRAM_ID;
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_instruction_failure(out.expect_err("token program as cuotas"), "wrong loader");
+}
+
+#[test]
+fn init_rejects_wrong_program_data() {
+    // `program_data` must be THE ProgramData account of this program: the
+    // program account itself is owned by the upgradeable loader but holds
+    // Program state, not ProgramData -> deserialization fails.
+    let mut env = Env::new();
+    let admin = env.actors.admin.pubkey();
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+    let mut i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    i.accounts[2].pubkey = cuotas_tests::env::program_id();
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_instruction_failure(out.expect_err("program as program_data"), "not ProgramData");
+}
+
+#[test]
+fn init_rejects_signer_that_is_not_upgrade_authority() {
+    // With the ProgramData authority pointing at someone else, the fixture
+    // admin is just another key and bootstrap must refuse it.
+    let mut env = Env::new();
+    let attacker = env.actors.attacker.pubkey();
+    env.set_upgrade_authority(&attacker);
+    let admin = env.actors.admin.pubkey();
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+    let i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
+    expect_cuotas_err(&out, CuotasError::NotUpgradeAuthority, "admin != upgrade authority");
+}
+
+#[test]
+fn init_binds_admin_to_whoever_holds_upgrade_authority() {
+    // The positive flip side: bootstrap is captured by the key in
+    // ProgramData, not by any fixture constant — whoever holds the real
+    // upgrade authority becomes config.admin.
+    let mut env = Env::new();
+    let attacker = env.actors.attacker.pubkey();
+    env.set_upgrade_authority(&attacker);
+    let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
+    let i = ix::admin_init_config(&attacker, &{env.usdc_mint}, &params);
+    env.send(&[i], &{env.actors.attacker.insecure_clone()}, &[])
+        .expect_ok("upgrade authority bootstraps");
+    assert_eq!(addr(&cfg(&env).admin), attacker);
+}
+
+#[test]
 fn init_rejects_mint_without_six_decimals() {
     let mut env = Env::new();
     let bad_mint = Address::new_unique();

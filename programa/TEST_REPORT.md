@@ -40,22 +40,33 @@ loaded; default is `../target/deploy/cuotas.so` relative to the crate.
 Latest full run (post-reviewer ABI, `cuotas.so` rebuilt 17:39 UTC):
 
 ```
-admin_config.rs        12 passed  (init w/ ProgramData check, update, set_state)
-pool_lp.rs             28 passed  (pool_init, deposits, withdrawals, NAV,
-                                    OrphanedCapital, LpSupplyMismatch,
-                                    wiped-tranche retire + recapitalize)
+admin_config.rs        16 passed  (init w/ ProgramData check incl. program /
+                                    program_data slot substitution, foreign
+                                    authority + positive binding, update,
+                                    set_state)
+pool_lp.rs             29 passed  (pool_init, deposits, withdrawals, NAV,
+                                    OrphanedCapital + LpSupplyMismatch on BOTH
+                                    tranches, LP-ATA variants: non-canonical /
+                                    cross-tranche / foreign-owner, wiped-
+                                    tranche retire + recapitalize)
 loss.rs                 9 passed  (waterfall, bounds, cash sweep to treasury,
                                     OC preserved, loss bounded by vault cash)
 merchant_reputation.rs  7 passed  (merchant register, student reputation)
 guarantee.rs           11 passed  (lifecycle, GuaranteeTermsLocked exposure
                                     gate, zero-hash rejection, role separation)
 pause_matrix.rs         4 passed  (op x state matrix, WithdrawsOnly exit)
-adversarial.rs          4 passed  (authority matrix, external burn forfeit,
-                                    conservation + V+OC=J+S+AF)
+adversarial.rs          6 passed  (authority matrix, external burn forfeit,
+                                    post-burn deposit priced on reconciled
+                                    supply, total-burn → OrphanedCapital via
+                                    real instructions, conservation)
 regressions.rs          4 passed / 1 RED BY DESIGN (R4, see below)
 -------------------------
-TOTAL                  79 green + 1 tracked regression   (~9 s wall, in-process)
+TOTAL                  86 green + 1 tracked regression   (~9 s wall, in-process)
 ```
+
+All 12 instruction builders in `ix.rs` were additionally cross-checked
+account-by-account against `target/idl/cuotas.json` (name, order,
+writable/signer flags) — exact match, no drift.
 
 ABI deltas absorbed by the harness since the previous run:
 
@@ -113,11 +124,11 @@ Positive coverage (state + token-balance assertions):
 
 | instruction | positives | key negatives covered |
 |---|---|---|
-| `admin_init_config` | spec config persisted incl. both tier tables, bump; upgrade-authority bootstrap verified via program+ProgramData | non-authority signer → `NotUpgradeAuthority` (R3), dup init, wrong config PDA, 8-decimal mint, token-account-as-mint, token-2022 mint, 11 config-param mutants → `InvalidConfig` |
+| `admin_init_config` | spec config persisted incl. both tier tables, bump; upgrade-authority bootstrap verified via program+ProgramData; whoever holds the authority captures admin (positive binding with foreign fixture) | non-authority signer → `NotUpgradeAuthority` (R3), admin≠authority → `NotUpgradeAuthority`, dup init, wrong config PDA, non-executable/foreign-loader `program` slot, wrong `program_data`, 8-decimal mint, token-account-as-mint, token-2022 mint, 11 config-param mutants → `InvalidConfig` |
 | `admin_update_config` | params replaced, keeper rotation honored immediately | attacker/keeper/student → `NotAdmin`, invalid params → `InvalidConfig` |
 | `admin_set_state` | Normal→Halted→WithdrawsOnly→Normal round trip | attacker, keeper → `NotAdmin` |
 | `pool_init` | vault (authority=pool), both LP mints (6 dec, authority=pool, supply 0), zeroed counters | non-admin → `NotAdmin`, foreign mint → `InvalidUsdcMint`, token-2022 program id, swapped LP mints, duplicate |
-| `lp_deposit` | first-deposit 1:1, tranche independence, NAV deposit after loss (500 capital / 1000 shares → 100→200 shares), post-burn reconcile | zero → `ZeroAmount`, dust under `capital>>shares` → `DepositTooSmall`, insolvent tranche → `TrancheWipedOut`, capital>0+shares=0 → `OrphanedCapital`, supply>shares → `LpSupplyMismatch`, foreign mint → `InvalidUsdcMint`, wrong pool/config/vault/LP-mint/USDC-ATA/LP-ATA (8 substitutions), insufficient balance, missing LP ATA, forged signer (2 arms), bad tranche discriminant, gated in Halted + WithdrawsOnly → `ProtocolNotNormal` |
+| `lp_deposit` | first-deposit 1:1, tranche independence, NAV deposit after loss (500 capital / 1000 shares → 100→200 shares), post-burn reconcile, post-burn deposit priced on reconciled supply (elevated NAV paid, no free re-mint) | zero → `ZeroAmount`, dust under `capital>>shares` → `DepositTooSmall`, insolvent tranche → `TrancheWipedOut`, capital>0+shares=0 → `OrphanedCapital` (both tranches, surgical + total-burn natural path), supply>shares → `LpSupplyMismatch` (both tranches), foreign mint → `InvalidUsdcMint`, wrong pool/config/vault/LP-mint/USDC-ATA (8 substitutions), LP-ATA variants: non-canonical account → `NotCanonicalAta`, cross-tranche ATA, foreign-owner ATA, insufficient balance, missing LP ATA, forged signer (2 arms), bad tranche discriminant, gated in Halted + WithdrawsOnly → `ProtocolNotNormal` |
 | `lp_withdraw` | partial pro-rata payout, NAV after loss (0.6/share), WithdrawsOnly exit, second-LP pro-rata, worthless shares retire for 0 + recapitalize | zero → `ZeroShares`, over supply → `InsufficientShares`, over own balance → burn failure, illiquid vault → `InsufficientLiquidity`, supply>shares → `LpSupplyMismatch`, account substitution ×3, Halted → `ProtocolHalted` |
 | `admin_apply_loss` | waterfall junior-first, spill to senior, wipe-to-zero, cash sweep vault→treasury, OC preserved, halted bookkeeping OK | non-admin incl. keeper → `NotAdmin`, zero → `ZeroAmount`, loss>total → `LossExceedsCapital`, loss>vault-cash → spl failure, empty pool |
 | `merchant_register` | owner/settlement/active/plans_count/bump persisted; merchant wallet needn't sign | keeper/attacker/student → `NotAdmin`, foreign/other-mint/non-ATA settlement → `NotCanonicalAta`, foreign mint → `InvalidUsdcMint`, wrong merchant PDA, duplicate |
@@ -160,7 +171,12 @@ Positive coverage (state + token-balance assertions):
    in the tested sequence the burner loses 200 shares worth of NAV, the
    survivor exits with 625 (500 + forfeited 125), and the pool drains to
    exact zero. Supply ABOVE recorded shares fails `LpSupplyMismatch`
-   (exercised via direct mint-supply edit).
+   (exercised via direct mint-supply edit). Two follow-on cases pin the
+   economics end-to-end: a NEW depositor after a partial burn is priced on
+   the reconciled supply (pays the elevated 2.0 NAV — the forfeited claim
+   is never re-minted), and a 100% external burn is the only instruction-
+   level path to `capital>0 && supply==0`, which trips `OrphanedCapital`
+   on the next deposit instead of minting free shares.
 
 3. **Attacker cannot mint LP tokens** (`attacker_cannot_mint_lp_tokens`):
    mint authority is the pool PDA; a raw spl `MintTo` signed by an attacker

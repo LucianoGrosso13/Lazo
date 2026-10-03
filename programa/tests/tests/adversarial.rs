@@ -128,6 +128,72 @@ fn external_lp_burn_cannot_steal_from_other_lps() {
     assert_eq!(env.accounting_delta(), 0, "no stranded NAV");
 }
 
+#[test]
+fn deposit_after_external_burn_prices_on_reconciled_supply() {
+    // The burn forfeiture must extend to NEW depositors: pricing runs on
+    // reconciled supply, so a post-burn depositor buys shares at the
+    // elevated NAV — never diluted by phantom supply.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    lp_ready(&mut env, &bob, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC);
+
+    // alice burns half of her tokens externally: capital 1000, live supply 500
+    let lp_a = spl::ata(&alice, &p.lp_junior, &spl::TOKEN_PROGRAM_ID);
+    let burn = spl::burn_ix(&lp_a, &p.lp_junior, &alice, 500 * USDC);
+    env.send(&[burn], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("burn");
+
+    // bob deposits 1000 against recorded shares=500 (post-reconcile):
+    // shares = 1000*500/1000 = 500 — he pays the elevated 2.0 NAV, alice's
+    // forfeited claim is NOT re-minted to him for free
+    deposit(&{env.actors.bob.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC);
+    let lp_b = spl::ata(&bob, &p.lp_junior, &spl::TOKEN_PROGRAM_ID);
+    assert_eq!(env.token_balance(&lp_b), 500 * USDC, "priced on reconciled supply");
+    assert_eq!(env.pool().junior_shares, 1_000 * USDC, "recorded == live supply");
+    assert_eq!(env.mint_supply(&p.lp_junior), 1_000 * USDC);
+    assert_eq!(env.pool().junior_capital, 2_000 * USDC);
+
+    // NAV is now 2.0/share: bob exits his 500 shares for 1000 USDC back,
+    // alice exits her remaining 500 for the forfeited-claim-boosted 1000
+    for kp in [env.actors.bob.insecure_clone(), env.actors.alice.insecure_clone()] {
+        let i = ix::lp_withdraw(&kp.pubkey(), &{env.usdc_mint}, Tranche::Junior, 500 * USDC);
+        env.send(&[i], &kp, &[]).expect_ok("exit at NAV 2.0");
+    }
+    assert_eq!(env.pool().junior_capital, 0, "full drain, no stranded NAV");
+    assert_eq!(env.accounting_delta(), 0);
+}
+
+#[test]
+fn external_full_burn_creates_orphaned_capital() {
+    // A 100% external burn is the ONLY instruction-level path to
+    // capital>0 with supply==0: the pool cannot claw back alice's capital
+    // contribution, but her claim is gone. The next deposit must trip
+    // OrphanedCapital instead of minting free 1:1 shares.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    lp_ready(&mut env, &bob, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC);
+
+    let lp_a = spl::ata(&alice, &p.lp_junior, &spl::TOKEN_PROGRAM_ID);
+    let burn = spl::burn_ix(&lp_a, &p.lp_junior, &alice, 1_000 * USDC);
+    env.send(&[burn], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("total burn");
+    assert_eq!(env.mint_supply(&p.lp_junior), 0);
+    assert_eq!(env.pool().junior_capital, 1_000 * USDC, "orphaned NAV");
+
+    // reconcile_shares drops recorded shares to 0, then the orphaned-
+    // capital guard stops the deposit cold — bob keeps his USDC
+    let i = ix::lp_deposit(&bob, &{env.usdc_mint}, Tranche::Junior, 100 * USDC);
+    let out = env.send(&[i], &{env.actors.bob.insecure_clone()}, &[]);
+    expect_cuotas_err(&out, CuotasError::OrphanedCapital, "orphaned via total burn");
+    assert_eq!(env.mint_supply(&p.lp_junior), 0);
+}
+
 // ---------- conservation ----------
 
 #[test]

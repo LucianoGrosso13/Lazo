@@ -338,6 +338,40 @@ fn deposit_rejects_wrong_accounts() {
 }
 
 #[test]
+fn deposit_rejects_wrong_lp_ata_variants() {
+    // depositor_lp_ata must be the canonical ATA of (depositor, lp_mint) —
+    // enforced in three layers, each exercised independently.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let bob = env.actors.bob.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    let alice_kp = env.actors.alice.insecure_clone();
+
+    // 1) a real token account (alice-owned, junior mint) at a NON-ATA
+    //    address -> passes token:: checks, fails the address constraint
+    let non_canonical_lp = env.make_token_account(&alice, &p.lp_junior, 0);
+    let mut i = ix::lp_deposit(&alice, &{env.usdc_mint}, Tranche::Junior, 1);
+    i.accounts[7].pubkey = non_canonical_lp;
+    let out = env.send(&[i], &alice_kp, &[]);
+    expect_cuotas_err(&out, CuotasError::NotCanonicalAta, "non-canonical lp account");
+
+    // 2) alice's canonical ATA of the OTHER tranche's mint -> token::mint
+    env.make_ata(&alice, &p.lp_senior, 0);
+    let mut i = ix::lp_deposit(&alice, &{env.usdc_mint}, Tranche::Junior, 1);
+    i.accounts[7].pubkey = spl::ata(&alice, &p.lp_senior, &spl::TOKEN_PROGRAM_ID);
+    let out = env.send(&[i], &alice_kp, &[]);
+    expect_instruction_failure(out.expect_err("cross-tranche lp ata"), "wrong lp mint ata");
+
+    // 3) bob's canonical junior ATA while alice signs -> token::authority
+    let bob_lp = env.make_ata(&bob, &p.lp_junior, 0);
+    let mut i = ix::lp_deposit(&alice, &{env.usdc_mint}, Tranche::Junior, 1);
+    i.accounts[7].pubkey = bob_lp;
+    let out = env.send(&[i], &alice_kp, &[]);
+    expect_instruction_failure(out.expect_err("foreign-owner lp ata"), "wrong ata owner");
+}
+
+#[test]
 fn deposit_with_insufficient_balance_fails() {
     let mut env = Env::new();
     let p = env.bootstrap();
@@ -578,38 +612,53 @@ fn wiped_tranche_shares_retire_for_zero_then_recapitalize() {
 
 #[test]
 fn deposit_into_orphaned_capital_rejected() {
-    // capital > 0 with shares == 0 is unreachable via instructions (share
-    // supply only hits zero alongside capital or via full retirement, which
-    // leaves capital == 0 too). Model it directly: the deposit must NOT
-    // mint 1:1 free shares against orphaned NAV.
-    let mut env = Env::new();
-    let p = env.bootstrap();
-    let alice = env.actors.alice.pubkey();
-    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
-    env.edit_pool(|pool| pool.junior_capital = 500 * USDC); // shares stay 0
+    // capital > 0 with shares == 0 is only reachable via state surgery or a
+    // full external burn (see adversarial.rs) — never through the program's
+    // own ops. Model it directly: the deposit must NOT mint 1:1 free shares
+    // against orphaned NAV, on either tranche.
+    for tranche in [Tranche::Junior, Tranche::Senior] {
+        let mut env = Env::new();
+        let p = env.bootstrap();
+        let alice = env.actors.alice.pubkey();
+        let lp_mint = match tranche {
+            Tranche::Junior => p.lp_junior,
+            Tranche::Senior => p.lp_senior,
+        };
+        lp_ready(&mut env, &alice, 5_000 * USDC, &lp_mint);
+        env.edit_pool(|pool| match tranche {
+            Tranche::Junior => pool.junior_capital = 500 * USDC,
+            Tranche::Senior => pool.senior_capital = 500 * USDC,
+        }); // shares stay 0
 
-    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC);
-    expect_cuotas_err(&out, CuotasError::OrphanedCapital, "orphaned NAV");
+        let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, tranche, 100 * USDC);
+        expect_cuotas_err(&out, CuotasError::OrphanedCapital, "orphaned NAV");
+    }
 }
 
 #[test]
 fn lp_supply_above_recorded_shares_rejected() {
     // Mint supply above the share counter means accounting corruption —
     // unreachable normally (pool PDA is the only mint authority), produced
-    // here by writing the mint's supply field directly.
-    let mut env = Env::new();
-    let p = env.bootstrap();
-    let alice = env.actors.alice.pubkey();
-    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
-    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC).expect_ok("d");
+    // here by writing the mint's supply field directly, on either tranche.
+    for tranche in [Tranche::Junior, Tranche::Senior] {
+        let mut env = Env::new();
+        let p = env.bootstrap();
+        let alice = env.actors.alice.pubkey();
+        let lp_mint = match tranche {
+            Tranche::Junior => p.lp_junior,
+            Tranche::Senior => p.lp_senior,
+        };
+        lp_ready(&mut env, &alice, 5_000 * USDC, &lp_mint);
+        deposit(&{env.actors.alice.insecure_clone()}, &mut env, tranche, 100 * USDC).expect_ok("d");
 
-    env.set_mint_supply(&p.lp_junior, 101 * USDC);
-    let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
-    expect_cuotas_err(&out, CuotasError::LpSupplyMismatch, "supply > shares on withdraw");
+        env.set_mint_supply(&lp_mint, 101 * USDC);
+        let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, tranche, 10 * USDC);
+        expect_cuotas_err(&out, CuotasError::LpSupplyMismatch, "supply > shares on withdraw");
 
-    env.set_mint_supply(&p.lp_junior, 100 * USDC); // restore sanity
-    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
-    out.expect_ok("consistent again");
+        env.set_mint_supply(&lp_mint, 100 * USDC); // restore sanity
+        let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, tranche, 10 * USDC);
+        out.expect_ok("consistent again");
+    }
 }
 
 #[test]
