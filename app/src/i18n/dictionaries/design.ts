@@ -89,6 +89,15 @@ export const design = defineDict({
       cracked: "Se raja al vencer",
       refilled: "La luz de atrás la llena: paga el fiador",
       etched: "Pagada: queda grabada",
+      marks: {
+        none: "Al día",
+        cracked: "Rajada",
+        refilled: "Recuperada",
+        etched: "Pagada",
+      },
+      ariaSummary:
+        "El precio entra al vidrio como luz blanca y sale partido en anticipo y tres cuotas; abajo, el total de la alternativa en gris.",
+      comparisonNote: "La banda gris es el total de la alternativa, una cifra de terceros.",
     },
   },
   en: {
@@ -175,6 +184,15 @@ export const design = defineDict({
       cracked: "It cracks when late",
       refilled: "Backlight fills it: the guarantor pays",
       etched: "Paid: etched into the glass",
+      marks: {
+        none: "On time",
+        cracked: "Cracked",
+        refilled: "Recovered",
+        etched: "Paid",
+      },
+      ariaSummary:
+        "The price enters the glass as white light and leaves split into a down payment and three installments; below, the alternative's total in grey.",
+      comparisonNote: "The grey band is the alternative's total, a third-party figure.",
     },
   },
 });
