@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T23:05:00Z",
+  "title": "Design System: Lazo — Prisma",
+  "extensions": {
+    "colorMeta": {
+      "abyss": {
+        "role": "neutral",
+        "displayName": "Abismo violáceo",
+        "canonical": "#07060b",
+        "tonalRamp": ["oklch(0.10 0.01 290)", "oklch(0.145 0.018 290)", "oklch(0.22 0.03 290)", "oklch(0.32 0.04 290)", "oklch(0.45 0.05 290)", "oklch(0.60 0.05 290)", "oklch(0.78 0.04 290)", "oklch(0.92 0.02 290)"]
+      },
+      "violet": {
+        "role": "primary",
+        "displayName": "Violeta Solana",
+        "canonical": "#9945ff",
+        "tonalRamp": ["oklch(0.15 0.03 293)", "oklch(0.25 0.08 293)", "oklch(0.38 0.16 293)", "oklch(0.50 0.24 293)", "oklch(0.575 0.265 293)", "oklch(0.68 0.22 293)", "oklch(0.80 0.13 293)", "oklch(0.92 0.05 293)"]
+      },
+      "indigo": {
+        "role": "secondary",
+        "displayName": "Índigo espectral",
+        "canonical": "#6c63ff",
+        "tonalRamp": ["oklch(0.15 0.03 280)", "oklch(0.28 0.08 280)", "oklch(0.42 0.15 280)", "oklch(0.55 0.20 280)", "oklch(0.62 0.19 280)", "oklch(0.72 0.14 280)", "oklch(0.83 0.08 280)", "oklch(0.93 0.03 280)"]
+      },
+      "cyan": {
+        "role": "primary",
+        "displayName": "Cian haz",
+        "canonical": "#00c2ff",
+        "tonalRamp": ["oklch(0.15 0.02 225)", "oklch(0.28 0.05 225)", "oklch(0.42 0.10 225)", "oklch(0.58 0.15 225)", "oklch(0.75 0.155 225)", "oklch(0.85 0.10 225)", "oklch(0.92 0.05 225)", "oklch(0.97 0.02 225)"]
+      },
+      "green": {
+        "role": "primary",
+        "displayName": "Verde pulso",
+        "canonical": "#19fb9b",
+        "tonalRamp": ["oklch(0.16 0.03 155)", "oklch(0.30 0.07 155)", "oklch(0.45 0.13 155)", "oklch(0.62 0.20 155)", "oklch(0.88 0.235 155)", "oklch(0.93 0.15 155)", "oklch(0.96 0.07 155)", "oklch(0.99 0.02 155)"]
+      },
+      "beam": {
+        "role": "neutral",
+        "displayName": "Haz blanco",
+        "canonical": "#f4f1ff",
+        "tonalRamp": ["oklch(0.15 0.02 295)", "oklch(0.30 0.04 295)", "oklch(0.45 0.06 295)", "oklch(0.60 0.05 295)", "oklch(0.75 0.04 295)", "oklch(0.85 0.03 295)", "oklch(0.955 0.018 295)", "oklch(0.99 0.01 295)"]
+      },
+      "ash": {
+        "role": "neutral",
+        "displayName": "Ceniza alternativa",
+        "canonical": "#8b92a9",
+        "tonalRamp": ["oklch(0.20 0.02 265)", "oklch(0.32 0.03 265)", "oklch(0.45 0.04 265)", "oklch(0.63 0.035 265)", "oklch(0.72 0.03 265)", "oklch(0.82 0.025 265)", "oklch(0.90 0.015 265)", "oklch(0.96 0.008 265)"]
+      },
+      "crack": {
+        "role": "secondary",
+        "displayName": "Fisura",
+        "canonical": "#ff5470",
+        "tonalRamp": ["oklch(0.18 0.05 15)", "oklch(0.30 0.10 15)", "oklch(0.45 0.18 15)", "oklch(0.58 0.23 15)", "oklch(0.655 0.235 15)", "oklch(0.75 0.18 15)", "oklch(0.85 0.10 15)", "oklch(0.93 0.05 15)"]
+      },
+      "backlight": {
+        "role": "secondary",
+        "displayName": "Contraluz fiador",
+        "canonical": "#c4a3ff",
+        "tonalRamp": ["oklch(0.20 0.05 295)", "oklch(0.32 0.09 295)", "oklch(0.45 0.14 295)", "oklch(0.58 0.18 295)", "oklch(0.76 0.15 295)", "oklch(0.85 0.10 295)", "oklch(0.92 0.05 295)", "oklch(0.97 0.02 295)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Titular del hero y cierre; Bricolage comprimida (wdth 92, opsz 96)." },
+      "headline": { "displayName": "Headline", "purpose": "Títulos de sección (wdth 90, opsz 72)." },
+      "figure-lg": { "displayName": "Figure grande", "purpose": "Montos y porcentajes a escala máxima; el tamaño es evidencia." },
+      "figure": { "displayName": "Figure", "purpose": "Números de titular en escalera y ledger." },
+      "body": { "displayName": "Body", "purpose": "Bajadas y texto corrido." },
+      "label": { "displayName": "Label / medida", "purpose": "Etiquetas de calibración en Martian Mono mayúscula (chips, bandas, nav, referencia)." }
+    },
+    "shadows": [
+      { "name": "glass-ambient", "value": "inset 0 1px 0 rgb(244 241 255 / 0.38), inset 0 -1px 0 rgb(4 2 10 / 0.85), 0 18px 48px -16px rgb(0 0 0 / 0.8)", "purpose": "Vidrio de panel: canto iluminado arriba, profundidad abajo." },
+      { "name": "slab-drop", "value": "drop-shadow(0 34px 60px rgb(0 0 0 / 0.72)) drop-shadow(0 0 1px rgb(244 241 255 / 0.2))", "purpose": "Caída del bloque de prisma (en el wrapper; clip-path se la comería)." },
+      { "name": "cta-halo", "value": "0 14px 42px -8px rgb(153 69 255 / 0.75), 0 0 22px rgb(0 194 255 / 0.28)", "purpose": "Halo del botón primario en hover." },
+      { "name": "chip-on-glow", "value": "inset 0 1px 0 rgb(244 241 255 / 0.2), 0 0 14px rgb(0 194 255 / 0.28)", "purpose": "Chip encendido como tramo de haz." }
+    ],
+    "motion": [
+      { "name": "ease-beam", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Ease-out de refracción; todas las transiciones de estado." },
+      { "name": "band-tween", "value": "620ms easeOutExpo", "purpose": "Re-refracción de montos al mover precio/escalón." },
+      { "name": "fissure-draw", "value": "0.55s ease-out forwards (stroke-dashoffset)", "purpose": "La fisura se dibuja una vez, localizada." },
+      { "name": "refill-sweep", "value": "1.15s ease-out both", "purpose": "La contraluz del garante recompone la banda desde atrás." },
+      { "name": "photons-loop", "value": "1.6s linear infinite", "purpose": "Partículas del haz entrante; pausado fuera de viewport/pestaña." },
+      { "name": "pressure-loop", "value": "2.4s ease-in-out infinite", "purpose": "Pulso de presión al superar el tope; pausado igual." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-tight", "value": "560px" },
+      { "name": "sm", "value": "640px" },
+      { "name": "tablet", "value": "760px" },
+      { "name": "split", "value": "860px" },
+      { "name": "mid", "value": "960px" },
+      { "name": "desktop", "value": "1024px" },
+      { "name": "content-max", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "El haz blanco mismo: CTA principal con canto espectral inferior.",
+      "html": "<button class=\"ds-btn-primary\">Comprar en 3 cuotas sin interés</button>",
+      "css": ".ds-btn-primary { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; border-radius: 999px; padding: 0.625rem 1.375rem; font-weight: 600; font-size: 0.9375rem; line-height: 1.2; white-space: nowrap; cursor: pointer; color: #0b0716; background: linear-gradient(180deg, #ffffff, #ddd7f2); box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgb(153 69 255 / 0.35), 0 10px 32px -10px rgb(153 69 255 / 0.5), 0 0 0 1px rgb(244 241 255 / 0.08); transition: box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary::after { content: \"\"; position: absolute; inset-inline: 14%; bottom: 0; height: 2px; border-radius: 999px; background: linear-gradient(90deg, transparent, var(--color-violet), var(--color-cyan), var(--color-green), transparent); opacity: 0.9; } .ds-btn-primary:hover { box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgb(153 69 255 / 0.4), 0 14px 42px -8px rgb(153 69 255 / 0.75), 0 0 22px rgb(0 194 255 / 0.28), 0 0 0 1px rgb(244 241 255 / 0.12); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; } .ds-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Vidrio del mundo para acciones secundarias.",
+      "html": "<button class=\"ds-btn-secondary\">Ver la demo</button>",
+      "css": ".ds-btn-secondary { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; border-radius: 999px; padding: 0.625rem 1.375rem; font-weight: 600; font-size: 0.9375rem; line-height: 1.2; white-space: nowrap; cursor: pointer; color: var(--color-ink); background: linear-gradient(165deg, rgb(244 241 255 / 0.1), rgb(244 241 255 / 0.03) 45%, rgb(153 69 255 / 0.06)), rgb(14 11 23 / 0.5); -webkit-backdrop-filter: blur(14px) saturate(1.35); backdrop-filter: blur(14px) saturate(1.35); box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.3), inset 0 -1px 0 rgb(4 2 10 / 0.7), 0 10px 28px -12px rgb(0 0 0 / 0.7); transition: box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.55s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-secondary:hover { background: linear-gradient(165deg, rgb(244 241 255 / 0.16), rgb(244 241 255 / 0.05) 45%, rgb(153 69 255 / 0.1)), rgb(17 13 28 / 0.55); box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.4), inset 0 -1px 0 rgb(4 2 10 / 0.7), 0 12px 34px -12px rgb(0 0 0 / 0.75), 0 0 18px rgb(153 69 255 / 0.22); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Una línea de luz: acción terciaria sin vidrio.",
+      "html": "<button class=\"ds-btn-ghost\">Ver comprobante</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 0.5rem; border: none; background: none; border-radius: 999px; padding: 0.625rem 0.5rem; font-weight: 600; font-size: 0.9375rem; white-space: nowrap; cursor: pointer; color: var(--color-ink-2); transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-ghost:hover { color: var(--color-beam); text-decoration: underline; text-decoration-color: rgb(0 194 255 / 0.7); text-underline-offset: 0.22em; } .ds-btn-ghost:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Etiqueta de calibración en mono mayúscula; encendida es un tramo de haz.",
+      "html": "<span class=\"ds-chip\">Devnet</span> <span class=\"ds-chip ds-chip-on\">Escalón 0</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 0.3rem 0.8rem; white-space: nowrap; font-family: var(--font-num); font-size: 0.6875rem; letter-spacing: 0.14em; line-height: 1.4; text-transform: uppercase; color: var(--color-ink-2); background: rgb(244 241 255 / 0.045); border: 1px solid rgb(244 241 255 / 0.14); box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.12); transition: color 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.45s cubic-bezier(0.16, 1, 0.3, 1); } .ds-chip-on { color: var(--color-beam); border-color: rgb(0 194 255 / 0.65); background: rgb(0 194 255 / 0.1); box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.2), 0 0 14px rgb(0 194 255 / 0.28); } .ds-chip:focus-visible { outline: 2px solid var(--color-green); outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segtrack",
+      "description": "Pista de vidrio hundido con opciones que se encienden (idioma, escalón, producto).",
+      "html": "<div class=\"ds-segtrack\" role=\"group\" aria-label=\"Idioma\"><button class=\"ds-seg ds-seg-on\" type=\"button\">ES</button><button class=\"ds-seg\" type=\"button\">EN</button></div>",
+      "css": ".ds-segtrack { display: inline-flex; gap: 0.25rem; padding: 0.25rem; border-radius: 999px; background: rgb(4 2 10 / 0.55); border: 1px solid rgb(244 241 255 / 0.09); box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 -0.5px 0 rgb(244 241 255 / 0.08); } .ds-seg { border: none; border-radius: 999px; padding: 0.3rem 0.8rem; white-space: nowrap; cursor: pointer; font-family: var(--font-num); font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ink-2); background: transparent; transition: color 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.45s cubic-bezier(0.16, 1, 0.3, 1); } .ds-seg-on { color: var(--color-beam); background: rgb(0 194 255 / 0.1); box-shadow: inset 0 0 0 1px rgb(0 194 255 / 0.65), 0 0 14px rgb(0 194 255 / 0.28); } .ds-seg:focus-visible { outline: 2px solid var(--color-green); outline-offset: 2px; }"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Vidrio grueso con canto visible, luz interior y borde espectral; nunca card plana.",
+      "html": "<div class=\"ds-glass\"><p class=\"ds-glass-text\">Panel de vidrio: canto iluminado arriba, espectro abajo.</p></div>",
+      "css": ".ds-glass { position: relative; isolation: isolate; border-radius: 18px; padding: 1.25rem; background: linear-gradient(165deg, rgb(244 241 255 / 0.085), rgb(244 241 255 / 0.015) 38%, rgb(153 69 255 / 0.05)), rgb(14 11 23 / 0.55); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.38), inset 1px 0 0 rgb(244 241 255 / 0.05), inset -1px 0 0 rgb(244 241 255 / 0.035), inset 0 -1px 0 rgb(4 2 10 / 0.85), 0 1px 0 rgb(244 241 255 / 0.05), 0 18px 48px -16px rgb(0 0 0 / 0.8); } .ds-glass::before { content: \"\"; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(118deg, rgb(255 255 255 / 0.12), transparent 26%), radial-gradient(120% 90% at 50% -20%, rgb(244 241 255 / 0.07), transparent 55%); pointer-events: none; } .ds-glass::after { content: \"\"; position: absolute; inset-inline: 1px; bottom: 0; height: 3px; border-radius: 0 0 18px 18px; background: linear-gradient(90deg, transparent 2%, rgb(153 69 255 / 0.65) 22%, rgb(0 194 255 / 0.55) 50%, rgb(25 251 155 / 0.6) 78%, transparent 98%); opacity: 0.75; pointer-events: none; } .ds-glass-text { color: var(--color-ink-2); font-size: 0.9375rem; line-height: 1.5; margin: 0; }"
+    },
+    {
+      "name": "Glass Slab",
+      "kind": "custom",
+      "refersTo": "glass-slab",
+      "description": "Bloque de vidrio de héroe con aristas biseladas como prisma tallado.",
+      "html": "<div class=\"ds-slab-wrap\"><div class=\"ds-slab\"><p class=\"ds-slab-text\">Bloque prisma: bisel de 20 px y facetas de corte.</p></div></div>",
+      "css": ".ds-slab-wrap { filter: drop-shadow(0 34px 60px rgb(0 0 0 / 0.72)) drop-shadow(0 0 1px rgb(244 241 255 / 0.2)); } .ds-slab { position: relative; isolation: isolate; padding: 1.5rem; clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px); background: linear-gradient(158deg, rgb(244 241 255 / 0.11), rgb(244 241 255 / 0.02) 34%, rgb(153 69 255 / 0.07) 82%, rgb(0 194 255 / 0.05)), rgb(13 10 22 / 0.6); -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); } .ds-slab::before { content: \"\"; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(244 241 255 / 0.34), transparent 2px), linear-gradient(135deg, rgb(244 241 255 / 0.3), transparent 30px) top left / 34px 34px no-repeat, linear-gradient(225deg, rgb(244 241 255 / 0.18), transparent 30px) top right / 34px 34px no-repeat, linear-gradient(118deg, rgb(255 255 255 / 0.1), transparent 30%); pointer-events: none; } .ds-slab::after { content: \"\"; position: absolute; inset-inline: 6%; bottom: 0; height: 3px; background: linear-gradient(90deg, transparent, rgb(153 69 255 / 0.8) 24%, rgb(0 194 255 / 0.7) 50%, rgb(25 251 155 / 0.8) 76%, transparent); opacity: 0.75; pointer-events: none; } .ds-slab-text { color: var(--color-ink-2); font-size: 0.9375rem; margin: 0; }"
+    },
+    {
+      "name": "State Marks",
+      "kind": "custom",
+      "refersTo": "state-mark",
+      "description": "El estado de una cuota como marca en el vidrio: se lee por forma y trama, no sólo por color.",
+      "html": "<span class=\"ds-mark ds-mark-dim\"></span> <span class=\"ds-mark ds-mark-lit\"></span> <span class=\"ds-mark ds-mark-etched\"></span> <span class=\"ds-mark ds-mark-cracked\"></span> <span class=\"ds-mark ds-mark-refilled\"></span>",
+      "css": ".ds-mark { display: inline-block; width: 2.125rem; height: 1.125rem; border-radius: 0.25rem; vertical-align: -0.2em; margin-right: 0.35rem; } .ds-mark-dim { border: 1px dashed rgb(244 241 255 / 0.3); } .ds-mark-lit { background: linear-gradient(180deg, #ffffff, rgb(0 194 255 / 0.95) 55%, rgb(153 69 255 / 0.9)); box-shadow: 0 0 12px rgb(0 194 255 / 0.6), 0 0 3px rgb(153 69 255 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.8); } .ds-mark-etched { background: repeating-linear-gradient(135deg, rgb(244 241 255 / 0.5) 0 1px, transparent 1px 4.5px), rgb(244 241 255 / 0.04); box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.65), inset 0 -0.5px 0 rgb(244 241 255 / 0.25); } .ds-mark-cracked { background: rgb(255 84 112 / 0.12); border: 1px solid rgb(255 84 112 / 0.55); box-shadow: inset 0 0 6px rgb(255 84 112 / 0.25); } .ds-mark-refilled { background: radial-gradient(90% 140% at 50% 115%, rgb(196 163 255 / 0.9), rgb(153 69 255 / 0.3) 72%, rgb(153 69 255 / 0.08)); box-shadow: 0 3px 16px rgb(153 69 255 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.4); }"
+    },
+    {
+      "name": "Reference Tag",
+      "kind": "chip",
+      "refersTo": "ref-tag",
+      "description": "Etiqueta punteada junto a cifras de terceros no verificadas.",
+      "html": "<span class=\"ds-ref\">referencia</span>",
+      "css": ".ds-ref { display: inline-block; font-family: var(--font-num); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-ink-3); border: 1px dashed rgb(154 147 187 / 0.5); border-radius: 3px; padding: 0.1rem 0.35rem; vertical-align: 0.15em; }"
+    },
+    {
+      "name": "Beam Line",
+      "kind": "custom",
+      "refersTo": "beam-line",
+      "description": "Filete espectral de 1px que recorre cantos y separa la barra superior.",
+      "html": "<hr class=\"ds-beam-line\" />",
+      "css": ".ds-beam-line { display: block; height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgb(153 69 255 / 0.9) 26%, rgb(0 194 255 / 0.8) 52%, rgb(25 251 155 / 0.9) 78%, transparent); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Un haz de luz partido en cuotas",
+    "overview": "Una compra es un haz de luz blanca que entra a un bloque de vidrio tallado; el prisma de Lazo lo dispersa en anticipo + 3 cuotas del espectro Solana, y el garante es la contraluz que rellena cualquier banda que se apague. El fondo es un casi negro violáceo con bloom radial, grano fino y filetes espectrales: nada es una card translúcida plana ni un dashboard DeFi genérico con un sticker de gradiente.\n\nLa densidad es compacta y medida: números tabulares a escala de titular, etiquetas de calibración en mayúsculas, márgenes laterales 16–40 px y separación vertical 30–64 px. El espectro violeta→cian→verde sólo significa plata en movimiento; la alternativa (Mercado Pago) es gris y quebrada.",
+    "keyCharacteristics": [
+      "Vidrio grueso con canto visible, luz interior y canto inferior que atrapa el espectro",
+      "Estado como marca en el vidrio (forma + trama, no sólo color)",
+      "Luz en movimiento, vidrio estable; refracciones ease-out de 400–700 ms",
+      "Números de titular como evidencia, \"referencia\" declarada en cifras de terceros"
+    ],
+    "rules": [
+      { "name": "The Spectrum-Means-Money Rule", "body": "El gradiente violeta→cian→verde sólo aparece donde hay plata moviéndose o un canto que la atrapa. Nunca como relleno decorativo de fondos.", "section": "colors" },
+      { "name": "The Numbers-Are-Headlines Rule", "body": "Los montos que prueban el producto (0%, anticipo, cuota) se renderizan a escala de figure en cara tabular; el tamaño es evidencia, no adorno.", "section": "typography" },
+      { "name": "The Mark-Not-Color Rule", "body": "El estado se lee por marca: futura = contorno punteado, por vencer = núcleo encendido, pagada = grabado rayado, vencida = rajadura dibujada, recuperada = relleno por contraluz. El color acompaña; la forma informa.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do mover la luz (bandas, refracción ~400–700ms con cubic-bezier(0.16, 1, 0.3, 1)) y dejar el vidrio quieto.",
+      "Do declarar lo simulado y las cifras de terceros con la etiqueta ref-tag junto al dato.",
+      "Do mantener el badge devnet visible en toda superficie.",
+      "Do dar estado quieto completo con prefers-reduced-motion (animaciones off, fisura dibujada, refill al 25%)."
+    ],
+    "donts": [
+      "Don't usar el gradiente espectral como decoración fuera del haz/cantos (The Spectrum-Means-Money Rule).",
+      "Don't dibujar cards translúcidas planas: el vidrio siempre lleva canto visible, luz interior y borde espectral.",
+      "Don't representar mora por mover un control: late/refill sólo por estado real o demostración identificada.",
+      "Don't usar rebotes, fragmentos ni destellos repetidos; las transiciones son corrimientos de refracción ease-out."
+    ]
+  }
+}
