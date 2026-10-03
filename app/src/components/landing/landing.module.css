@@ -288,6 +288,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .controlLabel {
@@ -299,6 +300,8 @@
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .range {
@@ -615,8 +618,11 @@
 .beamAlt {
   position: absolute;
   inset: 0 auto 0 0;
+  width: 100%;
   border-radius: 99px;
-  transition: width 0.6s var(--ease);
+  transform: scaleX(var(--k, 1));
+  transform-origin: left center;
+  transition: transform 0.6s var(--ease);
 }
 
 .beamLazo {
@@ -944,14 +950,16 @@
 .rulerLight {
   position: absolute;
   inset: -1px auto -1px 0;
-  width: 0;
+  width: 100%;
   background: linear-gradient(90deg, #fff, var(--violet) 40%, #ffb36b 80%, #ff6b8b);
   box-shadow: 0 0 18px rgb(153 69 255 / 0.8);
-  transition: width 1.8s var(--ease) 0.2s;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.8s var(--ease) 0.2s;
 }
 
 .rulerLit .rulerLight {
-  width: 100%;
+  transform: scaleX(1);
 }
 
 .rulerGrace {

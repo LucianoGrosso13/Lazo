@@ -2,7 +2,7 @@ import { defineDict } from "../locale";
 
 export const common = defineDict({
   es: {
-    tagline: "Cuotas sin interés, respaldadas por tu familia.",
+    tagline: "Cuotas sin interés, respaldadas por un garante.",
     nav: { tienda: "Tienda", panel: "Mi plan", comercio: "Comercio", pool: "Pool" },
     devnet: "Devnet · plata de prueba",
     devnetHint: "Corre en devnet, la red de prueba de Solana: el USDC es de mentira y no vale nada.",
@@ -16,7 +16,7 @@ export const common = defineDict({
     },
   },
   en: {
-    tagline: "Zero-interest installments, backed by family.",
+    tagline: "Zero-interest installments, backed by a guarantor.",
     nav: { tienda: "Store", panel: "My plan", comercio: "Merchant", pool: "Pool" },
     devnet: "Devnet · test money",
     devnetHint: "Runs on devnet, Solana's test network: the USDC is fake and worth nothing.",

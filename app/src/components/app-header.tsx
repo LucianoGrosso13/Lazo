@@ -59,7 +59,6 @@ export function AppHeader() {
     { href: "/panel", label: t.nav.panel },
     { href: "/comercio", label: t.nav.comercio },
     { href: "/pool", label: t.nav.pool },
-    { href: "/design", label: d.chrome.designLink },
   ];
 
   return (

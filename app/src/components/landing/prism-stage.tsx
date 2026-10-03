@@ -381,7 +381,7 @@ export function PrismStage({ inputLabel, inputValue, bands, cracked = false, sta
           <div
             key={g.id}
             className={`${styles.bandLabel} ${g.mark === "late" ? styles.bandLabelLate : ""}`}
-            style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, left: `${(FAN_END_X / VB_W) * 100 + 1.6}%`, ["--band" as string]: g.color }}
+            style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, ["--band" as string]: g.color }}
             aria-hidden
           >
             <span className={styles.labelKey}>{g.label}</span>

@@ -62,7 +62,7 @@ export function LandingHero() {
   const lazoTotal = toMicro(price);
   const mpTotal = Math.round(lazoTotal * (1 + REFERENCE.mpInstallmentMarkup));
   const checkoutHref = productId ? `/checkout/${productId}` : "/tienda";
-  const instCount = split?.installments.length ?? 3;
+  const instCount = split?.installments.length ?? config?.installmentsCount ?? null;
 
   const pickProduct = (p: Product) => {
     setProductId(p.id);
@@ -88,6 +88,7 @@ export function LandingHero() {
                 fmt(split.price, 0),
                 split.downPayment > 0 ? fmt(split.downPayment) : null,
                 fmt(split.installments[0] ?? 0),
+                split.installments.length,
               )}
             />
           ) : (
@@ -157,8 +158,8 @@ export function LandingHero() {
                 <p className={styles.payLine} aria-live="polite">
                   <span>
                     {split.downPayment > 0
-                      ? t.paySplit(fmt(split.downPayment), fmt(split.installments[0] ?? 0), instCount)
-                      : t.payNoDown(fmt(split.installments[0] ?? 0), instCount)}
+                      ? t.paySplit(fmt(split.downPayment), fmt(split.installments[0] ?? 0), split.installments.length)
+                      : t.payNoDown(fmt(split.installments[0] ?? 0), split.installments.length)}
                   </span>
                   <span className={styles.payTotal}>{t.payTotal(fmt(lazoTotal, 0))}</span>
                 </p>
@@ -186,7 +187,7 @@ export function LandingHero() {
           <p className={styles.lede}>{t.lede}</p>
           <div className={styles.ctaRow}>
             <Link href={checkoutHref} className={styles.ctaPrimary}>
-              {t.ctaPrimary}
+              {instCount ? t.ctaPrimary(instCount) : t.ctaGeneric}
               <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
                 <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -208,7 +209,7 @@ export function LandingHero() {
           <div className={styles.compareRow}>
             <span className={styles.compareWho}>{t.lazo}</span>
             <span className={styles.compareTrack}>
-              <span className={styles.beamLazo} style={{ width: `${(lazoTotal / mpTotal) * 100}%` }} />
+              <span className={styles.beamLazo} style={{ ["--k" as string]: lazoTotal / mpTotal }} />
             </span>
             <span className={styles.compareNum}>
               US$ {fmt(lazoTotal, 0)} <small>· 0% {t.interest}</small>
@@ -217,7 +218,7 @@ export function LandingHero() {
           <div className={styles.compareRow}>
             <span className={styles.compareWho}>{t.mp}</span>
             <span className={styles.compareTrack}>
-              <span className={styles.beamAlt} style={{ width: "100%" }} />
+              <span className={styles.beamAlt} />
             </span>
             <span className={styles.compareNum}>
               ~US$ {fmt(mpTotal, 0)} <small className={styles.refTag}>{t.reference}</small>

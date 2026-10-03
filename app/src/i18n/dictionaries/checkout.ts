@@ -43,7 +43,7 @@ export const checkout = defineDict({
       },
       no_guarantee: {
         t: "Necesitás un fiador",
-        d: "Lazo te presta porque un familiar te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
+        d: "Lazo te presta porque un garante te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
         cta: { label: "Invitar a mi fiador", href: "/fiador/nuevo" },
       },
       exceeds_tier_max: {
@@ -115,7 +115,7 @@ export const checkout = defineDict({
       },
       no_guarantee: {
         t: "You need a guarantor",
-        d: "Lazo lends to you because a family member backs you with their card: they only pay if you don't. Send them the invite to activate it.",
+        d: "Lazo lends to you because a guarantor backs you with their card: they only pay if you don't. Send them the invite to activate it.",
         cta: { label: "Invite my guarantor", href: "/fiador/nuevo" },
       },
       exceeds_tier_max: {

@@ -6,7 +6,8 @@ export const landingHero = defineDict({
     title2: "Cero interés.",
     title3: "Sin tarjeta.",
     lede: "Cuotas sin interés, respaldadas por un garante que solo paga si vos no pagás. El comercio cobra al instante y cada paso queda registrado en Solana.",
-    ctaPrimary: "Comprar en 3 cuotas sin interés",
+    ctaPrimary: (count: number) => `Comprar en ${count} cuotas sin interés`,
+    ctaGeneric: "Comprar en cuotas",
     ctaSecondary: "Ver la demo",
     devnet: "Corre en devnet: el USDC es de prueba y no vale nada.",
     priceLabel: "Precio",
@@ -31,17 +32,18 @@ export const landingHero = defineDict({
     mp: "Mercado Pago, cuotas sin tarjeta",
     reference: "referencia",
     savings: (x: string) => `Te ahorrás US$ ${x}`,
-    stageAria: (price: string, down: string | null, inst: string) =>
+    stageAria: (price: string, down: string | null, inst: string, count: number) =>
       down
-        ? `Una compra de US$ ${price} se divide en un anticipo de US$ ${down} y tres cuotas de US$ ${inst}, sin interés.`
-        : `Una compra de US$ ${price} se divide en tres cuotas de US$ ${inst}, sin anticipo ni interés.`,
+        ? `Una compra de US$ ${price} se divide en un anticipo de US$ ${down} y ${count} cuotas de US$ ${inst}, sin interés.`
+        : `Una compra de US$ ${price} se divide en ${count} cuotas de US$ ${inst}, sin anticipo ni interés.`,
   },
   en: {
     title1: "Three installments.",
     title2: "Zero interest.",
     title3: "No credit card.",
     lede: "Zero-interest installments backed by a guarantor who only pays if you don't. The merchant gets paid instantly and every step is recorded on Solana.",
-    ctaPrimary: "Buy in 3 interest-free installments",
+    ctaPrimary: (count: number) => `Buy in ${count} interest-free installments`,
+    ctaGeneric: "Buy in installments",
     ctaSecondary: "Watch the demo",
     devnet: "Runs on devnet: the USDC is test money and worth nothing.",
     priceLabel: "Price",
@@ -66,9 +68,9 @@ export const landingHero = defineDict({
     mp: "Mercado Pago, no-card installments",
     reference: "reference",
     savings: (x: string) => `You save US$ ${x}`,
-    stageAria: (price: string, down: string | null, inst: string) =>
+    stageAria: (price: string, down: string | null, inst: string, count: number) =>
       down
-        ? `A US$ ${price} purchase splits into a US$ ${down} down payment and three US$ ${inst} installments, interest-free.`
-        : `A US$ ${price} purchase splits into three US$ ${inst} installments with no down payment, interest-free.`,
+        ? `A US$ ${price} purchase splits into a US$ ${down} down payment and ${count} US$ ${inst} installments, interest-free.`
+        : `A US$ ${price} purchase splits into ${count} US$ ${inst} installments with no down payment, interest-free.`,
   },
 });

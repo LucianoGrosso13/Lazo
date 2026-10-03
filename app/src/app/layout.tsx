@@ -20,14 +20,14 @@ const martian = Martian_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lazo · Cuotas sin interés, respaldadas por tu familia",
+  title: "Lazo · Cuotas sin interés, respaldadas por un garante",
   description:
-    "Zero-interest USDC installments for students without a credit card, backed by a family guarantor. Runs on Solana devnet.",
+    "Zero-interest USDC installments for students without a credit card, backed by a guarantor. Runs on Solana devnet.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`h-full antialiased ${bricolage.variable} ${martian.variable}`}>
+    <html lang="es" className={`h-full antialiased scroll-pt-20 ${bricolage.variable} ${martian.variable}`}>
       <body className="min-h-full flex flex-col">
         <Providers>
           <AppHeader />
