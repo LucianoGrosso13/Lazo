@@ -12,7 +12,7 @@ const SIZES = {
 } as const;
 
 /**
- * Número a escala de titular: tabular (Azeret Mono), prefijo US$/USDC más
+ * Número a escala de titular: tabular (Martian Mono), prefijo US$/USDC más
  * chico y sufijo opcional. El tamaño es la facturación del dato.
  */
 export function BigNumber({

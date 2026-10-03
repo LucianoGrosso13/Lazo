@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
@@ -34,10 +34,8 @@ function PrismaGlyph({ className = "" }: { className?: string }) {
 }
 
 function LocaleSwitch() {
-  const { locale, setLocale } = useLocale();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const active = mounted ? locale : "es";
+  // useLocale ya devuelve "es" en el servidor y en la hidratación.
+  const { locale: active, setLocale } = useLocale();
   return (
     <SegmentedControl
       label="ES / EN"
@@ -49,21 +47,6 @@ function LocaleSwitch() {
       ]}
     />
   );
-}
-
-/** La wallet solo se pinta montada: el gate cambia entre SSR e hidratación. */
-function WalletSlot() {
-  const t = useT(common);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) {
-    return (
-      <span className="btn btn-secondary btn-sm opacity-60" aria-hidden>
-        {t.wallet.loading}
-      </span>
-    );
-  }
-  return <WalletButton />;
 }
 
 export function AppHeader() {
@@ -108,7 +91,7 @@ export function AppHeader() {
               <LocaleSwitch />
             </span>
             <span className="hidden md:block">
-              <WalletSlot />
+              <WalletButton />
             </span>
             <ChipButton
               className="md:hidden"
@@ -159,7 +142,7 @@ export function AppHeader() {
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3">
             <LocaleSwitch />
-            <WalletSlot />
+            <WalletButton />
           </div>
         </div>
       )}

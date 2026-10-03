@@ -35,11 +35,11 @@
   --color-crack: #ff5470;
   --color-backlight: #c4a3ff;
 
-  /* Familias: Spectral (voz del vidrio tallado) + Azeret Mono (medición) */
-  --font-sans: var(--font-spectral), "Iowan Old Style", Georgia, serif;
-  --font-display: var(--font-spectral), "Iowan Old Style", Georgia, serif;
-  --font-num: var(--font-azeret), ui-monospace, "SF Mono", Menlo, monospace;
-  --font-mono: var(--font-azeret), ui-monospace, "SF Mono", Menlo, monospace;
+  /* Familias: Bricolage Grotesque (display y texto) + Martian Mono (medición) */
+  --font-sans: var(--font-bricolage), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-num: var(--font-martian), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: var(--font-martian), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Movimiento: corrimientos de refracción, ease-out, sin rebotes */
   --ease-beam: cubic-bezier(0.16, 1, 0.3, 1);
@@ -50,9 +50,9 @@
   --text-measure--letter-spacing: 0.14em;
 
   /* Tamaños de número de titular */
-  --text-figure: clamp(2.2rem, 8.5vw, 4.5rem);
+  --text-figure: clamp(2rem, 6vw, 3.75rem);
   --text-figure--line-height: 1;
-  --text-figure-lg: clamp(3.1rem, 12vw, 6rem);
+  --text-figure-lg: clamp(2.6rem, 7vw, 4.75rem);
   --text-figure-lg--line-height: 1;
 }
 

@@ -6,7 +6,6 @@ import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
 import { useLocale, useT } from "@/i18n/locale";
-import { display, mono } from "./fonts";
 import { PrismStage, type StageBand } from "./prism-stage";
 import { REFERENCE } from "./reference";
 import { splitPurchase } from "./split";
@@ -54,7 +53,7 @@ export function LandingHero() {
   };
 
   return (
-    <section className={`${styles.landing} ${display.variable} ${mono.variable} ${styles.hero}`}>
+    <section className={`${styles.landing} ${styles.hero}`}>
       <div className={styles.grain} aria-hidden />
       <div className={styles.heroGrid}>
         <div className={styles.heroStage}>

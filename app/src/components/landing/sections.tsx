@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
 import { useLocale, useT } from "@/i18n/locale";
-import { display, mono } from "./fonts";
 import { SPECTRUM } from "./hero";
 import { REFERENCE } from "./reference";
 import { merchantFeeOfPrice, splitPurchase } from "./split";
@@ -39,7 +38,7 @@ function useInView<T extends Element>() {
 
 export function LandingSections() {
   return (
-    <div className={`${styles.landing} ${display.variable} ${mono.variable}`}>
+    <div className={`${styles.landing}`}>
       <Ladder />
       <Guarantor />
       <Benefits />

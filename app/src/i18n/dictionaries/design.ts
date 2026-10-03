@@ -39,8 +39,8 @@ export const design = defineDict({
       sample: "Lazo parte la luz en cuotas.",
       sampleNum: "anticipo · cuota · día 3 · día 15",
       display:
-        "Spectral talla los titulares y el texto: la voz del vidrio cortado. AaBbCcDdEeFfGg 0123456789",
-      num: "Azeret Mono mide: cantos, etiquetas y números tabulares que se alinean como marcas de una regla.",
+        "Bricolage Grotesque lleva los titulares y el texto: ancha, con cuerpo, legible en vidrio. AaBbCcDdEeFfGg 0123456789",
+      num: "Martian Mono mide: etiquetas y números tabulares que se alinean como marcas de una regla.",
     },
     glass: {
       panelTitle: "Panel",
@@ -125,8 +125,8 @@ export const design = defineDict({
       sample: "Lazo splits light into installments.",
       sampleNum: "down payment · installment · day 3 · day 15",
       display:
-        "Spectral cuts headlines and body text: the voice of cut glass. AaBbCcDdEeFfGg 0123456789",
-      num: "Azeret Mono measures: edges, labels and tabular numbers that align like ruler marks.",
+        "Bricolage Grotesque carries headlines and body text: wide, solid, legible on glass. AaBbCcDdEeFfGg 0123456789",
+      num: "Martian Mono measures: labels and tabular numbers that align like ruler marks.",
     },
     glass: {
       panelTitle: "Panel",
