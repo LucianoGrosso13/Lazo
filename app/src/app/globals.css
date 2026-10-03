@@ -487,6 +487,8 @@ button.chip {
 /* Pista de vidrio para controles segmentados */
 .segtrack {
   display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   gap: 0.25rem;
   padding: 0.25rem;
   border-radius: 999px;
