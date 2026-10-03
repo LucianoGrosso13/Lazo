@@ -23,14 +23,14 @@ export const cuentas = defineDict({
         "student-tier3": "Estudiante escalón 3",
         merchant: "Comercio",
         admin: "Admin",
-        guarantor: "Fiador (por invitación)",
+        guarantor: "Garante (por invitación)",
       },
     },
     roles: {
       student: "Estudiante",
       merchant: "Comercio",
       admin: "Administrador",
-      guarantor: "Fiador",
+      guarantor: "Garante",
     },
     entry: {
       title: "Entrá a tu cuenta",
@@ -63,7 +63,7 @@ export const cuentas = defineDict({
       demoTitle: "Recorré las cuentas de ejemplo",
       demoBlurb:
         "Elegí una cuenta simulada para ver cada rol. Los datos son de prueba: no son direcciones devnet reales ni autorizan operaciones.",
-      guarantorTitle: "Fiador",
+      guarantorTitle: "Garante",
       guarantorBlurb:
         "El fiador no usa wallet: entra por un enlace que le manda el estudiante. Este botón genera una invitación simulada para el estudiante que venís recorriendo.",
       guarantorSameBrowser:

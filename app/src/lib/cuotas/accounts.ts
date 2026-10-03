@@ -310,10 +310,11 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
       if (!invitation || invitation.completedAt) {
         throw new AccountCuotasError("invalid_token", "Invitación inválida o ya utilizada");
       }
-      // El alta delega en la base: nunca un segundo store de Guarantee.
+      // El alta delega en la base: nunca un segundo store de Guarantee. El
+      // estudiante queda ligado al token aun si args trae extras en runtime.
       let result: TxResult<Guarantee>;
       try {
-        result = await base.registerGuarantee({ student: invitation.student, ...args });
+        result = await base.registerGuarantee({ ...args, student: invitation.student });
       } catch (e) {
         throw mapError(e);
       }

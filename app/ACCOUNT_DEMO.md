@@ -1,5 +1,7 @@
 # Lazo account demo
 
+> **Incomplete checkpoint (2026-10-03):** saved to the main branch at the user's request to close immediately. The student account/payment page is still missing. Guarantor acceptance is blocked pending the contractual maximum decision. Admin mutation hooks and shared checkout identity still need integration. This is not a complete or verified four-role demo. See `proyecto/06-checkpoint-cierre.md`.
+
 Lazo is a student installment demo on Solana **devnet**, the test network. Its devUSDC token has no monetary value. The current account flows use an explicitly labelled browser mock; they do not submit blockchain transactions or charge cards.
 
 ## Run locally

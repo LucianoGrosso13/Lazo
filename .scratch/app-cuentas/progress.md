@@ -92,3 +92,37 @@ API común en implementación (worker01), comercio/pool (worker04) en paralelo. 
 - Captura preliminar entrada /app desktop guardada evidence/entry-desktop-preliminary.png, browser sin pageerror. Selector recortado en1440; asignado a01. Captura no es aceptación final.
 - Fetch origin completado: origin/main d285833. Push sólo al terminar integración/reviews; no alteración del checkout principal.
 - Borrador guía inglesa app/ACCOUNT_DEMO.md y matriz verification.md creados por coordinador, con checks pendientes y límites explícitos.
+
+- Commit6103ef2 registra coordinación/matriz/guía inglesa. d76530b permite verificar modo real en puerto3013 (se hará tras cerrar nuestro dev server mock, sin cache concurrente). accounts.test.ts retirado observado; typecheck de último merge pasa. Prompts review Standards/Spec preparados, todavía sin lanzar reviewers antes de implementación completa.
+
+## Checkpoint6 — contrato publicado
+
+- Owner01 confirmó API estable en status msg_a26fdd94c39b/msg_81071d188f9a; códigos del supervisor aplicados: accounts.test retirado, ruteo automático, último estudiante común, fallback storage, límite navegador, reset y nav wrap.
+- Commit4106f22 prefactor aditivo separado;09c4402 entrada/roles/shell/evidencia y e2e. Worker reporta e2e entry3/3 y types clean; no contar sus Vitest39 como acceptance cuentas. Destinos de roles aún pendientes de owners, tickets no se declaran done.
+- /tmp/app-cuentas-contract-for-session-a.md señala4106f22 publicado para queA tome bridge (cherry-pick mínimo) y prepare hooks/fix fixture sin copiarWIP.
+- Inventario global terminales30 sin truncación/paginación, detecta workersA en lazo-mock/design/tienda/checkout; ningún otro Run relevante. No se gestiona lifecycle ni se edita sus paths.
+
+## Ola2 — follow-up sin ciclo
+
+- Recibido y aceptado worker_done01 msg_49f82ebaaa0d, Dispatch esperado ctx_27d76454f76b, outcome succeeded. Aceptación acotada contrato/entrada; ticket integrado queda06, no recorrido final listo. Supervisor confirma esta frontera. Task01 settled automáticamente.
+- Inventario previo: Runs14 sin cursor, Tasks01completed/02+03ready/04+05dispatched; workers3 sin paginación. worker-show01 exactWorker/live y mismo proceso probado.
+- Next owner inmediato: Task03 task_34f03fa6978b reutiliza terminal01 con nuevo Dispatch ctx_82cf17c2bc9b, input accepted. Transferencia antes de ACK delivery_4ac9bdb71673; no release por follow-up inmediato. Máximo3workers útiles.
+- Task02 ready para follow-up del owner04 cuando settled; no segundo estudiante paralelo.
+- Integrado checkoutA98cb792. A sigue dueño del consumo bridge y hooks.
+
+## Checkpoint7 — coordinación A y publicación autorizada
+
+- A contactó por Run nuevo run_4d961a8649b5, coordinator term_867c7d84-1e53-4137-890a-7630a04d9916. Aceptó un único push main por cuentas; toma bridge/hook/fixture con sus owners. Mantiene front-esqueleto y no toca paneles. Q1 pendiente confirmado para ambos. Copy profesional «respaldadas por un garante», sin requisito mamá/familia, transmitido03; A cambia fixture.
+- MergeA2a833e3: Prisma WebGL. Conflicto package.json resuelto por coordinator conservando scripts typegen+test:e2e y Playwright. Commit310906a. Nuevo skill deployments-cicd leído por autorización Vercel; no despliegue todavía.
+- Usuario vía supervisor autoriza publicar en mismo proyecto lazo-cuotas luego main completo verificado; READY+commit+alias+rutas públicas se comprobarán. No proyecto nuevo ni WIP. Comunicación aA durable msg_fec5c44cee71, pendiente ACK de acuerdo final publicación. Supervisor inspecciona config real read-only.
+- Observación pública móvil /pool: carga sin wallet,0Explorer, sin overflow/pageerror. /comercio404 transitorio durante escritura04, no aceptación. Helperconsulta.tsx asignado04 de forma explícita, sin otroeditor.
+- Corrección mínima accounts.ts ligada al token asignada03 (spread args antes de student), commit separado al reportar. FinancieroA intacto.
+
+- A aceptó publicación única final a cargo de cuentas (msg_b0f3b8243753), sin WIP. Supervisor verificó proyectoVercel existente prj_Cd8rTTuMHgsCZwbqv3kcHnmH20Fs, control-andinas-projects, rootapp, Node24.x, GitHubrepo y producción main. Alias READY actual sin SHA/ref no prueba nuestro commit. Registro deployment.md; al cierre nuevoREADY+sourceexacta+alias+rutas.
+
+## Checkpoint8 — runtime y hallazgos supervisados
+
+- Unique checks owner coordinator: broadcast a03/04/05 y nudge para consumirlo. No futuros e2e/typegen/build/dev propios; workers piden check puntual por Orca. Nuestro devsession42899 terminóexit0. Inventario server3012: nohup04 conocido npmPID98294→next98344→server98375, iniciado18:00:46; sin cortarlo, ownership operativo transferido acoordinator pendiente confirmación04. No otrosprocesos ajenos tocados.
+- Q1 pending: supervisor halló coverageMax=maxPurchase provisional y confirmar/doc activo; instrucción urgente03 bloquear aceptación/descarga numérica hasta respuesta, UIindependiente sigue. Balance subscribe y precedencia lastStudent con selector mock activo asignados03 en account-context, sin otroeditor. Cambios01 aditivos se commitean aparte.
+- Hallazgo04 isAddress retractado por supervisor tras comprobar fixture exacta true conKit; instrucción de excepción retirada antes de aceptación, conserva e2e clic Ver público.
+- AnewRun informóA original Claude sigue activo en chat40641009-5745-4251-96e2-dac83230e694. Anew sólo refinamientoUI/lazo-ui, no integra ticketsoriginales/main/deploy. Aviso originalA /tmp/lazo-original-A-ownership.md para relay supervisor; no ACK original todavía, no se apropia mailbox.

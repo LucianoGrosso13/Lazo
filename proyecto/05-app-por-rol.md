@@ -1,6 +1,6 @@
 # 05 — Cuentas por rol de Lazo
 
-Fecha: 2026-10-03. Estado: implementación en curso, gate de seis tickets/tracker local/rutas públicas aprobado. Sólo devnet (red de prueba, sin dinero real). No presentar el recorrido como real mientras programa/IDL, Didit y Mobbex no estén comprobados.
+Fecha: 2026-10-03. Estado: checkpoint de cierre inmediato solicitado por el usuario, implementación incompleta guardada para main. Detalle vigente en `06-checkpoint-cierre.md`. Sólo devnet (red de prueba, sin dinero real). No presentar el recorrido como real mientras programa/IDL, Didit y Mobbex no estén comprobados.
 
 ## Decisiones del handoff
 
@@ -25,4 +25,4 @@ Tickets 01–06 en .scratch/app-cuentas/issues. Run run_fa4df6a795be; workers De
 - Conexión de Phantom sólo se declara comprobada si se observa una wallet real; tests automáticos no firman ni envían transacciones.
 - Hooks admin del mismo mock A: setProtocolState y registerMerchantAccount. No éxito fingido mientras faltan.
 - Máximo final de fianza: pregunta puntual Q1 para supervisor; nunca asumir que coverageMax determina el cargo completo.
-- Integración con remoto actualizado y push normal main autorizados; deploy manual fuera del alcance.
+- Integración con remoto actualizado y push normal main autorizados; publicación del resultado verificado autorizada en proyecto Vercel existente lazo-cuotas, sin crear otro proyecto ni desplegar WIP.

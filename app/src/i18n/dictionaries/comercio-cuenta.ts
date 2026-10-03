@@ -1,0 +1,146 @@
+import { defineDict } from "../locale";
+
+// Panel del comercio: cuenta propia (/app/comercio) y vista pública
+// (/comercio, /comercio/[direccion]). Las cifras de terceros son referencias
+// del equipo (proyecto/02-validacion.md), rotuladas y sin garantía.
+export const comercioCuenta = defineDict({
+  es: {
+    titulo: "Comercio",
+    vistaPublica: "Vista pública",
+    vistaDemo: "Comercio de ejemplo",
+    tuComercio: "Tu comercio",
+    cuentaSinIdentidad:
+      "Sin cuenta activa: conectá la wallet del comercio o, en modo demo, elegí «Comercio» en el selector de cuentas.",
+    resolviendo: "Detectando la cuenta…",
+    cuentaNoComercioTitle: "Esta cuenta no es un comercio",
+    cuentaNoComercioBody:
+      "La cuenta activa se resolvió como «{rol}». El panel del comercio solo abre con una cuenta de comercio registrada.",
+    irEntrada: "Ir a la entrada de cuentas",
+    verPublico: "Ver la vista pública del comercio",
+    cuentaPropia: "Vista pública de este comercio",
+    leerTitle: "Lectura pendiente",
+    leerBody:
+      "La lectura de cobros todavía no está conectada en este modo. Los datos aparecen acá cuando el cliente compartido los publique.",
+    reintentar: "Reintentar",
+    errorTitle: "No se pudo leer el comercio",
+    errorBody: "Falló la consulta al cliente de cuotas. Revisá la conexión y reintentá.",
+    noRegistradoTitle: "Comercio no registrado",
+    noRegistradoBody:
+      "Esta dirección no tiene una cuenta de comercio en el protocolo (todavía).",
+    saldoLabel: "Cobrado al instante",
+    saldoHint: "Saldo de cobros en devUSDC. La mora del estudiante no lo toca.",
+    ventasTitle: "Ventas en cuotas",
+    ventasCount: "{count} ventas",
+    ventasVacia:
+      "Todavía no hay ventas registradas. Cuando un estudiante compra en cuotas, el cobro aparece acá al instante.",
+    colFecha: "Fecha",
+    colPrecio: "Precio",
+    colCobrado: "Cobrado",
+    colComision: "Comisión",
+    colComprobante: "Comprobante",
+    splitCobras: "lo que cobrás",
+    splitComision: "comisión Lazo sobre lo financiado",
+    comisionReal: "Tu comisión efectiva",
+    comisionesPagadas: "Comisiones pagadas",
+    comisionConfig: "{pct}% sobre lo financiado (config vigente)",
+    alternativasTitle: "Frente a otras formas de vender en cuotas",
+    alternativasNote:
+      "Cifras de terceros publicadas por el equipo como referencia (ene–abr 2026); no son cotizaciones vigentes ni una promesa.",
+    refLazo: "Lazo · sobre lo financiado",
+    refCuotaSimple: "Cuota Simple (pymes)",
+    refMp: "Mercado Pago",
+    sobreElPrecio: "sobre el precio",
+    referenciaTag: "referencia",
+    refInstant:
+      "Cobrás al instante en USDC. GOcuotas, por ejemplo, le paga al comercio a 22 días hábiles (referencia).",
+    checkoutTitle: "Checkout integrable",
+    checkoutBody:
+      "Cada producto de la tienda demo tiene su checkout en 3 cuotas. Este es el enlace que iría en tu tienda.",
+    checkoutCopiar: "Copiar enlace",
+    checkoutCopiado: "Copiado",
+    checkoutAbrir: "Abrir checkout",
+    checkoutRoadmap: "Plugins oficiales para Tiendanube y WooCommerce: roadmap.",
+    direccionInvalidaTitle: "Dirección inválida",
+    direccionInvalidaBody:
+      "Eso no es una dirección base58 de Solana. Revisá que esté completa (32–44 caracteres, sin 0, O, I ni l).",
+    direccionInvalidaVolver: "Ver el comercio de ejemplo",
+    buscarLabel: "Consultá un comercio por dirección",
+    buscarPlaceholder: "Dirección de la wallet del comercio",
+    buscarBoton: "Ver comercio",
+    buscarInvalido: "Esa dirección no es válida.",
+    demoSoloMock:
+      "El comercio de ejemplo solo existe en modo demo. En devnet real, consultá la dirección de un comercio registrado.",
+    sinCargoDeMora: "Sin riesgo de mora: si el estudiante no paga, el fiador cubre.",
+    comprobanteSimulado: "comprobante simulado",
+    verEnExplorer: "Ver en Explorer",
+  },
+  en: {
+    titulo: "Merchant",
+    vistaPublica: "Public view",
+    vistaDemo: "Demo merchant",
+    tuComercio: "Your merchant",
+    cuentaSinIdentidad:
+      "No active account: connect the merchant wallet or, in demo mode, pick “Merchant” in the account selector.",
+    resolviendo: "Detecting the account…",
+    cuentaNoComercioTitle: "This account is not a merchant",
+    cuentaNoComercioBody:
+      "The active account resolved as “{rol}”. The merchant panel only opens with a registered merchant account.",
+    irEntrada: "Go to the accounts entry",
+    verPublico: "See the merchant's public view",
+    cuentaPropia: "Public view of this merchant",
+    leerTitle: "Read pending",
+    leerBody:
+      "Payout reads aren't wired in this mode yet. Data shows up here once the shared client publishes it.",
+    reintentar: "Retry",
+    errorTitle: "Couldn't read the merchant",
+    errorBody: "The installments client query failed. Check your connection and retry.",
+    noRegistradoTitle: "Merchant not registered",
+    noRegistradoBody: "This address has no merchant account in the protocol (yet).",
+    saldoLabel: "Settled instantly",
+    saldoHint: "Payout balance in devUSDC. Student delinquency never touches it.",
+    ventasTitle: "Installment sales",
+    ventasCount: "{count} sales",
+    ventasVacia:
+      "No sales recorded yet. When a student buys in installments, the payout shows up here instantly.",
+    colFecha: "Date",
+    colPrecio: "Price",
+    colCobrado: "Received",
+    colComision: "Fee",
+    colComprobante: "Receipt",
+    splitCobras: "what you receive",
+    splitComision: "Lazo fee on the financed amount",
+    comisionReal: "Your effective fee",
+    comisionesPagadas: "Fees paid",
+    comisionConfig: "{pct}% on the financed amount (current config)",
+    alternativasTitle: "Against other ways of selling in installments",
+    alternativasNote:
+      "Third-party figures published by the team as reference (Jan–Apr 2026); not live quotes or a promise.",
+    refLazo: "Lazo · on the financed amount",
+    refCuotaSimple: "Cuota Simple (SMBs)",
+    refMp: "Mercado Pago",
+    sobreElPrecio: "on the price",
+    referenciaTag: "reference",
+    refInstant:
+      "You settle instantly in USDC. GOcuotas, for example, pays merchants 22 business days later (reference).",
+    checkoutTitle: "Embeddable checkout",
+    checkoutBody:
+      "Every product in the demo store has its own 3-installment checkout. This is the link that would live in your store.",
+    checkoutCopiar: "Copy link",
+    checkoutCopiado: "Copied",
+    checkoutAbrir: "Open checkout",
+    checkoutRoadmap: "Official Tiendanube and WooCommerce plugins: roadmap.",
+    direccionInvalidaTitle: "Invalid address",
+    direccionInvalidaBody:
+      "That's not a base58 Solana address. Check it's complete (32–44 chars, no 0, O, I or l).",
+    direccionInvalidaVolver: "See the demo merchant",
+    buscarLabel: "Look up a merchant by address",
+    buscarPlaceholder: "Merchant wallet address",
+    buscarBoton: "View merchant",
+    buscarInvalido: "That address isn't valid.",
+    demoSoloMock:
+      "The demo merchant only exists in demo mode. On real devnet, look up a registered merchant address.",
+    sinCargoDeMora: "No delinquency risk: if the student doesn't pay, the guarantor covers.",
+    comprobanteSimulado: "simulated receipt",
+    verEnExplorer: "View on Explorer",
+  },
+});

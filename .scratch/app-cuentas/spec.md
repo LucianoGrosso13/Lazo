@@ -69,17 +69,19 @@ Una entrada común identifica al estudiante, comercio o administrador por la wal
 
 ## Testing Decisions
 
-- Frontera propuesta: comportamiento del recorrido por rutas públicas en navegador usando modo demo. Observar lo que ve y hace cada usuario; no acoplarse a componentes privados.
+- Frontera aprobada: comportamiento del recorrido por rutas públicas en navegador usando modo demo. Observar lo que ve y hace cada usuario; no acoplarse a componentes privados. Un tracer por ciclo, sin lotes horizontales de tests antes de implementar.
 - Cubrir entrada y rol, cancelación/pago de cuota, invitación y alta del fiador, exposición, comercio, avance del reloj, recupero y pool. Verificar que los cuatro roles reflejan la misma compra y que mock no crea evidencia onchain falsa.
 - Cubrir enlaces inválidos y acciones no autorizadas mediante las interfaces públicas de aplicación.
-- La base incorporada del 2026-10-03 incluye Vitest, lint y typecheck; todavía no incluye archivos de pruebas ni herramienta de recorrido en navegador. Reutilizar lo que aporte la sesión A y acordar la frontera de navegador antes de añadir pruebas. El gate sigue pendiente.
+- El gate está aprobado en approval.md. El coordinador incorporó Playwright y Chromium para la frontera pública; los tests internos de sesión A permanecen bajo su ownership y no reemplazan la aceptación de cuentas en navegador.
 - Comprobar tipos y archivos de prueba afectados regularmente; suite completa una vez al integrar, además de lint, build y revisión visual móvil/escritorio con capturas.
 - Conexión real de wallet se comprueba sin solicitar claves ni aprobar transacciones por el usuario. Registrar lo que no pudo comprobarse por falta de wallet o programa.
 
 ## Out of Scope
 
-Landing, catálogo, checkout, tokens de diseño, programa Anchor y keeper real (propiedad de otras sesiones); deploy manual, mainnet, dinero real, varias compras simultáneas por estudiante, firma digital certificada, Google, tramo sin fiador en UI, depósitos senior, conversión a pesos sin fuente, integraciones Tiendanube/WooCommerce oficiales y promesas de rendimiento garantizado.
+Landing, catálogo, checkout, tokens de diseño, programa Anchor y keeper real (propiedad de otras sesiones); crear otro proyecto Vercel o desplegar WIP, mainnet, dinero real, varias compras simultáneas por estudiante, firma digital certificada, Google, tramo sin fiador en UI, depósitos senior, conversión a pesos sin fuente, integraciones Tiendanube/WooCommerce oficiales y promesas de rendimiento garantizado.
 
 ## Further Notes
 
-Fuente: handoff del 2026-10-03 y memoria del equipo. La base app de front-esqueleto fue incorporada por fast-forward a 4234262; incluye contratos y proveedores, pero la mayoría de las operaciones del mock aún son pendientes. Su disponibilidad no aprueba este spec ni habilita lanzar trabajo dependiente de contratos ausentes. Las comparaciones de terceros son referencias del equipo sin nueva verificación; no presentarlas como tasas vigentes. Luciano autorizó integrar y subir el resultado a main al terminar, preservando el trabajo de las otras sesiones, sin force push. La entrega a jurados se escribe en inglés y declara devnet y simulaciones.
+Fuente: handoff del 2026-10-03 y memoria del equipo. La base app de front-esqueleto fue incorporada desde 4234262, con merges de los commits publicados de mock y diseño. El progreso y las operaciones disponibles se registran en progress.md; no copiar cambios ajenos sin commit. Las comparaciones de terceros son referencias del equipo sin nueva verificación; no presentarlas como tasas vigentes. Luciano autorizó integrar y subir el resultado a main al terminar, preservando el trabajo de las otras sesiones, sin force push. La entrega a jurados se escribe en inglés y declara devnet y simulaciones.
+
+Actualización de alcance20:58UTC: supervisor transmite pedido usuario «esto lo subis a lo de vercel??» y confirma publicación del resultado completo verificado en proyecto existente lazo-cuotas, después de push normal main. Verificar deployment READY, commit y alias https://lazo-cuotas.vercel.app por rutas públicas. Esta autorización no resuelveQ1. Un único owner de integración/main/publicación, coordinado conA.
