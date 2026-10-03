@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Tokens provisorios: el ticket del sistema de diseño (Prisma) los reemplaza. */
+:root {
+  --background: #07060b;
+  --foreground: #f4f1ff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.wallet-btn {
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
+  background: linear-gradient(90deg, #9945ff, #19fb9b);
+  color: #07060b;
+  font-weight: 600;
+}
