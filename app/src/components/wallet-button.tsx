@@ -72,7 +72,7 @@ export function WalletButton() {
   // La detección de wallets solo existe en el navegador: en el servidor y en la
   // hidratación se muestra el estado de carga para que el HTML coincida.
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
-  if (!mounted) return <span className="wallet-btn opacity-60">{t.loading}</span>;
+  if (!mounted) return <span className={`${buttonClasses("ghost", "sm")} opacity-60`}>{t.loading}</span>;
   return (
     <WalletReadyGate
       client={client}

@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
-import { Spectral, Azeret_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Martian_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
 import { Providers } from "./providers";
 import "./globals.css";
 
-// Spectral: la voz del vidrio tallado (display + texto).
-const spectral = Spectral({
-  variable: "--font-spectral",
+// Bricolage Grotesque: display y texto (variable, con ejes de tamaño óptico y ancho).
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  axes: ["opsz", "wdth"],
+  display: "swap",
 });
 
-// Azeret Mono: números tabulares a escala de titular, marcas de medición.
-const azeret = Azeret_Mono({
-  variable: "--font-azeret",
+// Martian Mono: números tabulares, etiquetas y medición.
+const martian = Martian_Mono({
+  variable: "--font-martian",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`h-full antialiased ${spectral.variable} ${azeret.variable}`}>
+    <html lang="es" className={`h-full antialiased ${bricolage.variable} ${martian.variable}`}>
       <body className="min-h-full flex flex-col">
         <Providers>
           <AppHeader />
