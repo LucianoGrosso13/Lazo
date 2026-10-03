@@ -304,7 +304,64 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       return { value: toPublicPlan(plan), signature };
     },
 
-    payInstallment: pending("payInstallment"),
+    async payInstallment(student, planId): Promise<TxResult<Plan>> {
+      refresh();
+      const plan = state.plans.find(
+        (p) => p.id === planId && p.student === student,
+      );
+      if (!plan) throw new CuotasError("not_found", `plan ${planId}`);
+      const inst = plan.installments.find((i) => !i.paidAt && !i.chargedAt);
+      if (!inst) {
+        throw new CuotasError("nothing_due", `plan ${planId} sin cuotas impagas`);
+      }
+
+      const at = now(state);
+      inst.paidAt = at;
+      inst.status = "Paid";
+      inst.signature = fakeSignature();
+      const paid = inst.amount + inst.penalty;
+
+      // El repago entra al vault: baja el crédito pendiente por el principal
+      // y sube lo disponible por lo que efectivamente entró (con punitorio).
+      state.pool.events.push({
+        kind: "Repayment",
+        amount: paid,
+        at,
+        signature: inst.signature,
+        planId,
+      });
+      state.pool.outstandingCredit -= inst.amount;
+      state.pool.available += paid;
+      state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+
+      const rep = state.reputations[student];
+      rep.activeExposure = Math.max(0, rep.activeExposure - inst.amount);
+      activity({ kind: "InstallmentPaid", student, planId, amount: paid });
+
+      const allResolved = plan.installments.every(
+        (i) => i.paidAt !== undefined || i.chargedAt !== undefined,
+      );
+      if (allResolved) {
+        if (plan.status !== "Recovered") plan.status = "Settled";
+        // Sube de escalón solo si el plan cuenta (financiado ≥ mínimo y sin
+        // pasar la gracia). Al saldarlo via cobro al fiador no sube.
+        if (plan.counts) {
+          rep.plansCompleted += 1;
+          if (rep.tier < 3) {
+            rep.tier = (rep.tier + 1) as Reputation["tier"];
+            activity({ kind: "TierUp", student, planId });
+          }
+        }
+      } else if (plan.status === "Late") {
+        const anyLate = plan.installments.some(
+          (i) => !i.paidAt && !i.chargedAt && i.status === "Late",
+        );
+        if (!anyLate) plan.status = "Active";
+      }
+
+      commit();
+      return { value: toPublicPlan(plan), signature: inst.signature };
+    },
 
     async registerGuarantee(args): Promise<TxResult<Guarantee>> {
       refresh();
