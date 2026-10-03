@@ -227,7 +227,82 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       return { value: clone(state.reputations[student]), signature: fakeSignature() };
     },
 
-    openPlan: pending("openPlan"),
+    async openPlan(args): Promise<TxResult<Plan>> {
+      refresh();
+      const merchant = state.merchants[args.merchant];
+      if (!merchant) {
+        throw new CuotasError("not_found", `comercio ${args.merchant}`);
+      }
+      if (ensureStudent(state, args.student)) commit();
+      const quote = computeQuote(state, args.price, args.student);
+      if (!quote.eligible) {
+        throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
+      }
+
+      const at = now(state);
+      const signature = fakeSignature();
+      const day = state.config.secondsPerDay;
+      const plan: MockPlan = {
+        id: `plan-${++state.planSeq}`,
+        student: args.student,
+        merchant: args.merchant,
+        productId: args.productId,
+        price: args.price,
+        downPayment: quote.downPayment,
+        financed: quote.financed,
+        merchantFee: quote.merchantFee,
+        installments: quote.installments.map((amount, index) => ({
+          index,
+          amount,
+          dueAt: at + (index + 1) * 30 * day,
+          penalty: 0,
+          status: "Upcoming",
+        })),
+        openedAt: at,
+        status: "Active",
+        counts: quote.financed >= state.config.minFinancedToCount,
+        signature,
+      };
+      state.plans.push(plan);
+
+      // El comercio cobra al instante: anticipo del estudiante + adelanto
+      // del pool, menos la comisión sobre lo financiado.
+      merchant.settlementBalance += quote.merchantReceives;
+      merchant.plansCount += 1;
+      merchant.sales.push({
+        planId: plan.id,
+        price: args.price,
+        downPayment: quote.downPayment,
+        financed: quote.financed,
+        fee: quote.merchantFee,
+        received: quote.merchantReceives,
+        at,
+        signature,
+      });
+
+      const advance = quote.financed - quote.merchantFee;
+      state.pool.events.push({
+        kind: "Advance",
+        amount: advance,
+        at,
+        signature,
+        planId: plan.id,
+      });
+      state.pool.outstandingCredit += quote.financed;
+      state.pool.accruedFees += quote.merchantFee;
+      state.pool.available -= advance;
+      state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+
+      state.reputations[args.student].activeExposure += quote.financed;
+      activity({
+        kind: "PlanOpened",
+        student: args.student,
+        planId: plan.id,
+        amount: args.price,
+      });
+      commit();
+      return { value: toPublicPlan(plan), signature };
+    },
 
     payInstallment: pending("payInstallment"),
 
