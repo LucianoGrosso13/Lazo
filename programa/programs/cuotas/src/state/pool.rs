@@ -22,12 +22,14 @@ impl Tranche {
 
 /// Two-tranche liquidity pool, PDA ["pool", usdc_mint].
 ///
-/// Accounting invariant:
-///   vault.amount + outstanding_credit == junior_capital + senior_capital + accrued_fees
+/// Recognized accounting invariant (without unsolicited token donations):
+///   vault.amount + outstanding_credit == junior_capital + senior_capital
 ///
 /// - `*_capital` is the NAV attributed to each tranche's shares.
 /// - `outstanding_credit` is capital advanced to plans that has not been repaid.
-/// - `accrued_fees` is owed to the treasury and is NOT part of LP NAV.
+/// - `accrued_fees` is cumulative recognized gain already included in LP NAV,
+///   not a treasury liability or a liquidity reserve.
+/// - Unsolicited token donations remain unallocated surplus, outside LP NAV.
 #[account]
 #[derive(InitSpace)]
 pub struct Pool {
@@ -85,7 +87,7 @@ impl Pool {
     }
 
     /// Shares minted for `amount` deposited into a tranche.
-    /// Floored in favor of the pool. Bootstrap (zero shares AND zero capital)
+    /// Exact whole shares are required. Bootstrap (zero shares AND zero capital)
     /// mints 1:1 against the deposit. Capital without shares is orphaned NAV
     /// that must not be gifted to the next depositor; shares without capital
     /// is a wiped tranche that cannot take deposits at a meaningful price.
@@ -100,10 +102,19 @@ impl Pool {
             return Ok(amount);
         }
         require!(tranche_capital > 0, CuotasError::TrancheWipedOut);
-        let shares = (amount as u128)
-            .checked_mul(tranche_shares as u128)
-            .ok_or(CuotasError::MathOverflow)?
-            .checked_div(tranche_capital as u128)
+        let capital = u128::from(tranche_capital);
+        let numerator = u128::from(amount)
+            .checked_mul(u128::from(tranche_shares))
+            .ok_or(CuotasError::MathOverflow)?;
+        require!(
+            numerator
+                .checked_rem(capital)
+                .ok_or(CuotasError::MathOverflow)?
+                == 0,
+            CuotasError::UnrepresentableDeposit
+        );
+        let shares = numerator
+            .checked_div(capital)
             .ok_or(CuotasError::MathOverflow)?;
         let shares = u64::try_from(shares).map_err(|_| CuotasError::MathOverflow)?;
         require!(shares > 0, CuotasError::DepositTooSmall);
@@ -131,26 +142,22 @@ impl Pool {
 
     /// Book a deposit: capital += amount, shares += shares_minted.
     pub fn book_deposit(&mut self, tranche: Tranche, amount: u64, shares: u64) -> Result<()> {
+        let capital = self
+            .tranche_capital(tranche)
+            .checked_add(amount)
+            .ok_or(CuotasError::MathOverflow)?;
+        let shares = self
+            .tranche_shares(tranche)
+            .checked_add(shares)
+            .ok_or(CuotasError::MathOverflow)?;
         match tranche {
             Tranche::Junior => {
-                self.junior_capital = self
-                    .junior_capital
-                    .checked_add(amount)
-                    .ok_or(CuotasError::MathOverflow)?;
-                self.junior_shares = self
-                    .junior_shares
-                    .checked_add(shares)
-                    .ok_or(CuotasError::MathOverflow)?;
+                self.junior_capital = capital;
+                self.junior_shares = shares;
             }
             Tranche::Senior => {
-                self.senior_capital = self
-                    .senior_capital
-                    .checked_add(amount)
-                    .ok_or(CuotasError::MathOverflow)?;
-                self.senior_shares = self
-                    .senior_shares
-                    .checked_add(shares)
-                    .ok_or(CuotasError::MathOverflow)?;
+                self.senior_capital = capital;
+                self.senior_shares = shares;
             }
         }
         Ok(())
@@ -158,29 +165,88 @@ impl Pool {
 
     /// Book a withdrawal: capital -= amount, shares -= shares_burned.
     pub fn book_withdraw(&mut self, tranche: Tranche, amount: u64, shares: u64) -> Result<()> {
+        let capital = self
+            .tranche_capital(tranche)
+            .checked_sub(amount)
+            .ok_or(CuotasError::MathOverflow)?;
+        let shares = self
+            .tranche_shares(tranche)
+            .checked_sub(shares)
+            .ok_or(CuotasError::MathOverflow)?;
         match tranche {
             Tranche::Junior => {
-                self.junior_capital = self
-                    .junior_capital
-                    .checked_sub(amount)
-                    .ok_or(CuotasError::MathOverflow)?;
-                self.junior_shares = self
-                    .junior_shares
-                    .checked_sub(shares)
-                    .ok_or(CuotasError::MathOverflow)?;
+                self.junior_capital = capital;
+                self.junior_shares = shares;
             }
             Tranche::Senior => {
-                self.senior_capital = self
-                    .senior_capital
-                    .checked_sub(amount)
-                    .ok_or(CuotasError::MathOverflow)?;
-                self.senior_shares = self
-                    .senior_shares
-                    .checked_sub(shares)
-                    .ok_or(CuotasError::MathOverflow)?;
+                self.senior_capital = capital;
+                self.senior_shares = shares;
             }
         }
         Ok(())
+    }
+
+    pub fn gain_allocation(
+        junior_capital: u64,
+        senior_capital: u64,
+        gain: u64,
+    ) -> Result<GainBreakdown> {
+        require!(gain > 0, CuotasError::ZeroAmount);
+        let total = u128::from(junior_capital)
+            .checked_add(u128::from(senior_capital))
+            .ok_or(CuotasError::MathOverflow)?;
+        require!(total > 0, CuotasError::NoCapitalForGain);
+        let gain = u128::from(gain);
+        let junior_gain = gain
+            .checked_mul(u128::from(junior_capital))
+            .ok_or(CuotasError::MathOverflow)?
+            .checked_div(total)
+            .ok_or(CuotasError::MathOverflow)?;
+        let senior_floor = gain
+            .checked_mul(u128::from(senior_capital))
+            .ok_or(CuotasError::MathOverflow)?
+            .checked_div(total)
+            .ok_or(CuotasError::MathOverflow)?;
+        let remainder = gain
+            .checked_sub(junior_gain)
+            .and_then(|remaining| remaining.checked_sub(senior_floor))
+            .ok_or(CuotasError::MathOverflow)?;
+        let senior_gain = senior_floor
+            .checked_add(remainder)
+            .ok_or(CuotasError::MathOverflow)?;
+        require!(
+            junior_gain.checked_add(senior_gain) == Some(gain),
+            CuotasError::MathOverflow
+        );
+        Ok(GainBreakdown {
+            junior_gain: u64::try_from(junior_gain).map_err(|_| CuotasError::MathOverflow)?,
+            senior_gain: u64::try_from(senior_gain).map_err(|_| CuotasError::MathOverflow)?,
+        })
+    }
+
+    pub fn book_gain(&mut self, gain: u64) -> Result<GainBreakdown> {
+        let allocation = Self::gain_allocation(self.junior_capital, self.senior_capital, gain)?;
+        require!(
+            (self.junior_capital == 0 || self.junior_shares > 0)
+                && (self.senior_capital == 0 || self.senior_shares > 0),
+            CuotasError::OrphanedCapital
+        );
+        let junior_capital = self
+            .junior_capital
+            .checked_add(allocation.junior_gain)
+            .ok_or(CuotasError::MathOverflow)?;
+        let senior_capital = self
+            .senior_capital
+            .checked_add(allocation.senior_gain)
+            .ok_or(CuotasError::MathOverflow)?;
+        let accrued_fees = self
+            .accrued_fees
+            .checked_add(gain)
+            .ok_or(CuotasError::MathOverflow)?;
+        self.junior_capital = junior_capital;
+        self.senior_capital = senior_capital;
+        self.accrued_fees = accrued_fees;
+        Ok(allocation)
     }
 
     /// Apply a realized loss of `amount`, cascading junior-first and senior
@@ -215,6 +281,11 @@ impl Pool {
     }
 }
 
+pub struct GainBreakdown {
+    pub junior_gain: u64,
+    pub senior_gain: u64,
+}
+
 pub struct LossBreakdown {
     pub junior_hit: u64,
     pub senior_hit: u64,
@@ -224,6 +295,16 @@ pub struct LossBreakdown {
 mod tests {
     use super::*;
     use anchor_lang::error::Error;
+
+    trait TryToVec {
+        fn try_to_vec(&self) -> std::io::Result<Vec<u8>>;
+    }
+
+    impl<T: anchor_lang::AnchorSerialize> TryToVec for T {
+        fn try_to_vec(&self) -> std::io::Result<Vec<u8>> {
+            anchor_lang::prelude::borsh::to_vec(self)
+        }
+    }
 
     fn assert_err<T>(res: Result<T>, expected: CuotasError) {
         match res {
@@ -270,11 +351,29 @@ mod tests {
     }
 
     #[test]
-    fn deposit_floors_and_rejects_zero_share_mints() {
-        // capital >> shares: small deposit yields 0 shares -> rejected
+    fn deposit_rejects_fractional_share_mints() {
+        // capital >> shares: a fractional-share deposit is rejected
         assert_err(
             Pool::shares_for_deposit(1_000_000_000, 10, 100),
-            CuotasError::DepositTooSmall,
+            CuotasError::UnrepresentableDeposit,
+        );
+    }
+
+    #[test]
+    fn deposit_rejects_external_burn_inflation() {
+        let mut pool = empty_pool();
+        pool.book_deposit(Tranche::Junior, 1_000_000_000, 1_000_000_000)
+            .unwrap();
+        pool.reconcile_shares(Tranche::Junior, 1).unwrap();
+        let before = pool.try_to_vec().unwrap();
+        assert_err(
+            Pool::shares_for_deposit(pool.junior_capital, pool.junior_shares, 1_500_000_000),
+            CuotasError::UnrepresentableDeposit,
+        );
+        assert_eq!(pool.try_to_vec().unwrap(), before);
+        assert_eq!(
+            Pool::amount_for_withdraw(pool.junior_capital, pool.junior_shares, 1).unwrap(),
+            1_000_000_000
         );
     }
 
@@ -390,5 +489,167 @@ mod tests {
         assert_eq!(pool.tranche_capital(Tranche::Junior), 11);
         assert_eq!(pool.tranche_shares(Tranche::Junior), 22);
         assert_eq!(pool.tranche_capital(Tranche::Senior), 0);
+    }
+
+    #[test]
+    fn deposit_accepts_only_exact_amount_increments() {
+        for amount in 1..=12 {
+            if amount % 3 == 0 {
+                assert_eq!(
+                    Pool::shares_for_deposit(6, 4, amount).unwrap(),
+                    amount / 3 * 2
+                );
+            } else {
+                assert_err(
+                    Pool::shares_for_deposit(6, 4, amount),
+                    CuotasError::UnrepresentableDeposit,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn deposit_checks_wide_products_and_narrowing() {
+        assert_eq!(
+            Pool::shares_for_deposit(u64::MAX, u64::MAX, u64::MAX).unwrap(),
+            u64::MAX
+        );
+        assert_err(
+            Pool::shares_for_deposit(1, u64::MAX, u64::MAX),
+            CuotasError::MathOverflow,
+        );
+    }
+
+    #[test]
+    fn booking_failures_leave_host_state_unchanged() {
+        for tranche in [Tranche::Junior, Tranche::Senior] {
+            let mut pool = empty_pool();
+            pool.book_deposit(tranche, 1, u64::MAX).unwrap();
+            let before = pool.try_to_vec().unwrap();
+            assert_err(pool.book_deposit(tranche, 1, 1), CuotasError::MathOverflow);
+            assert_eq!(pool.try_to_vec().unwrap(), before);
+            let mut pool = empty_pool();
+            pool.book_deposit(tranche, u64::MAX, 1).unwrap();
+            let before = pool.try_to_vec().unwrap();
+            assert_err(pool.book_deposit(tranche, 1, 1), CuotasError::MathOverflow);
+            assert_eq!(pool.try_to_vec().unwrap(), before);
+            assert_err(pool.book_withdraw(tranche, 1, 2), CuotasError::MathOverflow);
+            assert_eq!(pool.try_to_vec().unwrap(), before);
+        }
+    }
+
+    #[test]
+    fn gains_are_proportional_with_senior_receiving_integer_remainder() {
+        for (junior, senior, gain, expected) in [
+            (200, 800, 100, (20, 80)),
+            (1, 2, 2, (0, 2)),
+            (2, 1, 2, (1, 1)),
+            (0, 7, 9, (0, 9)),
+            (7, 0, 9, (9, 0)),
+            (
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                (u64::MAX / 2, u64::MAX / 2 + 1),
+            ),
+        ] {
+            let split = Pool::gain_allocation(junior, senior, gain).unwrap();
+            assert_eq!((split.junior_gain, split.senior_gain), expected);
+            assert_eq!(
+                u128::from(split.junior_gain) + u128::from(split.senior_gain),
+                u128::from(gain)
+            );
+        }
+    }
+
+    #[test]
+    fn gains_conserve_value_across_small_integer_inputs() {
+        for junior in 0..=8 {
+            for senior in 0..=8 {
+                if junior + senior == 0 {
+                    continue;
+                }
+                for gain in 1..=16 {
+                    let split = Pool::gain_allocation(junior, senior, gain).unwrap();
+                    assert_eq!(split.junior_gain + split.senior_gain, gain);
+                    assert_eq!(split.junior_gain, gain * junior / (junior + senior));
+                    let senior_floor = gain * senior / (junior + senior);
+                    assert!(
+                        split.senior_gain == senior_floor || split.senior_gain == senior_floor + 1
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn gains_reject_empty_capital_and_zero_amount() {
+        assert_err(
+            Pool::gain_allocation(0, 0, 1),
+            CuotasError::NoCapitalForGain,
+        );
+        assert_err(Pool::gain_allocation(1, 1, 0), CuotasError::ZeroAmount);
+        let mut pool = empty_pool();
+        let before = pool.try_to_vec().unwrap();
+        assert_err(pool.book_gain(1), CuotasError::NoCapitalForGain);
+        assert_eq!(pool.try_to_vec().unwrap(), before);
+    }
+
+    #[test]
+    fn gain_booking_counts_income_once_and_preserves_shares_and_credit() {
+        let mut pool = empty_pool();
+        pool.book_deposit(Tranche::Junior, 200, 100).unwrap();
+        pool.book_deposit(Tranche::Senior, 800, 400).unwrap();
+        pool.outstanding_credit = 500;
+        let gain = pool.book_gain(100).unwrap();
+        assert_eq!((gain.junior_gain, gain.senior_gain), (20, 80));
+        assert_eq!((pool.junior_capital, pool.senior_capital), (220, 880));
+        assert_eq!((pool.junior_shares, pool.senior_shares), (100, 400));
+        assert_eq!(pool.outstanding_credit, 500);
+        assert_eq!(pool.accrued_fees, 100);
+        let modeled_vault_after_income = 600_u64;
+        assert_eq!(
+            modeled_vault_after_income + pool.outstanding_credit,
+            pool.total_capital().unwrap()
+        );
+        pool.apply_loss(100).unwrap();
+        assert_eq!(pool.accrued_fees, 100);
+    }
+
+    #[test]
+    fn gain_booking_rejects_orphan_capital_without_host_mutation() {
+        for tranche in [Tranche::Junior, Tranche::Senior] {
+            let mut pool = empty_pool();
+            pool.book_deposit(tranche, 100, 100).unwrap();
+            pool.reconcile_shares(tranche, 0).unwrap();
+            let before = pool.try_to_vec().unwrap();
+            assert_err(pool.book_gain(10), CuotasError::OrphanedCapital);
+            assert_eq!(pool.try_to_vec().unwrap(), before);
+        }
+    }
+
+    #[test]
+    fn gain_does_not_revive_zero_nav_shares() {
+        let mut pool = empty_pool();
+        pool.junior_shares = 10;
+        pool.book_deposit(Tranche::Senior, 100, 100).unwrap();
+        pool.book_gain(10).unwrap();
+        assert_eq!((pool.junior_capital, pool.junior_shares), (0, 10));
+        assert_eq!((pool.senior_capital, pool.senior_shares), (110, 100));
+    }
+
+    #[test]
+    fn gain_overflow_never_partially_mutates_host_state() {
+        for (junior, senior, fees) in [(u64::MAX, 0, 0), (1, u64::MAX, 0), (2, 3, u64::MAX)] {
+            let mut pool = empty_pool();
+            pool.junior_capital = junior;
+            pool.senior_capital = senior;
+            pool.junior_shares = u64::from(junior > 0);
+            pool.senior_shares = u64::from(senior > 0);
+            pool.accrued_fees = fees;
+            let before = pool.try_to_vec().unwrap();
+            assert_err(pool.book_gain(5), CuotasError::MathOverflow);
+            assert_eq!(pool.try_to_vec().unwrap(), before);
+        }
     }
 }

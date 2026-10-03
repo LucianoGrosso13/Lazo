@@ -112,6 +112,10 @@ pub fn handle_keeper_update_guarantee(
     mandate_hash: [u8; 32],
 ) -> Result<()> {
     validate_guarantee_params(max_purchase, coverage_max, &mandate_hash)?;
+    require!(
+        mandate_hash != ctx.accounts.guarantee.mandate_hash,
+        CuotasError::MandateHashUnchanged
+    );
 
     let guarantee = &mut ctx.accounts.guarantee;
     guarantee.max_purchase = max_purchase;

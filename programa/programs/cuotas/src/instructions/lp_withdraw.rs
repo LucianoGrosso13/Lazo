@@ -4,7 +4,7 @@ use anchor_spl::token_interface::{
     burn, transfer_checked, Burn, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-use crate::constants::{CONFIG_SEED, POOL_SEED, VAULT_SEED};
+use crate::constants::{CONFIG_SEED, POOL_SEED, USDC_DECIMALS, VAULT_SEED};
 use crate::error::CuotasError;
 use crate::events::Withdrawn;
 use crate::state::{Pool, ProtocolConfig, Tranche};
@@ -26,7 +26,11 @@ pub struct LpWithdraw<'info> {
         bump = pool.bump,
     )]
     pub pool: Account<'info, Pool>,
-    #[account(constraint = usdc_mint.key() == config.usdc_mint @ CuotasError::InvalidUsdcMint)]
+    #[account(
+        constraint = usdc_mint.key() == config.usdc_mint @ CuotasError::InvalidUsdcMint,
+        mint::decimals = USDC_DECIMALS,
+        mint::token_program = token_program,
+    )]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Pool vault (PDA ["vault", pool]), source of the withdrawal.
     #[account(
@@ -35,6 +39,7 @@ pub struct LpWithdraw<'info> {
         bump,
         token::mint = usdc_mint,
         token::authority = pool,
+        token::token_program = token_program,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
     /// LP mint of the chosen tranche (PDA [tranche seed, pool]). Its live
@@ -43,6 +48,9 @@ pub struct LpWithdraw<'info> {
         mut,
         seeds = [tranche.lp_mint_seed(), pool.key().as_ref()],
         bump,
+        mint::authority = pool,
+        mint::decimals = USDC_DECIMALS,
+        mint::token_program = token_program,
     )]
     pub lp_mint: InterfaceAccount<'info, Mint>,
     /// Depositor USDC destination: canonical ATA (depositor, usdc_mint).
@@ -50,6 +58,7 @@ pub struct LpWithdraw<'info> {
         mut,
         token::mint = usdc_mint,
         token::authority = depositor,
+        token::token_program = token_program,
         constraint = depositor_usdc_ata.key()
             == get_associated_token_address_with_program_id(
                 &depositor.key(),
@@ -64,6 +73,7 @@ pub struct LpWithdraw<'info> {
         mut,
         token::mint = lp_mint,
         token::authority = depositor,
+        token::token_program = token_program,
         constraint = depositor_lp_ata.key()
             == get_associated_token_address_with_program_id(
                 &depositor.key(),
@@ -90,15 +100,10 @@ pub fn handle_lp_withdraw(ctx: Context<LpWithdraw>, tranche: Tranche, shares: u6
         shares,
     )?;
 
-    // LPs can only withdraw vault liquidity that is not owed to the treasury.
+    // LPs can withdraw actual vault liquidity; accrued_fees is informational.
     // Zero-amount withdrawals are allowed so holders can retire worthless or
     // dust shares — that is how a wiped tranche gets back to a clean slate.
-    let available = ctx
-        .accounts
-        .vault
-        .amount
-        .checked_sub(pool.accrued_fees)
-        .ok_or(CuotasError::MathOverflow)?;
+    let available = ctx.accounts.vault.amount;
     require!(amount <= available, CuotasError::InsufficientLiquidity);
 
     burn(

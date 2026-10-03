@@ -52,14 +52,15 @@ pub mod cuotas {
 
     /// Burn LP shares and withdraw USDC from the vault at the tranche NAV,
     /// reconciled with live mint supply before pricing. Limited to vault
-    /// liquidity not owed to the treasury. Zero-payout burns are allowed so
+    /// liquidity; accrued_fees is informational. Zero-payout burns are allowed so
     /// worthless shares can be retired. Allowed in Normal and WithdrawsOnly.
     pub fn lp_withdraw(ctx: Context<LpWithdraw>, tranche: Tranche, shares: u64) -> Result<()> {
         instructions::lp_withdraw::handle_lp_withdraw(ctx, tranche, shares)
     }
 
-    /// Apply a realized loss: moves `amount` USDC from the vault to the
-    /// treasury ATA (cash simulation) and reduces tranche capital junior-first.
+    /// PROVISIONAL cash-loss simulation: moves `amount` USDC from the vault
+    /// to the treasury ATA and reduces tranche capital junior-first.
+    /// Final cash-loss versus existing-credit write-off policy is pending.
     pub fn admin_apply_loss(ctx: Context<AdminApplyLoss>, amount: u64) -> Result<()> {
         instructions::admin_apply_loss::handle_admin_apply_loss(ctx, amount)
     }

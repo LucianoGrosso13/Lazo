@@ -50,4 +50,10 @@ pub enum CuotasError {
     NotUpgradeAuthority,
     #[msg("Math overflow")]
     MathOverflow,
+    #[msg("Deposit amount cannot be represented exactly by whole LP shares")]
+    UnrepresentableDeposit,
+    #[msg("Guarantee update requires a mandate hash different from the stored hash")]
+    MandateHashUnchanged,
+    #[msg("A gain cannot be allocated without positive tranche capital")]
+    NoCapitalForGain,
 }

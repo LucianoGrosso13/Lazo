@@ -48,7 +48,7 @@ pub struct ProtocolConfig {
     pub keeper: Pubkey,
     /// The devUSDC mint the whole protocol denominates in. Immutable after init.
     pub usdc_mint: Pubkey,
-    /// Destination of accrued merchant fees (set in a later instruction set).
+    /// Treasury destination for the provisional cash-loss simulation.
     pub treasury: Pubkey,
     /// Merchant fee in bps charged over the financed amount.
     pub fee_bps: u16,

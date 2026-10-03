@@ -9,14 +9,14 @@ use crate::error::CuotasError;
 use crate::events::LossApplied;
 use crate::state::{Pool, ProtocolConfig};
 
-/// Admin-only loss administration — the "cash simulation" accounting mode:
-/// `amount` USDC is actually moved out of the vault to the treasury ATA and
-/// tranche capital is reduced junior-first. `outstanding_credit` is left
-/// untouched, so the invariant
-/// `vault + outstanding_credit == junior + senior + accrued_fees` holds.
-/// If the business decides on a "credit write-off" mode instead (amount must
-/// be <= outstanding_credit and the vault stays put), only this handler
-/// changes — the waterfall in `Pool::apply_loss` stays the same.
+/// PROVISIONAL admin-only cash-loss simulation, pending the user's choice
+/// between cash loss and existing-credit write-off. `amount` USDC moves from
+/// the vault to the canonical treasury ATA; tranche capital falls junior-first
+/// and `outstanding_credit` is unchanged. Without unallocated donations,
+/// `vault + outstanding_credit == junior + senior`; `accrued_fees` is only
+/// cumulative information, not an additional treasury liability.
+/// An existing-credit write-off instead needs an outstanding-credit bound
+/// and reduction without moving vault tokens; it is not implemented here.
 #[derive(Accounts)]
 pub struct AdminApplyLoss<'info> {
     pub admin: Signer<'info>,

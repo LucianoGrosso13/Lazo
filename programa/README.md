@@ -1,150 +1,100 @@
 # cuotas — Anchor program
 
-Interest-free USDC installments ("Cuotas sin tarjeta") on Solana **devnet** for
-the Colosseum Crypto World's Fair hackathon. A student pays in fixed
-installments backed by a family guarantor; a two-tranche liquidity pool
-(junior = first-loss, senior = LP capital) advances the merchant settlement
-and absorbs losses junior-first; an on-chain reputation ladder unlocks better
-terms.
+Core of an interest-free installment prototype for Solana **devnet only** (the test network; no real money). The intended product uses a family guarantor, a two-tranche liquidity pool and an on-chain reputation ladder.
 
-**Status: core program only.** `open_plan`, installment payments,
-default/mora, recovery and keeper cranks are intentionally NOT implemented
-yet — they land in a later iteration. Nothing here is deployed: no program,
-no devUSDC mint, no transaction was ever signed or sent.
+**Status: core implementation, not a completed or deployed product.** No program has been deployed and no devUSDC mint exists. Loan origination, installments, defaults, recoveries and keeper cranks are out of scope. Final business acceptance of the loss and gain policies is still pending; passing technical checks does not resolve those decisions.
 
-- Program ID (declare_id): `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ`
-- Toolchain: Anchor CLI `1.2.0`, `anchor-lang/anchor-spl 1.2.0`,
-  Solana CLI `3.1.14`, platform-tools `v1.52`
-- Token model: `token_interface` (`InterfaceAccount<Mint/TokenAccount>`,
-  `Interface<TokenInterface>`) pinned explicitly to the **classic SPL Token**
-  program — devUSDC is a classic 6-decimals mint.
+- Declared build-time program ID: `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ` (not proof of a deployed account).
+- Intended devUSDC mint: **not created**; classic SPL Token, 6 decimals.
+- Toolchain: Anchor CLI and `anchor-lang`/`anchor-spl` `1.2.0`, Solana CLI `3.1.14`, Rust `1.89.0` for host checks.
+- Token accounts use `token_interface`; every token transfer uses `transfer_checked`. Only the classic SPL Token program is supported, not Token-2022.
 
-## Accounts (PDAs)
+## Safe local build and tests
+
+From the repository root:
+
+```sh
+cd programa
+NO_DNA=1 anchor build --arch v1
+cargo test -p cuotas --lib
+cargo test --manifest-path tests/Cargo.toml --no-fail-fast
+cargo fmt --all -- --check
+cargo clippy -p cuotas --all-targets -- -D warnings
+```
+
+These commands build and execute local host/LiteSVM tests; they do not deploy, start a network validator or submit network transactions. `--arch v1` selects SBPFv1 bytecode for the local LiteSVM harness; it is unrelated to the transaction message version. Run the SBF build serially: do not race another build using `programa/target`. The independent acceptance harness uses its own `tests/target` and loads `target/deploy/cuotas.so`.
+
+The `test` script in `Anchor.toml` contains the two Cargo test commands. Do **not** use plain `anchor test`: the provider is devnet and the command can attempt deployment. Generated artifacts are `target/deploy/cuotas.so`, `target/idl/cuotas.json` and `target/types/`. Verification must identify the exact source commit and SHA-256 of the artifact tested; prior or interim test results are not final acceptance. Instruction-level evidence is maintained separately in `TEST_REPORT.md`.
+
+## Accounts
 
 | Account | Seeds | Contents |
 |---|---|---|
-| `ProtocolConfig` | `["config"]` | admin, keeper, `usdc_mint` (immutable), treasury, `fee_bps`, `penalty_bps`, `grace_days`, `guarantor_charge_day`, `seconds_per_day`, `min_financed_to_count`, 4 guaranteed + 2 unguaranteed `TierParams`, `state`, `bump`. All business defaults live here — nothing is hardcoded in handlers. |
-| `Pool` | `["pool", usdc_mint]` | junior/senior `shares` + `capital`, `outstanding_credit`, `accrued_fees`, `bump`. |
-| vault | `["vault", pool]` | token account, mint = usdc_mint, authority = pool. |
-| junior LP mint | `["lp_junior", pool]` | mint authority = pool, 6 decimals. |
-| senior LP mint | `["lp_senior", pool]` | mint authority = pool, 6 decimals. |
-| `Merchant` | `["merchant", wallet]` | owner, canonical settlement ATA, active, plans_count. |
-| `Reputation` | `["reputation", student]` | tier, plans_completed, late_count, active_exposure. |
-| `Guarantee` | `["guarantee", student]` | max_purchase, coverage_max, mandate_hash, active, registered_at. |
+| `ProtocolConfig` | `["config"]` | admin, keeper, immutable usdc_mint, treasury, fee/penalty/timing parameters, minimum financed amount, guaranteed/unguaranteed tier tables, state and canonical bump |
+| `Pool` | `["pool", usdc_mint]` | junior/senior shares and capital, outstanding credit, informational accrued fees and bump |
+| Vault | `["vault", pool]` | devUSDC token account controlled by the pool |
+| Junior LP mint | `["lp_junior", pool]` | pool mint authority, 6 decimals |
+| Senior LP mint | `["lp_senior", pool]` | pool mint authority, 6 decimals |
+| `Merchant` | `["merchant", wallet]` | owner, canonical settlement ATA, active flag and plan count |
+| `Reputation` | `["reputation", student]` | tier, completed plans, late count, active exposure and bump |
+| `Guarantee` | `["guarantee", student]` | purchase/coverage caps, mandate hash, active flag, registration time and bump |
 
-Invariant: `vault.amount + outstanding_credit == junior_capital + senior_capital + accrued_fees`.
+LP tokens are receipts for a tranche's capital. An ATA is the canonical token account for an owner and mint. All business parameters come from `ProtocolConfig`, not hardcoded handler defaults.
 
-## Instructions
+## Instructions and authorization
 
-| ix | authority | state gate | notes |
+| Instruction | Authority | State gate | Behavior |
 |---|---|---|---|
-| `admin_init_config` | **program upgrade authority** (proven via program → ProgramData relation, not "first signer wins") | once (`init`) | validates params, pins usdc_mint (6 dec, classic SPL) |
-| `admin_update_config` | admin | any state | full replacement of params; never touches admin/usdc_mint/state |
-| `admin_set_state` | admin | any state | Normal / Halted / WithdrawsOnly — needed to un-pause |
-| `pool_init` | admin | Normal | creates pool + vault + both LP mints |
-| `lp_deposit(tranche, amount)` | depositor | Normal | transfer_checked in, LP shares out at tranche NAV |
-| `lp_withdraw(tranche, shares)` | depositor | Normal + WithdrawsOnly | burn shares, USDC out; zero-payout burns allowed |
-| `admin_apply_loss(amount)` | admin | any state | cash simulation: vault → treasury ATA; capital −junior-first |
-| `merchant_register` | admin | Normal | merchant wallet does NOT sign; settlement = canonical ATA |
-| `student_init_reputation` | student | Normal | self-service, tier 0 |
-| `keeper_register_guarantee` | keeper | Normal | `init` — cannot be recreated |
-| `keeper_update_guarantee` | keeper | Normal + `reputation.active_exposure == 0` | only re-activation path; requires fresh nonzero mandate_hash |
-| `keeper_revoke_guarantee` | keeper | **any state** | `active = false`, terms kept for audit |
+| `admin_init_config` | current program upgrade authority | once, using `init` | binds executable program and ProgramData; validates config and classic 6-decimal mint |
+| `admin_update_config` | admin | any | replaces parameters, not admin/mint/state |
+| `admin_set_state` | admin | any | Normal, Halted or WithdrawsOnly |
+| `pool_init` | admin | Normal | initializes pool, vault and both LP mints |
+| `lp_deposit(tranche, amount)` | depositor | Normal | reconciles canonical supply, requires exact shares before transfer/mint |
+| `lp_withdraw(tranche, shares)` | depositor | Normal or WithdrawsOnly | burns owned shares; pays no more than actual vault liquidity |
+| `admin_apply_loss(amount)` | admin | any | **PROVISIONAL** cash-loss simulation to the canonical treasury ATA |
+| `merchant_register` | admin | Normal | binds merchant to its canonical devUSDC settlement ATA |
+| `student_init_reputation` | student | Normal | creates tier-zero reputation |
+| `keeper_register_guarantee` | keeper | Normal | initializes one guarantee per student |
+| `keeper_update_guarantee` | keeper | Normal, no active exposure | requires a nonzero mandate hash different from the stored hash |
+| `keeper_revoke_guarantee` | keeper | any | clears active only; retains historical terms |
 
-## Build & test (safe — no deploys)
+Deposit and withdrawal validate canonical LP seeds, pool mint authority, decimals and classic token-program ownership explicitly. User token accounts must have the expected mint, owner and canonical ATA address.
 
-```sh
-# SBF artifact → target/deploy/cuotas.so
-# --arch v1 produces SBPFv1 bytecode: accepted by every LiteSVM/agave
-# runtime and deployable on devnet. Plain `anchor build` defaults to v3,
-# which LiteSVM's v1 program-runtime loader rejects.
-cd programa
-NO_DNA=1 anchor build --arch v1
+## Share pricing and external burns
 
-# host math unit tests (NAV, waterfall, reconcile, config validation)
-cargo test -p cuotas --lib
+Let `C` be the selected tranche's tracked capital, `S` its canonical LP mint supply and `A` a deposit, all in base units. Before pricing a deposit or withdrawal, reconcile recorded shares to live supply. A supply above the recorded count fails with `LpSupplyMismatch`. Partial external burns forfeit the burned claims to remaining holders; unsolicited token donations never enter tracked capital automatically.
 
-# independent LiteSVM acceptance suite (owned by the test worker)
-cargo test --manifest-path tests/Cargo.toml --no-fail-fast
+- Bootstrap mints 1:1 **only when C = S = 0**.
+- `C > 0, S = 0` fails with `OrphanedCapital`; new depositors cannot capture abandoned capital. No administrative orphan-recovery instruction is added.
+- `C = 0, S > 0` rejects deposits with `TrancheWipedOut`. Holders may withdraw their own valid shares for zero payout; recapitalization is possible only after all worthless claims are retired. Lost or uncooperative holders can prevent that cleanup.
+- For `C > 0, S > 0`, compute checked `u128` numerator `A * S`. Reject a nonzero remainder modulo `C` with `UnrepresentableDeposit`, **before transferring tokens or minting shares**. Then divide exactly, check `u64` narrowing and require positive shares. Capital/share booking is checked as well.
 
-# same two, via the anchor test script (never starts a validator, never deploys)
-# `anchor test` itself is NOT safe here — provider is devnet.
-```
+The exact deposit amount increment is **`C / gcd(C, S)` token base units**. This is intentionally restrictive: the increment may become large after losses or external burns, and no rounding tolerance, fee or hidden donation is accepted. The ABI remains `lp_deposit(tranche, amount)`.
 
-`cargo fmt --check` and `cargo clippy -p cuotas --all-targets` are clean.
+For example, after a sole depositor deposits 1,000,000,000 base units and burns all but one LP unit, a 1,500,000,000-unit victim deposit is rejected. Floor rounding would mint one LP unit and transfer 250,000,000 units of value to the incumbent; exact representability prevents that transfer. Withdrawals still round down, and withdrawing the entire live supply returns the entire tracked tranche capital subject to liquidity.
 
-## Design decisions where the brief was ambiguous
+## Gains and accounting
 
-1. **Bootstrap admin = upgrade authority.** `admin_init_config` requires the
-   signer's key to equal `program_data.upgrade_authority_address`, proven via
-   `program.programdata_address()`. A random first caller cannot steal the
-   singleton admin role.
-2. **`admin_apply_loss` = cash simulation.** The admin moves `amount` USDC out
-   of the vault into the treasury's canonical ATA and tranche capital is
-   reduced junior-first; `outstanding_credit` is untouched and the accounting
-   invariant holds at every step. Final "cash vs credit write-off" semantics
-   are a pending business decision — the waterfall helper
-   (`Pool::apply_loss`) is shared, so switching modes only touches the
-   handler's cash movement and a `amount <= outstanding_credit` bound.
-3. **LP supply reconciliation before pricing.** `lp_mint.supply` is synced
-   into `Pool.*_shares` before every deposit/withdraw: raw SPL burns by
-   holders forfeit their NAV claim to remaining holders; `supply > recorded`
-   is rejected as corruption (`LpSupplyMismatch`).
-4. **Degenerate tranche states.** Bootstrap 1:1 pricing requires BOTH
-   `shares == 0` and `capital == 0`. `capital > 0, shares == 0` is orphaned
-   NAV — deposits rejected (`OrphanedCapital`) so no one is gifted leftover
-   balance. `capital == 0, shares > 0` is a wiped tranche — deposits rejected
-   (`TrancheWipedOut`), withdrawals still allowed at zero payout so holders
-   retire worthless shares and the tranche can later recapitalize cleanly.
-5. **Guarantee lifecycle.** `init` makes the guarantee un-recreatable; update
-   rewrites terms and is the only re-activation path, but is Normal-gated,
-   requires a fresh nonzero `mandate_hash`, and is rejected while the
-   student's `reputation.active_exposure > 0` (the PDA is validated by seeds).
-   Revoke works in any state and preserves the terms for auditability.
-6. **Junior tranche is permissionless.** Anyone can deposit either tranche;
-   in practice the team seeds junior first-loss capital.
-7. **All NAV/share math is `u128` + checked ops**; no `saturating_*` in
-   accounting paths. LP withdraws are bounded by `vault - accrued_fees`
-   (credit already advanced is simply absent from the vault).
+The brief calls for gains proportional to tranche capital. `Pool::gain_allocation(J, S, gain)` is a pure Rust helper, not an instruction: it floors each capital-proportional allocation, then assigns the entire integer remainder to senior. Thus `deltaJ + deltaS == gain`; the remainder is at most one base unit. A zero-capital tranche receives no gain. Positive gain with zero total capital fails with `NoCapitalForGain`; zero gain fails with `ZeroAmount`.
 
-## Deployment — PENDING EXPLICIT APPROVAL
+`Pool::book_gain` computes both resulting capitals and the fee counter with checked arithmetic before changing any field. It rejects positive capital without recorded shares (`OrphanedCapital`) and fails without partial host mutation on overflow. Shares and outstanding credit are unchanged. A future caller must reconcile both canonical LP supplies and validate the backing asset increase in the same atomic instruction before booking recognized income; this core has no gain-recognition instruction or loan flow.
 
-Nothing is deployed. The steps below are prepared but **must not be run
-without an explicit go-ahead**; every transaction that signs or sends needs
-per-action approval. Devnet only — never mainnet.
+`accrued_fees` is a **cumulative informational counter of recognized gains already allocated to LP capital**, not an extra treasury payable or reserve. It starts at zero and no currently exposed instruction increases it. Losses and withdrawals do not reset or subtract this historical counter.
 
-```sh
-# 0) build artifact (see above)
-cd programa && NO_DNA=1 anchor build --arch v1
+Without unsolicited donations, recognized accounting is:
 
-# 1) create devUSDC (6 decimals, authority = deployer) — devnet faucet SOL first
-solana config set --url devnet
-spl-token create-token --decimals 6            # record <DEVUSDC_MINT>
-spl-token create-account <DEVUSDC_MINT>
+`vault.amount + outstanding_credit = junior_capital + senior_capital`
 
-# 2) deploy program (upgrade authority = deployer wallet — that wallet MUST
-#    also be the one to call admin_init_config afterwards)
-solana program deploy target/deploy/cuotas.so --program-id <KEYPAIR_JSON>
+Donations remain unallocated surplus, so actual assets may exceed tracked capital; there is no automatic surplus allocation. Withdrawals are bounded by `vault.amount`, not `vault.amount - accrued_fees`, and outstanding credit is not subtracted again because lent tokens are already absent from the vault. Gains must not be counted twice as both LP capital and a treasury liability.
 
-# 3) run admin_init_config via a small TS/Rust client (IDL: target/idl/cuotas.json)
-#    accounts: admin(=upgrade authority), program, program_data, config, usdc_mint
-# 4) run pool_init, seed junior capital, register keeper/merchants per runbook
-```
+## PROVISIONAL loss policy and pending decisions
 
-## Layout
+The current `admin_apply_loss` draft actually transfers vault tokens to the canonical treasury devUSDC ATA and reduces capital junior-first, leaving outstanding credit unchanged. It is a **cash-loss simulation**, not an existing-credit write-off, and remains subject to the user's explicit business decision. Its asset and capital changes match; insufficient vault funds roll the transaction back.
 
-```
-programs/cuotas/src/
-  lib.rs            entrypoint + instruction docs
-  constants.rs      PDA seeds, USDC_DECIMALS, BPS_DENOMINATOR
-  error.rs          CuotasError (6000+)
-  events.rs         emitted events
-  state/            ProtocolConfig+TierParams, Pool+Tranche, Merchant,
-                    Reputation, Guarantee (+ host unit tests)
-  instructions/     admin_config, admin_set_state, pool_init, lp_deposit,
-                    lp_withdraw, admin_apply_loss, merchant_register,
-                    student_init_reputation, keeper_guarantee
-tests/              LiteSVM acceptance suite — OWNED BY THE TEST WORKER
-target/idl/cuotas.json   generated IDL (from `anchor build`)
-target/types/            generated TS types
-```
+An existing-credit write-off would instead require sufficient outstanding credit, reduce that credit and capital, and leave vault tokens unchanged. It is not implemented. Proportional gains follow the brief, but final business acceptance is also pending. Neither local tests nor this README claim the complete brief is accepted.
+
+Junior deposits remain permissionless in this core; team-only junior funding is an operational demo convention, not an enforced allowlist. No real investors or mainnet operation are supported.
+
+## Deployment status
+
+**Not deployed; devUSDC not created.** Deployment, mint creation, airdrops and every network transaction require separate explicit approval. There are no deployment commands in the safe verification flow. This task provides local artifacts only; devnet deployment and final readiness remain pending.
