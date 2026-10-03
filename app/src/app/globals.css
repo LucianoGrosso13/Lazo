@@ -1,25 +1,561 @@
 @import "tailwindcss";
 
-/* Tokens provisorios: el ticket del sistema de diseño (Prisma) los reemplaza. */
-:root {
-  --background: #07060b;
-  --foreground: #f4f1ff;
+/* ==========================================================================
+   Prisma — sistema de diseño de Lazo
+   Una compra es un haz de luz blanca; el vidrio de Lazo lo parte en
+   anticipo + 3 cuotas. Luz blanca = precio; espectro = plata en movimiento;
+   gris = la alternativa. La luz se mueve, el vidrio no.
+   ========================================================================== */
+
+@theme {
+  /* Suelo: casi negro violáceo */
+  --color-abyss: #07060b;
+  --color-abyss-2: #0d0a17;
+  --color-abyss-3: #141026;
+
+  /* Espectro Solana: la dispersión del haz */
+  --color-violet: #9945ff;
+  --color-cyan: #00c2ff;
+  --color-green: #19fb9b;
+
+  /* Luz blanca: el precio, lo neutro */
+  --color-beam: #f4f1ff;
+
+  /* La alternativa (MP): gris sin espectro */
+  --color-ash: #8b92a9;
+  --color-ash-2: #565d74;
+
+  /* Tinta (AA sobre abyss y sobre vidrio) */
+  --color-ink: #f4f1ff;
+  --color-ink-2: #b9b3d6;
+  --color-ink-3: #9a93bb;
+  --color-ink-ghost: #6a6488;
+
+  /* Estado: se lee por marca y por color */
+  --color-crack: #ff5470;
+  --color-backlight: #c4a3ff;
+
+  /* Familias: Spectral (voz del vidrio tallado) + Azeret Mono (medición) */
+  --font-sans: var(--font-spectral), "Iowan Old Style", Georgia, serif;
+  --font-display: var(--font-spectral), "Iowan Old Style", Georgia, serif;
+  --font-num: var(--font-azeret), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: var(--font-azeret), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Movimiento: corrimientos de refracción, ease-out, sin rebotes */
+  --ease-beam: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Etiquetas de calibración */
+  --text-measure: 0.6875rem;
+  --text-measure--line-height: 1.1;
+  --text-measure--letter-spacing: 0.14em;
+
+  /* Tamaños de número de titular */
+  --text-figure: clamp(2.2rem, 8.5vw, 4.5rem);
+  --text-figure--line-height: 1;
+  --text-figure-lg: clamp(3.1rem, 12vw, 6rem);
+  --text-figure-lg--line-height: 1;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* ------------------------------ Base ------------------------------------ */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+  color: var(--color-ink);
+  background-color: var(--color-abyss);
+  background-image:
+    /* el haz de luz cae desde arriba, no es un blob: es el origen del haz */
+    radial-gradient(130% 52% at 50% -12%, rgb(153 69 255 / 0.17), transparent 62%),
+    radial-gradient(60% 40% at 8% 108%, rgb(0 194 255 / 0.05), transparent 70%),
+    radial-gradient(70% 45% at 100% 112%, rgb(153 69 255 / 0.06), transparent 72%);
+    background-attachment: fixed;
+    font-family: var(--font-sans);
+  }
+
+  /* Grano fino de vidrio sobre todo el mundo */
+  body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* -------------------- Superficies del navegador ----------------------- */
+
+  ::selection {
+    background: rgb(153 69 255 / 0.6);
+    color: var(--color-beam);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  input,
+  textarea,
+  [contenteditable] {
+    caret-color: var(--color-cyan);
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(153 69 255 / 0.4) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgb(153 69 255 / 0.5), rgb(0 194 255 / 0.4));
+    border: 3px solid var(--color-abyss);
+    border-radius: 8px;
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+/* ------------------------- Mundo: vidrio -------------------------------- */
+
+@layer components {
+
+/* El haz espectral que recorre filetes y cantos */
+.beam-line {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(153 69 255 / 0.9) 26%,
+    rgb(0 194 255 / 0.8) 52%,
+    rgb(25 251 155 / 0.9) 78%,
+    transparent
+  );
 }
 
-.wallet-btn {
-  border-radius: 9999px;
-  padding: 0.4rem 1rem;
-  background: linear-gradient(90deg, #9945ff, #19fb9b);
-  color: #07060b;
+/* Panel de vidrio grueso: canto visible, luz interior, refracción */
+.glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      165deg,
+      rgb(244 241 255 / 0.085),
+      rgb(244 241 255 / 0.015) 38%,
+      rgb(153 69 255 / 0.05)
+    ),
+    rgb(14 11 23 / 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.38),
+    inset 1px 0 0 rgb(244 241 255 / 0.05),
+    inset -1px 0 0 rgb(244 241 255 / 0.035),
+    inset 0 -1px 0 rgb(4 2 10 / 0.85),
+    0 1px 0 rgb(244 241 255 / 0.05),
+    0 18px 48px -16px rgb(0 0 0 / 0.8);
+}
+
+/* Canto inferior pulido: el borde del vidrio atrapa el espectro */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset-inline: 1px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(
+    90deg,
+    transparent 2%,
+    rgb(153 69 255 / 0.65) 22%,
+    rgb(0 194 255 / 0.55) 50%,
+    rgb(25 251 155 / 0.6) 78%,
+    transparent 98%
+  );
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+/* Brillo interior: luz que entra por el canto superior izquierdo */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(118deg, rgb(255 255 255 / 0.12), transparent 26%),
+    radial-gradient(120% 90% at 50% -20%, rgb(244 241 255 / 0.07), transparent 55%);
+  pointer-events: none;
+}
+
+/* Vidrio más hondo: header, menús, superficies sobre el mundo */
+.glass-deep {
+  background:
+    linear-gradient(
+      165deg,
+      rgb(244 241 255 / 0.07),
+      rgb(244 241 255 / 0.01) 40%,
+      rgb(153 69 255 / 0.04)
+    ),
+    rgb(10 8 18 / 0.72);
+  -webkit-backdrop-filter: blur(26px) saturate(1.5);
+  backdrop-filter: blur(26px) saturate(1.5);
+}
+
+/* Bloque de vidrio para héroes: aristas biseladas como prisma tallado */
+.slab-depth {
+  filter: drop-shadow(0 34px 60px rgb(0 0 0 / 0.72)) drop-shadow(0 0 1px rgb(244 241 255 / 0.2));
+}
+.slab {
+  position: relative;
+  isolation: isolate;
+  clip-path: polygon(
+    20px 0,
+    calc(100% - 20px) 0,
+    100% 20px,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    20px 100%,
+    0 calc(100% - 20px),
+    0 20px
+  );
+  background:
+    linear-gradient(
+      158deg,
+      rgb(244 241 255 / 0.11),
+      rgb(244 241 255 / 0.02) 34%,
+      rgb(153 69 255 / 0.07) 82%,
+      rgb(0 194 255 / 0.05)
+    ),
+    rgb(13 10 22 / 0.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  backdrop-filter: blur(28px) saturate(1.5);
+}
+/* Arista pulida superior + facetas de corte en las esquinas */
+.slab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(244 241 255 / 0.34), transparent 2px),
+    linear-gradient(135deg, rgb(244 241 255 / 0.3), transparent 30px) top left / 34px 34px no-repeat,
+    linear-gradient(225deg, rgb(244 241 255 / 0.18), transparent 30px) top right / 34px 34px no-repeat,
+    linear-gradient(118deg, rgb(255 255 255 / 0.1), transparent 30%);
+  pointer-events: none;
+}
+/* Canto inferior del bloque: espectro más cargado que el del panel */
+.slab::after {
+  content: "";
+  position: absolute;
+  inset-inline: 6%;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(153 69 255 / 0.8) 24%,
+    rgb(0 194 255 / 0.7) 50%,
+    rgb(25 251 155 / 0.8) 76%,
+    transparent
+  );
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+/* --------------------- Marcas de estado --------------------------------- */
+/* El estado es una marca en el vidrio: se distingue por forma y trama,
+   no solo por color. */
+
+.mark {
+  --mark-w: 2.125rem;
+  --mark-h: 1.125rem;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--mark-w);
+  height: var(--mark-h);
+  border-radius: 0.25rem;
+  vertical-align: -0.2em;
+}
+.mark-bar {
+  --mark-w: 100%;
+  --mark-h: 0.625rem;
+  display: block;
+  border-radius: 999px;
+}
+
+/* dim — cuota futura: contorno fantasma, casi no está */
+.mark-dim {
+  border: 1px dashed rgb(244 241 255 / 0.3);
+}
+
+/* lit — por vencer: núcleo caliente, brillo espectral */
+.mark-lit {
+  background: linear-gradient(180deg, #ffffff, rgb(0 194 255 / 0.95) 55%, rgb(153 69 255 / 0.9));
+  box-shadow:
+    0 0 12px rgb(0 194 255 / 0.6),
+    0 0 3px rgb(153 69 255 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.8);
+}
+
+/* etched — pagada: grabado rayado, hundida en el vidrio */
+.mark-etched {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgb(244 241 255 / 0.5) 0 1px,
+      transparent 1px 4.5px
+    ),
+    rgb(244 241 255 / 0.04);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.65),
+    inset 0 -0.5px 0 rgb(244 241 255 / 0.25);
+}
+
+/* cracked — vencida: vidrio oscurecido con rajadura dibujada */
+.mark-cracked {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='20' viewBox='0 0 36 20'%3E%3Cpath d='M5 20 L12 12 L10 6 L17 7 L15 0' stroke='%2322030c' stroke-width='1.3' fill='none'/%3E%3Cpath d='M12 12 L17 15 L23 14' stroke='%2322030c' stroke-width='1' fill='none'/%3E%3Cpath d='M5 20 L12 12 L10 6 L17 7 L15 0' stroke='%23ff8ba0' stroke-width='0.4' fill='none' transform='translate(0.8,0.4)'/%3E%3C/svg%3E") repeat-x center / auto 100%,
+    rgb(255 84 112 / 0.12);
+  border: 1px solid rgb(255 84 112 / 0.55);
+  box-shadow: inset 0 0 6px rgb(255 84 112 / 0.25);
+}
+
+/* refilled — recuperada por el fiador: la luz de atrás la llena */
+.mark-refilled {
+  background: radial-gradient(
+    90% 140% at 50% 115%,
+    rgb(196 163 255 / 0.9),
+    rgb(153 69 255 / 0.3) 72%,
+    rgb(153 69 255 / 0.08)
+  );
+  box-shadow:
+    0 3px 16px rgb(153 69 255 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.4);
+}
+
+/* ---------------------------- Controles ---------------------------------- */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.625rem 1.375rem;
   font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    box-shadow 0.55s var(--ease-beam),
+    background-color 0.55s var(--ease-beam),
+    color 0.55s var(--ease-beam),
+    opacity 0.3s var(--ease-beam);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.btn-sm {
+  padding: 0.4rem 0.95rem;
+  font-size: 0.8125rem;
+}
+
+/* Primario: el haz blanco mismo — lo agarrás para partirlo */
+.btn-primary {
+  color: #0b0716;
+  background: linear-gradient(180deg, #ffffff, #ddd7f2);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    inset 0 -1px 0 rgb(153 69 255 / 0.35),
+    0 10px 32px -10px rgb(153 69 255 / 0.5),
+    0 0 0 1px rgb(244 241 255 / 0.08);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset-inline: 14%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--color-violet), var(--color-cyan), var(--color-green), transparent);
+  opacity: 0.9;
+  transition: opacity 0.55s var(--ease-beam);
+}
+.btn-primary:not(:disabled):hover {
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    inset 0 -1px 0 rgb(153 69 255 / 0.4),
+    0 14px 42px -8px rgb(153 69 255 / 0.75),
+    0 0 22px rgb(0 194 255 / 0.28),
+    0 0 0 1px rgb(244 241 255 / 0.12);
+}
+.btn-primary:not(:disabled):hover::after {
+  opacity: 1;
+}
+
+/* Secundario: vidrio del mundo */
+.btn-secondary {
+  color: var(--color-ink);
+  border-radius: 999px;
+  background:
+    linear-gradient(165deg, rgb(244 241 255 / 0.1), rgb(244 241 255 / 0.03) 45%, rgb(153 69 255 / 0.06)),
+    rgb(14 11 23 / 0.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  backdrop-filter: blur(14px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.3),
+    inset 0 -1px 0 rgb(4 2 10 / 0.7),
+    0 10px 28px -12px rgb(0 0 0 / 0.7);
+}
+.btn-secondary:not(:disabled):hover {
+  background:
+    linear-gradient(165deg, rgb(244 241 255 / 0.16), rgb(244 241 255 / 0.05) 45%, rgb(153 69 255 / 0.1)),
+    rgb(17 13 28 / 0.55);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.4),
+    inset 0 -1px 0 rgb(4 2 10 / 0.7),
+    0 12px 34px -12px rgb(0 0 0 / 0.75),
+    0 0 18px rgb(153 69 255 / 0.22);
+}
+
+/* Ghost: una línea de luz, sin vidrio */
+.btn-ghost {
+  color: var(--color-ink-2);
+  padding-inline: 0.5rem;
+}
+.btn-ghost:not(:disabled):hover {
+  color: var(--color-beam);
+  text-decoration: underline;
+  text-decoration-color: rgb(0 194 255 / 0.7);
+}
+
+/* Chips: etiquetas de calibración grabadas */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  white-space: nowrap;
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: var(--text-measure--letter-spacing, 0.14em);
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+  background: rgb(244 241 255 / 0.045);
+  border: 1px solid rgb(244 241 255 / 0.14);
+  box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.12);
+  transition:
+    color 0.45s var(--ease-beam),
+    border-color 0.45s var(--ease-beam),
+    box-shadow 0.45s var(--ease-beam),
+    background-color 0.45s var(--ease-beam);
+}
+button.chip {
+  cursor: pointer;
+}
+.chip[data-on="true"],
+.chip[aria-pressed="true"] {
+  color: var(--color-beam);
+  border-color: rgb(0 194 255 / 0.65);
+  background: rgb(0 194 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.2),
+    0 0 14px rgb(0 194 255 / 0.28);
+}
+
+/* Pista de vidrio para controles segmentados */
+.segtrack {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgb(4 2 10 / 0.55);
+  border: 1px solid rgb(244 241 255 / 0.09);
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.6),
+    inset 0 -0.5px 0 rgb(244 241 255 / 0.08);
+}
+
+/* Etiqueta "referencia": cifras de terceros, declaradas */
+.ref-tag {
+  display: inline-block;
+  font-family: var(--font-num);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  border: 1px dashed rgb(154 147 187 / 0.5);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+  vertical-align: 0.15em;
+}
+
+/* Tooltip del badge devnet */
+.tip {
+  position: relative;
+}
+.tip-panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  width: 15.5rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-ink-2);
+  text-transform: none;
+  letter-spacing: normal;
+  text-align: left;
+  opacity: 0;
+  translate: 0 -4px;
+  pointer-events: none;
+  transition:
+    opacity 0.4s var(--ease-beam),
+    translate 0.4s var(--ease-beam);
+  z-index: 50;
+}
+.tip:hover .tip-panel,
+.tip:focus-visible .tip-panel,
+.tip:focus-within .tip-panel {
+  opacity: 1;
+  translate: 0 0;
+}
+}
+
+/* --------------------------- Movimiento ---------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
