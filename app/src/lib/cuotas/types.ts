@@ -59,7 +59,7 @@ export interface Guarantee {
   mandateHash: string;
   active: boolean;
   registeredAt: UnixSeconds;
-  /** Datos de presentación que viven off-chain (ej. "Visa •••• 4242", "Mamá"). */
+  /** Datos de presentación que viven off-chain (ej. "Visa •••• 4242", "Fiador de ejemplo"). */
   display?: { guarantorName?: string; cardLabel?: string };
 }
 
