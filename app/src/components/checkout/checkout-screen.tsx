@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
@@ -32,6 +32,8 @@ import { GlassPanel } from "@/components/ui/glass";
 import { BigNumber } from "@/components/ui/big-number";
 import { ReferenceTag } from "@/components/ui/badges";
 import { Breakdown, type BreakdownData, type WalletStatus } from "./breakdown";
+import { ConfirmPanel } from "./confirm-panel";
+import { ConfirmSuccess } from "./confirm-success";
 import styles from "./checkout.module.css";
 
 const noopSubscribe = () => () => {};
@@ -142,6 +144,41 @@ export function CheckoutScreen({
       ]
     : [];
 
+  // Flujo del panel: desglose → confirmación → éxito.
+  const [step, setStep] = useState<"review" | "confirm" | "success">("review");
+  const [opening, setOpening] = useState(false);
+  const [signError, setSignError] = useState<CuotasError | null>(null);
+  const [opened, setOpened] = useState<{ plan: Plan; signature: string } | null>(null);
+
+  // Si cambia la wallet, el flujo vuelve al desglose.
+  const [prevWallet, setPrevWallet] = useState(wallet);
+  if (prevWallet !== wallet) {
+    setPrevWallet(wallet);
+    setStep("review");
+    setOpened(null);
+    setSignError(null);
+  }
+
+  const sign = async () => {
+    if (!wallet || opening) return;
+    setOpening(true);
+    setSignError(null);
+    try {
+      const res = await getCuotas().openPlan({
+        student: wallet,
+        merchant: DEMO_MERCHANT,
+        price: product.price,
+        productId: product.id,
+      });
+      setOpened({ plan: res.value, signature: res.signature });
+      setStep("success");
+    } catch (e) {
+      setSignError(e instanceof CuotasError ? e : new CuotasError("not_found"));
+    } finally {
+      setOpening(false);
+    }
+  };
+
   const cracked = walletStatus === "connected" && !!mine && !mine.quote.eligible;
   const mpTotal = Math.round(product.price * (1 + REFERENCE.mpInstallmentMarkup));
   const lazoTotal = data?.total ?? product.price;
@@ -177,87 +214,115 @@ export function CheckoutScreen({
           </div>
         </header>
 
-        <div className={styles.grid}>
-          <div className={styles.stageCol}>
-            {data ? (
-              <div className={styles.stageCrop}>
-                <div className={styles.stageWide}>
-                  <PrismStage
-                    inputLabel={t.price}
-                    inputValue={`US$ ${fmt(product.price, 0)}`}
-                    bands={bands}
-                    cracked={cracked}
-                    ariaLabel={t.stageAria(
-                      fmt(product.price, 0),
-                      fmt(data.downPayment),
-                      fmt(data.installments[0] ?? 0),
-                    )}
+        {step === "success" && opened ? (
+          <div className={styles.enter}>
+            <ConfirmSuccess
+              plan={opened.plan}
+              signature={opened.signature}
+              merchantName={base?.merchant.name ?? t.confirm.merchantFallback}
+            />
+          </div>
+        ) : (
+          <>
+            <div className={styles.grid}>
+              <div className={styles.stageCol}>
+                {data ? (
+                  <div className={styles.stageCrop}>
+                    <div className={styles.stageWide}>
+                      <PrismStage
+                        inputLabel={t.price}
+                        inputValue={`US$ ${fmt(product.price, 0)}`}
+                        bands={bands}
+                        cracked={cracked}
+                        ariaLabel={t.stageAria(
+                          fmt(product.price, 0),
+                          fmt(data.downPayment),
+                          fmt(data.installments[0] ?? 0),
+                        )}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.stageSkeleton} />
+                )}
+                <p className={styles.stageNote}>{t.demoNote}</p>
+              </div>
+
+              {step === "confirm" && mine ? (
+                <div className={styles.enter}>
+                  <ConfirmPanel
+                    quote={mine.quote}
+                    merchant={base?.merchant}
+                    clock={base?.clock}
+                    opening={opening}
+                    error={signError}
+                    onBack={() => {
+                      setStep("review");
+                      setSignError(null);
+                    }}
+                    onSign={sign}
                   />
                 </div>
-              </div>
-            ) : (
-              <div className={styles.stageSkeleton} />
-            )}
-            <p className={styles.stageNote}>{t.demoNote}</p>
-          </div>
-
-          {data ? (
-            <Breakdown
-              data={data}
-              guarantee={mine?.guarantee ?? null}
-              clock={base?.clock}
-              config={config}
-              walletStatus={walletStatus}
-            />
-          ) : (
-            <GlassPanel className={styles.panel} aria-busy>
-              <div className={styles.sk} style={{ height: "1.1rem", width: "42%" }} />
-              <div className={styles.sk} style={{ height: "0.85rem" }} />
-              <div className={styles.sk} style={{ height: "0.85rem" }} />
-              <div className={styles.sk} style={{ height: "0.85rem", width: "70%" }} />
-              <div className={styles.sk} style={{ height: "2.4rem" }} />
-            </GlassPanel>
-          )}
-        </div>
-
-        <section className={styles.compare} aria-label={t.compareTitle}>
-          <h2 className={styles.compareTitle}>{t.compareTitle}</h2>
-          <div className={styles.compareRows}>
-            <div className={styles.compareRow}>
-              <span className={styles.compareWho}>{t.lazo}</span>
-              <span className={styles.compareTrack} aria-hidden>
-                <span
-                  className={styles.beamLazo}
-                  style={{ width: `${(lazoTotal / mpTotal) * 100}%` }}
+              ) : data ? (
+                <Breakdown
+                  data={data}
+                  guarantee={mine?.guarantee ?? null}
+                  clock={base?.clock}
+                  config={config}
+                  walletStatus={walletStatus}
+                  onConfirm={mine ? () => setStep("confirm") : undefined}
                 />
-              </span>
-              <span className={styles.compareNum}>
-                US$ {fmt(lazoTotal, 0)} <small>· {t.interestFree}</small>
-              </span>
+              ) : (
+                <GlassPanel className={styles.panel} aria-busy>
+                  <div className={styles.sk} style={{ height: "1.1rem", width: "42%" }} />
+                  <div className={styles.sk} style={{ height: "0.85rem" }} />
+                  <div className={styles.sk} style={{ height: "0.85rem" }} />
+                  <div className={styles.sk} style={{ height: "0.85rem", width: "70%" }} />
+                  <div className={styles.sk} style={{ height: "2.4rem" }} />
+                </GlassPanel>
+              )}
             </div>
-            <div className={styles.compareRow}>
-              <span className={styles.compareWho}>{t.mp}</span>
-              <span className={styles.compareTrack} aria-hidden>
-                <span className={styles.beamAlt} />
-              </span>
-              <span className={styles.compareNum}>
-                ~US$ {fmt(mpTotal, 0)}{" "}
-                <small>
-                  <ReferenceTag>{t.reference}</ReferenceTag>
-                </small>
-              </span>
-            </div>
-          </div>
-          <p className={styles.savings}>
-            {t.savingsLead}{" "}
-            <BigNumber
-              amount={savings}
-              size="lg"
-              decimals={0}
-              className={styles.savingsNum}
-            />
-          </p>
-        </section>
+
+            <section className={styles.compare} aria-label={t.compareTitle}>
+              <h2 className={styles.compareTitle}>{t.compareTitle}</h2>
+              <div className={styles.compareRows}>
+                <div className={styles.compareRow}>
+                  <span className={styles.compareWho}>{t.lazo}</span>
+                  <span className={styles.compareTrack} aria-hidden>
+                    <span
+                      className={styles.beamLazo}
+                      style={{ width: `${(lazoTotal / mpTotal) * 100}%` }}
+                    />
+                  </span>
+                  <span className={styles.compareNum}>
+                    US$ {fmt(lazoTotal, 0)} <small>· {t.interestFree}</small>
+                  </span>
+                </div>
+                <div className={styles.compareRow}>
+                  <span className={styles.compareWho}>{t.mp}</span>
+                  <span className={styles.compareTrack} aria-hidden>
+                    <span className={styles.beamAlt} />
+                  </span>
+                  <span className={styles.compareNum}>
+                    ~US$ {fmt(mpTotal, 0)}{" "}
+                    <small>
+                      <ReferenceTag>{t.reference}</ReferenceTag>
+                    </small>
+                  </span>
+                </div>
+              </div>
+              <p className={styles.savings}>
+                {t.savingsLead}{" "}
+                <BigNumber
+                  amount={savings}
+                  size="lg"
+                  decimals={0}
+                  className={styles.savingsNum}
+                />
+              </p>
+            </section>
+          </>
+        )}
       </div>
     </section>
   );

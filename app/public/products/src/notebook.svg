@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="spec" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9945FF"/>
+      <stop offset="0.52" stop-color="#00C2FF"/>
+      <stop offset="1" stop-color="#19FB9B"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#00C2FF" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#9945FF" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#9945FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="floor" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#9945FF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#9945FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur18" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="blur6" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="900" fill="#0b0817"/>
+  <rect width="1200" height="900" fill="url(#halo)"/>
+  <ellipse cx="600" cy="760" rx="420" ry="80" fill="url(#floor)"/>
+
+  <!-- luz ambiental detrás de la tapa -->
+  <rect x="356" y="208" width="488" height="352" rx="24" fill="none" stroke="url(#spec)" stroke-width="10" filter="url(#blur18)" opacity="0.55"/>
+
+  <!-- pantalla -->
+  <rect x="356" y="208" width="488" height="352" rx="24" fill="#0e0b1a" fill-opacity="0.92" stroke="url(#spec)" stroke-width="5"/>
+  <rect x="376" y="228" width="448" height="312" rx="14" fill="none" stroke="#f4f1ff" stroke-opacity="0.14" stroke-width="2"/>
+
+  <!-- glifo prisma + espectro, compacto -->
+  <g stroke-linecap="round" fill="none">
+    <line x1="430" y1="384" x2="516" y2="384" stroke="#f4f1ff" stroke-width="8"/>
+    <path d="M528 322 L528 446 L616 384 Z" stroke="#f4f1ff" stroke-width="5.5" stroke-linejoin="round" fill="#f4f1ff" fill-opacity="0.05"/>
+    <path d="M622 371 L770 319" stroke="#9945FF" stroke-width="8" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M622 384 L770 384" stroke="#00C2FF" stroke-width="8" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M622 397 L770 449" stroke="#19FB9B" stroke-width="8" filter="url(#blur6)" opacity="0.8"/>
+    <path d="M622 371 L770 319" stroke="#9945FF" stroke-width="4.5"/>
+    <path d="M622 384 L770 384" stroke="#00C2FF" stroke-width="4.5"/>
+    <path d="M622 397 L770 449" stroke="#19FB9B" stroke-width="4.5"/>
+  </g>
+
+  <!-- bisagra -->
+  <rect x="330" y="560" width="540" height="26" rx="13" fill="#141026" stroke="url(#spec)" stroke-width="4"/>
+
+  <!-- base -->
+  <path d="M302 586 L898 586 L944 690 Q950 704 934 704 L266 704 Q250 704 256 690 Z" fill="#0e0b1a" stroke="#f4f1ff" stroke-opacity="0.2" stroke-width="4" stroke-linejoin="round"/>
+  <!-- teclado -->
+  <path d="M356 612 L844 612 L876 676 L324 676 Z" fill="none" stroke="#f4f1ff" stroke-opacity="0.16" stroke-width="2.5" stroke-linejoin="round"/>
+  <g stroke="#f4f1ff" stroke-opacity="0.26" stroke-width="3" stroke-linecap="round">
+    <line x1="392" y1="636" x2="424" y2="636"/>
+    <line x1="440" y1="636" x2="472" y2="636"/>
+    <line x1="488" y1="636" x2="520" y2="636"/>
+    <line x1="536" y1="636" x2="664" y2="636"/>
+    <line x1="680" y1="636" x2="712" y2="636"/>
+    <line x1="728" y1="636" x2="760" y2="636"/>
+    <line x1="776" y1="636" x2="808" y2="636"/>
+    <line x1="416" y1="660" x2="448" y2="660"/>
+    <line x1="464" y1="660" x2="496" y2="660"/>
+    <line x1="512" y1="660" x2="688" y2="660"/>
+    <line x1="704" y1="660" x2="736" y2="660"/>
+    <line x1="752" y1="660" x2="784" y2="660"/>
+  </g>
+</svg>
