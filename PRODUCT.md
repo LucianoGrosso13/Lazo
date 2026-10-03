@@ -16,7 +16,7 @@ web
 
 ## Product Purpose
 
-Cuotas en USDC **sin interés** para estudiantes sin tarjeta, respaldadas por un familiar fiador con tarjeta, con una escalera de reputación onchain que baja el anticipo y sube el tope con cada plan pagado. El comercio cobra al instante y paga 7% sobre lo financiado. Éxito en la hackathon: alguien con Phantom en devnet completa la compra en menos de 2 minutos sin ayuda, y el flujo de mora (vence → gracia → cobro al fiador → recupero onchain → baja de escalón) se muestra en menos de 60 segundos.
+Cuotas en USDC **sin interés** para estudiantes sin tarjeta, respaldadas por un garante con tarjeta, con una escalera de reputación onchain que baja el anticipo y sube el tope con cada plan pagado. El comercio cobra al instante y paga 7% sobre lo financiado. Éxito en la hackathon: alguien con Phantom en devnet completa la compra en menos de 2 minutos sin ayuda, y el flujo de mora (vence → gracia → cobro al fiador → recupero onchain → baja de escalón) se muestra en menos de 60 segundos.
 
 ## Positioning
 
@@ -40,7 +40,7 @@ Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y so
 
 ## Brand Commitments
 
-- Nombre del producto: **Lazo** (elegido el 2026-10-03; marca sin verificar). En español es el lazo familiar; en inglés "bond" también es fianza. Bajada ES: "Cuotas sin interés, respaldadas por tu familia." EN: "Zero-interest installments, backed by family."
+- Nombre del producto: **Lazo** (elegido el 2026-10-03; marca sin verificar). En español es el lazo familiar; en inglés "bond" también es fianza. Bajada ES: "Cuotas sin interés. Respaldadas por un garante." EN: "Zero-interest installments. Backed by a guarantor."
 - Estética pedida por el equipo: temática hackathon/web3, vidrio y gradientes con los colores de Solana, interactiva. Apunta al premio a mejor diseño.
 - Voz: español rioplatense claro, sin jerga cripto innecesaria; cada término nuevo (wallet, devnet, firma) se explica en una línea.
 

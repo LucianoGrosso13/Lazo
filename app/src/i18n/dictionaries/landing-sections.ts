@@ -8,14 +8,17 @@ export const landingSections = defineDict({
       tier: (n: number) => `Escalón ${n}`,
       down: "anticipo",
       cap: "tope",
-      coverage: "cobertura del fiador",
-      example: (price: string, down: string) => `Una PC de US$ ${price}: anticipo de US$ ${down}`,
+      coverage: "cobertura del garante",
+      example: (price: string, down: string, inst: string, count: number) =>
+        `US$ ${price}: hoy US$ ${down} + ${count} cuotas de US$ ${inst} del saldo`,
+      exampleNoDown: (price: string, inst: string, count: number) =>
+        `US$ ${price}: sin anticipo, ${count} cuotas de US$ ${inst}`,
       start: "Acá arrancás",
       top: "Sin anticipo",
     },
     guarantor: {
-      title: "Tu mamá no te presta la tarjeta. Te respalda.",
-      lede: "Hoy le pedís la tarjeta a un familiar para cada compra. Con Lazo, esa persona se suma una vez como fiadora, elige un tope y carga su tarjeta. Solo se le cobra si vos no pagás.",
+      title: "Un garante te respalda. Solo paga si vos no.",
+      lede: "Hoy le pedís prestada la tarjeta a alguien para cada compra. Con Lazo, esa persona se suma una vez como garante: verifica su identidad, elige un tope y carga su tarjeta. Solo se le cobra si vos no pagás.",
       steps: [
         { t: "Le mandás un link", d: "Por WhatsApp. Verifica su identidad y lee la fianza." },
         { t: "Elige su tope", d: "Sabe desde el día uno cuánto puede llegar a pagar, como máximo." },
@@ -26,11 +29,11 @@ export const landingSections = defineDict({
       events: {
         due: "Vence la cuota",
         grace: "Gracia, sin recargo",
-        notice: "Aviso al fiador",
+        notice: "Aviso al garante",
         penalty: (pct: string) => `Recargo del ${pct}`,
-        charge: "Se cobra al fiador y bajás un escalón",
+        charge: "Se cobra al garante y bajás un escalón",
       },
-      receipt: "El cobro queda registrado en la cadena con el hash del comprobante.",
+      receipt: "El cobro queda registrado con su comprobante; en esta demo es simulado.",
     },
     benefits: {
       title: "Gana el estudiante, el comercio y quien pone la plata",
@@ -59,19 +62,22 @@ export const landingSections = defineDict({
     },
     honest: {
       title: "Qué es real y qué es de prueba",
-      realTitle: "Real, en devnet",
+      realTitle: "Real, verificable",
       real: [
-        "El programa, el pool, los planes y la reputación",
-        "El pago del anticipo y de las cuotas con Phantom",
-        "El comercio cobra al instante, se ve en el explorador",
+        "Devnet, la red de prueba de Solana: la plata no vale",
+        "Las reglas de cuotas, escalones y comisión del protocolo",
+        "Los montos y límites salen de esa config, no de ejemplos",
       ],
-      simTitle: "Simulado, y lo decimos",
+      simTitle: "Simulado o pendiente, y lo decimos",
       sim: [
+        "Los planes, pagos, reputación y comprobantes que ves",
+        "El programa onchain, el KYC y la tarjeta del garante: integración pendiente",
         "El USDC es un token de prueba (devUSDC)",
         "En la demo, un día dura segundos",
         "La tienda es una tienda demo",
-        "La tarjeta del fiador corre en un sandbox",
       ],
+      modeMock: "Esta página corre con datos simulados.",
+      modeReal: "El modo real está activado pero el programa aún no está integrado: nada de esto llegó a la cadena.",
     },
     close: {
       title: "Probalo con una PC de US$ 1.000",
@@ -88,13 +94,16 @@ export const landingSections = defineDict({
       down: "down payment",
       cap: "limit",
       coverage: "guarantor coverage",
-      example: (price: string, down: string) => `A US$ ${price} PC: US$ ${down} down`,
+      example: (price: string, down: string, inst: string, count: number) =>
+        `US$ ${price}: US$ ${down} today + ${count} installments of US$ ${inst} on the balance`,
+      exampleNoDown: (price: string, inst: string, count: number) =>
+        `US$ ${price}: no down payment, ${count} installments of US$ ${inst}`,
       start: "You start here",
       top: "No down payment",
     },
     guarantor: {
-      title: "Mom doesn't lend you her card. She backs you.",
-      lede: "Today you borrow a relative's card for every purchase. With Lazo, they join once as guarantor, pick a cap and add their card. They're only charged if you don't pay.",
+      title: "A guarantor backs you. They only pay if you don't.",
+      lede: "Today you borrow someone's card for every purchase. With Lazo, they join once as your guarantor: they verify their ID, pick a cap and add their card. They're only charged if you don't pay.",
       steps: [
         { t: "You send a link", d: "Over WhatsApp. They verify their ID and read the guarantee." },
         { t: "They pick a cap", d: "From day one they know the most they could ever pay." },
@@ -109,7 +118,7 @@ export const landingSections = defineDict({
         penalty: (pct: string) => `${pct} late fee`,
         charge: "Guarantor is charged and you drop a tier",
       },
-      receipt: "The charge is recorded onchain with the receipt hash.",
+      receipt: "The charge is recorded with its receipt; in this demo it's simulated.",
     },
     benefits: {
       title: "The student, the merchant and the lender all win",
@@ -138,19 +147,22 @@ export const landingSections = defineDict({
     },
     honest: {
       title: "What's real and what's a test",
-      realTitle: "Real, on devnet",
+      realTitle: "Real, verifiable",
       real: [
-        "The program, the pool, the plans and the reputation",
-        "Paying the down payment and installments with Phantom",
-        "The merchant is paid instantly, visible on the explorer",
+        "Devnet, Solana's test network: the money is worth nothing",
+        "The protocol's installment, tier and fee rules",
+        "Amounts and limits come from that config, not from examples",
       ],
-      simTitle: "Simulated, and we say so",
+      simTitle: "Simulated or pending, and we say so",
       sim: [
+        "The plans, payments, reputation and receipts you see",
+        "The onchain program, KYC and the guarantor's card: integration pending",
         "The USDC is a test token (devUSDC)",
         "In the demo, a day lasts seconds",
         "The store is a demo store",
-        "The guarantor's card runs in a sandbox",
       ],
+      modeMock: "This page runs on simulated data.",
+      modeReal: "Real mode is on but the program isn't integrated yet: nothing here reached the chain.",
     },
     close: {
       title: "Try it with a US$ 1,000 PC",

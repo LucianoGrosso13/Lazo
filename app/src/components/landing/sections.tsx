@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
+import { formatUsdc, getCuotas, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
 import { useLocale, useT } from "@/i18n/locale";
 import { SPECTRUM } from "./hero";
+import { radioKeyDown } from "./radio";
 import { REFERENCE } from "./reference";
 import { merchantFeeOfPrice, splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
@@ -65,7 +66,12 @@ function Ladder() {
         </h2>
         <p className={styles.sectionLede}>{t.lede}</p>
       </div>
-      <div className={styles.ladder} role="radiogroup" aria-label={t.title}>
+      <div
+        className={styles.ladder}
+        role="radiogroup"
+        aria-label={t.title}
+        onKeyDown={(e) => radioKeyDown(e, TIERS.length, active, (i) => setActive(i as TierIndex))}
+      >
         {TIERS.map((n) => {
           const tier = config.guaranteedTiers[n];
           return (
@@ -74,6 +80,7 @@ function Ladder() {
               type="button"
               role="radio"
               aria-checked={active === n}
+              tabIndex={active === n ? 0 : -1}
               className={styles.step}
               style={{ ["--rise" as string]: n, ["--band" as string]: SPECTRUM[n] }}
               onClick={() => setActive(n)}
@@ -98,7 +105,18 @@ function Ladder() {
         })}
       </div>
       <p className={styles.ladderExample} aria-live="polite">
-        {t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))}
+        {ex.downPayment > 0
+          ? t.example(
+              formatUsdc(EXAMPLE_PRICE, locale, 0),
+              formatUsdc(ex.downPayment, locale),
+              formatUsdc(ex.installments[0] ?? 0, locale),
+              config.installmentsCount,
+            )
+          : t.exampleNoDown(
+              formatUsdc(EXAMPLE_PRICE, locale, 0),
+              formatUsdc(ex.installments[0] ?? 0, locale),
+              config.installmentsCount,
+            )}
       </p>
     </section>
   );
@@ -238,6 +256,7 @@ function Benefits() {
 
 function Honest() {
   const t = useT(landingSections).honest;
+  const mode = getCuotas().mode;
   return (
     <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
       <h2 id="honest-title" className={styles.h2}>
@@ -261,6 +280,7 @@ function Honest() {
           </ul>
         </div>
       </div>
+      <p className={styles.modeNote}>{mode === "real" ? t.modeReal : t.modeMock}</p>
     </section>
   );
 }

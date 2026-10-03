@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
 import { useLocale, useT } from "@/i18n/locale";
 import { PrismStage, type StageBand } from "./prism-stage";
+import { radioKeyDown } from "./radio";
 import { REFERENCE } from "./reference";
 import { splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
@@ -19,6 +20,9 @@ const MIN_PRICE = 120;
 const MAX_PRICE = 1500;
 const TIERS: TierIndex[] = [0, 1, 2, 3];
 
+/** Id de la primera cuota: es la banda que marca la demo de mora/refill. */
+const LATE_BAND = "c1";
+
 export function LandingHero() {
   const t = useT(landingHero);
   const { locale } = useLocale();
@@ -26,6 +30,18 @@ export function LandingHero() {
   const [price, setPrice] = useState(1000);
   const [productId, setProductId] = useState<Product["id"] | null>("pc");
   const [tier, setTier] = useState<TierIndex>(0);
+
+  // Demostración visual de mora: una banda se apaga, el garante la repone.
+  const [demo, setDemo] = useState<"idle" | "late" | "refill">("idle");
+  const demoTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => demoTimers.current.forEach(clearTimeout), []);
+
+  const runDemo = () => {
+    if (demo !== "idle") return;
+    setDemo("late");
+    demoTimers.current.push(setTimeout(() => setDemo("refill"), 1100));
+    demoTimers.current.push(setTimeout(() => setDemo("idle"), 2900));
+  };
 
   const fmt = (micro: number, decimals = 2) => formatUsdc(micro, locale, decimals);
   const split = useMemo(() => (config ? splitPurchase(config, toMicro(price), tier) : null), [config, price, tier]);
@@ -46,6 +62,7 @@ export function LandingHero() {
   const lazoTotal = toMicro(price);
   const mpTotal = Math.round(lazoTotal * (1 + REFERENCE.mpInstallmentMarkup));
   const checkoutHref = productId ? `/checkout/${productId}` : "/tienda";
+  const instCount = split?.installments.length ?? 3;
 
   const pickProduct = (p: Product) => {
     setProductId(p.id);
@@ -62,8 +79,16 @@ export function LandingHero() {
               inputLabel={t.priceLabel}
               inputValue={`US$ ${fmt(split.price, 0)}`}
               bands={bands}
-              cracked={!split.withinTier}
-              ariaLabel={t.stageAria(fmt(split.price, 0), fmt(split.downPayment), fmt(split.installments[0]))}
+              state={{
+                warning: !split.withinTier,
+                late: demo === "late" ? LATE_BAND : undefined,
+                refill: demo === "refill" ? LATE_BAND : undefined,
+              }}
+              ariaLabel={t.stageAria(
+                fmt(split.price, 0),
+                split.downPayment > 0 ? fmt(split.downPayment) : null,
+                fmt(split.installments[0] ?? 0),
+              )}
             />
           ) : (
             <div className={styles.stageSkeleton} />
@@ -106,13 +131,19 @@ export function LandingHero() {
                   </button>
                 ))}
               </div>
-              <div className={styles.segmented} role="radiogroup" aria-label={t.tierLabel}>
+              <div
+                className={styles.segmented}
+                role="radiogroup"
+                aria-label={t.tierLabel}
+                onKeyDown={(e) => radioKeyDown(e, TIERS.length, tier, (i) => setTier(i as TierIndex))}
+              >
                 {TIERS.map((n) => (
                   <button
                     key={n}
                     type="button"
                     role="radio"
                     aria-checked={tier === n}
+                    tabIndex={tier === n ? 0 : -1}
                     className={styles.segment}
                     onClick={() => setTier(n)}
                   >
@@ -121,9 +152,28 @@ export function LandingHero() {
                 ))}
               </div>
             </div>
-            <p className={styles.tierNote} aria-live="polite">
-              {split && !split.withinTier ? t.overTier(fmt(split.maxPurchase, 0)) : " "}
-            </p>
+            {split ? (
+              <>
+                <p className={styles.payLine} aria-live="polite">
+                  <span>
+                    {split.downPayment > 0
+                      ? t.paySplit(fmt(split.downPayment), fmt(split.installments[0] ?? 0), instCount)
+                      : t.payNoDown(fmt(split.installments[0] ?? 0), instCount)}
+                  </span>
+                  <span className={styles.payTotal}>{t.payTotal(fmt(lazoTotal, 0))}</span>
+                </p>
+                <p className={styles.downNote}>{split.downPayment > 0 ? t.downNote : " "}</p>
+                <p className={styles.tierNote} aria-live="polite">
+                  {!split.withinTier ? t.overTier(fmt(split.maxPurchase, 0)) : " "}
+                </p>
+                <div className={styles.demoRow}>
+                  <button type="button" className={styles.demoBtn} onClick={runDemo} disabled={demo !== "idle"}>
+                    {t.demoBtn}
+                  </button>
+                  <span className={styles.demoNote}>{t.demoNote}</span>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
 
