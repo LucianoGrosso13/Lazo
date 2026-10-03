@@ -35,11 +35,15 @@ fn signer_rw(pubkey: Address) -> AccountMeta {
     AccountMeta::new(pubkey, true)
 }
 
-/// Accounts for AdminInitConfig: [admin(mut,sig), config(w), usdc_mint(r), system_program].
+/// Accounts for AdminInitConfig: [admin(mut,sig), program(r), program_data(r),
+/// config(w), usdc_mint(r), system_program]. The program/ProgramData pair
+/// proves the signer is the program's upgrade authority.
 pub fn admin_init_config(admin: &Address, usdc_mint: &Address, params: &ConfigParams) -> Instruction {
     ix(
         vec![
             signer_rw(*admin),
+            ro(program_id()),
+            ro(pda::program_data().0),
             rw(pda::config().0),
             ro(*usdc_mint),
             ro(system_program::ID),
@@ -142,13 +146,20 @@ pub fn lp_withdraw(depositor: &Address, usdc_mint: &Address, tranche: Tranche, s
     )
 }
 
-/// [admin(sig), config(r), pool(w)]
-pub fn admin_apply_loss(admin: &Address, usdc_mint: &Address, amount: u64) -> Instruction {
+/// [admin(sig), config(r), pool(w), usdc_mint(r), vault(w),
+///  treasury_ata(w), token_program(r)] — the loss is real cash moved from
+/// the vault to the treasury ATA ("cash simulation" accounting).
+pub fn admin_apply_loss(admin: &Address, usdc_mint: &Address, treasury: &Address, amount: u64) -> Instruction {
+    let pool = pda::pool(usdc_mint).0;
     ix(
         vec![
             signer_ro(*admin),
             ro(pda::config().0),
-            rw(pda::pool(usdc_mint).0),
+            rw(pool),
+            ro(*usdc_mint),
+            rw(pda::vault(&pool).0),
+            rw(ata(treasury, usdc_mint, &TOKEN_PROGRAM_ID)),
+            ro(TOKEN_PROGRAM_ID),
         ],
         instruction::AdminApplyLoss { amount }.data(),
     )
@@ -204,7 +215,8 @@ pub fn keeper_register_guarantee(
     )
 }
 
-/// [keeper(sig), config(r), student(r), guarantee(w)]
+/// [keeper(sig), config(r), student(r), guarantee(w), reputation(r)]
+/// The reputation account gates term rewrites on `active_exposure == 0`.
 pub fn keeper_update_guarantee(
     keeper: &Address,
     student: &Address,
@@ -218,6 +230,7 @@ pub fn keeper_update_guarantee(
             ro(pda::config().0),
             ro(*student),
             rw(pda::guarantee(student).0),
+            ro(pda::reputation(student).0),
         ],
         instruction::KeeperUpdateGuarantee { max_purchase, coverage_max, mandate_hash }.data(),
     )

@@ -78,16 +78,14 @@ pub fn spec_shares_for_deposit(capital: u64, shares: u64, amount: u64) -> Option
 }
 
 /// Independent (spec-side) payout math for a withdraw: amount = floor(
-/// shares * tranche_capital / total_shares ). None when the spec's error
-/// cases trigger (zero shares / more than outstanding / worth zero).
+/// shares * tranche_capital / total_shares ). Zero payout is allowed so
+/// worthless/dust shares can be retired; None only when the spec's error
+/// cases trigger (zero shares / more than outstanding).
 pub fn spec_amount_for_withdraw(capital: u64, total_shares: u64, shares: u64) -> Option<u64> {
     if shares == 0 || shares > total_shares {
         return None;
     }
     let a = (shares as u128) * (capital as u128) / (total_shares as u128);
     let a = u64::try_from(a).ok()?;
-    if a == 0 {
-        return None; // WithdrawYieldsZero
-    }
     Some(a)
 }

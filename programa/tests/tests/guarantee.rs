@@ -106,7 +106,7 @@ fn register_gated_by_state() {
         let i = ix::admin_set_state(&admin, st);
         env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("set state");
         let student = env.actors.alice.pubkey();
-        let out = register(&{env.actors.keeper.insecure_clone()}, &mut env, &student, 1, 1, [0u8; 32]);
+        let out = register(&{env.actors.keeper.insecure_clone()}, &mut env, &student, 1, 1, [8u8; 32]);
         expect_cuotas_err(&out, CuotasError::ProtocolNotNormal, "register gated");
     }
 }
@@ -117,6 +117,9 @@ fn update_changes_terms_and_reactivates() {
     env.bootstrap();
     let student = env.actors.alice.pubkey();
     let keeper = env.actors.keeper.insecure_clone();
+    // update requires the student's reputation account (exposure gate)
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
 
     register(&keeper, &mut env, &student, 100 * USDC, 50 * USDC, [1u8; 32]).expect_ok("register");
     revoke(&keeper, &mut env, &student).expect_ok("revoke");
@@ -140,7 +143,9 @@ fn update_rejects_non_keeper_zero_params_and_missing_account() {
     let student = env.actors.alice.pubkey();
     let bob = env.actors.bob.pubkey();
     let keeper = env.actors.keeper.insecure_clone();
-    register(&keeper, &mut env, &student, 1, 1, [0u8; 32]).expect_ok("register");
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
+    register(&keeper, &mut env, &student, 1, 1, [1u8; 32]).expect_ok("register");
 
     // non-keeper (incl. admin)
     for kp in [env.actors.admin.insecure_clone(), env.actors.attacker.insecure_clone()] {
@@ -194,7 +199,9 @@ fn keeper_lifecycle_state_gates() {
     env.bootstrap();
     let student = env.actors.alice.pubkey();
     let keeper = env.actors.keeper.insecure_clone();
-    register(&keeper, &mut env, &student, 1, 1, [0u8; 32]).expect_ok("register");
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
+    register(&keeper, &mut env, &student, 1, 1, [2u8; 32]).expect_ok("register");
 
     let admin = env.actors.admin.pubkey();
     let i = ix::admin_set_state(&admin, ProtocolState::Halted);
@@ -203,4 +210,43 @@ fn keeper_lifecycle_state_gates() {
     let out = update(&keeper, &mut env, &student, 2, 2, [4u8; 32]);
     expect_cuotas_err(&out, CuotasError::ProtocolNotNormal, "update gated in Halted");
     revoke(&keeper, &mut env, &student).expect_ok("revoke allowed in Halted");
+}
+
+#[test]
+fn update_blocked_while_student_has_exposure() {
+    // Rewriting terms under an active plan is forbidden: GuaranteeTermsLocked
+    // while reputation.active_exposure > 0. No instruction produces exposure
+    // yet, so it is set directly on the reputation account.
+    let mut env = Env::new();
+    env.bootstrap();
+    let student = env.actors.alice.pubkey();
+    let keeper = env.actors.keeper.insecure_clone();
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
+    register(&keeper, &mut env, &student, 100 * USDC, 50 * USDC, [5u8; 32]).expect_ok("register");
+
+    env.edit_reputation(&student, |r| r.active_exposure = 10 * USDC);
+    let out = update(&keeper, &mut env, &student, 200 * USDC, 80 * USDC, [6u8; 32]);
+    expect_cuotas_err(&out, CuotasError::GuaranteeTermsLocked, "exposure locks terms");
+
+    // exposure cleared → the same update goes through
+    env.edit_reputation(&student, |r| r.active_exposure = 0);
+    update(&keeper, &mut env, &student, 200 * USDC, 80 * USDC, [6u8; 32]).expect_ok("unlocked");
+}
+
+#[test]
+fn register_and_update_reject_zero_mandate_hash() {
+    let mut env = Env::new();
+    env.bootstrap();
+    let student = env.actors.alice.pubkey();
+    let keeper = env.actors.keeper.insecure_clone();
+    let i = ix::student_init_reputation(&student);
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("init rep");
+
+    let out = register(&keeper, &mut env, &student, 1, 1, [0u8; 32]);
+    expect_cuotas_err(&out, CuotasError::InvalidGuaranteeParams, "register zero hash");
+
+    register(&keeper, &mut env, &student, 1, 1, [1u8; 32]).expect_ok("register");
+    let out = update(&keeper, &mut env, &student, 1, 1, [0u8; 32]);
+    expect_cuotas_err(&out, CuotasError::InvalidGuaranteeParams, "update zero hash");
 }

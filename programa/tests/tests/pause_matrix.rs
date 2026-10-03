@@ -29,7 +29,9 @@ fn setup() -> Env {
         let i = ix::lp_deposit(&kp.pubkey(), &{env.usdc_mint}, t, 1_000 * USDC);
         env.send(&[i], &kp, &[]).expect_ok("seed deposit");
     }
-    // guarantee for alice so update/revoke have a target
+    // guarantee + reputation for alice so update/revoke have a target
+    let i = ix::student_init_reputation(&env.actors.alice.pubkey());
+    env.send(&[i], &{env.actors.alice.insecure_clone()}, &[]).expect_ok("seed reputation");
     let i = ix::keeper_register_guarantee(
         &env.actors.keeper.pubkey(),
         &env.actors.alice.pubkey(),
@@ -61,7 +63,7 @@ fn run(env: &mut Env, op: &str) -> TxOutcome {
             env.send(&[i], &{env.actors.alice.insecure_clone()}, &[])
         }
         "admin_apply_loss" => {
-            let i = ix::admin_apply_loss(&admin, &{env.usdc_mint}, 1);
+            let i = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 1);
             env.send(&[i], &{env.actors.admin.insecure_clone()}, &[])
         }
         "merchant_register" => {

@@ -8,7 +8,7 @@ use cuotas_tests::{ix, pda};
 use solana_signer::Signer;
 
 fn apply_loss(signer: &solana_keypair::Keypair, env: &mut Env, amount: u64) -> cuotas_tests::err::TxOutcome {
-    let i = ix::admin_apply_loss(&signer.pubkey(), &{env.usdc_mint}, amount);
+    let i = ix::admin_apply_loss(&signer.pubkey(), &{env.usdc_mint}, &{env.actors.payer.pubkey()}, amount);
     env.send(&[i], signer, &[])
 }
 
@@ -27,7 +27,8 @@ fn fund_tranche(tranche: Tranche, kp: &solana_keypair::Keypair, usdc: u64, env: 
 #[test]
 fn waterfall_junior_absorbs_first() {
     let mut env = Env::new();
-    env.bootstrap();
+    let p = env.bootstrap();
+    let treasury_ata = env.treasury_ata();
     fund_tranche(Tranche::Junior, &{env.actors.alice.insecure_clone()}, 300 * USDC, &mut env);
     fund_tranche(Tranche::Senior, &{env.actors.bob.insecure_clone()}, 700 * USDC, &mut env);
 
@@ -39,12 +40,17 @@ fn waterfall_junior_absorbs_first() {
     // share counts never change on a loss — only NAV per share
     assert_eq!(pool.junior_shares, 300 * USDC);
     assert_eq!(pool.senior_shares, 700 * USDC);
+    // cash-simulation: the loss amount physically left the vault
+    assert_eq!(env.token_balance(&p.vault), 800 * USDC);
+    assert_eq!(env.token_balance(&treasury_ata), 200 * USDC);
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
 }
 
 #[test]
 fn waterfall_spills_to_senior_after_junior_exhausted() {
     let mut env = Env::new();
-    env.bootstrap();
+    let p = env.bootstrap();
+    let treasury_ata = env.treasury_ata();
     fund_tranche(Tranche::Junior, &{env.actors.alice.insecure_clone()}, 200 * USDC, &mut env);
     fund_tranche(Tranche::Senior, &{env.actors.bob.insecure_clone()}, 800 * USDC, &mut env);
 
@@ -53,6 +59,9 @@ fn waterfall_spills_to_senior_after_junior_exhausted() {
     let pool = env.pool();
     assert_eq!(pool.junior_capital, 0, "junior wiped first");
     assert_eq!(pool.senior_capital, 500 * USDC, "senior takes the rest");
+    assert_eq!(env.token_balance(&p.vault), 500 * USDC);
+    assert_eq!(env.token_balance(&treasury_ata), 500 * USDC);
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
 }
 
 #[test]
@@ -109,22 +118,50 @@ fn loss_rejects_non_admin_including_keeper() {
 }
 
 #[test]
-fn loss_writes_off_outstanding_credit_first() {
+fn loss_moves_cash_to_treasury_and_preserves_credit() {
+    // Cash-simulation mode (decision landed): the loss is real cash moved
+    // vault -> treasury; outstanding_credit is NOT written off. With 500
+    // lent out, the consistent vault holds only the un-lent capital.
     let mut env = Env::new();
-    env.bootstrap();
+    let p = env.bootstrap();
+    let treasury_ata = env.treasury_ata();
     fund_tranche(Tranche::Junior, &{env.actors.alice.insecure_clone()}, 200 * USDC, &mut env);
     fund_tranche(Tranche::Senior, &{env.actors.bob.insecure_clone()}, 800 * USDC, &mut env);
 
-    // Model 500 of outstanding credit (loans out to plans) — unreachable via
-    // instructions today, set directly to exercise the write-off path.
-    env.edit_pool(|p| p.outstanding_credit = 500 * USDC);
+    // Model 500 of outstanding credit: capital left the vault for plans
+    // (unreachable via instructions today — direct state edit).
+    env.edit_pool(|pool| pool.outstanding_credit = 500 * USDC);
+    env.set_token_amount(&p.vault, 500 * USDC);
+    assert_eq!(env.accounting_delta(), 0, "modeled state is consistent");
 
     apply_loss(&{env.actors.admin.insecure_clone()}, &mut env, 300 * USDC).expect_ok("loss");
 
     let pool = env.pool();
-    assert_eq!(pool.outstanding_credit, 200 * USDC, "300 written off the 500 lent");
+    assert_eq!(pool.outstanding_credit, 500 * USDC, "credit untouched in cash-sim");
     assert_eq!(pool.junior_capital, 0, "junior fully absorbed NAV loss");
     assert_eq!(pool.senior_capital, 700 * USDC, "100 spilled to senior");
+    assert_eq!(env.token_balance(&p.vault), 200 * USDC);
+    assert_eq!(env.token_balance(&treasury_ata), 300 * USDC);
+    assert_eq!(env.accounting_delta(), 0, "V+OC=J+S+AF after loss");
+}
+
+#[test]
+fn loss_is_bounded_by_vault_cash_not_just_capital() {
+    // With most capital lent out, a loss can fit inside total capital yet
+    // exceed the cash left in the vault — the sweep transfer then fails at
+    // the SPL layer. Documents the cash-simulation boundary.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    fund_tranche(Tranche::Junior, &{env.actors.alice.insecure_clone()}, 500 * USDC, &mut env);
+    fund_tranche(Tranche::Senior, &{env.actors.bob.insecure_clone()}, 500 * USDC, &mut env);
+
+    // 900 lent out → only 100 cash remains; a 300 loss fits in capital.
+    env.edit_pool(|pool| pool.outstanding_credit = 900 * USDC);
+    env.set_token_amount(&p.vault, 100 * USDC);
+
+    let out = apply_loss(&{env.actors.admin.insecure_clone()}, &mut env, 300 * USDC);
+    let f = out.expect_err("loss > vault cash must fail");
+    cuotas_tests::err::expect_instruction_failure(f, "spl transfer underflow");
 }
 
 #[test]

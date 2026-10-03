@@ -117,6 +117,17 @@ impl Env {
         )
         .expect("failed to write devUSDC mint");
 
+        // LiteSVM loads the program as upgradeable but writes ProgramData
+        // with upgrade_authority_address = None. admin_init_config now binds
+        // the bootstrap signer to the upgrade authority, so patch it to the
+        // fixture admin. ProgramData layout: tag u32 | slot u64 |
+        // Option<Pubkey> tag u8 | pubkey 32B.
+        let pd = pda::program_data().0;
+        let mut pd_acct = svm.get_account(&pd).expect("programdata account");
+        pd_acct.data[12] = 1;
+        pd_acct.data[13..45].copy_from_slice(actors.admin.pubkey().as_ref());
+        svm.set_account(pd, pd_acct).unwrap();
+
         Self { svm, actors, usdc_mint }
     }
 
@@ -275,11 +286,23 @@ impl Env {
         self.send(&[ix], &self.actors.admin.insecure_clone(), &[])
     }
 
-    /// Full bootstrap: config + pool. Returns the derived addresses.
+    /// Full bootstrap: config + pool + treasury ATA (needed by apply_loss).
+    /// Returns the derived addresses.
     pub fn bootstrap(&mut self) -> Protocol {
         self.init_config().expect_ok("bootstrap: admin_init_config");
         self.init_pool().expect_ok("bootstrap: pool_init");
+        let treasury = addr(&self.config().treasury);
+        self.make_ata(&treasury, &{ self.usdc_mint }, 0);
         self.protocol()
+    }
+
+    /// Canonical USDC ATA of `config.treasury` — the loss-cash destination.
+    pub fn treasury_ata(&self) -> Address {
+        spl::ata(
+            &addr(&self.config().treasury),
+            &{ self.usdc_mint },
+            &spl::TOKEN_PROGRAM_ID,
+        )
     }
 
     /// Derive all protocol addresses for the current usdc_mint.
@@ -297,6 +320,11 @@ impl Env {
     /// Read the on-chain Pool account.
     pub fn pool(&self) -> cuotas::Pool {
         self.decode::<cuotas::Pool>(&pda::pool(&self.usdc_mint).0)
+    }
+
+    /// Read the on-chain Reputation account for a student.
+    pub fn reputation(&self, student: &Address) -> cuotas::Reputation {
+        self.decode::<cuotas::Reputation>(&pda::reputation(student).0)
     }
 
     /// Read the on-chain ProtocolConfig account.
@@ -327,6 +355,28 @@ impl Env {
         let mut acc = self.svm.get_account(&addr).unwrap();
         acc.data = data;
         self.svm.set_account(addr, acc).unwrap();
+    }
+
+    /// Overwrite Reputation state directly (e.g. active_exposure, which no
+    /// instruction can yet produce) so gate checks run for real.
+    pub fn edit_reputation(&mut self, student: &Address, f: impl FnOnce(&mut cuotas::Reputation)) {
+        let addr = pda::reputation(student).0;
+        let mut rep = self.decode::<cuotas::Reputation>(&addr);
+        f(&mut rep);
+        let mut data = Vec::new();
+        anchor_lang::AccountSerialize::try_serialize(&rep, &mut data).unwrap();
+        let mut acc = self.svm.get_account(&addr).unwrap();
+        acc.data = data;
+        self.svm.set_account(addr, acc).unwrap();
+    }
+
+    /// Write the supply field of an SPL mint account directly. Only way to
+    /// make supply exceed the pool's share counters (mint authority is the
+    /// pool PDA) and exercise the LpSupplyMismatch guard.
+    pub fn set_mint_supply(&mut self, mint: &Address, supply: u64) {
+        let mut acc = self.svm.get_account(mint).unwrap();
+        acc.data[36..44].copy_from_slice(&supply.to_le_bytes());
+        self.svm.set_account(*mint, acc).unwrap();
     }
 }
 

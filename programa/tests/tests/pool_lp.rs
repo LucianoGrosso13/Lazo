@@ -179,7 +179,7 @@ fn second_deposit_uses_tranche_nav() {
 
     // Depress junior NAV to 0.5 via a realized loss (counters only).
     let admin = env.actors.admin.pubkey();
-    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, 500 * USDC);
+    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 500 * USDC);
     env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
 
     // spec math: capital 500, shares 1000 -> deposit 100 mints 200
@@ -232,7 +232,7 @@ fn deposit_into_insolvent_tranche_rejected() {
 
     // wipe junior capital entirely; shares remain outstanding
     let admin = env.actors.admin.pubkey();
-    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, 1_000 * USDC);
+    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 1_000 * USDC);
     env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
 
     // shares>0 while capital==0: TrancheWipedOut must refuse new deposits
@@ -484,7 +484,7 @@ fn withdraw_after_loss_pays_reduced_nav() {
     deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 1_000 * USDC).expect_ok("d");
 
     let admin = env.actors.admin.pubkey();
-    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, 400 * USDC);
+    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 400 * USDC);
     env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
 
     // NAV/share = 600/1000 -> withdrawing 500 shares yields 300
@@ -547,19 +547,69 @@ fn withdraw_more_than_own_balance_but_within_supply_fails() {
 }
 
 #[test]
-fn withdraw_from_wiped_tranche_yields_zero() {
+fn wiped_tranche_shares_retire_for_zero_then_recapitalize() {
+    // Post-fix semantics: a wiped tranche's shares are retired for 0 USDC
+    // instead of failing — that is how the tranche reaches a clean slate
+    // and can bootstrap again at 1:1.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    let (usdc_a, lp_a) = lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC).expect_ok("d");
+
+    let admin = env.actors.admin.pubkey();
+    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, &{env.actors.payer.pubkey()}, 100 * USDC);
+    env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
+    assert_eq!(env.pool().junior_capital, 0);
+
+    // retiring worthless shares pays 0 but succeeds and burns them
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 50 * USDC).expect_ok("retire");
+    assert_eq!(env.token_balance(&usdc_a), 4_900 * USDC, "0 payout");
+    assert_eq!(env.token_balance(&lp_a), 50 * USDC, "half retired");
+    assert_eq!(env.pool().junior_shares, 50 * USDC);
+
+    // retire the rest → clean slate → deposits bootstrap at 1:1 again
+    withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 50 * USDC).expect_ok("retire all");
+    assert_eq!(env.pool().junior_shares, 0);
+    deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 42 * USDC).expect_ok("redeposit");
+    assert_eq!(env.pool().junior_shares, 42 * USDC, "fresh 1:1 mint");
+    assert_eq!(env.pool().junior_capital, 42 * USDC);
+}
+
+#[test]
+fn deposit_into_orphaned_capital_rejected() {
+    // capital > 0 with shares == 0 is unreachable via instructions (share
+    // supply only hits zero alongside capital or via full retirement, which
+    // leaves capital == 0 too). Model it directly: the deposit must NOT
+    // mint 1:1 free shares against orphaned NAV.
+    let mut env = Env::new();
+    let p = env.bootstrap();
+    let alice = env.actors.alice.pubkey();
+    lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
+    env.edit_pool(|pool| pool.junior_capital = 500 * USDC); // shares stay 0
+
+    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC);
+    expect_cuotas_err(&out, CuotasError::OrphanedCapital, "orphaned NAV");
+}
+
+#[test]
+fn lp_supply_above_recorded_shares_rejected() {
+    // Mint supply above the share counter means accounting corruption —
+    // unreachable normally (pool PDA is the only mint authority), produced
+    // here by writing the mint's supply field directly.
     let mut env = Env::new();
     let p = env.bootstrap();
     let alice = env.actors.alice.pubkey();
     lp_ready(&mut env, &alice, 5_000 * USDC, &p.lp_junior);
     deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 100 * USDC).expect_ok("d");
 
-    let admin = env.actors.admin.pubkey();
-    let loss = ix::admin_apply_loss(&admin, &{env.usdc_mint}, 100 * USDC);
-    env.send(&[loss], &{env.actors.admin.insecure_clone()}, &[]).expect_ok("loss");
+    env.set_mint_supply(&p.lp_junior, 101 * USDC);
+    let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    expect_cuotas_err(&out, CuotasError::LpSupplyMismatch, "supply > shares on withdraw");
 
-    let out = withdraw(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 50 * USDC);
-    expect_cuotas_err(&out, CuotasError::WithdrawYieldsZero, "wiped nav");
+    env.set_mint_supply(&p.lp_junior, 100 * USDC); // restore sanity
+    let out = deposit(&{env.actors.alice.insecure_clone()}, &mut env, Tranche::Junior, 10 * USDC);
+    out.expect_ok("consistent again");
 }
 
 #[test]

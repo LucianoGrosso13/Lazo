@@ -61,7 +61,8 @@ fn init_with_wrong_config_pda_fails() {
     let params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
     let mut i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
     // config account replaced by a different (valid-format) PDA
-    i.accounts[1].pubkey = pda::pool(&{env.usdc_mint}).0;
+    // (index 3: admin, program, program_data, config, usdc_mint, system)
+    i.accounts[3].pubkey = pda::pool(&{env.usdc_mint}).0;
     let out = env.send(&[i], &{env.actors.admin.insecure_clone()}, &[]);
     expect_instruction_failure(out.expect_err("wrong config pda"), "wrong pda");
 }
