@@ -14,9 +14,9 @@ export const checkout = defineDict({
     total: "Total",
     interestFree: "0% de interés",
     merchantToday: (x: string) => `El comercio cobra US$ ${x} hoy, sin esperar.`,
-    guarantorLabel: "Fiador",
-    guarantorLine: (name: string, card: string | null, max: string) =>
-      `Fiador · ${name}${card ? ` · ${card}` : ""} · tope US$ ${max}`,
+    guarantorLabel: "Garante",
+    guarantorLine: (card: string | null, max: string) =>
+      `Garante${card ? ` · ${card}` : ""} · tope US$ ${max}`,
     checking: "Buscando tu wallet…",
     connectTitle: "Conectá tu wallet para comprar",
     connectBody:
@@ -33,7 +33,7 @@ export const checkout = defineDict({
       },
       blocked_after_default: {
         t: "No podés abrir planes nuevos",
-        d: "Una cuota tuya llegó al día 15 y la terminó pagando tu fiador. Tu cuenta quedó bloqueada para planes nuevos.",
+        d: "Una cuota tuya llegó al día 15 y la terminó pagando tu garante. Tu cuenta quedó bloqueada para planes nuevos.",
         cta: { label: "Ver mi plan", href: "/panel" },
       },
       has_active_plan: {
@@ -42,9 +42,9 @@ export const checkout = defineDict({
         cta: { label: "Ir a mi plan", href: "/panel" },
       },
       no_guarantee: {
-        t: "Necesitás un fiador",
-        d: "Lazo te presta porque un familiar te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
-        cta: { label: "Invitar a mi fiador", href: "/fiador/nuevo" },
+        t: "Necesitás un garante",
+        d: "Lazo te presta porque un garante te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
+        cta: { label: "Invitar a mi garante", href: "/fiador/nuevo" },
       },
       exceeds_tier_max: {
         t: "Supera el tope de tu escalón",
@@ -54,13 +54,13 @@ export const checkout = defineDict({
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
       exceeds_guarantor_max_purchase: {
-        t: "Supera el tope de tu fiador",
-        d: (max: string) => `Tu fiador te cubre compras hasta US$ ${max}.`,
+        t: "Supera el tope de tu garante",
+        d: (max: string) => `Tu garante te cubre compras hasta US$ ${max}.`,
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
       exceeds_guarantee_coverage: {
-        t: "Tu fiador no llega a cubrirla",
-        d: (max: string) => `La cobertura de tu fiador llega a US$ ${max}.`,
+        t: "Tu garante no llega a cubrirla",
+        d: (max: string) => `La cobertura de tu garante llega a US$ ${max}.`,
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
     },
@@ -72,6 +72,51 @@ export const checkout = defineDict({
     demoNote: "Compra simulada · el USDC es de prueba (devnet)",
     stageAria: (price: string, down: string, inst: string) =>
       `La compra de US$ ${price} se divide en un anticipo de US$ ${down} y tres cuotas de US$ ${inst}, sin interés.`,
+    confirm: {
+      title: "Revisá lo que firmás",
+      rows: {
+        dest: "Destino",
+        payToday: "Pagás hoy",
+        token: "Token",
+        network: "Red",
+        merchant: "El comercio recibe",
+        after: "Después",
+      },
+      merchantFallback: "Tienda Demo",
+      tokenValue: "devUSDC · USDC de prueba",
+      networkValue: "Solana devnet · plata de prueba",
+      instantly: "al instante",
+      installmentsLine: (n: number, amt: string) => `${n} cuotas de US$ ${amt}`,
+      mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
+      sign: "Firmar y abrir plan",
+      opening: "Abriendo el plan…",
+      back: "Volver",
+      errorTitle: "No se pudo abrir el plan",
+      errors: {
+        exceeds_tier_max: "El precio supera el tope de tu escalón.",
+        exceeds_guarantor_max_purchase: "Supera el tope de tu garante.",
+        exceeds_guarantee_coverage: "Tu garante no llega a cubrir esta compra.",
+        no_guarantee: "Necesitás un garante activo para comprar.",
+        blocked_after_default: "Tu cuenta está bloqueada para planes nuevos.",
+        has_active_plan: "Ya tenés un plan activo: pagalo antes de abrir otro.",
+        protocol_halted: "El protocolo está en pausa. Probá más tarde.",
+        not_found: "No encontramos el comercio o tu cuenta. Recargá la página.",
+        generic: "Algo falló del otro lado. Probá de nuevo.",
+      },
+      success: {
+        title: "Listo, plan abierto",
+        merchantPaidLead: "El comercio cobró",
+        merchantPaidTail: "al instante",
+        youPaid: (x: string) => `Pagaste el anticipo: US$ ${x}`,
+        installments: (n: number, amt: string) => `Quedan ${n} cuotas de US$ ${amt}`,
+        beamYou: "tu wallet",
+        beamAria: (x: string) =>
+          `La luz de tu pago viaja hasta el comercio, que cobra US$ ${x} al instante.`,
+        receipt: (sig: string) => `Comprobante simulado · ${sig}`,
+        ctaPanel: "Ir a mi plan",
+        ctaStore: "Volver a la tienda",
+      },
+    },
   },
   en: {
     back: "Store",
@@ -87,8 +132,8 @@ export const checkout = defineDict({
     interestFree: "0% interest",
     merchantToday: (x: string) => `The merchant gets US$ ${x} today, no waiting.`,
     guarantorLabel: "Guarantor",
-    guarantorLine: (name: string, card: string | null, max: string) =>
-      `Guarantor · ${name}${card ? ` · ${card}` : ""} · up to US$ ${max}`,
+    guarantorLine: (card: string | null, max: string) =>
+      `Guarantor${card ? ` · ${card}` : ""} · up to US$ ${max}`,
     checking: "Looking for your wallet…",
     connectTitle: "Connect your wallet to buy",
     connectBody:
@@ -144,5 +189,50 @@ export const checkout = defineDict({
     demoNote: "Simulated purchase · the USDC is test money (devnet)",
     stageAria: (price: string, down: string, inst: string) =>
       `The US$ ${price} purchase splits into a US$ ${down} down payment and three US$ ${inst} installments, interest-free.`,
+    confirm: {
+      title: "Check what you're signing",
+      rows: {
+        dest: "Destination",
+        payToday: "You pay today",
+        token: "Token",
+        network: "Network",
+        merchant: "Merchant receives",
+        after: "Then",
+      },
+      merchantFallback: "Demo Store",
+      tokenValue: "devUSDC · test USDC",
+      networkValue: "Solana devnet · test money",
+      instantly: "instantly",
+      installmentsLine: (n: number, amt: string) => `${n} installments of US$ ${amt}`,
+      mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
+      sign: "Sign & open plan",
+      opening: "Opening the plan…",
+      back: "Back",
+      errorTitle: "The plan couldn't be opened",
+      errors: {
+        exceeds_tier_max: "The price is over your tier's cap.",
+        exceeds_guarantor_max_purchase: "It's over your guarantor's cap.",
+        exceeds_guarantee_coverage: "Your guarantor can't cover this purchase.",
+        no_guarantee: "You need an active guarantor to buy.",
+        blocked_after_default: "Your account is blocked from new plans.",
+        has_active_plan: "You already have an active plan: pay it off first.",
+        protocol_halted: "The protocol is paused. Try again later.",
+        not_found: "We couldn't find the merchant or your account. Reload the page.",
+        generic: "Something failed on the other side. Try again.",
+      },
+      success: {
+        title: "Done, plan opened",
+        merchantPaidLead: "The merchant got",
+        merchantPaidTail: "instantly",
+        youPaid: (x: string) => `You paid the down payment: US$ ${x}`,
+        installments: (n: number, amt: string) => `${n} installments of US$ ${amt} left`,
+        beamYou: "your wallet",
+        beamAria: (x: string) =>
+          `The light of your payment travels to the merchant, who gets US$ ${x} instantly.`,
+        receipt: (sig: string) => `Simulated receipt · ${sig}`,
+        ctaPanel: "Go to my plan",
+        ctaStore: "Back to the store",
+      },
+    },
   },
 });

@@ -80,7 +80,6 @@ export function Breakdown({
           <StateMark state="refilled" title={t.guarantorLabel} />
           <span>
             {t.guarantorLine(
-              guarantee.display?.guarantorName ?? t.guarantorLabel,
               guarantee.display?.cardLabel ?? null,
               fmt(guarantee.maxPurchase, 0),
             )}
