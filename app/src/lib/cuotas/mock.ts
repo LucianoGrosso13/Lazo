@@ -23,6 +23,7 @@ import type {
 import {
   bpsOf,
   ensureStudent,
+  fakeReceiptHash,
   fakeSignature,
   loadState,
   now,
@@ -39,9 +40,6 @@ export interface MockOverrides {
 }
 
 const clone = <T>(value: T): T => structuredClone(value);
-
-const pending = (name: string) => () =>
-  Promise.reject(new CuotasError("not_implemented", `mock.${name} pendiente`));
 
 /** Quita las marcas internas del keeper antes de exponer la cuota. */
 function toPublicInstallment(i: MockInstallment) {
@@ -153,6 +151,197 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     });
   };
 
+  /**
+   * Recalcula el estado del plan según sus cuotas y, si se salda un plan que
+   * cuenta, sube el escalón. Devuelve true si cambió algo.
+   */
+  const settleOrRefresh = (plan: MockPlan): boolean => {
+    if (plan.status === "Recovered") return false;
+    const unpaid = plan.installments.filter(
+      (i) => i.paidAt === undefined && i.chargedAt === undefined,
+    );
+    const prev = plan.status;
+    plan.status =
+      unpaid.length === 0
+        ? "Settled"
+        : unpaid.some((i) => i.status === "Late")
+          ? "Late"
+          : "Active";
+    if (plan.status === "Settled" && prev !== "Settled" && plan.counts) {
+      const rep = state.reputations[plan.student];
+      rep.plansCompleted += 1;
+      if (rep.tier < 3) {
+        rep.tier = (rep.tier + 1) as Reputation["tier"];
+        activity({ kind: "TierUp", student: plan.student, planId: plan.id });
+      }
+      return true;
+    }
+    return plan.status !== prev;
+  };
+
+  /**
+   * El keeper le cobra al fiador las cuotas dadas (principal + punitorio),
+   * registra el recupero en el pool y castiga la reputación. Replica
+   * `keeper_register_recovery`: el comprobante del procesador queda como
+   * `receiptHash` en el evento `Recovery`.
+   */
+  const chargeToGuarantor = (
+    plan: MockPlan,
+    installments: MockInstallment[],
+    at: UnixSeconds,
+  ) => {
+    const rep = state.reputations[plan.student];
+    let principal = 0;
+    let total = 0;
+    for (const i of installments) {
+      principal += i.amount;
+      total += i.amount + i.penalty;
+      i.chargedAt = at;
+      i.status = "ChargedToGuarantor";
+    }
+    state.pool.events.push({
+      kind: "Recovery",
+      amount: total,
+      at,
+      signature: fakeSignature(),
+      planId: plan.id,
+      receiptHash: fakeReceiptHash(),
+    });
+    state.pool.outstandingCredit -= principal;
+    state.pool.available += total;
+    state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+    rep.lateCount += 1;
+    rep.blockedFromNewPlans = true;
+    rep.activeExposure = Math.max(0, rep.activeExposure - principal);
+    activity({
+      kind: "GuarantorCharged",
+      student: plan.student,
+      planId: plan.id,
+      amount: total,
+      at,
+    });
+    activity({
+      kind: "RecoveryRegistered",
+      student: plan.student,
+      planId: plan.id,
+      amount: total,
+      at,
+    });
+    if (rep.tier > 0) {
+      rep.tier = (rep.tier - 1) as Reputation["tier"];
+      activity({ kind: "TierDown", student: plan.student, planId: plan.id, at });
+    }
+  };
+
+  /**
+   * Keeper simulado (idempotente): recorre las cuotas impagas y aplica la
+   * línea de mora del reloj de demo — aviso al fiador (día 3), punitorio
+   * (día 6) y cobro al fiador (día 15). Una segunda cuota al día 15 caduca
+   * los plazos y le cobra todo el saldo al fiador (plan Recovered).
+   */
+  const applyKeeper = (): boolean => {
+    const cfg = state.config;
+    const spd = cfg.secondsPerDay;
+    const t = now(state);
+    let changed = false;
+
+    for (const plan of state.plans) {
+      if (plan.status === "Settled" || plan.status === "Recovered") continue;
+      for (const inst of plan.installments) {
+        if (inst.paidAt !== undefined || inst.chargedAt !== undefined) continue;
+        const daysLate = Math.floor((t - inst.dueAt) / spd);
+
+        if (daysLate >= cfg.guarantorNoticeDay && inst.notifiedAt === undefined) {
+          inst.notifiedAt = inst.dueAt + cfg.guarantorNoticeDay * spd;
+          activity({
+            kind: "GuarantorNotified",
+            student: plan.student,
+            planId: plan.id,
+            amount: inst.amount,
+            at: inst.notifiedAt,
+          });
+          changed = true;
+        }
+        if (daysLate > cfg.graceDays && inst.markedLateAt === undefined) {
+          inst.markedLateAt = inst.dueAt + (cfg.graceDays + 1) * spd;
+          inst.penalty = bpsOf(inst.amount, cfg.penaltyBps);
+          plan.counts = false;
+          activity({
+            kind: "MarkedLate",
+            student: plan.student,
+            planId: plan.id,
+            amount: inst.amount,
+            at: inst.markedLateAt,
+          });
+          changed = true;
+        }
+
+        if (daysLate >= cfg.guarantorChargeDay) {
+          const firstCharge = !plan.installments.some(
+            (j) => j.chargedAt !== undefined,
+          );
+          if (firstCharge) {
+            chargeToGuarantor(
+              plan,
+              [inst],
+              inst.dueAt + cfg.guarantorChargeDay * spd,
+            );
+          } else {
+            // Segunda cuota del plan al día 15: caducan los plazos y se le
+            // cobra al fiador todo el saldo impago (con punitorios).
+            const remaining = plan.installments.filter(
+              (j) => j.paidAt === undefined && j.chargedAt === undefined,
+            );
+            for (const j of remaining) {
+              const lateDays = Math.floor((t - j.dueAt) / spd);
+              if (lateDays > cfg.graceDays && j.markedLateAt === undefined) {
+                j.markedLateAt = j.dueAt + (cfg.graceDays + 1) * spd;
+                j.penalty = bpsOf(j.amount, cfg.penaltyBps);
+                activity({
+                  kind: "MarkedLate",
+                  student: plan.student,
+                  planId: plan.id,
+                  amount: j.amount,
+                  at: j.markedLateAt,
+                });
+              }
+            }
+            chargeToGuarantor(
+              plan,
+              remaining,
+              inst.dueAt + cfg.guarantorChargeDay * spd,
+            );
+            plan.status = "Recovered";
+            plan.counts = false;
+            break;
+          }
+          changed = true;
+          continue;
+        }
+
+        const status =
+          daysLate < 0
+            ? "Upcoming"
+            : daysLate === 0
+              ? "Due"
+              : daysLate <= cfg.graceDays
+                ? "Grace"
+                : "Late";
+        if (inst.status !== status) {
+          inst.status = status;
+          changed = true;
+        }
+      }
+      if (settleOrRefresh(plan)) changed = true;
+    }
+    return changed;
+  };
+
+  /** Corre el keeper por si el reloj avanzó; persiste y avisa si cambió algo. */
+  const sync = () => {
+    if (applyKeeper()) commit();
+  };
+
   return {
     mode: "mock",
 
@@ -163,6 +352,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async getClock(): Promise<DemoClock> {
       refresh();
+      sync();
       return {
         now: now(state),
         secondsPerDay: state.config.secondsPerDay,
@@ -172,24 +362,28 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async getReputation(student) {
       refresh();
+      sync();
       if (ensureStudent(state, student)) commit();
       return clone(state.reputations[student]);
     },
 
     async getGuarantee(student) {
       refresh();
+      sync();
       const g = state.guarantees[student];
       return g ? clone(g) : null;
     },
 
     async quote(price, student) {
       refresh();
+      sync();
       if (ensureStudent(state, student)) commit();
       return computeQuote(state, price, student);
     },
 
     async getPlans(student) {
       refresh();
+      sync();
       return state.plans
         .filter((p) => p.student === student)
         .map(toPublicPlan);
@@ -197,6 +391,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async getMerchant(owner) {
       refresh();
+      sync();
       const m = state.merchants[owner];
       if (!m) throw new CuotasError("not_found", `comercio ${owner}`);
       return clone(m);
@@ -204,11 +399,13 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async getPool() {
       refresh();
+      sync();
       return clone(state.pool);
     },
 
     async getActivity(filter) {
       refresh();
+      sync();
       return clone(
         state.activity
           .filter(
@@ -223,12 +420,14 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async initReputation(student): Promise<TxResult<Reputation>> {
       refresh();
+      sync();
       if (ensureStudent(state, student)) commit();
       return { value: clone(state.reputations[student]), signature: fakeSignature() };
     },
 
     async openPlan(args): Promise<TxResult<Plan>> {
       refresh();
+      sync();
       const merchant = state.merchants[args.merchant];
       if (!merchant) {
         throw new CuotasError("not_found", `comercio ${args.merchant}`);
@@ -306,6 +505,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async payInstallment(student, planId): Promise<TxResult<Plan>> {
       refresh();
+      sync();
       const plan = state.plans.find(
         (p) => p.id === planId && p.student === student,
       );
@@ -338,26 +538,10 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       rep.activeExposure = Math.max(0, rep.activeExposure - inst.amount);
       activity({ kind: "InstallmentPaid", student, planId, amount: paid });
 
-      const allResolved = plan.installments.every(
-        (i) => i.paidAt !== undefined || i.chargedAt !== undefined,
-      );
-      if (allResolved) {
-        if (plan.status !== "Recovered") plan.status = "Settled";
-        // Sube de escalón solo si el plan cuenta (financiado ≥ mínimo y sin
-        // pasar la gracia). Al saldarlo via cobro al fiador no sube.
-        if (plan.counts) {
-          rep.plansCompleted += 1;
-          if (rep.tier < 3) {
-            rep.tier = (rep.tier + 1) as Reputation["tier"];
-            activity({ kind: "TierUp", student, planId });
-          }
-        }
-      } else if (plan.status === "Late") {
-        const anyLate = plan.installments.some(
-          (i) => !i.paidAt && !i.chargedAt && i.status === "Late",
-        );
-        if (!anyLate) plan.status = "Active";
-      }
+      // Si no queda nada impago el plan queda Settled; sube de escalón solo
+      // si cuenta (financiado ≥ mínimo y sin pasar la gracia). Al saldarlo
+      // via cobro al fiador no sube.
+      settleOrRefresh(plan);
 
       commit();
       return { value: toPublicPlan(plan), signature: inst.signature };
@@ -365,6 +549,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async registerGuarantee(args): Promise<TxResult<Guarantee>> {
       refresh();
+      sync();
       ensureStudent(state, args.student);
       const previous = state.guarantees[args.student];
       const guarantee: Guarantee = {
@@ -384,6 +569,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
     async revokeGuarantee(student): Promise<TxResult<Guarantee>> {
       refresh();
+      sync();
       const guarantee = state.guarantees[student];
       if (!guarantee) throw new CuotasError("not_found", `fiador de ${student}`);
       if (guarantee.active) {
@@ -394,7 +580,17 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       return { value: clone(guarantee), signature: fakeSignature() };
     },
 
-    advanceDays: pending("advanceDays"),
+    async advanceDays(days): Promise<DemoClock> {
+      refresh();
+      state.daysAdvanced += days;
+      applyKeeper();
+      commit();
+      return {
+        now: now(state),
+        secondsPerDay: state.config.secondsPerDay,
+        daysAdvanced: state.daysAdvanced,
+      };
+    },
 
     async resetDemo() {
       state = seedState(seedConfig);
