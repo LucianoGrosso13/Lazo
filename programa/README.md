@@ -2,10 +2,10 @@
 
 Core of an interest-free installment prototype for Solana **devnet only** (the test network; no real money). The intended product uses a family guarantor, a two-tranche liquidity pool and an on-chain reputation ladder.
 
-**Status: core implementation, not a completed or deployed product.** No program has been deployed and no devUSDC mint exists. Loan origination, installments, defaults, recoveries and keeper cranks are out of scope. Final business acceptance of the loss and gain policies is still pending; passing technical checks does not resolve those decisions.
+**Status: core implementation, not a completed or deployed product.** No program has been deployed and no devUSDC mint exists yet: deployment is prepared and explicitly user-approved, but currently blocked on devnet faucet funding — see `DEPLOYMENT_REPORT.md` for the live status, recorded attempts and resumable commands. Loan origination, installments, defaults, recoveries and keeper cranks are out of scope. Final business acceptance of the loss and gain policies is still pending; passing technical checks does not resolve those decisions.
 
-- Declared build-time program ID: `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ` (not proof of a deployed account).
-- Intended devUSDC mint: **not created**; classic SPL Token, 6 decimals.
+- Deployment program ID (keypair held outside the repo): `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ` (reserved for deploy; not proof of a deployed account).
+- Intended devUSDC mint: `8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y` — **not created**; classic SPL Token, 6 decimals, deployer mint authority, no freeze authority. It is a test token, never real USDC.
 - Toolchain: Anchor CLI and `anchor-lang`/`anchor-spl` `1.2.0`, Solana CLI `3.1.14`. `rust-toolchain.toml` pins Rust `1.89.0` for workspace host work (unit tests, fmt/clippy, host-side IDL builds); the SBF artifact is compiled by Solana's bundled platform tools via `anchor build`/`cargo-build-sbf`, not by that pinned host rustc. The LiteSVM harness needs newer host crates (e.g. `solana-syscalls`), so it runs on the installed `stable` toolchain via `cargo +stable` (tested on 1.99.0).
 - Token accounts use `token_interface`; every token transfer uses `transfer_checked`. Only the classic SPL Token program is supported, not Token-2022.
 
@@ -99,4 +99,4 @@ Junior deposits remain permissionless in this core; team-only junior funding is 
 
 ## Deployment status
 
-**Not deployed; devUSDC not created.** Deployment, mint creation, airdrops and every network transaction require separate explicit approval. There are no deployment commands in the safe verification flow. This task provides local artifacts only; devnet deployment and final readiness remain pending.
+**Not deployed; devUSDC not created — funding blocked.** The deployment is prepared and explicitly user-approved: program ID `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ`, mint `8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y`, reviewed artifact `cuotas.so` SHA-256 `8d05b07fd749c950d87d32396470402c5ae28749e53ab3e7079710269b7b2476` (469,824 bytes). All four bounded faucet requests were rate-limited and the deployer balance remains 0, so no network transaction has been submitted. `DEPLOYMENT_REPORT.md` records every attempt, the exact approved commands (key paths are placeholders; keys live outside the repo) and the post-deployment verification plan. No protocol initialization (`admin_init_config`/`pool_init`), mint-to, or any other write is authorized or planned by this task. The safe verification flow above still performs no network actions.
