@@ -66,7 +66,7 @@ function Ladder() {
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="ladder-title">
+    <section ref={sectionRef} id="how" className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -197,7 +197,6 @@ function Benefits() {
       theirs: R.mpInstallmentMarkup * 100,
       max: R.mpInstallmentMarkup * 100,
       vs: t.rows.student.vs(nf(R.mpInstallmentMarkup * 100, 0)),
-      extra: null as string | null,
     },
     {
       who: t.rows.merchant.who,
@@ -207,7 +206,6 @@ function Benefits() {
       theirs: R.merchantFeePct.mercadoPago,
       max: R.merchantFeePct.mercadoPago,
       vs: t.rows.merchant.vs(nf(R.merchantFeePct.cuotaSimple, 2), nf(R.merchantFeePct.mercadoPago, 2)),
-      extra: t.rows.merchant.payout(R.goCuotasPayoutBusinessDays),
     },
     {
       who: t.rows.pool.who,
@@ -217,7 +215,6 @@ function Benefits() {
       theirs: R.apyPct.kamino,
       max: R.apyPct.lazoSeniorTarget,
       vs: t.rows.pool.vs(String(R.apyPct.kamino), String(R.apyPct.jupiter)),
-      extra: t.rows.pool.audit,
     },
   ];
 
@@ -238,7 +235,6 @@ function Benefits() {
             </span>
             <span className={styles.ledgerVs}>
               {r.vs} <small className={styles.refTag}>{s.reference}</small>
-              {r.extra ? <span className={styles.ledgerExtra}>{r.extra}</span> : null}
             </span>
           </div>
         ))}

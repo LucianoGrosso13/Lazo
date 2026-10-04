@@ -44,7 +44,7 @@
 
 .motionToggle {
   position: fixed;
-  z-index: 51;
+  z-index: 45;
   right: clamp(0.75rem, 2vw, 1.5rem);
   bottom: 5.25rem;
   display: inline-flex;
@@ -640,6 +640,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: clamp(4rem, 9vw, 8rem) var(--pad);
+  scroll-margin-top: 4.5rem;
 }
 
 .sectionReveal { animation: none; }
@@ -1122,11 +1123,6 @@
   font-size: 0.92rem;
   color: var(--ink-2);
   line-height: 1.5;
-}
-
-.ledgerExtra {
-  display: block;
-  color: var(--ink);
 }
 
 @media (max-width: 760px) {

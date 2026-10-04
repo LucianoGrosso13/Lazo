@@ -9,10 +9,14 @@ export const design = defineDict({
     chrome: {
       menuOpen: "Abrir menú",
       menuClose: "Cerrar menú",
-      navLabel: "Secciones",
+      navLabel: "Destinos",
       designLink: "Diseño",
       devnetShort: "devnet",
       simulated: "simulada",
+      more: "Más",
+      howItWorks: "Cómo funciona",
+      groupDemo: "El demo",
+      groupMore: "Más",
     },
     title: "Sistema Prisma",
     intro:
@@ -104,10 +108,14 @@ export const design = defineDict({
     chrome: {
       menuOpen: "Open menu",
       menuClose: "Close menu",
-      navLabel: "Sections",
+      navLabel: "Destinations",
       designLink: "Design",
       devnetShort: "devnet",
       simulated: "simulated",
+      more: "More",
+      howItWorks: "How it works",
+      groupDemo: "The demo",
+      groupMore: "More",
     },
     title: "Prisma system",
     intro:

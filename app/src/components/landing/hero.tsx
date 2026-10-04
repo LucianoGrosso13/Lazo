@@ -182,9 +182,9 @@ export function LandingHero() {
                 <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </MotionLink>
-            <Link href="/tienda" className={styles.ctaSecondary}>
+            <a href="#how" className={styles.ctaSecondary}>
               {t.ctaSecondary}
-            </Link>
+            </a>
           </div>
           <p className={styles.devnetNote}>
             <span className={styles.devnetDot} aria-hidden />

@@ -5,7 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useSyncExternalStore
 export type Locale = "es" | "en";
 
 type Ctx = { locale: Locale; setLocale: (l: Locale) => void };
-const LocaleContext = createContext<Ctx>({ locale: "es", setLocale: () => {} });
+const DEFAULT_LOCALE: Locale = "en";
+const LocaleContext = createContext<Ctx>({ locale: DEFAULT_LOCALE, setLocale: () => {} });
 const STORAGE_KEY = "lazo.locale";
 
 const localeListeners = new Set<() => void>();
@@ -14,18 +15,26 @@ function subscribeLocale(cb: () => void) {
   return () => localeListeners.delete(cb);
 }
 function readLocale(): Locale {
-  return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "es";
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "es" ? "es" : DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
 }
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const locale = useSyncExternalStore(subscribeLocale, readLocale, () => "es" as Locale);
+  const locale = useSyncExternalStore(subscribeLocale, readLocale, () => DEFAULT_LOCALE);
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
   const setLocale = useCallback((l: Locale) => {
-    window.localStorage.setItem(STORAGE_KEY, l);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      // Storage bloqueado: la preferencia vive solo en memoria.
+    }
     localeListeners.forEach((cb) => cb());
   }, []);
 
