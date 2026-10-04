@@ -21,6 +21,6 @@ wallet = "~/.config/solana/id.json"
 [scripts]
 # Host math unit tests + the independent LiteSVM acceptance suite.
 # Never runs a local validator and never deploys.
-test = "cargo test -p cuotas --lib && cargo test --manifest-path tests/Cargo.toml --no-fail-fast"
+test = "cargo test -p cuotas --lib && cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast"
 
 [hooks]

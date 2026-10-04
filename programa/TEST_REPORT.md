@@ -33,12 +33,15 @@ compiled `b7833ac`, not a stale artifact.
 # SBF artifact (evidence build, already verified):
 cd programa && NO_DNA=1 anchor build --arch v1
 
-# in-process acceptance suite (all 97 tests):
-cd programa/tests && cargo test
+# in-process acceptance suite (all 97 tests); the tests workspace needs
+# stable, not the 1.89.0 host/SBF pin in ../rust-toolchain.toml:
+cd programa/tests && cargo +stable test --no-fail-fast
 
-# host-only unit tests of the program crate (serial, 29 tests):
+# host-only unit tests of the program crate (serial, 29 tests, pinned 1.89.0):
 cd programa && cargo test -p cuotas --lib
 ```
+
+Equivalently, from `programa/`: `cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast`.
 
 `CUOTAS_SO=/path/to/cuotas.so` overrides which artifact the suite loads
 (default `../target/deploy/cuotas.so`). Never run `anchor test` (it would
