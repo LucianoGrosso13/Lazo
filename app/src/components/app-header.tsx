@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
@@ -49,10 +50,13 @@ function LocaleSwitch() {
   );
 }
 
+const MotionLink = motion.create(Link);
+
 export function AppHeader() {
   const t = useT(common);
   const d = useT(design);
   const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const nav = [
     { href: "/tienda", label: t.nav.tienda },
@@ -68,7 +72,7 @@ export function AppHeader() {
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-[1.375rem] font-medium tracking-[-0.01em] text-beam"
+              className="app-brand flex items-center gap-2.5 text-[1.375rem] font-medium tracking-[-0.01em] text-beam"
             onClick={() => setOpen(false)}
           >
             <PrismaGlyph className="h-5 w-[1.875rem]" />
@@ -79,7 +83,8 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="font-num text-measure uppercase text-ink-2 transition-colors hover:text-beam"
+                tabIndex={0}
+                className="app-nav-link font-num text-measure uppercase text-ink-2 transition-colors hover:text-beam"
               >
                 {item.label}
               </Link>
@@ -126,26 +131,38 @@ export function AppHeader() {
         </div>
         <hr className="beam-line" />
       </div>
-      {open && (
-        <div className="glass glass-deep mx-4 mt-2 p-4 md:hidden">
+      <AnimatePresence initial={false}>
+        {open ? (
+        <motion.div
+          initial={{ opacity: reduceMotion ? 1 : 0, filter: reduceMotion ? "none" : "blur(4px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          exit={{ opacity: reduceMotion ? 1 : 0, filter: reduceMotion ? "none" : "blur(3px)" }}
+          transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+          className="glass glass-deep mx-4 mt-2 p-4 md:hidden"
+        >
           <nav aria-label={d.chrome.navLabel} className="flex flex-col">
-            {nav.map((item) => (
-              <Link
+            {nav.map((item, index) => (
+              <MotionLink
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="border-b border-beam/5 py-3 font-num text-sm uppercase tracking-[0.14em] text-ink-2 last:border-0 hover:text-beam"
+                className="app-nav-link border-b border-beam/5 py-3 font-num text-sm uppercase tracking-[0.14em] text-ink-2 last:border-0 hover:text-beam"
+                initial={{ opacity: reduceMotion ? 1 : 0.55 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : index * 0.035 }}
+                whileTap={reduceMotion ? undefined : { color: "#19fb9b" }}
               >
                 {item.label}
-              </Link>
+              </MotionLink>
             ))}
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3">
             <LocaleSwitch />
             <WalletButton />
           </div>
-        </div>
-      )}
+        </motion.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }

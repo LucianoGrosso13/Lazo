@@ -2,10 +2,10 @@ import { defineDict } from "../locale";
 
 export const common = defineDict({
   es: {
-    tagline: "Cuotas sin interés, respaldadas por tu familia.",
+    tagline: "Crédito para estudiar. Sin interés. Con respaldo.",
     nav: { tienda: "Tienda", panel: "Mi plan", comercio: "Comercio", pool: "Pool" },
-    devnet: "Devnet · plata de prueba",
-    devnetHint: "Corre en devnet, la red de prueba de Solana: el USDC es de mentira y no vale nada.",
+    devnet: "Demo · devnet previsto",
+    devnetHint: "Esta interfaz usa datos simulados. Solana devnet es la red de prueba prevista; sus fondos no tienen valor monetario.",
     wallet: {
       connect: "Conectar wallet",
       connectWith: "Conectar con",
@@ -16,10 +16,10 @@ export const common = defineDict({
     },
   },
   en: {
-    tagline: "Zero-interest installments, backed by family.",
+    tagline: "Credit for education. Zero interest. Family backed.",
     nav: { tienda: "Store", panel: "My plan", comercio: "Merchant", pool: "Pool" },
-    devnet: "Devnet · test money",
-    devnetHint: "Runs on devnet, Solana's test network: the USDC is fake and worth nothing.",
+    devnet: "Demo · devnet planned",
+    devnetHint: "This interface uses simulated data. Solana devnet is the planned test network; its funds have no monetary value.",
     wallet: {
       connect: "Connect wallet",
       connectWith: "Connect with",

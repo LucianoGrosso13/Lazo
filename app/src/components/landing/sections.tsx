@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
 import { useLocale, useT } from "@/i18n/locale";
-import { SPECTRUM } from "./hero";
+import { ChangingNumber, MotionLink, SPECTRUM } from "./hero";
 import { REFERENCE } from "./reference";
 import { merchantFeeOfPrice, splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
@@ -13,6 +13,13 @@ import styles from "./landing.module.css";
 
 const EXAMPLE_PRICE = toMicro(1000);
 const TIERS: TierIndex[] = [0, 1, 2, 3];
+
+function TierIndicator() {
+  const reduceMotion = useReducedMotion();
+  return reduceMotion ? <span className={styles.tierIndicator} aria-hidden="true" /> : (
+    <motion.span className={styles.tierIndicator} aria-hidden="true" layoutId="ladder-active-tier" transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }} />
+  );
+}
 
 /** Marca la sección cuando entra en pantalla (una sola vez). */
 function useInView<T extends Element>() {
@@ -53,12 +60,13 @@ function Ladder() {
   const { locale } = useLocale();
   const config = useProtocolConfig();
   const [active, setActive] = useState<TierIndex>(0);
+  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   if (!config) return null;
   const pct = (bps: number) => `${bps / 100}%`;
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section className={styles.section} aria-labelledby="ladder-title">
+    <section ref={sectionRef} className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -80,6 +88,7 @@ function Ladder() {
               onMouseEnter={() => setActive(n)}
               onFocus={() => setActive(n)}
             >
+              {active === n ? <TierIndicator /> : null}
               <span className={styles.stepTier}>{t.tier(n)}</span>
               <span className={styles.stepBig}>{pct(tier.downPaymentBps)}</span>
               <span className={styles.stepKey}>{t.down}</span>
@@ -98,7 +107,7 @@ function Ladder() {
         })}
       </div>
       <p className={styles.ladderExample} aria-live="polite">
-        {t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))}
+        <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
       </p>
     </section>
   );
@@ -108,6 +117,7 @@ function Guarantor() {
   const t = useT(landingSections).guarantor;
   const config = useProtocolConfig();
   const [rulerRef, seen] = useInView<HTMLDivElement>();
+  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   if (!config) return null;
   const end = config.guarantorChargeDay;
   const at = (day: number) => `${(day / end) * 100}%`;
@@ -119,7 +129,7 @@ function Guarantor() {
   ];
 
   return (
-    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="guarantor-title">
+    <section ref={sectionRef} className={`${styles.section} ${styles.sectionQuiet} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="guarantor-title">
       <div className={styles.split2}>
         <div>
           <h2 id="guarantor-title" className={styles.h2}>
@@ -171,6 +181,7 @@ function Benefits() {
   const t = s.benefits;
   const { locale } = useLocale();
   const config = useProtocolConfig();
+  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   if (!config) return null;
   const nf = (v: number, d = 1) =>
     new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: d }).format(v);
@@ -211,7 +222,7 @@ function Benefits() {
   ];
 
   return (
-    <section className={styles.section} aria-labelledby="benefits-title">
+    <section ref={sectionRef} className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealLedger}`} aria-labelledby="benefits-title">
       <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>
         {t.title}
       </h2>
@@ -222,8 +233,8 @@ function Benefits() {
             <span className={styles.ledgerValue}>{r.value}</span>
             <span className={styles.ledgerLabel}>{r.label}</span>
             <span className={styles.ledgerBeams} aria-hidden>
-              <span className={styles.ledgerBeamOurs} style={{ width: `${Math.max(1.5, (r.ours / r.max) * 100)}%` }} />
-              <span className={styles.ledgerBeamTheirs} style={{ width: `${(r.theirs / r.max) * 100}%` }} />
+              <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
+              <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
             </span>
             <span className={styles.ledgerVs}>
               {r.vs} <small className={styles.refTag}>{s.reference}</small>
@@ -238,8 +249,9 @@ function Benefits() {
 
 function Honest() {
   const t = useT(landingSections).honest;
+  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   return (
-    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
+    <section ref={sectionRef} className={`${styles.section} ${styles.sectionQuiet} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealHonest}`} aria-labelledby="honest-title">
       <h2 id="honest-title" className={styles.h2}>
         {t.title}
       </h2>
@@ -267,12 +279,13 @@ function Honest() {
 
 function Close() {
   const t = useT(landingSections).close;
+  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   return (
-    <footer className={styles.close}>
+    <footer ref={sectionRef} className={`${styles.close} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealClose}`}>
       <h2 className={styles.closeTitle}>{t.title}</h2>
-      <Link href="/tienda" className={styles.ctaPrimary}>
+      <MotionLink href="/tienda" tabIndex={0} className={styles.ctaPrimary} whileHover={{ scale: 1.018 }} whileTap={{ scale: 0.985 }}>
         {t.cta}
-      </Link>
+      </MotionLink>
       <p className={styles.closeFoot}>{t.foot}</p>
     </footer>
   );

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
@@ -18,11 +20,40 @@ export const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
 const MIN_PRICE = 120;
 const MAX_PRICE = 1500;
 const TIERS: TierIndex[] = [0, 1, 2, 3];
+export const MotionLink = motion.create(Link);
+
+export function ChangingNumber({ value, className }: { value: string; className?: string }) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.span
+        key={value}
+        className={className}
+        initial={{ opacity: reduceMotion ? 1 : 0.68, filter: reduceMotion ? "none" : "blur(3px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        exit={{ opacity: reduceMotion ? 1 : 0.62, filter: reduceMotion ? "none" : "blur(2px)" }}
+        transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }}
+      >
+        {value}
+      </motion.span>
+    </AnimatePresence>
+  );
+}
+
+function SelectionLight({ id }: { id: string }) {
+  const reduceMotion = useReducedMotion();
+  return reduceMotion ? (
+    <span aria-hidden="true" className={styles.selectionLight} />
+  ) : (
+    <motion.span aria-hidden="true" className={styles.selectionLight} layoutId={`selection-${id}`} transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }} />
+  );
+}
 
 export function LandingHero() {
   const t = useT(landingHero);
   const { locale } = useLocale();
   const config = useProtocolConfig();
+  const reduceMotion = useReducedMotion();
   const [price, setPrice] = useState(1000);
   const [productId, setProductId] = useState<Product["id"] | null>("pc");
   const [tier, setTier] = useState<TierIndex>(0);
@@ -75,7 +106,7 @@ export function LandingHero() {
                 {t.price}
               </label>
               <output htmlFor="lazo-price" className={styles.priceOut}>
-                US$ {fmt(toMicro(price), 0)}
+                US$ <ChangingNumber value={fmt(toMicro(price), 0)} />
               </output>
             </div>
             <input
@@ -102,6 +133,7 @@ export function LandingHero() {
                     className={styles.segment}
                     onClick={() => pickProduct(p)}
                   >
+                    {productId === p.id ? <SelectionLight id="product" /> : null}
                     {t.products[p.id]} <span className={styles.segmentNum}>{fmt(p.price, 0)}</span>
                   </button>
                 ))}
@@ -116,6 +148,7 @@ export function LandingHero() {
                     className={styles.segment}
                     onClick={() => setTier(n)}
                   >
+                    {tier === n ? <SelectionLight id="tier" /> : null}
                     {t.tierName(n)}
                   </button>
                 ))}
@@ -129,18 +162,26 @@ export function LandingHero() {
 
         <div className={styles.heroCopy}>
           <h1 className={styles.title}>
-            <span>{t.title1}</span>
-            <span className={styles.titleZero}>{t.title2}</span>
-            <span>{t.title3}</span>
+            {[t.title1, t.title2, t.title3].map((line, index) => (
+              <motion.span
+                key={line}
+                className={index === 1 ? styles.titleZero : undefined}
+                initial={false}
+                animate={{ filter: reduceMotion ? "brightness(1)" : ["brightness(1.12)", "brightness(1)"] }}
+                transition={{ duration: reduceMotion ? 0 : 0.46, delay: reduceMotion ? 0 : index * 0.11, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {line}
+              </motion.span>
+            ))}
           </h1>
           <p className={styles.lede}>{t.lede}</p>
           <div className={styles.ctaRow}>
-            <Link href={checkoutHref} className={styles.ctaPrimary}>
+            <MotionLink href={checkoutHref} tabIndex={0} className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
               {t.ctaPrimary}
               <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
                 <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Link>
+            </MotionLink>
             <Link href="/tienda" className={styles.ctaSecondary}>
               {t.ctaSecondary}
             </Link>
@@ -158,23 +199,23 @@ export function LandingHero() {
           <div className={styles.compareRow}>
             <span className={styles.compareWho}>{t.lazo}</span>
             <span className={styles.compareTrack}>
-              <span className={styles.beamLazo} style={{ width: `${(lazoTotal / mpTotal) * 100}%` }} />
+              <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
             </span>
             <span className={styles.compareNum}>
-              US$ {fmt(lazoTotal, 0)} <small>· 0% {t.interest}</small>
+              US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· 0% {t.interest}</small>
             </span>
           </div>
           <div className={styles.compareRow}>
             <span className={styles.compareWho}>{t.mp}</span>
             <span className={styles.compareTrack}>
-              <span className={styles.beamAlt} style={{ width: "100%" }} />
+              <span className={styles.beamAlt} style={{ transform: "scaleX(1)" }} />
             </span>
             <span className={styles.compareNum}>
-              ~US$ {fmt(mpTotal, 0)} <small className={styles.refTag}>{t.reference}</small>
+              ~US$ <ChangingNumber value={fmt(mpTotal, 0)} /> <small className={styles.refTag}>{t.reference}</small>
             </span>
           </div>
         </div>
-        <p className={styles.savings}>{t.savings(fmt(mpTotal - lazoTotal, 0))}</p>
+        <p className={styles.savings}><ChangingNumber value={t.savings(fmt(mpTotal - lazoTotal, 0))} /></p>
       </div>
     </section>
   );

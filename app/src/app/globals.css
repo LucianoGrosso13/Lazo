@@ -132,6 +132,31 @@
 
 @layer components {
 
+.app-nav-link {
+  position: relative;
+  text-decoration: none;
+}
+
+.app-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -0.42rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-violet), var(--color-cyan), var(--color-green));
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 220ms var(--ease-beam);
+}
+
+.app-nav-link:hover::after,
+.app-nav-link:focus-visible::after { clip-path: inset(0 0 0 0); }
+
+.app-brand svg { transition: filter 240ms var(--ease-beam); }
+.app-brand:hover svg { filter: drop-shadow(0 0 5px rgb(0 194 255 / 0.55)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-link::after, .app-brand svg { transition: none; }
+}
+
 /* El haz espectral que recorre filetes y cantos */
 .beam-line {
   height: 1px;

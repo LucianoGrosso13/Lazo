@@ -21,9 +21,9 @@ const martian = Martian_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lazo · Cuotas sin interés, respaldadas por tu familia",
+  title: "Lazo · Crédito para estudiar, sin interés",
   description:
-    "Zero-interest USDC installments for students without a credit card, backed by a family guarantor. Runs on Solana devnet.",
+    "A simulated demo of zero-interest installments for students, backed by a family guarantor. No payments or transactions are processed; the planned test environment is Solana devnet.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
