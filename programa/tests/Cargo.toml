@@ -1,0 +1,44 @@
+[package]
+name = "cuotas-tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "LiteSVM acceptance suite for the cuotas program. Owned by the test worker (programa/tests/**)."
+
+# Self-rooted workspace: this crate deliberately does NOT join the anchor
+# workspace in ../Cargo.toml, so no core-owned manifest has to change.
+# Run with:  cargo test --manifest-path programa/tests/Cargo.toml
+# or:        cd programa/tests && cargo test
+# Requires:  ../target/deploy/cuotas.so (NO_DNA=1 anchor build)
+[workspace]
+
+[dependencies]
+# Program under test: instruction args (InstructionData), account layouts
+# (AccountDeserialize), error enum and program ID come from the same crate the
+# .so was built from, so the ABI can never silently drift.
+cuotas = { path = "../programs/cuotas" }
+
+# In-process SVM that executes the compiled .so (not a mock, not a stub).
+litesvm = "0.16.0"
+
+# Granular solana crates pinned to the same versions litesvm 0.16 uses
+# internally, so instruction/transaction types unify in one lockfile.
+solana-address = "~2.6.1"
+solana-instruction = "~3.4.0"
+solana-instruction-error = "~2.4.0"
+solana-keypair = "~3.1.2"
+solana-signer = "~3.0.1"
+solana-message = "~4.2.4"
+solana-transaction = "~4.1.5"
+solana-transaction-error = "~3.3.1"
+solana-account = "~4.3.0"
+solana-clock = "~3.1.1"
+solana-rent = "~4.3.0"
+solana-sdk-ids = "~3.1.0"
+# anchor-lang 1.2 speaks solana_pubkey::Pubkey (solana-address 1.x lineage)
+# while litesvm speaks solana_address::Address (2.x). Both are [u8;32];
+# conversions happen in helpers::addr()/pk().
+solana-pubkey = "~3.0.0"
+# Same version the program crate pins — needed to name AccountDeserialize /
+# InstructionData in generic helpers.
+anchor-lang = "1.2.0"
