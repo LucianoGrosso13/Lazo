@@ -30,18 +30,13 @@ compiled `b7833ac`, not a stale artifact.
 ## How to run
 
 ```sh
-# SBF artifact (evidence build, already verified):
-cd programa && NO_DNA=1 anchor build --arch v1
-
-# in-process acceptance suite (all 97 tests); the tests workspace needs
-# stable, not the 1.89.0 host/SBF pin in ../rust-toolchain.toml:
-cd programa/tests && cargo +stable test --no-fail-fast
-
-# host-only unit tests of the program crate (serial, 29 tests, pinned 1.89.0):
-cd programa && cargo test -p cuotas --lib
+cd programa
+NO_DNA=1 anchor build --arch v1                                          # SBF artifact (evidence build, already verified)
+cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 97 tests)
+cargo test -p cuotas --lib                                               # host-only unit tests (serial, 29 tests)
 ```
 
-Equivalently, from `programa/`: `cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast`.
+Toolchain notes: `rust-toolchain.toml` pins Rust 1.89.0 for the workspace host commands (`cargo test -p cuotas --lib`); the SBF artifact is compiled by Solana's bundled platform tools via `anchor build`, independent of that pin. The `tests/` LiteSVM workspace needs a newer host rustc, so it must override the pin with `+stable` (verified on stable 1.99.0) — running it as plain `cargo test` under `programa/` fails to compile `solana-syscalls`.
 
 `CUOTAS_SO=/path/to/cuotas.so` overrides which artifact the suite loads
 (default `../target/deploy/cuotas.so`). Never run `anchor test` (it would

@@ -6,7 +6,7 @@ Core of an interest-free installment prototype for Solana **devnet only** (the t
 
 - Declared build-time program ID: `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ` (not proof of a deployed account).
 - Intended devUSDC mint: **not created**; classic SPL Token, 6 decimals.
-- Toolchain: Anchor CLI and `anchor-lang`/`anchor-spl` `1.2.0`, Solana CLI `3.1.14`, Rust `1.89.0` (pinned by `rust-toolchain.toml`) for the SBF build and host unit tests; the LiteSVM harness needs newer host crates (e.g. `solana-syscalls`), so it runs on the installed `stable` toolchain via `cargo +stable`.
+- Toolchain: Anchor CLI and `anchor-lang`/`anchor-spl` `1.2.0`, Solana CLI `3.1.14`. `rust-toolchain.toml` pins Rust `1.89.0` for workspace host work (unit tests, fmt/clippy, host-side IDL builds); the SBF artifact is compiled by Solana's bundled platform tools via `anchor build`/`cargo-build-sbf`, not by that pinned host rustc. The LiteSVM harness needs newer host crates (e.g. `solana-syscalls`), so it runs on the installed `stable` toolchain via `cargo +stable` (tested on 1.99.0).
 - Token accounts use `token_interface`; every token transfer uses `transfer_checked`. Only the classic SPL Token program is supported, not Token-2022.
 
 ## Safe local build and tests
@@ -22,7 +22,7 @@ cargo fmt --all -- --check
 cargo clippy -p cuotas --all-targets -- -D warnings
 ```
 
-`rust-toolchain.toml` pins `1.89.0` for everything under `programa/`. The independent LiteSVM suite in `tests/` is a separate host-side workspace whose dependencies require a newer rustc, so its command must override the pin with `+stable` (or run where no pin applies).
+`rust-toolchain.toml` pins `1.89.0` for host commands under `programa/` (`cargo test -p cuotas --lib`, fmt, clippy); `anchor build` delegates SBF compilation to Solana's bundled platform tools, which the pin does not govern. The independent LiteSVM suite in `tests/` is a separate host-side workspace whose dependencies require a newer rustc, so its command must override the pin with `+stable` (or run where no pin applies).
 
 These commands build and execute local host/LiteSVM tests; they do not deploy, start a network validator or submit network transactions. `--arch v1` selects SBPFv1 bytecode for the local LiteSVM harness; it is unrelated to the transaction message version. Run the SBF build serially: do not race another build using `programa/target`. The independent acceptance harness uses its own `tests/target` and loads `target/deploy/cuotas.so`.
 
