@@ -73,16 +73,17 @@ Devnet SOL has no real value and comes only from the public faucet. Budget appro
 
 The exact approved `solana program deploy` argv was used with only the permitted `.so` path substitution (integration worktree, identical SHA-256). Devnet transaction congestion caused repeated send/confirm failures; each bounded invocation made incremental progress because the CLI skips buffer chunks already written:
 
-| Attempt | Result | Buffer written after attempt |
+| Invocation | Log file | Result |
 |---|---|---|
-| 1 | `Data writes to account failed: Max retries exceeded` | ~36% |
-| 2 | same | ~65% |
-| 3 | same | ~72% |
-| 4 | same | — |
-| 5 | **success**, deploy signature above | 100%, program activated |
-| 6 | `Max retries exceeded` | n/a — ran before attempt 5's success was observed; re-created the buffer account |
+| 1 | `deploy-1791076095.log` | `Data writes to account failed: Max retries exceeded` |
+| 2 | `deploy-retry-1791076205.log` | same |
+| 3 | `deploy-retry2-1791076314.log` | same |
+| 4 | `deploy-retry3-1791076394.log` | same |
+| 5 | `deploy-retry4-1791076482.log` | same |
+| 6 | `deploy-retry5-1791076549.log` | **success**, deploy signature above; program activated |
+| 7 | `deploy-retry6-1791076577.log` | `Max retries exceeded`; an extra iteration ran after success and re-created the buffer account |
 
-Attempt 6 re-created buffer account `DUgcg4Y2FTujLeV1X4CQPVAogPyrgsHopZgnxP56ddNW` (partial data, owned by the upgradeable loader) holding 2.38758476 SOL of rent. Closing it to reclaim rent is **not authorized** (no buffer-close/refund transactions were approved), so the buffer is left in place harmlessly. The program account itself is unaffected.
+The retry loop continued after invocation 6 succeeded. Invocation 7 re-created buffer account `DUgcg4Y2FTujLeV1X4CQPVAogPyrgsHopZgnxP56ddNW` (partial data, owned by the upgradeable loader) holding 2.38758476 SOL of recoverable rent. Closing it to reclaim rent is **not authorized** (no buffer-close/refund transactions were approved), so the buffer remains in place. The executable program is unaffected. Future retry loops must stop on the first successful exit and verify the deployed program before any further submission.
 
 ## Commands executed (exact approved argv; `$CUOTAS_KEYS` = owner-only key dir outside the repo)
 
