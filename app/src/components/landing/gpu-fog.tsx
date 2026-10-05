@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-export function GpuFog({ enabled }: { enabled: boolean }) {
+export function GpuFog() {
   const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = host.current;
-    if (!container || !enabled || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!container || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let disposed = false;
     let renderer: import("three/webgpu").WebGPURenderer | undefined;
     let geometry: import("three/webgpu").PlaneGeometry | undefined;
@@ -32,10 +32,10 @@ export function GpuFog({ enabled }: { enabled: boolean }) {
         material = new WebGPU.MeshBasicNodeMaterial();
         material.transparent = true;
         material.depthWrite = false;
-        const p = TSL.uv().mul(TSL.vec2(3.2, 2.1));
-        const drift = TSL.time.mul(0.025);
+        const p = TSL.uv().mul(TSL.vec2(3.6, 2.4));
+        const drift = TSL.time.mul(0.065);
         const cloud = TSL.mx_fractal_noise_float(p.add(TSL.vec2(drift, drift.mul(0.63))));
-        const veil = TSL.smoothstep(0.18, 0.86, cloud).mul(0.29);
+        const veil = TSL.smoothstep(0.08, 0.62, cloud).mul(0.68);
         const hue = TSL.smoothstep(0.25, 0.8, TSL.uv().x.add(cloud.mul(0.22)));
         material.colorNode = TSL.mix(
           TSL.vec3(0.6, 0.27, 1),
@@ -46,7 +46,7 @@ export function GpuFog({ enabled }: { enabled: boolean }) {
         geometry = new WebGPU.PlaneGeometry(2, 2);
         const plane = new WebGPU.Mesh(geometry, material);
         scene.add(plane);
-        renderer = new WebGPU.WebGPURenderer({ alpha: true, antialias: false, powerPreference: "low-power" });
+        renderer = new WebGPU.WebGPURenderer({ alpha: true, antialias: false, powerPreference: "high-performance" });
         renderer.setClearColor(0x07060b, 0);
         renderer.domElement.setAttribute("aria-hidden", "true");
         renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
@@ -121,7 +121,7 @@ export function GpuFog({ enabled }: { enabled: boolean }) {
       geometry?.dispose();
       material?.dispose();
     };
-  }, [enabled]);
+  }, []);
 
   return <div ref={host} style={{ position: "absolute", inset: 0, overflow: "hidden" }} />;
 }
