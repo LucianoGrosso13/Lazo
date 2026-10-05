@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Fade } from "@/components/animate-ui/primitives/effects/fade";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Highlight, HighlightItem } from "@/components/animate-ui/primitives/effects/highlight";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
@@ -128,46 +129,40 @@ function Guarantor() {
 
       <div className={styles.ruler}>
         <p className={styles.rulerTitle}>{t.rulerTitle}</p>
-        <div className={`${styles.rulerTrack} rulerTrack`}>
-          <motion.span className={styles.rulerProgress} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: reduceMotion ? 0 : 0.75, ease: [0.16, 1, 0.3, 1] }} />
-          <span className={styles.rulerGrace} style={{ left: at(0), width: at(config.graceDays) }}>
-            <span>{t.events.grace}</span>
-          </span>
-          {Array.from({ length: end + 1 }, (_, d) => (
-            <span key={d} className={styles.tick} style={{ left: at(d) }} data-major={marks.some((m) => m.day === d) || undefined} />
-          ))}
-          <Highlight
-            mode="parent"
-            controlledItems
-            value={activeMark}
-            onValueChange={(value) => value && setActiveMark(value)}
-            click
-            hover={false}
-            transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className={styles.markHighlight}
-            containerClassName={styles.rulerMarks}
-          >
+        <Highlight mode="parent" controlledItems value={activeMark} onValueChange={(value) => value && setActiveMark(value)} click hover={false} transition={{ duration: reduceMotion ? 0 : 0.2 }} className={styles.markHighlight} containerClassName={styles.timelineLayout}>
+          <div className={styles.timelineEvents} aria-label={t.rulerTitle}>
             {marks.map((m) => (
-              <HighlightItem key={m.kind} asChild id={m.kind}>
+              <HighlightItem key={m.kind} id={m.kind} asChild>
                 <button
                   type="button"
-                  data-value={m.kind}
-                  className={styles.mark}
                   data-kind={m.kind}
-                  data-side={m.kind === "due" || m.kind === "penalty" ? "above" : "below"}
+                  className={styles.timelineEvent}
                   aria-pressed={activeMark === m.kind}
                   onClick={() => setActiveMark(m.kind)}
                   onFocus={() => setActiveMark(m.kind)}
-                  style={{ left: at(m.day) }}
                 >
                   <span className={styles.markDay}>{t.day(m.day)}</span>
-                  <span className={styles.markLabel}>{m.label}</span>
+                  <span className={styles.markLabel} data-kind={m.kind}>{m.label}</span>
                 </button>
               </HighlightItem>
             ))}
-          </Highlight>
-        </div>
-        <motion.p className={styles.rulerFoot} key={activeMark} initial={{ opacity: 0.55, y: reduceMotion ? 0 : 3 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>{t.receipt}</motion.p>
+          </div>
+          <div className={styles.timelineTrack} data-grace={t.events.grace}>
+            <motion.span className={styles.timelineProgress} initial={{ scaleX: 0 }} whileInView={{ scaleX: (marks.find((m) => m.kind === activeMark)?.day ?? 0) / end }} viewport={{ once: true }} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} />
+            <span className={styles.timelineGrace} style={{ width: at(config.graceDays) }} />
+            {Array.from({ length: end + 1 }, (_, d) => (
+              <span key={d} className={styles.tick} style={{ left: at(d) }} data-major={marks.some((m) => m.day === d) || undefined} />
+            ))}
+          </div>
+        </Highlight>
+        <AutoHeight deps={[activeMark]} transition={{ duration: reduceMotion ? 0 : 0.2 }}>
+          <div className={styles.timelineDetail} aria-live="polite">
+            <p className={styles.rulerFoot}>{t.receipt}</p>
+            <p className={styles.timelineSelected}>
+              <b>{t.day(marks.find((m) => m.kind === activeMark)?.day ?? 0)} · {marks.find((m) => m.kind === activeMark)?.label}</b>
+            </p>
+          </div>
+        </AutoHeight>
       </div>
     </section>
   );
