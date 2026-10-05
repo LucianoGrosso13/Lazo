@@ -33,11 +33,11 @@
 .fogFallback {
   position: absolute;
   inset: -18%;
-  opacity: 0.92;
+  opacity: 0.66;
   background:
-    radial-gradient(ellipse 38% 42% at 13% 26%, rgb(153 69 255 / 0.7), transparent 76%),
-    radial-gradient(ellipse 40% 46% at 72% 32%, rgb(0 194 255 / 0.49), transparent 74%),
-    radial-gradient(ellipse 38% 36% at 52% 85%, rgb(25 251 155 / 0.38), transparent 78%);
+    radial-gradient(ellipse 38% 42% at 13% 26%, rgb(153 69 255 / 0.6), transparent 76%),
+    radial-gradient(ellipse 40% 46% at 72% 32%, rgb(0 194 255 / 0.45), transparent 74%),
+    radial-gradient(ellipse 38% 36% at 52% 85%, rgb(25 251 155 / 0.2), transparent 78%);
   filter: blur(42px) saturate(1.5);
   animation: fogDrift 13s ease-in-out infinite alternate;
 }
@@ -45,7 +45,7 @@
 .spectralWake {
   position: absolute;
   inset: -30%;
-  opacity: 0.7;
+  opacity: 0.54;
   background: conic-gradient(
     from 238deg at 48% 45%,
     transparent 0deg,
@@ -109,9 +109,9 @@
   overflow: hidden;
   padding: clamp(1rem, 3vw, 2.5rem) var(--pad) clamp(2.5rem, 5vw, 4rem);
   background:
-    radial-gradient(60% 70% at 18% 42%, rgb(153 69 255 / 0.24), transparent 70%),
-    radial-gradient(40% 50% at 70% 50%, rgb(0 194 255 / 0.13), transparent 70%),
-    rgb(7 6 11 / 0.34);
+    radial-gradient(60% 70% at 18% 42%, rgb(153 69 255 / 0.12), transparent 70%),
+    radial-gradient(40% 50% at 70% 50%, rgb(0 194 255 / 0.07), transparent 70%),
+    rgb(7 6 11 / 0.68);
   border-bottom: 1px solid var(--edge);
 }
 
@@ -727,8 +727,8 @@
     justify-self: start;
   }
 
-  .fogFallback { opacity: 0.85; filter: blur(30px) saturate(1.4); }
-  .spectralWake { opacity: 0.6; filter: blur(48px) saturate(1.5); }
+  .fogFallback { opacity: 0.58; filter: blur(30px) saturate(1.4); }
+  .spectralWake { opacity: 0.46; filter: blur(48px) saturate(1.5); }
   .lightSweep { opacity: 0.44; }
 }
 
