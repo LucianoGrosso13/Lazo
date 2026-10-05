@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { Fade } from "@/components/animate-ui/primitives/effects/fade";
+import { Highlight, HighlightItem } from "@/components/animate-ui/primitives/effects/highlight";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
 import { useLocale, useT } from "@/i18n/locale";
@@ -21,28 +23,6 @@ function TierIndicator() {
   );
 }
 
-/** Marca la sección cuando entra en pantalla (una sola vez). */
-function useInView<T extends Element>() {
-  const ref = useRef<T>(null);
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setSeen(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return [ref, seen] as const;
-}
-
 export function LandingSections() {
   return (
     <div className={`${styles.landing}`}>
@@ -60,13 +40,12 @@ function Ladder() {
   const { locale } = useLocale();
   const config = useProtocolConfig();
   const [active, setActive] = useState<TierIndex>(0);
-  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   if (!config) return null;
   const pct = (bps: number) => `${bps / 100}%`;
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section ref={sectionRef} id="how" className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="ladder-title">
+    <section id="how" className={styles.section} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -106,9 +85,9 @@ function Ladder() {
           );
         })}
       </div>
-      <p className={styles.ladderExample} aria-live="polite">
+      <Fade className={styles.ladderExample} inView inViewOnce initialOpacity={0.9} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} aria-live="polite">
         <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
-      </p>
+      </Fade>
     </section>
   );
 }
@@ -116,8 +95,8 @@ function Ladder() {
 function Guarantor() {
   const t = useT(landingSections).guarantor;
   const config = useProtocolConfig();
-  const [rulerRef, seen] = useInView<HTMLDivElement>();
-  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
+  const [activeMark, setActiveMark] = useState("due");
+  const reduceMotion = useReducedMotion();
   if (!config) return null;
   const end = config.guarantorChargeDay;
   const at = (day: number) => `${(day / end) * 100}%`;
@@ -129,7 +108,7 @@ function Guarantor() {
   ];
 
   return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.sectionQuiet} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealSteps}`} aria-labelledby="guarantor-title">
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="guarantor-title">
       <div className={styles.split2}>
         <div>
           <h2 id="guarantor-title" className={styles.h2}>
@@ -147,30 +126,48 @@ function Guarantor() {
         </ol>
       </div>
 
-      <div ref={rulerRef} className={`${styles.ruler} ${seen ? styles.rulerLit : ""}`}>
+      <div className={styles.ruler}>
         <p className={styles.rulerTitle}>{t.rulerTitle}</p>
-        <div className={styles.rulerTrack}>
+        <div className={`${styles.rulerTrack} rulerTrack`}>
+          <motion.span className={styles.rulerProgress} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: reduceMotion ? 0 : 0.75, ease: [0.16, 1, 0.3, 1] }} />
           <span className={styles.rulerGrace} style={{ left: at(0), width: at(config.graceDays) }}>
             <span>{t.events.grace}</span>
           </span>
-          <span className={styles.rulerLight} />
           {Array.from({ length: end + 1 }, (_, d) => (
             <span key={d} className={styles.tick} style={{ left: at(d) }} data-major={marks.some((m) => m.day === d) || undefined} />
           ))}
-          {marks.map((m, i) => (
-            <span
-              key={m.kind}
-              className={styles.mark}
-              data-kind={m.kind}
-              data-side={i % 2 ? "below" : "above"}
-              style={{ left: at(m.day), ["--delay" as string]: `${(m.day / end) * 1.6}s` }}
-            >
-              <span className={styles.markDay}>{t.day(m.day)}</span>
-              <span className={styles.markLabel}>{m.label}</span>
-            </span>
-          ))}
+          <Highlight
+            mode="parent"
+            controlledItems
+            value={activeMark}
+            onValueChange={(value) => value && setActiveMark(value)}
+            click
+            hover={false}
+            transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className={styles.markHighlight}
+            containerClassName={styles.rulerMarks}
+          >
+            {marks.map((m) => (
+              <HighlightItem key={m.kind} asChild id={m.kind}>
+                <button
+                  type="button"
+                  data-value={m.kind}
+                  className={styles.mark}
+                  data-kind={m.kind}
+                  data-side={m.kind === "due" || m.kind === "penalty" ? "above" : "below"}
+                  aria-pressed={activeMark === m.kind}
+                  onClick={() => setActiveMark(m.kind)}
+                  onFocus={() => setActiveMark(m.kind)}
+                  style={{ left: at(m.day) }}
+                >
+                  <span className={styles.markDay}>{t.day(m.day)}</span>
+                  <span className={styles.markLabel}>{m.label}</span>
+                </button>
+              </HighlightItem>
+            ))}
+          </Highlight>
         </div>
-        <p className={styles.rulerFoot}>{t.receipt}</p>
+        <motion.p className={styles.rulerFoot} key={activeMark} initial={{ opacity: 0.55, y: reduceMotion ? 0 : 3 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>{t.receipt}</motion.p>
       </div>
     </section>
   );
@@ -181,7 +178,6 @@ function Benefits() {
   const t = s.benefits;
   const { locale } = useLocale();
   const config = useProtocolConfig();
-  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   if (!config) return null;
   const nf = (v: number, d = 1) =>
     new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: d }).format(v);
@@ -219,7 +215,7 @@ function Benefits() {
   ];
 
   return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealLedger}`} aria-labelledby="benefits-title">
+    <section className={styles.section} aria-labelledby="benefits-title">
       <details className={styles.economicsDisclosure}>
         <summary className={`${styles.h2} ${styles.h2Wide} ${styles.disclosureSummary}`}>
           <span id="benefits-title">{t.title}</span>
@@ -247,9 +243,8 @@ function Benefits() {
 
 function Honest() {
   const t = useT(landingSections).honest;
-  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.sectionQuiet} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealHonest}`} aria-labelledby="honest-title">
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
       <h2 id="honest-title" className={styles.h2}>
         {t.title}
       </h2>
@@ -278,9 +273,8 @@ function Honest() {
 function Close() {
   const t = useT(landingSections).close;
   const reduceMotion = useReducedMotion();
-  const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   return (
-    <footer ref={sectionRef} className={`${styles.close} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealClose}`}>
+    <footer className={styles.close}>
       <h2 className={styles.closeTitle}>{t.title}</h2>
       <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}

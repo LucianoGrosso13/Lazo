@@ -8,7 +8,6 @@ import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
 import { ChipButton, SegmentedControl } from "@/components/ui/chip";
-import { DevnetBadge } from "@/components/ui/badges";
 import { WalletButton } from "./wallet-button";
 
 /** Marca: un haz blanco entra al prisma y sale como espectro. */
@@ -270,7 +269,6 @@ export function AppHeader() {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <DevnetBadge />
             <span className="hidden sm:block">
               <LocaleSwitch />
             </span>

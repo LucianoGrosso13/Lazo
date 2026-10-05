@@ -9,6 +9,7 @@ import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
 import { useLocale, useT } from "@/i18n/locale";
 import {
@@ -35,6 +36,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
   const t = useT(garanteCuenta);
   const { locale } = useLocale();
   const [paso, setPaso] = useState<Paso>(0);
+  const reduceMotion = useReducedMotion();
   const [tope, setTope] = useState<Micro | null>(null);
   const [nombre, setNombre] = useState("");
   const [card, setCard] = useState(0);
@@ -146,6 +148,8 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
       </ol>
 
       <div className="mt-6">
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={paso} initial={{ opacity: 0.82, y: reduceMotion ? 0 : 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0.75, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>
         {paso === 0 && (
           <section aria-label={t.alta.steps.resumen}>
             <p className="font-medium text-ink">{t.alta.resumenTitle}</p>
@@ -360,6 +364,8 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
             )}
           </section>
         )}
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">

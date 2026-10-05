@@ -29,6 +29,7 @@ import { PrismStage, type StageBand } from "@/components/landing/prism-stage";
 import { SPECTRUM } from "@/components/landing/hero";
 import { REFERENCE } from "@/components/landing/reference";
 import { GlassPanel } from "@/components/ui/glass";
+import { Fade } from "@/components/animate-ui/primitives/effects/fade";
 import { BigNumber } from "@/components/ui/big-number";
 import { ReferenceTag } from "@/components/ui/badges";
 import { Breakdown, type BreakdownData, type WalletStatus } from "./breakdown";
@@ -185,7 +186,7 @@ export function CheckoutScreen({
   const savings = Math.max(0, mpTotal - lazoTotal);
 
   return (
-    <section className={styles.page}>
+    <Fade role="region" className={styles.page} initialOpacity={0.96} transition={{ duration: 0.24 }}>
       <div className={styles.wrap}>
         <Link href="/tienda" className={styles.back}>
           <svg
@@ -324,6 +325,6 @@ export function CheckoutScreen({
           </>
         )}
       </div>
-    </section>
+    </Fade>
   );
 }

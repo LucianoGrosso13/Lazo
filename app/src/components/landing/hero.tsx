@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { AnimatePresence } from "motion/react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
@@ -25,18 +24,15 @@ export const MotionLink = motion.create(Link);
 export function ChangingNumber({ value, className }: { value: string; className?: string }) {
   const reduceMotion = useReducedMotion();
   return (
-    <AnimatePresence mode="popLayout" initial={false}>
-      <motion.span
-        key={value}
-        className={className}
-        initial={{ opacity: reduceMotion ? 1 : 0.68, filter: reduceMotion ? "none" : "blur(3px)" }}
-        animate={{ opacity: 1, filter: "blur(0px)" }}
-        exit={{ opacity: reduceMotion ? 1 : 0.62, filter: reduceMotion ? "none" : "blur(2px)" }}
-        transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }}
-      >
-        {value}
-      </motion.span>
-    </AnimatePresence>
+    <motion.span
+      className={className}
+      initial={false}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      whileTap={reduceMotion ? undefined : { color: "var(--color-beam)" }}
+      transition={{ duration: reduceMotion ? 0 : 0.14, ease: "easeOut" }}
+    >
+      {value}
+    </motion.span>
   );
 }
 
