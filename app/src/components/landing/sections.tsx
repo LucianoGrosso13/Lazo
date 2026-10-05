@@ -220,25 +220,27 @@ function Benefits() {
 
   return (
     <section ref={sectionRef} className={`${styles.section} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealLedger}`} aria-labelledby="benefits-title">
-      <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>
-        {t.title}
-      </h2>
-      <div className={styles.ledger}>
-        {rows.map((r, i) => (
-          <div key={r.who} className={styles.ledgerRow} style={{ ["--band" as string]: SPECTRUM[i + 1] }}>
-            <span className={styles.ledgerWho}>{r.who}</span>
-            <span className={styles.ledgerValue}>{r.value}</span>
-            <span className={styles.ledgerLabel}>{r.label}</span>
-            <span className={styles.ledgerBeams} aria-hidden>
-              <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
-              <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
-            </span>
-            <span className={styles.ledgerVs}>
-              {r.vs} <small className={styles.refTag}>{s.reference}</small>
-            </span>
-          </div>
-        ))}
-      </div>
+      <details className={styles.economicsDisclosure}>
+        <summary className={`${styles.h2} ${styles.h2Wide} ${styles.disclosureSummary}`}>
+          <span id="benefits-title">{t.title}</span>
+        </summary>
+        <div className={styles.ledger}>
+          {rows.map((r, i) => (
+            <div key={r.who} className={styles.ledgerRow} style={{ ["--band" as string]: SPECTRUM[i + 1] }}>
+              <span className={styles.ledgerWho}>{r.who}</span>
+              <span className={styles.ledgerValue}>{r.value}</span>
+              <span className={styles.ledgerLabel}>{r.label}</span>
+              <span className={styles.ledgerBeams} aria-hidden>
+                <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
+                <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
+              </span>
+              <span className={styles.ledgerVs}>
+                {r.vs} <small className={styles.refTag}>{s.reference}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </details>
     </section>
   );
 }
@@ -275,11 +277,12 @@ function Honest() {
 
 function Close() {
   const t = useT(landingSections).close;
+  const reduceMotion = useReducedMotion();
   const [sectionRef, sectionSeen] = useInView<HTMLElement>();
   return (
     <footer ref={sectionRef} className={`${styles.close} ${styles.sectionReveal} ${sectionSeen ? styles.sectionActivated : ""} ${styles.revealClose}`}>
       <h2 className={styles.closeTitle}>{t.title}</h2>
-      <MotionLink href="/tienda" tabIndex={0} className={styles.ctaPrimary} whileHover={{ scale: 1.018 }} whileTap={{ scale: 0.985 }}>
+      <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
       </MotionLink>
       <p className={styles.closeFoot}>{t.foot}</p>

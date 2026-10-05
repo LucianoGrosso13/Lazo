@@ -176,7 +176,7 @@ export function LandingHero() {
           </h1>
           <p className={styles.lede}>{t.lede}</p>
           <div className={styles.ctaRow}>
-            <MotionLink href={checkoutHref} tabIndex={0} className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
+            <MotionLink href={checkoutHref} className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
               {t.ctaPrimary}
               <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
                 <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -193,30 +193,32 @@ export function LandingHero() {
         </div>
       </div>
 
-      <div className={styles.compare}>
-        <p className={styles.compareTitle}>{t.compareTitle}</p>
-        <div className={styles.compareRows}>
-          <div className={styles.compareRow}>
-            <span className={styles.compareWho}>{t.lazo}</span>
-            <span className={styles.compareTrack}>
-              <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
-            </span>
-            <span className={styles.compareNum}>
-              US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· 0% {t.interest}</small>
-            </span>
+      <details className={styles.compare}>
+        <summary className={styles.compareTitle}>{t.compareTitle}</summary>
+        <div className={styles.compareDetails}>
+          <div className={styles.compareRows}>
+            <div className={styles.compareRow}>
+              <span className={styles.compareWho}>{t.lazo}</span>
+              <span className={styles.compareTrack}>
+                <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
+              </span>
+              <span className={styles.compareNum}>
+                US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· 0% {t.interest}</small>
+              </span>
+            </div>
+            <div className={styles.compareRow}>
+              <span className={styles.compareWho}>{t.mp}</span>
+              <span className={styles.compareTrack}>
+                <span className={styles.beamAlt} style={{ transform: "scaleX(1)" }} />
+              </span>
+              <span className={styles.compareNum}>
+                ~US$ <ChangingNumber value={fmt(mpTotal, 0)} /> <small className={styles.refTag}>{t.reference}</small>
+              </span>
+            </div>
           </div>
-          <div className={styles.compareRow}>
-            <span className={styles.compareWho}>{t.mp}</span>
-            <span className={styles.compareTrack}>
-              <span className={styles.beamAlt} style={{ transform: "scaleX(1)" }} />
-            </span>
-            <span className={styles.compareNum}>
-              ~US$ <ChangingNumber value={fmt(mpTotal, 0)} /> <small className={styles.refTag}>{t.reference}</small>
-            </span>
-          </div>
+          <p className={styles.savings}><ChangingNumber value={t.savings(fmt(mpTotal - lazoTotal, 0))} /></p>
         </div>
-        <p className={styles.savings}><ChangingNumber value={t.savings(fmt(mpTotal - lazoTotal, 0))} /></p>
-      </div>
+      </details>
     </section>
   );
 }

@@ -33,7 +33,7 @@ export const landingSections = defineDict({
       receipt: "En esta demo, la línea de tiempo ilustra el proceso y no registra eventos en cadena.",
     },
     benefits: {
-      title: "Condiciones claras para cada parte",
+      title: "Números ilustrativos",
       rows: {
         student: {
           who: "Estudiante",
@@ -109,7 +109,7 @@ export const landingSections = defineDict({
       receipt: "In this demo, the timeline illustrates the flow and does not record onchain events.",
     },
     benefits: {
-      title: "Clear terms for every side",
+      title: "Illustrative economics",
       rows: {
         student: {
           who: "Student",

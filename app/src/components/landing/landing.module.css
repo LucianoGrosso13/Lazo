@@ -517,8 +517,98 @@
 }
 
 .compareTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
   font-size: 0.95rem;
   color: var(--ink-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.compareTitle::-webkit-details-marker,
+.disclosureSummary::-webkit-details-marker { display: none; }
+.compareTitle::marker,
+.disclosureSummary::marker { content: none; }
+
+.compareTitle:focus-visible,
+.disclosureSummary:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 0.6rem;
+}
+
+.compareTitle::after,
+.disclosureSummary::after {
+  content: "+";
+  display: grid;
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  margin-left: 1rem;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  color: var(--cyan);
+  font: 500 1.1rem/1 var(--font-mono), ui-monospace, monospace;
+  transition:
+    transform 240ms var(--ease-beam),
+    border-color 240ms var(--ease-beam),
+    background-color 240ms var(--ease-beam),
+    box-shadow 240ms var(--ease-beam);
+}
+
+.compareTitle:hover::after,
+.disclosureSummary:hover::after {
+  border-color: rgb(0 194 255 / 0.6);
+}
+
+.compare[open] > .compareTitle::after,
+.economicsDisclosure[open] > .disclosureSummary::after {
+  content: "−";
+  transform: rotate(180deg);
+  border-color: var(--cyan);
+  background-color: rgb(0 194 255 / 0.12);
+  box-shadow: 0 0 16px rgb(0 194 255 / 0.45), inset 0 0 0 1px rgb(0 194 255 / 0.35);
+}
+
+@keyframes disclosureIn {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.compare[open] > .compareDetails,
+.economicsDisclosure[open] > .ledger {
+  animation: disclosureIn 360ms var(--ease) both;
+}
+
+.compareDetails {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.economicsDisclosure { max-width: 1440px; margin-inline: auto; }
+
+.disclosureSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 52rem;
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+  text-align: left;
+  border-radius: 0.6rem;
+}
+
+.economicsDisclosure > .disclosureSummary {
+  margin-bottom: 0;
+}
+
+.economicsDisclosure[open] > .disclosureSummary {
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
 }
 
 .compareRows {
@@ -612,15 +702,9 @@
   .savings {
     justify-self: start;
   }
-}
 
-@media (max-width: 640px) {
   .hero { padding-top: 4.75rem; }
   .motionToggle { top: 4.5rem; left: 1.25rem; right: auto; bottom: auto; min-height: 2.75rem; font-size: 0.66rem; }
-}
-
-@media (max-width: 640px) {
-  .motionToggle { font-size: 0.66rem; }
   .fogFallback { opacity: 0.32; filter: blur(24px); }
 }
 
@@ -631,6 +715,11 @@
   .caustic, .bandsGlow, .bands, .ctaPrimary, .beamLazo, .step, .segment { transition-duration: 0.01ms !important; }
   .ctaPrimary:hover, .step:hover, .step:focus-visible { transform: none; }
   .step[aria-checked="true"] { transform: none; }
+  .compareTitle::after, .disclosureSummary::after { transition: none !important; }
+  .compare[open] > .compareTitle::after,
+  .economicsDisclosure[open] > .disclosureSummary::after { transform: none; }
+  .compare[open] > .compareDetails,
+  .economicsDisclosure[open] > .ledger { animation: none !important; }
 }
 
 /* ---------- Secciones ---------- */
