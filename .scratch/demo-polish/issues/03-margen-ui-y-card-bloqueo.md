@@ -1,6 +1,6 @@
 # 03 — UI del margen + card de "no podés comprar" rediseñada
 
-**Status:** ready-for-agent · **Depende de:** 02 · **Tamaño:** M
+**Status:** done · **Depende de:** 02 · **Tamaño:** M
 
 ## Objetivo
 
@@ -29,8 +29,8 @@ Dos cosas:
 
 ## Criterios
 
-- [ ] Con un plan activo que consume margen, la tienda muestra "Margen: US$ X de US$ Y" y baja al pagar cuotas.
-- [ ] `exceeds_credit_limit` en checkout muestra el medidor + copy + CTA a `/panel`.
-- [ ] Las demás razones de bloqueo se ven con el nuevo diseño (sin regresión de contenido).
-- [ ] reduced-motion sin animaciones; 390 px sin overflow.
-- [ ] typecheck/lint/test/build en verde.
+- [x] Con un plan activo que consume margen, la tienda muestra "Margen: US$ X de US$ Y" y baja al pagar cuotas. (Verificado: notebook abierto → "US$ 850 disponibles de US$ 1.500"; evidencia `03-tienda-margen-*.png`. Bajar cuotas baja `activeExposure`, misma fuente.)
+- [x] `exceeds_credit_limit` en checkout muestra el medidor + copy + CTA a `/panel`. (`role="meter"`, aria-valuetext "US$ 650 / US$ 1.500", tramo rajado del intento, CTA "Ver mis planes" → `/panel`.)
+- [x] Las demás razones de bloqueo se ven con el nuevo diseño (sin regresión de contenido). (`.blocked` autocontenida: `ConfirmPanel` la reutiliza sin cambios; todas las razones conservan título/copy/CTA/`next`.)
+- [x] reduced-motion sin animaciones; 390 px sin overflow. (`animation-name: none` en el medidor con reduced-motion; scrollWidth 390 en tienda y checkout.)
+- [x] typecheck/lint/test/build en verde.
