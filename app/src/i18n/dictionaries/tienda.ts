@@ -98,7 +98,7 @@ export const tienda = defineDict({
       `${name}, US$ ${price}. US$ ${down} down payment and ${n} installments of US$ ${inst}, interest-free.`,
     footer: "Amounts come from the protocol config and your tier. Nothing is real: it runs on devnet.",
     dir: {
-      title: "Affiliated stores",
+      title: "Example stores",
       fictionalTag: "fictional examples",
       lede: "Sample stores for studying, gearing up and taking your first steps. These are fictional profiles — no real commercial agreements exist.",
       filterAria: "Filter stores by category",

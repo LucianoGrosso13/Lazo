@@ -66,10 +66,11 @@ espectro (mismo motivo que el haz: el directorio es el haz ya partido).
 
 1. Lede: copy del coordinador ya aplicado (resuelve la contradicción y la
    afirmación inverificable).
-2. Título EN "Partner directory" → "Affiliated stores" (sin lenguaje de
-   partnership; framing de afiliación consistente con "adheridos").
+2. Título EN "Partner directory" → "Example stores" (sin lenguaje de
+   partnership ni afiliación; último hallazgo del revisor).
 3. `.dirBand` → `.dirTick` horizontal (coordinador + fix #3 del review).
-4. Recaptura post-fix de las mismas 8 rutas: hecha (timestamps 13:24-25).
+4. Recaptura post-fix de las mismas 8 rutas: hecha (timestamps 13:24-25);
+   tras el cambio de título, confirmación visual EN desktop+mobile.
 
 ## Verificación
 
