@@ -1,8 +1,9 @@
 "use client";
 
 // Entrada del fiador por token de invitación: sin wallet, el enlace ES la
-// credencial. Token inválido → estado honesto sin exponer datos; real sin
-// backend HMAC → pendiente explícito; válida sin usar → alta; usada → panel.
+// credencial. Los tokens del servidor (HMAC, "v1.…") van al flujo real
+// (KYC Didit + tarjeta Mobbex + fianza canónica); los hex heredados van al
+// flujo mock local. Token inválido → estado honesto sin exponer datos.
 import Link from "next/link";
 import useSWR from "swr";
 import { buttonClasses } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { useT } from "@/i18n/locale";
 import { AccountCuotasError, getAccountCuotas, type Invitation } from "@/lib/cuotas";
 import { AltaFiador } from "./alta";
 import { PanelFiador } from "./panel";
+import { RealFiadorEntry } from "./real";
 
 const codeOf = (e: unknown): string | null =>
   e instanceof AccountCuotasError
@@ -36,6 +38,15 @@ function Estado({ testId, title, body, children }: {
 }
 
 export function FiadorEntry({ token }: { token: string }) {
+  // Los tokens del servidor son HMAC ("v1.<payload>.<sig>") y se resuelven
+  // contra el backend; el resto son referencias del mock local.
+  if (token.startsWith("v1.")) {
+    return <RealFiadorEntry token={token} />;
+  }
+  return <MockFiadorEntry token={token} />;
+}
+
+function MockFiadorEntry({ token }: { token: string }) {
   const t = useT(garanteCuenta);
   const query = useSWR(["fiador-invitation", token], () =>
     getAccountCuotas().resolveInvitation(token),
