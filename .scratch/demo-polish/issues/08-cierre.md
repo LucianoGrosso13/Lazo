@@ -1,6 +1,6 @@
 # 08 — Cierre: verificación, capturas y memoria
 
-**Status:** ready-for-agent · **Depende de:** 01-07 · **Tamaño:** S
+**Status:** done · **Depende de:** 01-07 · **Tamaño:** S
 
 ## Objetivo
 
@@ -19,6 +19,6 @@ Dejar la tanda integrada, verificada y documentada.
 
 ## Criterios
 
-- [ ] Todo lo de arriba en verde, evidencia en `.scratch/demo-polish/evidence/`.
-- [ ] Ningún texto renderizado nombra competidores ni dice "Tienda Demo".
-- [ ] Demo corre solo devnet/mock; nada de credenciales nuevas requeridas.
+- [x] Todo lo de arriba en verde, evidencia en `.scratch/demo-polish/evidence/` (capturas `08-*` + `capture-ticket-08.mjs`). typecheck/lint/test/build verdes; e2e 24/24 mock (1 skip real por diseño).
+- [x] Ningún texto renderizado nombra competidores ni dice "Tienda Demo" (verificado en ES y EN en `/`, `/tienda`, `/checkout/*`, `/comercio`, `/pool`, `/app/*`, `/panel`; quedan solo usos genéricos del sustantivo "tienda demo" en declaraciones de simulación, criterio aceptado del ticket 01).
+- [x] Demo corre solo devnet/mock; nada de credenciales nuevas requeridas (sin `.env.local`, mock por defecto).

@@ -41,5 +41,13 @@ test("guarantor timeline markers are keyboard buttons with selected state", asyn
   await markers.nth(1).focus();
   await page.keyboard.press("Enter");
   await expect(markers.nth(1)).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("[data-slot='motion-highlight']")).toHaveCount(1);
+  // El estado seleccionado se declara con data-active (las primitivas
+  // animate-ui/Highlight se retiraron en el checkpoint UX/UI): un solo
+  // marcador queda activo a la vez.
+  await expect(markers.nth(1)).toHaveAttribute("data-active", "true");
+  await expect(
+    page.locator(
+      "section[aria-labelledby='guarantor-title'] button[data-active='true']",
+    ),
+  ).toHaveCount(1);
 });

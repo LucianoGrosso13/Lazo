@@ -119,7 +119,7 @@ Calendario (hora Argentina):
 
 > Actualizado 2026-10-06 (rama `t-demo-devnet`). Detalle fino y bloqueos: `proyecto/handoff-demo-devnet.md` § "Estado real".
 >
-> **Tanda en curso:** pulido de la demo (fotos reales, prisma 3D, margen de crédito, "Voltia", comparaciones sin toggle). Spec + tickets en `.scratch/demo-polish/`; ejecución: `proyecto/handoff-pulido-demo.md`.
+> Pulido demo (margen, fotos, prisma 3D, Voltia): ver `.scratch/demo-polish/spec.md` — tanda cerrada (8/8 tickets done), ejecución `proyecto/handoff-pulido-demo.md`. Ojo: la divergencia mock↔programa del margen está anotada en `proyecto/05-pitch.md` § "Nota técnica".
 
 - [x] T0.1 Next.js + wallet
 - [x] T0.2 Deploy Vercel
