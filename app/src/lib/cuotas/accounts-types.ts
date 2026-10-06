@@ -60,9 +60,9 @@ export interface ResolvedAccount {
 export interface StudentBalance {
   /** `null` = no se pudo determinar; la UI declara indisponibilidad, no inventa. */
   available: Micro | null;
-  /** En mock siempre `true`: es plata de prueba. */
+  /** En mock siempre `true`: es plata de prueba. En real es devUSDC de devnet. */
   simulated: boolean;
-  source: "derived" | "unavailable";
+  source: "derived" | "onchain" | "unavailable";
 }
 
 /** Metadata de la invitación al fiador. El token no firma nada: es una referencia demo. */
@@ -107,6 +107,8 @@ export interface AdminSnapshot {
 export type AccountErrorCode =
   | "not_found"
   | "invalid_token"
+  /** Invitación vencida: el estudiante emite un enlace nuevo. */
+  | "expired"
   | "unauthorized"
   | "unavailable"
   | "not_implemented"
@@ -136,6 +138,16 @@ export interface AccountBaseHooks {
     actor: WalletAddress,
     args: AdminRegisterMerchantArgs,
   ): Promise<Merchant>;
+  /**
+   * Balance devUSDC onchain del ATA canónico del dueño (0 si no existe).
+   * Lo implementa la base real; el mock no lo expone (usa el derivado).
+   */
+  getDevUsdcBalance?(owner: WalletAddress): Promise<Micro>;
+  /**
+   * Comercios registrados onchain (barrido por discriminador). Lo implementa
+   * la base real; sin él, el snapshot marca "merchants" como pendiente.
+   */
+  listMerchants?(): Promise<AdminMerchantRef[]>;
 }
 
 export interface AccountCuotasClient {

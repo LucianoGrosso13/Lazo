@@ -23,6 +23,10 @@ export type ProtocolState = "Normal" | "Halted" | "WithdrawsOnly";
 
 /** Espejo de `ProtocolConfig`. Ningún número de negocio vive fuera de acá. */
 export interface ProtocolConfig {
+  /** Autoridad admin onchain. Presente en modo real; ausente en el mock. */
+  admin?: WalletAddress;
+  /** Autoridad del keeper onchain. Presente en modo real; ausente en el mock. */
+  keeper?: WalletAddress;
   feeBps: Bps;
   penaltyBps: Bps;
   graceDays: number;
@@ -31,6 +35,11 @@ export interface ProtocolConfig {
   guarantorChargeDay: number;
   secondsPerDay: number;
   installmentsCount: number;
+  /**
+   * Días entre vencimientos (`installment_interval_days` onchain). Presente
+   * en modo real; el mock usa 30 fijo en la UI y lo omite.
+   */
+  installmentIntervalDays?: number;
   guaranteedTiers: [TierParams, TierParams, TierParams, TierParams];
   unguaranteedTiers: [TierParams, TierParams];
   minFinancedToCount: Micro;
@@ -259,9 +268,31 @@ export interface CuotasClient {
   subscribe(listener: () => void): () => void;
 }
 
+export type RealErrorCode =
+  /** Sin wallet conectada para firmar. La UI pide conectar Phantom. */
+  | "wallet_required"
+  /** La wallet conectada no es la autoridad requerida (admin/keeper/estudiante). */
+  | "unauthorized"
+  /** El RPC no es devnet (verificación por hash de génesis). */
+  | "wrong_cluster"
+  /** La simulación previa a la firma falló: no se pide aprobación. */
+  | "simulation_failed"
+  /** Revisión explícita rechazada: cero firmas, cero envíos. */
+  | "review_rejected"
+  /** La wallet no firma la versión de transacción pedida. */
+  | "unsupported_version"
+  /** Fallo de red, RPC o confirmación: reintentar. No inventa datos. */
+  | "unavailable";
+
 export class CuotasError extends Error {
   constructor(
-    public readonly code: QuoteBlockReason | "not_found" | "nothing_due" | "demo_only" | "not_implemented",
+    public readonly code:
+      | QuoteBlockReason
+      | "not_found"
+      | "nothing_due"
+      | "demo_only"
+      | "not_implemented"
+      | RealErrorCode,
     message?: string,
   ) {
     super(message ?? code);

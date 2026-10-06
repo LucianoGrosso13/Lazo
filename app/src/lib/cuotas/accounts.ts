@@ -33,8 +33,60 @@ import type {
   WalletAddress,
 } from "./types";
 
-/** Clave versionada del store de metadatos de cuenta (invitaciones). */
+/** Clave versionada del store de metadatos de cuenta (invitaciones mock). */
 const STORAGE_KEY = "lazo.accounts.v1";
+
+/** Invitaciones reales: el backend emite tokens HMAC (válidos cross-browser). */
+function isServerRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
+async function inviteApi(
+  path: string,
+  init: { method: string; body?: unknown },
+): Promise<Record<string, unknown>> {
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method: init.method,
+      headers: { "content-type": "application/json" },
+      body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    });
+  } catch {
+    throw new AccountCuotasError("unavailable", "Sin respuesta del backend de invitaciones");
+  }
+  let data: unknown = null;
+  try {
+    data = await res.json();
+  } catch {
+    // Sin JSON: se mapea por estado abajo.
+  }
+  const code = isServerRecord(data) && typeof data.code === "string" ? data.code : "";
+  if (!res.ok || !isServerRecord(data)) {
+    if (code === "invalid_token" || res.status === 404) {
+      throw new AccountCuotasError("invalid_token", "Invitación inválida");
+    }
+    if (code === "expired_token" || res.status === 410) {
+      throw new AccountCuotasError("expired", "Invitación vencida: pedí un enlace nuevo");
+    }
+    throw new AccountCuotasError("unavailable", `Backend de invitaciones (${res.status})`);
+  }
+  return data;
+}
+
+function needString(res: Record<string, unknown>, key: string): string {
+  if (typeof res[key] !== "string") {
+    throw new AccountCuotasError("unavailable", `Backend de invitaciones: falta ${key}`);
+  }
+  return res[key] as string;
+}
+
+function needNumber(res: Record<string, unknown>, key: string): number {
+  if (typeof res[key] !== "number") {
+    throw new AccountCuotasError("unavailable", `Backend de invitaciones: falta ${key}`);
+  }
+  return res[key] as number;
+}
 
 interface AccountStoreV1 {
   version: 1;
@@ -130,12 +182,13 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
    * autoridad en config nadie es admin.
    */
   async function getAuthority(protocol: ProtocolConfig): Promise<AccountAuthority> {
-    const ext = protocol as ProtocolConfig & { admin?: WalletAddress; keeper?: WalletAddress };
-    if (ext.admin) return { admin: ext.admin, keeper: ext.keeper ?? null, source: "config" };
-    if (mode === "mock") {
-      return { admin: DEMO_ADMIN, keeper: ext.keeper ?? DEMO_KEEPER, source: "demo-fixture" };
+    if (protocol.admin) {
+      return { admin: protocol.admin, keeper: protocol.keeper ?? null, source: "config" };
     }
-    return { admin: null, keeper: ext.keeper ?? null, source: "config" };
+    if (mode === "mock") {
+      return { admin: DEMO_ADMIN, keeper: protocol.keeper ?? DEMO_KEEPER, source: "demo-fixture" };
+    }
+    return { admin: null, keeper: protocol.keeper ?? null, source: "config" };
   }
 
   async function requireAdmin(actor: WalletAddress): Promise<AccountAuthority> {
@@ -248,7 +301,20 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
     },
 
     async getBalance(student: WalletAddress): Promise<StudentBalance> {
-      if (mode === "real") return notYet("saldo devUSDC");
+      if (mode === "real") {
+        // Saldo real del ATA devUSDC. Sin hook en la base, indisponible:
+        // jamás un fixture.
+        if (!hooks.getDevUsdcBalance) return notYet("saldo devUSDC");
+        try {
+          const available = await hooks.getDevUsdcBalance(student);
+          return { available, simulated: false, source: "onchain" };
+        } catch (e) {
+          if (e instanceof CuotasError && e.code === "not_found") {
+            return { available: null, simulated: false, source: "unavailable" };
+          }
+          throw mapError(e);
+        }
+      }
       let plans: Plan[];
       try {
         plans = await base.getPlans(student);
@@ -272,7 +338,18 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
     },
 
     async createInvitation(student: WalletAddress): Promise<Invitation> {
-      if (mode === "real") return notYet("crear invitación");
+      if (mode === "real") {
+        const res = await inviteApi("/api/fiador/invitaciones", {
+          method: "POST",
+          body: { student },
+        });
+        return {
+          token: needString(res, "token"),
+          student,
+          createdAt: needNumber(res, "issuedAt"),
+          completedAt: null,
+        };
+      }
       const store = loadStore();
       // Idempotente solo mientras la invitación sigue activa: una ya usada
       // queda resoluble para volver por el enlace, pero el alta pide una nueva.
@@ -292,7 +369,19 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
     },
 
     async resolveInvitation(token: string): Promise<Invitation> {
-      if (mode === "real") return notYet("resolver invitación");
+      if (mode === "real") {
+        const res = await inviteApi(`/api/fiador/invitaciones/${encodeURIComponent(token)}`, {
+          method: "GET",
+        });
+        const acceptance = isServerRecord(res.acceptance) ? res.acceptance : null;
+        return {
+          token,
+          student: needString(res, "student"),
+          createdAt: needNumber(res, "issuedAt"),
+          completedAt:
+            acceptance && typeof acceptance.acceptedAt === "number" ? acceptance.acceptedAt : null,
+        };
+      }
       const invitation = loadStore().invitations.find((i) => i.token === token);
       if (!invitation) {
         throw new AccountCuotasError("invalid_token", "Invitación inválida o vencida");
@@ -304,7 +393,10 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
       token: string,
       args: CompleteGuarantorArgs,
     ): Promise<TxResult<Guarantee>> {
-      if (mode === "real") return notYet("alta del fiador");
+      // En real el alta la completa el fiador en su enlace (KYC + tarjeta en
+      // el backend) y la registra la wallet keeper: este atajo con mandato
+      // local no existe fuera del mock.
+      if (mode === "real") return notYet("alta del fiador (completala en el enlace del fiador)");
       const store = loadStore();
       const invitation = store.invitations.find((i) => i.token === token);
       if (!invitation || invitation.completedAt) {
@@ -382,19 +474,31 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
         return null;
       });
       const merchants: AdminMerchantRef[] = [];
-      try {
-        const m = await base.getMerchant(DEMO_MERCHANT);
-        merchants.push({ owner: m.owner, name: m.name, active: m.active, source: "account" });
-      } catch (e) {
-        if (e instanceof CuotasError && e.code === "not_implemented" && mode === "mock") {
-          merchants.push({
-            owner: DEMO_MERCHANT,
-            name: "Tienda Demo",
-            active: true,
-            source: "demo-fixture",
-          });
-        } else if (!(e instanceof CuotasError && e.code === "not_found")) {
+      if (mode === "real" && hooks.listMerchants) {
+        // Barrido onchain por discriminador. Sin hook, "merchants" pendiente:
+        // en real nunca se consulta la dirección simulada del mock.
+        try {
+          merchants.push(...(await hooks.listMerchants()));
+        } catch {
           pending.push("merchants");
+        }
+      } else if (mode === "real") {
+        pending.push("merchants");
+      } else {
+        try {
+          const m = await base.getMerchant(DEMO_MERCHANT);
+          merchants.push({ owner: m.owner, name: m.name, active: m.active, source: "account" });
+        } catch (e) {
+          if (e instanceof CuotasError && e.code === "not_implemented") {
+            merchants.push({
+              owner: DEMO_MERCHANT,
+              name: "Tienda Demo",
+              active: true,
+              source: "demo-fixture",
+            });
+          } else if (!(e instanceof CuotasError && e.code === "not_found")) {
+            pending.push("merchants");
+          }
         }
       }
       return { config: protocol, authority, pool, activity, merchants, pending };
