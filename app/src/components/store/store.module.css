@@ -98,9 +98,52 @@
   text-wrap: pretty;
 }
 
-.tierChip {
+.headMeta {
   margin-left: auto;
   align-self: end;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: end;
+}
+
+/* Margen tipo tarjeta: línea de calibración con su mini-medidor. */
+.marginLine {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-3);
+}
+
+.marginTrack {
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  height: 5px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgb(244 241 255 / 0.09);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.55);
+}
+
+.marginFill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  box-shadow: 0 0 8px rgb(0 194 255 / 0.5);
+  animation: marginGrow 0.6s var(--ease) both;
+}
+
+@keyframes marginGrow {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 /* ---------- Grilla: vidriera editorial ---------- */
@@ -390,8 +433,16 @@
     width: 100%;
   }
 
-  .tierChip {
+  .headMeta {
     margin-left: 0;
+    justify-items: start;
+  }
+
+  .marginLine {
+    white-space: normal;
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+    align-content: start;
   }
 }
 
@@ -531,7 +582,8 @@
     transition: none;
   }
 
-  .bandsOut {
+  .bandsOut,
+  .marginFill {
     animation: none;
   }
 }

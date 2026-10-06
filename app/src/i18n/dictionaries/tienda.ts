@@ -15,6 +15,8 @@ export const tienda = defineDict({
     buy: "Comprar en cuotas",
     breakdown: "Ver el desglose",
     yourTier: (n: number) => `Cotizando tu escalón ${n}`,
+    marginLine: (available: string, limit: string) =>
+      `Margen: US$ ${available} disponibles de US$ ${limit}`,
     guestTier: "Sin wallet: cotizás como escalón 0 (30% de anticipo).",
     guestHint: "Conectá tu wallet para ver tu anticipo real y comprar.",
     reasons: {
@@ -49,6 +51,8 @@ export const tienda = defineDict({
     buy: "Buy in installments",
     breakdown: "See the breakdown",
     yourTier: (n: number) => `Quoting your tier ${n}`,
+    marginLine: (available: string, limit: string) =>
+      `Margin: US$ ${available} of US$ ${limit} available`,
     guestTier: "No wallet: you're quoted as tier 0 (30% down payment).",
     guestHint: "Connect your wallet to see your real down payment and buy.",
     reasons: {
