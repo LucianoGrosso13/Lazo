@@ -19,6 +19,8 @@ export const tienda = defineDict({
     guestHint: "Conectá tu wallet para ver tu anticipo real y comprar.",
     reasons: {
       exceeds_tier_max: (max: string) => `Supera el tope de tu escalón (US$ ${max})`,
+      exceeds_credit_limit: (used: string, limit: string) =>
+        `Te quedaste sin margen (US$ ${used} de US$ ${limit} en uso)`,
       exceeds_guarantor_max_purchase: (max: string) => `Supera el tope de tu garante (US$ ${max})`,
       exceeds_guarantee_coverage: "Tu garante no llega a cubrirlo",
       no_guarantee: "Necesitás un garante para comprar",
@@ -51,6 +53,8 @@ export const tienda = defineDict({
     guestHint: "Connect your wallet to see your real down payment and buy.",
     reasons: {
       exceeds_tier_max: (max: string) => `Over your tier's cap (US$ ${max})`,
+      exceeds_credit_limit: (used: string, limit: string) =>
+        `You're out of credit margin (US$ ${used} of US$ ${limit} in use)`,
       exceeds_guarantor_max_purchase: (max: string) => `Over your guarantor's cap (US$ ${max})`,
       exceeds_guarantee_coverage: "Your guarantor can't cover this much",
       no_guarantee: "You need a guarantor to buy",

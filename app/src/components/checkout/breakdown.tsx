@@ -34,6 +34,8 @@ export interface BreakdownData {
   eligible: boolean;
   reasons: QuoteBlockReason[];
   withGuarantee: boolean;
+  /** Margen en uso (`reputation.activeExposure`) al momento de cotizar. */
+  activeExposure?: Micro;
 }
 
 const warming = (s: WalletStatus) => s !== "connected" && s !== "disconnected";
@@ -216,6 +218,20 @@ function Reason({
         next = b.exceeds_tier_max.next(n, fmt(config.guaranteedTiers[n].maxPurchase));
       }
       cta = b.exceeds_tier_max.cta;
+      break;
+    }
+    case "exceeds_credit_limit": {
+      title = b.exceeds_credit_limit.t;
+      // Mismo tierParams que computeQuote: maxPurchase del escalón = línea total.
+      const params = data.withGuarantee
+        ? config?.guaranteedTiers[data.tier]
+        : config?.unguaranteedTiers[
+            Math.min(data.tier, config.unguaranteedTiers.length - 1)
+          ];
+      desc = params
+        ? b.exceeds_credit_limit.d(fmt(data.activeExposure ?? 0), fmt(params.maxPurchase))
+        : null;
+      cta = b.exceeds_credit_limit.cta;
       break;
     }
     case "exceeds_guarantor_max_purchase":
