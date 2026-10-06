@@ -1,6 +1,6 @@
 # 04 — Comparaciones siempre visibles y sin nombres de competidores
 
-**Status:** ready-for-agent · **Depende de:** — · **Tamaño:** S-M
+**Status:** done · **Depende de:** — · **Tamaño:** S-M
 
 ## Objetivo
 
@@ -29,8 +29,8 @@ Regla: **Mercado Pago, Cuota Simple y GOcuotas jamás se nombran.** Reemplazos:
 
 ## Criterios
 
-- [ ] Hero y sección de números muestran la comparación sin click, arriba del fold si el diseño lo permite sin empujar el CTA.
-- [ ] `rg -ni "mercado ?pago|cuota simple|gocuotas" app/src` → cero en texto renderizado.
-- [ ] La etiqueta "referencia" sigue junto a las cifras de terceros.
-- [ ] reduced-motion y 390 px OK.
-- [ ] typecheck/lint/test/build en verde.
+- [x] Hero y sección de números muestran la comparación sin click, arriba del fold si el diseño lo permite sin empujar el CTA.
+- [x] `rg -ni "mercado ?pago|cuota simple|gocuotas" app/src` → cero en texto renderizado (quedan solo nombres de campos internos en `reference.ts`/`reference-figures.ts`, permitidos por el ticket).
+- [x] La etiqueta "referencia" sigue junto a las cifras de terceros.
+- [x] reduced-motion y 390 px OK.
+- [x] typecheck/lint/test/build en verde.
