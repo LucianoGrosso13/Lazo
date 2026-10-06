@@ -194,7 +194,7 @@ function Reason({
       break;
     case "blocked_after_default":
       title = b.blocked_after_default.t;
-      desc = b.blocked_after_default.d;
+      desc = config ? b.blocked_after_default.d(config.guarantorChargeDay) : null;
       cta = b.blocked_after_default.cta;
       break;
     case "has_active_plan":

@@ -53,12 +53,16 @@ export function EstadoConsulta({
   testId: string;
 }) {
   return (
-    <GlassPanel data-testid={testId} className="px-5 py-6" role="status">
+    <GlassPanel
+      data-testid={testId}
+      className="px-5 py-6"
+      role={tono === "error" ? "alert" : "status"}
+    >
       <div className="flex items-start gap-3">
         <StateMark state={tono === "error" ? "cracked" : "dim"} className="mt-1" />
         <div className="min-w-0">
           <p className={`font-medium ${tono === "error" ? "text-crack" : "text-ink"}`}>{title}</p>
-          <p className="mt-1 text-sm leading-relaxed text-ink-2">{body}</p>
+          {body ? <p className="mt-1 text-sm leading-relaxed text-ink-2">{body}</p> : null}
           {onRetry && (
             <button
               type="button"

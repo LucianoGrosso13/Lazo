@@ -34,6 +34,10 @@
   /* Estado: se lee por marca y por color */
   --color-crack: #ff5470;
   --color-backlight: #c4a3ff;
+  --color-bad: var(--color-crack);
+
+  /* Línea fina de vidrio: bordes de inputs, listas y paneles */
+  --color-hairline: rgb(244 241 255 / 0.1);
 
   /* Familias: Bricolage Grotesque (display y texto) + Martian Mono (medición) */
   --font-sans: var(--font-bricolage), system-ui, sans-serif;

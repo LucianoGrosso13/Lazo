@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { getCuotas } from "@/lib/cuotas";
 import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
@@ -13,8 +13,9 @@ import { useT } from "@/i18n/locale";
 export function DevnetBadge({ className = "" }: { className?: string }) {
   const t = useT(common);
   const d = useT(design);
+  const tipId = useId();
   return (
-    <span className={`tip inline-flex ${className}`} tabIndex={0}>
+    <span className={`tip inline-flex ${className}`} tabIndex={0} aria-describedby={tipId}>
       <span className="chip" data-on="true">
         <span
           aria-hidden
@@ -23,7 +24,7 @@ export function DevnetBadge({ className = "" }: { className?: string }) {
         <span className="sm:hidden">{d.chrome.devnetShort}</span>
         <span className="hidden sm:inline">{t.devnet}</span>
       </span>
-      <span role="tooltip" className="tip-panel glass glass-deep font-sans">
+      <span role="tooltip" id={tipId} className="tip-panel glass glass-deep font-sans">
         {t.devnetHint}
       </span>
     </span>

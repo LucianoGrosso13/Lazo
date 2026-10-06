@@ -33,7 +33,8 @@ export const checkout = defineDict({
       },
       blocked_after_default: {
         t: "No podés abrir planes nuevos",
-        d: "Una cuota tuya llegó al día 15 y la terminó pagando tu garante. Tu cuenta quedó bloqueada para planes nuevos.",
+        d: (chargeDay: number) =>
+          `Una cuota tuya llegó al día ${chargeDay} y la terminó pagando tu garante. Tu cuenta quedó bloqueada para planes nuevos.`,
         cta: { label: "Ver mi plan", href: "/panel" },
       },
       has_active_plan: {
@@ -44,7 +45,7 @@ export const checkout = defineDict({
       no_guarantee: {
         t: "Necesitás un garante",
         d: "Lazo te presta porque un garante te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
-        cta: { label: "Invitar a mi garante", href: "/fiador/nuevo" },
+        cta: { label: "Invitar a mi garante", href: "/app/estudiante" },
       },
       exceeds_tier_max: {
         t: "Supera el tope de tu escalón",
@@ -150,7 +151,8 @@ export const checkout = defineDict({
       },
       blocked_after_default: {
         t: "You can't open new plans",
-        d: "One of your installments reached day 15 and your guarantor ended up paying it. Your account is blocked from new plans.",
+        d: (chargeDay: number) =>
+          `One of your installments reached day ${chargeDay} and your guarantor ended up paying it. Your account is blocked from new plans.`,
         cta: { label: "See my plan", href: "/panel" },
       },
       has_active_plan: {
@@ -161,7 +163,7 @@ export const checkout = defineDict({
       no_guarantee: {
         t: "You need a guarantor",
         d: "Lazo lends to you because a family member backs you with their card: they only pay if you don't. Send them the invite to activate it.",
-        cta: { label: "Invite my guarantor", href: "/fiador/nuevo" },
+        cta: { label: "Invite my guarantor", href: "/app/estudiante" },
       },
       exceeds_tier_max: {
         t: "It's over your tier's cap",

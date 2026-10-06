@@ -15,7 +15,8 @@ export const landingSections = defineDict({
     },
     guarantor: {
       title: "Un familiar respalda el plan",
-      lede: "Elige un tope y registra una tarjeta. Si falta una cuota, primero recibe un aviso: recién al día 15 se le cobra.",
+      lede: (chargeDay: number) =>
+        `Elige un tope y registra una tarjeta. Si falta una cuota, primero recibe un aviso: recién al día ${chargeDay} se le cobra.`,
       steps: [
         { t: "Recibe una invitación", d: "El flujo explica la fianza y pide verificación de identidad." },
         { t: "Define un tope", d: "El monto máximo se acuerda antes de aceptar." },
@@ -91,7 +92,8 @@ export const landingSections = defineDict({
     },
     guarantor: {
       title: "A family member backs the plan",
-      lede: "They pick a cap and register a card. A missed installment warns them first — they're only charged on day 15.",
+      lede: (chargeDay: number) =>
+        `They pick a cap and register a card. A missed installment warns them first — they're only charged on day ${chargeDay}.`,
       steps: [
         { t: "Gets an invite", d: "The flow explains the guarantee and requests ID verification." },
         { t: "Sets a cap", d: "The maximum amount is agreed before accepting." },

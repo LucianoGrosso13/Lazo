@@ -285,7 +285,7 @@ export function DesignPage() {
                   value={priceUsd}
                   onChange={(e) => setPriceUsd(Number(e.target.value))}
                   aria-label={t.prism.price}
-                  className="mt-3 block w-56 max-w-full accent-[#00C2FF]"
+                  className="mt-3 block w-56 max-w-full accent-cyan"
                 />
               </label>
               <SegmentedControl

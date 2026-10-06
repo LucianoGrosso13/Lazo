@@ -198,14 +198,15 @@ interface InviteStatus {
 const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 const codeOf = (e: unknown): string | null => (e instanceof ApiError ? e.code : null);
 
-function Estado({ testId, title, body, children }: {
+function Estado({ testId, title, body, alert, children }: {
   testId: string;
   title: string;
   body: string;
+  alert?: boolean;
   children?: React.ReactNode;
 }) {
   return (
-    <GlassPanel data-testid={testId} className="p-6" role="status">
+    <GlassPanel data-testid={testId} className="p-6" role={alert ? "alert" : "status"}>
       <p className="font-medium text-ink">{title}</p>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">{body}</p>
       {children}
@@ -240,6 +241,7 @@ export function RealFiadorEntry({ token }: { token: string }) {
           testId={expired ? "fiador-vencido" : "fiador-invalido"}
           title={expired ? l.expiredTitle : t.invalid.title}
           body={expired ? l.expiredBody : t.invalid.body}
+          alert
         >
           <Link href="/app" className={`mt-5 inline-flex ${buttonClasses("secondary", "sm")}`}>
             {l.backToEntry}
@@ -248,7 +250,7 @@ export function RealFiadorEntry({ token }: { token: string }) {
       );
     }
     return (
-      <Estado testId="fiador-error" title={t.error.title} body={t.error.body}>
+      <Estado testId="fiador-error" title={t.error.title} body={t.error.body} alert>
         <button type="button" onClick={() => void query.mutate()} className={`mt-5 ${buttonClasses("secondary", "sm")}`}>
           {t.error.retry}
         </button>
@@ -689,7 +691,7 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
                     <input
                       type="radio"
                       name="tope-real"
-                      className="accent-[#00D3FF]"
+                      className="accent-cyan"
                       checked={topeElegido === m}
                       onChange={() => setTope(m)}
                     />
@@ -901,7 +903,7 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
                 type="checkbox"
                 checked={checked}
                 onChange={(e) => setChecked(e.target.checked)}
-                className="mt-1 accent-[#00D3FF]"
+                className="mt-1 accent-cyan"
               />
               <span className="max-w-prose text-sm leading-relaxed text-ink-2">{l.reviewCheck}</span>
             </label>

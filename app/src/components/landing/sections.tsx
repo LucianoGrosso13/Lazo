@@ -117,7 +117,7 @@ function Guarantor() {
           <h2 id="guarantor-title" className={styles.h2}>
             {t.title}
           </h2>
-          <p className={styles.sectionLede}>{t.lede}</p>
+          <p className={styles.sectionLede}>{t.lede(config.guarantorChargeDay)}</p>
         </div>
         <ol className={styles.steps}>
           {t.steps.map((s) => (

@@ -22,14 +22,15 @@ const codeOf = (e: unknown): string | null =>
       ? String((e as { code: unknown }).code)
       : null;
 
-function Estado({ testId, title, body, children }: {
+function Estado({ testId, title, body, alert, children }: {
   testId: string;
   title: string;
   body: string;
+  alert?: boolean;
   children?: React.ReactNode;
 }) {
   return (
-    <GlassPanel data-testid={testId} className="p-6" role="status">
+    <GlassPanel data-testid={testId} className="p-6" role={alert ? "alert" : "status"}>
       <p className="font-medium text-ink">{title}</p>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">{body}</p>
       {children}
@@ -70,7 +71,7 @@ function MockFiadorEntry({ token }: { token: string }) {
     const code = codeOf(query.error);
     if (code === "invalid_token") {
       return (
-        <Estado testId="fiador-invalido" title={t.invalid.title} body={t.invalid.body}>
+        <Estado testId="fiador-invalido" title={t.invalid.title} body={t.invalid.body} alert>
           <Link href="/app" className={`mt-5 inline-flex ${buttonClasses("secondary", "sm")}`}>
             {t.invalid.cta}
           </Link>
@@ -91,7 +92,7 @@ function MockFiadorEntry({ token }: { token: string }) {
       );
     }
     return (
-      <Estado testId="fiador-error" title={t.error.title} body={t.error.body}>
+      <Estado testId="fiador-error" title={t.error.title} body={t.error.body} alert>
         <button
           type="button"
           onClick={() => void mutate()}

@@ -172,7 +172,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                     <input
                       type="radio"
                       name="tope"
-                      className="accent-[#00D3FF]"
+                      className="accent-cyan"
                       checked={topeElegido === m}
                       onChange={() => setTope(m)}
                     />
@@ -298,7 +298,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                     <input
                       type="radio"
                       name="card"
-                      className="accent-[#00D3FF]"
+                      className="accent-cyan"
                       checked={card === i}
                       onChange={() => setCard(i)}
                     />

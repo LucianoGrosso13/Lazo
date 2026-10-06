@@ -191,7 +191,7 @@ export function CheckoutScreen({
   const savings = Math.max(0, mpTotal - lazoTotal);
 
   return (
-    <Fade role="region" className={styles.page} initialOpacity={0.96} transition={{ duration: 0.24 }}>
+    <Fade className={styles.page} initialOpacity={0.96} transition={{ duration: 0.24 }}>
       <div className={styles.wrap}>
         <Link href="/tienda" className={styles.back}>
           <svg
@@ -231,7 +231,7 @@ export function CheckoutScreen({
         ) : (
           <>
             <div className={styles.grid}>
-              <div className={styles.stageCol}>
+              <div>
                 {data ? (
                   <div className={styles.stageCrop}>
                     <div className={styles.stageWide}>
@@ -297,7 +297,7 @@ export function CheckoutScreen({
                   <span className={styles.compareTrack} aria-hidden>
                     <span
                       className={styles.beamLazo}
-                      style={{ width: `${(lazoTotal / mpTotal) * 100}%` }}
+                      style={{ transform: `scaleX(${lazoTotal / mpTotal})` }}
                     />
                   </span>
                   <span className={styles.compareNum}>

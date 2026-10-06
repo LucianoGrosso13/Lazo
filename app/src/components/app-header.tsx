@@ -233,6 +233,12 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-50">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[60] focus:rounded-full focus:bg-beam focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-abyss"
+      >
+        {t.skipToContent}
+      </a>
       <div className="glass-deep">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:gap-5 sm:px-6">
           <Link
@@ -278,6 +284,7 @@ export function AppHeader() {
             <ChipButton
               className="xl:hidden"
               aria-expanded={open}
+              aria-controls="app-nav-sheet"
               aria-label={open ? d.chrome.menuClose : d.chrome.menuOpen}
               onClick={() => setOpen((v) => !v)}
             >
@@ -318,6 +325,7 @@ export function AppHeader() {
             animate={{ opacity: 1, filter: "blur(0px)" }}
             exit={{ opacity: reduceMotion ? 1 : 0, filter: reduceMotion ? "none" : "blur(3px)" }}
             transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+            id="app-nav-sheet"
             className="glass glass-deep mx-4 mt-2 p-4 xl:hidden"
           >
             <nav aria-label={d.chrome.navLabel} className="flex flex-col">
