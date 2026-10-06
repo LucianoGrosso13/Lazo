@@ -17,6 +17,11 @@ import {
   type Reputation,
 } from "@/lib/cuotas";
 import { DEMO_CONFIG } from "@/lib/cuotas/demo-config";
+import {
+  DEMO_ACCOUNT_ADDRESSES,
+  readDemoSelection,
+  subscribeDemoSelection,
+} from "@/lib/roles";
 import { splitPurchase } from "@/components/landing/split";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { tienda } from "@/i18n/dictionaries/tienda";
@@ -100,6 +105,17 @@ export function TiendaPage() {
   const mounted = useMounted();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
 
+  // En mock, la identidad de ejemplo elegida en /app actúa como la wallet del
+  // recorrido (mismo criterio que useStudentAddress: la selección manda).
+  // Sin selección la tienda sigue en modo invitada — el fallback al estudiante
+  // nuevo de useStudentAddress no aplica acá para no perder esa vista.
+  const demoId = useSyncExternalStore(subscribeDemoSelection, readDemoSelection, () => null);
+  const demoStudent =
+    getCuotas().mode === "mock" && (demoId === "student-new" || demoId === "student-tier3")
+      ? DEMO_ACCOUNT_ADDRESSES[demoId]
+      : null;
+  const student = demoStudent ?? address;
+
   const configQ = useCuotasQuery(["config"], (c) => c.getConfig());
   // En mock arranca con la config de demo para el primer render (como use-config).
   const config = configQ.data ?? (getCuotas().mode === "mock" ? DEMO_CONFIG : undefined);
@@ -107,18 +123,18 @@ export function TiendaPage() {
   const merchantQ = useCuotasQuery(["merchant"], (c) => c.getMerchant(DEMO_MERCHANT));
 
   const walletQ = useCuotasQuery(
-    mounted && address ? ["tienda", address] : null,
+    mounted && student ? ["tienda", student] : null,
     async (c): Promise<WalletView> => {
-      // La key solo se activa con una wallet conectada: address no es null acá.
-      const student = address ?? "";
+      // La key solo se activa con un estudiante efectivo: student no es null acá.
+      const who = student ?? "";
       const [guarantee, reputation, ...quotes] = await Promise.all([
-        c.getGuarantee(student),
+        c.getGuarantee(who),
         // Estudiante sin Reputation on-chain todavía: primera compra, margen intacto.
-        c.getReputation(student).catch((e) => {
+        c.getReputation(who).catch((e) => {
           if (e instanceof CuotasError && e.code === "not_found") return null;
           throw e;
         }),
-        ...CATALOG.map((p) => c.quote(p.price, student)),
+        ...CATALOG.map((p) => c.quote(p.price, who)),
       ]);
       return {
         guarantee,
@@ -135,7 +151,7 @@ export function TiendaPage() {
     !mounted ||
     warming ||
     !config ||
-    (address != null && walletQ.data == null && walletQ.error == null);
+    (student != null && walletQ.data == null && walletQ.error == null);
 
   const retry = () => {
     void configQ.mutate();
@@ -145,7 +161,7 @@ export function TiendaPage() {
 
   const termsFor = (id: string, price: Micro): { terms: ProductTerms; badge: string | null } | null => {
     if (!config) return null;
-    if (address && walletQ.data) {
+    if (student && walletQ.data) {
       const q = walletQ.data.quotes[id];
       if (!q) return null;
       const exposure = walletQ.data.reputation?.activeExposure ?? 0;
@@ -163,7 +179,21 @@ export function TiendaPage() {
   };
 
   const [featured, ...rest] = CATALOG;
-  const tier = walletQ.data?.quotes[featured.id]?.tier;
+  const featuredQuote = walletQ.data?.quotes[featured.id];
+  const tier = featuredQuote?.tier;
+  const reputation = walletQ.data?.reputation ?? null;
+
+  // Margen tipo tarjeta: la línea del escalón menos lo comprometido
+  // (`reputation.activeExposure`). Misma cuenta que `computeQuote` en el mock.
+  let margin: { used: Micro; limit: Micro } | null = null;
+  if (reputation && config && featuredQuote) {
+    const params = featuredQuote.withGuarantee
+      ? config.guaranteedTiers[reputation.tier]
+      : config.unguaranteedTiers[
+          Math.min(reputation.tier, config.unguaranteedTiers.length - 1)
+        ];
+    margin = { used: reputation.activeExposure, limit: params.maxPurchase };
+  }
 
   return (
     <div className={styles.page}>
@@ -180,14 +210,32 @@ export function TiendaPage() {
           <h1 className={styles.title}>{t.title}</h1>
           <p className={styles.lede}>{t.lede}</p>
         </div>
-        {mounted && address && tier !== undefined ? (
-          <Chip on className={styles.tierChip}>
-            {t.yourTier(tier)}
-          </Chip>
+        {mounted && student && (tier !== undefined || margin) ? (
+          <div className={styles.headMeta}>
+            {tier !== undefined ? <Chip on>{t.yourTier(tier)}</Chip> : null}
+            {margin ? (
+              <p className={styles.marginLine}>
+                <span className={styles.marginTrack} aria-hidden>
+                  <span
+                    className={styles.marginFill}
+                    style={{
+                      transform: `scaleX(${
+                        margin.limit > 0 ? Math.min(1, margin.used / margin.limit) : 0
+                      })`,
+                    }}
+                  />
+                </span>
+                {t.marginLine(
+                  fmt(Math.max(0, margin.limit - margin.used), 0),
+                  fmt(margin.limit, 0),
+                )}
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </header>
 
-      {mounted && !warming && !address ? (
+      {mounted && !warming && !student ? (
         <GlassPanel className={`glass-deep ${styles.guest}`}>
           <p className={styles.guestText}>
             <b>{t.guestTier}</b>
