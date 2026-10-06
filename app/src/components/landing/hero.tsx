@@ -160,6 +160,10 @@ export function LandingHero() {
         </div>
 
         <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} aria-hidden />
+            {t.eyebrow}
+          </p>
           <h1 className={styles.title}>
             {[t.title1, t.title2, t.title3].map((line, index) => (
               <motion.span

@@ -21,9 +21,9 @@ const martian = Martian_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lazo · Credit for education, zero interest",
+  title: "Lazo · Credit for commerce, zero interest",
   description:
-    "A simulated demo of zero-interest installments for students, backed by a family guarantor. No payments or transactions are processed; the planned test environment is Solana devnet.",
+    "A simulated demo of zero-interest installments for shoppers, backed by a family guarantor. No payments or transactions are processed; the planned test environment is Solana devnet.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

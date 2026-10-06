@@ -36,7 +36,7 @@ export const landingSections = defineDict({
       title: "Números ilustrativos",
       rows: {
         student: {
-          who: "Estudiante",
+          who: "Cliente",
           value: "0%",
           label: "de interés en 3 cuotas",
           vs: (x: string) => `Mercado Pago, sin tarjeta: ~${x}% más`,
@@ -112,7 +112,7 @@ export const landingSections = defineDict({
       title: "Illustrative economics",
       rows: {
         student: {
-          who: "Student",
+          who: "Customer",
           value: "0%",
           label: "interest over 3 installments",
           vs: (x: string) => `Mercado Pago, no-card: ~${x}% more`,
