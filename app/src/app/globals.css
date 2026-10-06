@@ -298,6 +298,8 @@
 .beam-line {
   position: relative;
   height: 1px;
+  overflow-x: clip;
+  overflow-y: visible;
   border: 0;
   background: linear-gradient(
     90deg,
