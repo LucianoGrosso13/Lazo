@@ -45,15 +45,15 @@ test("/comercio: el buscador lleva a la vista pública del comercio (fixture exa
   await page.getByRole("button", { name: /ver comercio|view merchant/i }).click();
   await expect(page).toHaveURL(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("comercio-datos")).toBeVisible();
-  await expect(page.getByText(/tienda demo/i).first()).toBeVisible();
+  await expect(page.getByText(/voltia/i).first()).toBeVisible();
 });
 
 test("/comercio/[direccion] muestra el comercio demo registrado", async ({ page }) => {
   await page.goto(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("comercio-panel")).toBeVisible();
   await expect(page.getByTestId("comercio-datos")).toBeVisible();
-  // El comercio sembrado se llama "Tienda Demo" y declara datos de prueba.
-  await expect(page.getByText(/tienda demo/i).first()).toBeVisible();
+  // El comercio sembrado se llama "Voltia" y declara datos de prueba.
+  await expect(page.getByText(/voltia/i).first()).toBeVisible();
   // En mock las firmas se declaran simuladas: no hay links a Explorer.
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 });
@@ -100,6 +100,6 @@ test("/app/comercio → clic en vista pública llega a /comercio con la fixture"
     .click();
   await expect(page).toHaveURL(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("comercio-datos")).toBeVisible();
-  await expect(page.getByText(/tienda demo/i).first()).toBeVisible();
+  await expect(page.getByText(/voltia/i).first()).toBeVisible();
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 });
