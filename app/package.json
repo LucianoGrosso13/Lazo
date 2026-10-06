@@ -9,12 +9,17 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "generate": "node scripts/generate-client.mjs",
+    "generate:check": "node scripts/generate-client.mjs --check",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@solana-program/token": "0.17.0",
     "@solana/kit": "^8.4.0",
     "@solana/kit-plugin-rpc": "^0.19.0",
     "@solana/kit-plugin-wallet": "^0.20.0",
+    "@solana/program-client-core": "8.4.0",
     "@solana/react": "^8.4.0",
     "clsx": "^2.1.1",
     "motion": "^14.0.0",
@@ -26,16 +31,20 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@codama/nodes-from-anchor": "1.5.6",
+    "@codama/renderers-js": "2.5.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",
+    "codama": "1.11.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.3"
   }
