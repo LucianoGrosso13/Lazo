@@ -1,8 +1,9 @@
 import { defineDict } from "../locale";
 
 // Textos de la invitación al garante (InviteGuarantor): crear el enlace,
-// copiarlo y compartirlo por WhatsApp. Declara que el enlace es de la demo y
-// solo funciona en este navegador (sin backend compartido).
+// copiarlo y compartirlo por WhatsApp. En mock declara que el enlace es de la
+// demo y solo funciona en este navegador; en real el token lo firma el
+// servidor (HMAC) y el enlace es cross-browser dentro de devnet.
 export const invitacionCuenta = defineDict({
   es: {
     title: "Invitar a tu garante",
@@ -17,11 +18,15 @@ export const invitacionCuenta = defineDict({
     whatsapp: "Enviar por WhatsApp",
     whatsappMessage:
       "Te invito a ser mi garante en Lazo (demo en devnet, la plata es de prueba). Abrí este enlace en este navegador:",
+    whatsappMessageReal:
+      "Te invito a ser mi garante en Lazo (demo en devnet, la plata es de prueba). Abrí este enlace:",
     demoNote:
       "Enlace de demostración: vale solo en este navegador porque la demo no tiene servidor compartido. No es una firma ni un documento real.",
+    realNote:
+      "Enlace firmado por el servidor: tu garante lo abre en cualquier navegador. Corre en devnet (plata de prueba); no es un documento real.",
     pendingTitle: "Las invitaciones todavía no están disponibles",
     pendingBody:
-      "En modo real la invitación la firma el servidor (HMAC) y ese backend todavía no existe. No se simula una invitación que no es real.",
+      "En modo real la invitación la firma el servidor (HMAC); si este despliegue no lo tiene habilitado se declara pendiente. No se simula una invitación que no es real.",
   },
   en: {
     title: "Invite your guarantor",
@@ -36,10 +41,14 @@ export const invitacionCuenta = defineDict({
     whatsapp: "Send via WhatsApp",
     whatsappMessage:
       "I'm inviting you to be my guarantor on Lazo (devnet demo, test money). Open this link in this browser:",
+    whatsappMessageReal:
+      "I'm inviting you to be my guarantor on Lazo (devnet demo, test money). Open this link:",
     demoNote:
       "Demo link: it only works in this browser because the demo has no shared server. It is not a signature or a real document.",
+    realNote:
+      "Server-signed link: your guarantor opens it in any browser. It runs on devnet (test money); it is not a real document.",
     pendingTitle: "Invitations are not available yet",
     pendingBody:
-      "In real mode the invitation is signed server-side (HMAC) and that backend doesn't exist yet. We don't fake an invitation that isn't real.",
+      "In real mode the invitation is signed server-side (HMAC); if this deployment doesn't have it enabled we report it as pending. We don't fake an invitation that isn't real.",
   },
 });

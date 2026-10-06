@@ -1,9 +1,12 @@
 "use client";
 
 // InviteGuarantor: el estudiante genera el enlace de invitación para su
-// garante y lo copia o manda por WhatsApp. El enlace es de demostración y
-// vale solo en este navegador (sin backend compartido); en modo real el alta
-// todavía no existe y se declara pendiente, nunca se simula una firma HMAC.
+// garante y lo copia o manda por WhatsApp. En mock el enlace es de la demo y
+// vale solo en este navegador (localStorage, sin backend compartido). En real
+// el token lo firma el servidor (POST /api/fiador/invitaciones, HMAC): el
+// enlace es cross-browser y la URL a compartir es origin + guarantorPath, el
+// mismo path que devuelve la API. Si el backend falla se declara el error:
+// nunca se simula una invitación que no existe.
 import { useState } from "react";
 import useSWR from "swr";
 import { ReferenceTag } from "@/components/ui/badges";
@@ -17,9 +20,16 @@ import { guarantorPath } from "@/lib/roles";
 export function InviteGuarantor({ student }: { student: string }) {
   const t = useT(invitacionCuenta);
   const [copied, setCopied] = useState(false);
+  // El modo lo fija el cliente de cuentas (NEXT_PUBLIC_CUOTAS_MODE), la misma
+  // fuente que decide si createInvitation va al backend o al store local.
+  const mode = getAccountCuotas().mode;
 
-  const query = useSWR(["invitacion", student], () =>
-    getAccountCuotas().createInvitation(student),
+  // Sin revalidación por foco/reconexión: en real cada POST firma un token
+  // nuevo y el enlace compartido cambiaría debajo del usuario.
+  const query = useSWR(
+    ["invitacion", student],
+    () => getAccountCuotas().createInvitation(student),
+    { revalidateOnFocus: false, revalidateOnReconnect: false },
   );
   const invitation: Invitation | undefined = query.data;
   // URL absoluta para compartir; el path lo define roles.ts. La invitación
@@ -77,7 +87,8 @@ export function InviteGuarantor({ student }: { student: string }) {
     );
   }
 
-  const wa = `https://wa.me/?text=${encodeURIComponent(`${t.whatsappMessage} ${url}`)}`;
+  const waMessage = mode === "mock" ? t.whatsappMessage : t.whatsappMessageReal;
+  const wa = `https://wa.me/?text=${encodeURIComponent(`${waMessage} ${url}`)}`;
 
   return (
     <GlassPanel className="p-6" data-testid="invite-guarantor">
@@ -86,7 +97,7 @@ export function InviteGuarantor({ student }: { student: string }) {
           <p className="font-medium text-ink">{t.title}</p>
           <p className="mt-1 max-w-prose text-sm text-ink-2">{t.body}</p>
         </div>
-        <ReferenceTag>demo</ReferenceTag>
+        <ReferenceTag>{mode === "mock" ? "demo" : "devnet"}</ReferenceTag>
       </div>
 
       <label className="mt-4 block">
@@ -120,7 +131,9 @@ export function InviteGuarantor({ student }: { student: string }) {
         </a>
       </div>
 
-      <p className="mt-4 max-w-prose text-xs leading-relaxed text-ink-2">{t.demoNote}</p>
+      <p className="mt-4 max-w-prose text-xs leading-relaxed text-ink-2">
+        {mode === "mock" ? t.demoNote : t.realNote}
+      </p>
     </GlassPanel>
   );
 }
