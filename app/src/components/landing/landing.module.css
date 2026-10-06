@@ -1332,6 +1332,19 @@
   background: radial-gradient(50% 60% at 50% 30%, rgb(153 69 255 / 0.16), transparent 70%);
 }
 
+.closeMark {
+  width: min(15rem, 60vw);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  margin-bottom: -0.5rem;
+}
+
+.closeMarkVideo {
+  /* el loop renderiza luz sobre negro: screen lo integra al fondo oscuro */
+  mix-blend-mode: screen;
+}
+
 .closeTitle {
   font-size: clamp(2.2rem, 5vw, 4.4rem);
   line-height: 1;

@@ -1,6 +1,6 @@
 # 07 — Logo/marca 3D renderizado con HyperFrames
 
-**Status:** ready-for-agent · **Depende de:** — (paralelo, sin conflictos de archivos) · **Tamaño:** M
+**Status:** done · **Depende de:** — (paralelo, sin conflictos de archivos) · **Tamaño:** M
 
 ## Objetivo
 
@@ -23,7 +23,13 @@ El logo del header hoy es `PrismaGlyph` (SVG de líneas en `app-header.tsx`). El
 
 ## Criterios
 
-- [ ] El header muestra la marca 3D nítida en fondo oscuro, retina incluida.
-- [ ] El asset está commiteado local (no CDN), peso razonable.
-- [ ] `prefers-reduced-motion`: si hay video loop, ` prefersReducedMotion` → imagen estática (poster/first frame o PNG).
-- [ ] typecheck/lint/test/build en verde.
+- [x] El header muestra la marca 3D nítida en fondo oscuro, retina incluida.
+- [x] El asset está commiteado local (no CDN), peso razonable.
+- [x] `prefers-reduced-motion`: si hay video loop, ` prefersReducedMotion` → imagen estática (poster/first frame o PNG).
+- [x] typecheck/lint/test/build en verde.
+
+## Notas de implementación
+
+- HyperFrames 0.8.137 funcionó (no fue necesario el fallback SVG). Composición en `.scratch/demo-polish/brand/` (`index.html` 960×640 loop 4s seamless, `compositions/icon.html` 640×640 estático); pipeline documentado en `.scratch/demo-polish/brand/README.md`.
+- Assets: `app/public/brand/logo-prisma.png` (480×320 RGBA, 99KB), `logo-prisma@2x.png` (960×640, 264KB), `logo-prisma-loop.webm` + `.mp4` (~240/105KB, fondo negro para `mix-blend-mode: screen` — el VP9 alpha no sale en este pipeline, ticket preveía el fallback), `app/src/app/icon.png` (256px), `favicon.ico` regenerado (16/32/48).
+- `app-header.tsx`: `PrismaGlyph` ahora envuelve `<Image>` (marca decorativa, `alt=""` — el texto "Lazo" sigue). Landing `close` suma el loop decorativo (`BrandMark`) con fallback PNG bajo reduced-motion (verificado con playwright `reducedMotion`).

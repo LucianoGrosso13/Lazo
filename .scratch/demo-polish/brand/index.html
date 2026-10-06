@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=960, height=640" />
+    <title>Lazo — prisma mark</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 960px;
+        height: 640px;
+        overflow: hidden;
+        /* fondo transparente: el PNG/WebM sale con alpha */
+        background: transparent;
+      }
+      #root {
+        position: relative;
+        width: 960px;
+        height: 640px;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      svg { display: block; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Marca Lazo: prisma de vidrio triangular en cámara 3/4.
+      - Haz blanco entra horizontal por la izquierda y golpea la arista izquierda
+        de la cara frontal (E).
+      - Dentro del vidrio el haz se quiebra apenas hacia abajo (refracción) hasta F.
+      - De F sale el abanico espectral violeta→cian→verde hacia la derecha.
+      - Extrusión NE (58,-34): se ve la cara frontal + la cara rectangular derecha.
+      Loop 4s seamless: solo se mueve la luz (sweep sobre el abanico, respiración
+      del haz, glint en E). El vidrio no se mueve.
+    -->
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="960"
+      data-height="640"
+      data-duration="4"
+    >
+      <section id="mark" class="clip" data-start="0" data-duration="4" data-track-index="0">
+        <svg viewBox="0 0 960 640" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <!-- Vidrio de la cara frontal: luz de arriba-izquierda -->
+            <linearGradient id="glassFront" x1="380" y1="120" x2="640" y2="470" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.30" />
+              <stop offset="0.4" stop-color="#cdd3ff" stop-opacity="0.13" />
+              <stop offset="0.75" stop-color="#8f7bff" stop-opacity="0.07" />
+              <stop offset="1" stop-color="#141026" stop-opacity="0.30" />
+            </linearGradient>
+            <!-- Cara derecha: atravesada por la dispersión -->
+            <linearGradient id="glassSide" x1="560" y1="110" x2="660" y2="440" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9945ff" stop-opacity="0.26" />
+              <stop offset="0.5" stop-color="#00c2ff" stop-opacity="0.16" />
+              <stop offset="1" stop-color="#19fb9b" stop-opacity="0.14" />
+            </linearGradient>
+            <!-- Aristas: blanco que se apaga hacia la base -->
+            <linearGradient id="edgeGrad" x1="430" y1="110" x2="560" y2="470" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#ffffff" />
+              <stop offset="0.55" stop-color="#efeaff" stop-opacity="0.8" />
+              <stop offset="1" stop-color="#b9a8ff" stop-opacity="0.5" />
+            </linearGradient>
+            <linearGradient id="edgeSide" x1="500" y1="120" x2="660" y2="430" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.8" />
+              <stop offset="0.55" stop-color="#00c2ff" stop-opacity="0.45" />
+              <stop offset="1" stop-color="#19fb9b" stop-opacity="0.35" />
+            </linearGradient>
+            <!-- Haz entrante: aparece desde la izquierda -->
+            <linearGradient id="beamIn" x1="30" y1="330" x2="432" y2="330" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#f4f1ff" stop-opacity="0" />
+              <stop offset="0.2" stop-color="#f4f1ff" stop-opacity="0.7" />
+              <stop offset="1" stop-color="#ffffff" />
+            </linearGradient>
+            <!-- Cuña espectral interior (E→F, apenas dispersa dentro del vidrio) -->
+            <linearGradient id="innerSpectrum" x1="0" y1="290" x2="0" y2="390" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9945ff" stop-opacity="0.5" />
+              <stop offset="0.5" stop-color="#00c2ff" stop-opacity="0.45" />
+              <stop offset="1" stop-color="#19fb9b" stop-opacity="0.5" />
+            </linearGradient>
+            <!-- Abanico de dispersión: violeta arriba → verde abajo -->
+            <linearGradient id="fanFill" x1="0" y1="180" x2="0" y2="482" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9945ff" stop-opacity="0.34" />
+              <stop offset="0.5" stop-color="#00c2ff" stop-opacity="0.26" />
+              <stop offset="1" stop-color="#19fb9b" stop-opacity="0.34" />
+            </linearGradient>
+            <!-- Cada haz del abanico: fuerte en F, se desvanece al final -->
+            <linearGradient id="beamViolet" x1="545" y1="0" x2="920" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#c39aff" />
+              <stop offset="0.35" stop-color="#9945ff" />
+              <stop offset="1" stop-color="#9945ff" stop-opacity="0.25" />
+            </linearGradient>
+            <linearGradient id="beamCyan" x1="545" y1="0" x2="920" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#9be8ff" />
+              <stop offset="0.35" stop-color="#00c2ff" />
+              <stop offset="1" stop-color="#00c2ff" stop-opacity="0.25" />
+            </linearGradient>
+            <linearGradient id="beamGreen" x1="545" y1="0" x2="920" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#a9ffd9" />
+              <stop offset="0.35" stop-color="#19fb9b" />
+              <stop offset="1" stop-color="#19fb9b" stop-opacity="0.25" />
+            </linearGradient>
+            <!-- Brillo ambiental detrás del prisma -->
+            <radialGradient id="atmo" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#9945ff" stop-opacity="0.16" />
+              <stop offset="0.55" stop-color="#4a2ea0" stop-opacity="0.07" />
+              <stop offset="1" stop-color="#000000" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="caustic" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.85" />
+              <stop offset="0.4" stop-color="#d8ccff" stop-opacity="0.32" />
+              <stop offset="1" stop-color="#9945ff" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="entryGlow" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.9" />
+              <stop offset="0.5" stop-color="#f4f1ff" stop-opacity="0.3" />
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+            </radialGradient>
+            <!-- Barra de luz que barre el abanico (sheen) -->
+            <linearGradient id="sheenGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+              <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.85" />
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+            </linearGradient>
+            <filter id="blur6" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+            <filter id="blur12" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="12" />
+            </filter>
+            <filter id="blur24" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="24" />
+            </filter>
+            <!-- Recorte del abanico para el sweep -->
+            <clipPath id="fanClip">
+              <polygon points="545,355 920,180 920,480" />
+            </clipPath>
+            <clipPath id="prismClip">
+              <polygon points="500,130 390,455 600,455" />
+            </clipPath>
+          </defs>
+
+          <!-- Ambiente: halo violeta detrás del prisma -->
+          <ellipse cx="500" cy="320" rx="330" ry="260" fill="url(#atmo)" />
+
+          <!-- Haz blanco entrante -->
+          <g id="beamInG">
+            <line x1="36" y1="330" x2="430" y2="330" stroke="url(#beamIn)" stroke-width="18" stroke-linecap="round" filter="url(#blur12)" opacity="0.55" />
+            <line x1="36" y1="330" x2="430" y2="330" stroke="url(#beamIn)" stroke-width="4" stroke-linecap="round" />
+          </g>
+          <!-- Brillo en el punto de entrada E -->
+          <circle id="entryHalo" cx="432" cy="330" r="30" fill="url(#entryGlow)" opacity="0.7" />
+
+          <!-- ===== PRISMA ===== -->
+          <g id="prism">
+            <!-- tapa trasera (fantasma, espesor del vidrio): A'B'C' = front + (58,-34) -->
+            <polygon points="558,96 448,421 658,421" fill="#ffffff" fill-opacity="0.05" stroke="#dcd4ff" stroke-opacity="0.4" stroke-width="1.6" stroke-linejoin="round" />
+
+            <!-- cara rectangular derecha A-C-C'-A' -->
+            <polygon points="500,130 600,455 658,421 558,96" fill="url(#glassSide)" stroke="url(#edgeSide)" stroke-width="1.8" stroke-linejoin="round" />
+
+            <!-- tapa frontal A-B-C -->
+            <polygon points="500,130 390,455 600,455" fill="url(#glassFront)" stroke="url(#edgeGrad)" stroke-width="3" stroke-linejoin="round" />
+
+            <!-- bisel interior de la tapa (espesor del vidrio) -->
+            <polygon points="500,145 398,447 593,447" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1.4" stroke-linejoin="round" />
+
+            <!-- dispersión interna: de E a F apenas se abre el espectro -->
+            <g clip-path="url(#prismClip)">
+              <polygon points="432,326 552,344 552,366 432,334" fill="url(#innerSpectrum)" opacity="0.5" />
+              <circle id="causticGlow" cx="545" cy="355" r="46" fill="url(#caustic)" opacity="0.75" />
+            </g>
+
+            <!-- aristas de la extrusión que se asoman (ridges) -->
+            <line x1="500" y1="130" x2="558" y2="96" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="390" y1="455" x2="448" y2="421" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round" />
+            <line x1="600" y1="455" x2="658" y2="421" stroke="#ffffff" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round" />
+
+            <!-- brillo especular cerca del ápice -->
+            <line x1="486" y1="152" x2="452" y2="262" stroke="#ffffff" stroke-opacity="0.85" stroke-width="3" stroke-linecap="round" />
+            <line x1="492" y1="140" x2="466" y2="224" stroke="#ffffff" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round" filter="url(#blur6)" />
+          </g>
+
+          <!-- ===== DISPERSIÓN (fan a la derecha de F) ===== -->
+          <g id="fan">
+            <!-- cuña continua -->
+            <polygon points="548,352 920,182 920,478 548,360" fill="url(#fanFill)" filter="url(#blur6)" opacity="0.85" />
+            <!-- tres haces: glow + núcleo -->
+            <line x1="545" y1="355" x2="918" y2="205" stroke="url(#beamViolet)" stroke-width="11" stroke-linecap="round" filter="url(#blur6)" opacity="0.8" />
+            <line x1="545" y1="355" x2="918" y2="330" stroke="url(#beamCyan)" stroke-width="10" stroke-linecap="round" filter="url(#blur6)" opacity="0.7" />
+            <line x1="545" y1="355" x2="918" y2="468" stroke="url(#beamGreen)" stroke-width="11" stroke-linecap="round" filter="url(#blur6)" opacity="0.8" />
+            <line x1="545" y1="355" x2="918" y2="205" stroke="url(#beamViolet)" stroke-width="3" stroke-linecap="round" />
+            <line x1="545" y1="355" x2="918" y2="330" stroke="url(#beamCyan)" stroke-width="3" stroke-linecap="round" />
+            <line x1="545" y1="355" x2="918" y2="468" stroke="url(#beamGreen)" stroke-width="3" stroke-linecap="round" />
+          </g>
+
+          <!-- Sheen: barra de luz que recorre el abanico (loop). El overflow a
+               la derecha es intencional: sale del frame, recortada por fanClip. -->
+          <g clip-path="url(#fanClip)" data-layout-allow-overflow>
+            <g id="sweep">
+              <rect x="-320" y="140" width="150" height="420" fill="url(#sheenGrad)" opacity="0.5" transform="skewX(-16)" />
+            </g>
+          </g>
+
+          <!-- Glint en el punto de entrada E -->
+          <g transform="translate(432,330)">
+            <g id="glint" opacity="0.85">
+              <line x1="-14" y1="0" x2="14" y2="0" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+              <line x1="0" y1="-14" x2="0" y2="14" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+              <circle r="2.6" fill="#ffffff" />
+            </g>
+          </g>
+
+          <!-- motas de luz fijas que titilan sobre los haces -->
+          <g id="motes" fill="#ffffff">
+            <circle class="mote" cx="700" cy="300" r="2.2" opacity="0" />
+            <circle class="mote" cx="770" cy="390" r="1.8" opacity="0" />
+            <circle class="mote" cx="820" cy="255" r="1.6" opacity="0" />
+            <circle class="mote" cx="640" cy="345" r="1.6" opacity="0" />
+          </g>
+        </svg>
+      </section>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Loop 4s seamless — todo vuelve al mismo estado en t=0 y t=4.
+      // 1) Sheen recorriendo el abanico: fuera del clip en ambos extremos.
+      tl.fromTo("#sweep", { x: 0 }, { x: 1740, duration: 4, ease: "none" }, 0);
+
+      // 2) Respiración del haz entrante.
+      tl.fromTo("#beamInG", { opacity: 0.82 }, { opacity: 1, duration: 2, ease: "sine.inOut" }, 0)
+        .to("#beamInG", { opacity: 0.82, duration: 2, ease: "sine.inOut" }, 2);
+
+      // 3) Glint en E: pulso suave ida y vuelta (escala sobre su origen local).
+      tl.fromTo("#glint", { scale: 0.8, opacity: 0.55 }, { scale: 1.15, opacity: 0.95, duration: 1, ease: "sine.inOut" }, 0)
+        .to("#glint", { scale: 0.8, opacity: 0.55, duration: 1, ease: "sine.inOut" }, 1)
+        .to("#glint", { scale: 1.15, opacity: 0.95, duration: 1, ease: "sine.inOut" }, 2)
+        .to("#glint", { scale: 0.8, opacity: 0.55, duration: 1, ease: "sine.inOut" }, 3);
+
+      // 4) Cáustica en F: crece cuando el sheen llega al final del abanico.
+      tl.fromTo("#causticGlow", { opacity: 0.55 }, { opacity: 0.85, duration: 2, ease: "sine.inOut" }, 0)
+        .to("#causticGlow", { opacity: 0.55, duration: 2, ease: "sine.inOut" }, 2);
+
+      // 5) Motas titilando en ventanas distintas (un solo tween por mota, 0→pico→0).
+      tl.fromTo(".mote", { opacity: 0 }, {
+        keyframes: [
+          { opacity: 0.85, duration: 0.5, ease: "sine.inOut" },
+          { opacity: 0, duration: 0.5, ease: "sine.inOut" },
+        ],
+        stagger: 0.75,
+      }, 0.4);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
