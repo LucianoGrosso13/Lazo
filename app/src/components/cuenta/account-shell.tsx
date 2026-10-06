@@ -13,7 +13,6 @@ import { formatUsdc } from "@/lib/cuotas";
 import { useLocale } from "@/i18n/locale";
 import { ACCOUNT_ROUTES, DEMO_ACCOUNT_IDS, DEMO_ROUTES, PUBLIC_ROUTES } from "@/lib/roles";
 import { useAccount } from "./account-context";
-import { Reveal } from "@/components/ui/reveal";
 
 const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
@@ -76,7 +75,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Reveal><section className="glass-deep border-b border-beam/5" aria-label={t.shell.title}>
+      <section className="glass-deep border-b border-beam/5" aria-label={t.shell.title}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
             <span className="font-num text-[0.6875rem] uppercase tracking-[0.18em] text-ink-ghost">
@@ -132,7 +131,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
             )}
           </nav>
         </div>
-      </section></Reveal>
+      </section>
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">{children}</div>
     </>
   );

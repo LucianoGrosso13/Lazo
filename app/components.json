@@ -17,8 +17,5 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide",
-  "registries": {
-    "@animate-ui": "https://animate-ui.com/r/{name}.json"
-  }
+  "iconLibrary": "lucide"
 }

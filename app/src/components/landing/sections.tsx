@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Fade } from "@/components/animate-ui/primitives/effects/fade";
-import { Reveal } from "@/components/ui/reveal";
-import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
-import { Highlight, HighlightItem } from "@/components/animate-ui/primitives/effects/highlight";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
 import { useLocale, useT } from "@/i18n/locale";
@@ -40,7 +36,6 @@ export function LandingSections() {
 function Ladder() {
   const t = useT(landingSections).ladder;
   const { locale } = useLocale();
-  const reduceMotion = useReducedMotion();
   const config = useProtocolConfig();
   const [active, setActive] = useState<TierIndex>(0);
   if (!config) return null;
@@ -48,7 +43,7 @@ function Ladder() {
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <Reveal><section id="how" className={styles.section} aria-labelledby="ladder-title">
+    <section id="how" className={styles.section} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -88,10 +83,10 @@ function Ladder() {
           );
         })}
       </div>
-      <Fade className={styles.ladderExample} inView inViewOnce initialOpacity={0.94} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} aria-live="polite">
+      <p className={styles.ladderExample} aria-live="polite">
         <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
-      </Fade>
-    </section></Reveal>
+      </p>
+    </section>
   );
 }
 
@@ -131,22 +126,22 @@ function Guarantor() {
 
       <div className={styles.ruler}>
         <p className={styles.rulerTitle}>{t.rulerTitle}</p>
-        <Highlight mode="parent" controlledItems value={activeMark} onValueChange={(value) => value && setActiveMark(value)} click hover={false} transition={{ duration: reduceMotion ? 0 : 0.2 }} className={styles.markHighlight} containerClassName={styles.timelineLayout}>
+        <div className={styles.timelineLayout}>
           <div className={styles.timelineEvents} aria-label={t.rulerTitle}>
             {marks.map((m) => (
-              <HighlightItem key={m.kind} id={m.kind} asChild>
-                <button
-                  type="button"
-                  data-kind={m.kind}
-                  className={styles.timelineEvent}
-                  aria-pressed={activeMark === m.kind}
-                  onClick={() => setActiveMark(m.kind)}
-                  onFocus={() => setActiveMark(m.kind)}
-                >
-                  <span className={styles.markDay}>{t.day(m.day)}</span>
-                  <span className={styles.markLabel} data-kind={m.kind}>{m.label}</span>
-                </button>
-              </HighlightItem>
+              <button
+                key={m.kind}
+                type="button"
+                data-kind={m.kind}
+                data-active={activeMark === m.kind ? "true" : undefined}
+                className={styles.timelineEvent}
+                aria-pressed={activeMark === m.kind}
+                onClick={() => setActiveMark(m.kind)}
+                onFocus={() => setActiveMark(m.kind)}
+              >
+                <span className={styles.markDay}>{t.day(m.day)}</span>
+                <span className={styles.markLabel} data-kind={m.kind}>{m.label}</span>
+              </button>
             ))}
           </div>
           <div className={styles.timelineTrack} data-grace={t.events.grace}>
@@ -156,15 +151,13 @@ function Guarantor() {
               <span key={d} className={styles.tick} style={{ left: at(d) }} data-major={marks.some((m) => m.day === d) || undefined} />
             ))}
           </div>
-        </Highlight>
-        <AutoHeight deps={[activeMark]} transition={{ duration: reduceMotion ? 0 : 0.2 }}>
-          <div className={styles.timelineDetail} aria-live="polite">
-            <p className={styles.rulerFoot}>{t.receipt}</p>
-            <p className={styles.timelineSelected}>
-              <b>{t.day(marks.find((m) => m.kind === activeMark)?.day ?? 0)} · {marks.find((m) => m.kind === activeMark)?.label}</b>
-            </p>
-          </div>
-        </AutoHeight>
+        </div>
+        <div className={styles.timelineDetail} aria-live="polite">
+          <p className={styles.rulerFoot}>{t.receipt}</p>
+          <p className={styles.timelineSelected}>
+            <b>{t.day(marks.find((m) => m.kind === activeMark)?.day ?? 0)} · {marks.find((m) => m.kind === activeMark)?.label}</b>
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -212,7 +205,7 @@ function Benefits() {
   ];
 
   return (
-    <Reveal><section className={styles.section} aria-labelledby="benefits-title">
+    <section className={styles.section} aria-labelledby="benefits-title">
       <details className={styles.economicsDisclosure}>
         <summary className={`${styles.h2} ${styles.h2Wide} ${styles.disclosureSummary}`}>
           <span id="benefits-title">{t.title}</span>
@@ -234,14 +227,14 @@ function Benefits() {
           ))}
         </div>
       </details>
-    </section></Reveal>
+    </section>
   );
 }
 
 function Honest() {
   const t = useT(landingSections).honest;
   return (
-    <Reveal><section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
       <h2 id="honest-title" className={styles.h2}>
         {t.title}
       </h2>
@@ -263,7 +256,7 @@ function Honest() {
           </ul>
         </div>
       </div>
-    </section></Reveal>
+    </section>
   );
 }
 
@@ -271,12 +264,12 @@ function Close() {
   const t = useT(landingSections).close;
   const reduceMotion = useReducedMotion();
   return (
-    <Reveal><footer className={styles.close}>
+    <footer className={styles.close}>
       <h2 className={styles.closeTitle}>{t.title}</h2>
       <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
       </MotionLink>
       <p className={styles.closeFoot}>{t.foot}</p>
-    </footer></Reveal>
+    </footer>
   );
 }

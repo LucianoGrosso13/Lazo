@@ -23,7 +23,6 @@ import { BigNumber } from "@/components/ui/big-number";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipButton } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
-import { Reveal } from "@/components/ui/reveal";
 import { StateMark } from "@/components/ui/state-mark";
 import { WalletButton } from "@/components/wallet-button";
 import { adminCuenta } from "@/i18n/dictionaries/admin-cuenta";
@@ -375,7 +374,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
       </header>
 
       {/* Estado del protocolo: lectura + cambio con revisión */}
-      <Reveal><section data-testid="admin-estado" className="glass p-5 sm:p-6">
+      <section data-testid="admin-estado" className="glass p-5 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="text-lg font-semibold text-beam">{t.estadoTitle}</h2>
           <p data-testid="admin-estado-actual" className="flex items-center gap-2 text-sm">
@@ -426,10 +425,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </Button>
         </div>
         {slot("estado")}
-      </section></Reveal>
+      </section>
 
       {/* Escalones y reglas: solo lectura desde la config */}
-      <Reveal><section data-testid="admin-escalones" className="glass p-5 sm:p-6">
+      <section data-testid="admin-escalones" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.escalonesTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.escalonesHint}
@@ -526,10 +525,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             </dd>
           </div>
         </dl>
-      </section></Reveal>
+      </section>
 
       {/* Pool: NAV, tramos, utilización, crédito y movimientos */}
-      <Reveal><section data-testid="admin-pool" className="glass p-5 sm:p-6">
+      <section data-testid="admin-pool" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.poolTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{t.poolHint}</p>
         {s.pool ? (
@@ -543,10 +542,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             reintentar={t.reintentar}
           />
         )}
-      </section></Reveal>
+      </section>
 
       {/* Mora: línea del keeper según config + eventos reales del estado */}
-      <Reveal><section data-testid="admin-mora" className="glass p-5 sm:p-6">
+      <section data-testid="admin-mora" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.moraTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{t.moraHint}</p>
         <ol className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -590,10 +589,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           {t.moraEventosTitle}
         </h3>
         <MoraEventos activity={s.activity} t={t} />
-      </section></Reveal>
+      </section>
 
       {/* Bitácora completa del keeper */}
-      <Reveal><section data-testid="admin-bitacora" className="glass p-5 sm:p-6">
+      <section data-testid="admin-bitacora" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.bitacoraTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.bitacoraHint}
@@ -652,10 +651,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
               ))}
           </ul>
         )}
-      </section></Reveal>
+      </section>
 
       {/* Comercios: lista + alta con revisión */}
-      <Reveal><section data-testid="admin-comercios" className="glass p-5 sm:p-6">
+      <section data-testid="admin-comercios" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.comerciosTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.comerciosHint}
@@ -751,11 +750,11 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </Button>
         </form>
         {slot("comercio")}
-      </section></Reveal>
+      </section>
 
       {/* Reloj de la demo: solo mock admin, nunca en real */}
       {mode === "mock" && (
-        <Reveal><section data-testid="admin-reloj" className="glass p-5 sm:p-6">
+        <section data-testid="admin-reloj" className="glass p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-beam">{t.relojTitle}</h2>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
             {t.relojHint}
@@ -833,7 +832,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </div>
           {slot("reloj-avance")}
           {slot("reloj-reset")}
-        </section></Reveal>
+        </section>
       )}
     </div>
   );

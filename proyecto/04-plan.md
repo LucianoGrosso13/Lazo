@@ -118,6 +118,8 @@ Calendario (hora Argentina):
 ## Estado
 
 > Actualizado 2026-10-06 (rama `t-demo-devnet`). Detalle fino y bloqueos: `proyecto/handoff-demo-devnet.md` § "Estado real".
+>
+> **Tanda en curso:** pulido de la demo (fotos reales, prisma 3D, margen de crédito, "Voltia", comparaciones sin toggle). Spec + tickets en `.scratch/demo-polish/`; ejecución: `proyecto/handoff-pulido-demo.md`.
 
 - [x] T0.1 Next.js + wallet
 - [x] T0.2 Deploy Vercel

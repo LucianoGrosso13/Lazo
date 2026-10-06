@@ -8,10 +8,6 @@ import { BigNumber } from "@/components/ui/big-number";
 import { ExplorerLink } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
 import styles from "./checkout.module.css";
-import { Fade } from "@/components/animate-ui/primitives/effects/fade";
-import { Slide } from "@/components/animate-ui/primitives/effects/slide";
-import { useReducedMotion } from "motion/react";
-import { revealTransition } from "@/components/ui/reveal";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
@@ -30,14 +26,11 @@ export function ConfirmSuccess({
 }) {
   const t = useT(checkout).confirm.success;
   const { locale } = useLocale();
-  const reduceMotion = useReducedMotion();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
   const received = plan.price - plan.merchantFee;
 
   return (
-    <Fade asChild inView inViewOnce initialOpacity={0.94} transition={revealTransition(reduceMotion === true)}>
     <div className={styles.success}>
-      <Slide asChild direction="left" offset={6} transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}>
       <svg
         viewBox="0 0 760 190"
         className={styles.successSvg}
@@ -92,7 +85,6 @@ export function ConfirmSuccess({
           {merchantName}
         </text>
       </svg>
-      </Slide>
 
       <h2 className={styles.successTitle}>{t.title}</h2>
       <p className={styles.successLead}>
@@ -120,6 +112,5 @@ export function ConfirmSuccess({
         </Link>
       </div>
     </div>
-    </Fade>
   );
 }

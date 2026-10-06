@@ -3,15 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/catalog";
-import { useReducedMotion } from "motion/react";
 import { formatUsdc, type Micro, type QuoteBlockReason, type TierIndex } from "@/lib/cuotas";
 import { useLocale } from "@/i18n/locale";
 import type { tienda } from "@/i18n/dictionaries/tienda";
 import { BigNumber } from "@/components/ui/big-number";
 import { Chip } from "@/components/ui/chip";
 import styles from "./store.module.css";
-import { Fade } from "@/components/animate-ui/primitives/effects/fade";
-import { revealTransition } from "@/components/ui/reveal";
 
 // Mismo espectro del hero: anticipo → cuota 1 → cuota 2 → cuota 3.
 const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
@@ -42,12 +39,10 @@ export function ProductCard({
   t: Dict;
 }) {
   const { locale } = useLocale();
-  const reduceMotion = useReducedMotion();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
   const bands = [terms.downPayment, ...terms.installments];
 
   return (
-    <Fade asChild inView inViewOnce initialOpacity={0.94} transition={revealTransition(reduceMotion === true, featured ? 0 : 0.06)}>
     <article
       className={`glass ${styles.card} ${featured ? styles.featured : styles.sideCard}`}
       data-blocked={badge ? true : undefined}
@@ -131,6 +126,5 @@ export function ProductCard({
         </div>
       </Link>
     </article>
-    </Fade>
   );
 }

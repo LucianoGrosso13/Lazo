@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Fade } from "@/components/animate-ui/primitives/effects/fade";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
@@ -97,8 +96,7 @@ export function LandingHero() {
             <div className={styles.stageSkeleton} />
           )}
 
-          <Fade asChild inView inViewOnce initialOpacity={0.94} transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}>
-            <div className={styles.controls}>
+          <div className={styles.controls}>
             <div className={styles.controlRow}>
               <label htmlFor="lazo-price" className={styles.controlLabel}>
                 {t.price}
@@ -156,7 +154,6 @@ export function LandingHero() {
               {split && !split.withinTier ? t.overTier(fmt(split.maxPurchase, 0)) : " "}
             </p>
           </div>
-            </Fade>
         </div>
 
         <div className={styles.heroCopy}>

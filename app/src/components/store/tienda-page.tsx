@@ -26,7 +26,6 @@ import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { ProductCard, type ProductTerms } from "./product-card";
-import { Fade } from "@/components/animate-ui/primitives/effects/fade";
 import styles from "./store.module.css";
 
 const noopSubscribe = () => () => {};
@@ -141,7 +140,7 @@ export function TiendaPage() {
   const tier = walletQ.data?.quotes[featured.id]?.tier;
 
   return (
-    <Fade className={styles.page} initialOpacity={0.96} transition={{ duration: 0.24 }}>
+    <div className={styles.page}>
       <p className={styles.banner} role="note">
         {t.demoBanner}
         <span className={styles.merchant}>
@@ -205,7 +204,7 @@ export function TiendaPage() {
       )}
 
       <p className={styles.foot}>{t.footer}</p>
-    </Fade>
+    </div>
   );
 }
 

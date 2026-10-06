@@ -1067,19 +1067,6 @@
   cursor: pointer;
 }
 
-.markHighlight {
-  border: 1px solid rgb(153 69 255 / 0.38);
-  border-radius: 0.65rem;
-  background: linear-gradient(
-    120deg,
-    rgb(153 69 255 / 0.15),
-    rgb(0 194 255 / 0.1),
-    rgb(25 251 155 / 0.08)
-  );
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
-  pointer-events: none;
-}
-
 .timelineEvent[data-active="true"] {
   border-color: rgb(255 255 255 / 0.14);
   background: rgb(255 255 255 / 0.055);
