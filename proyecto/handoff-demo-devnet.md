@@ -38,3 +38,23 @@ El de `03-mvp.md`: link público con compra real en devnet < 2 min, mora complet
 ## Nota: delegación intentada y fallida (2026-10-06, fuera del alcance pedido)
 
 Se intentó ejecutar con Orca orchestration (Run `run_25f3d7917a43`, 7 tareas creadas: Fase 0, A1, A2, A3, A4a, A4b, C1). No existe agente `devin` en Orca, se usó `muse`. Los 6 `worker-start` fallaron en `agent_readiness` (timeout; el agente `muse` arranca en la terminal pero Orca nunca lo da por listo), incluso con `--timeout-ms 180000`. Los 3 primeros dispatches se liberaron (`ctx_02a3d0fb04ba`, `ctx_305d689019f5`, `ctx_00e52353d307`); los 3 reintentos (`ctx_36142e1495b7`, `ctx_f99f9a7bc781`, `ctx_f59c7c96a2bf`) quedaron fallados sin liberar. El próximo agente puede implementar el plan directamente en esta sesión o reintentar delegación con otro agente/terminal.
+
+## Estado real al 2026-10-06 (verificado, rama `t-demo-devnet`)
+
+La sesión del 5/10 ejecutó el plan directamente y quedó commiteado en 9 commits:
+
+- **Programa:** `open_plan`, `pay_installment`, `crank_mark_late`, `keeper_register_recovery` + `Plan` PDA implementados y en verde: 137 LiteSVM + 36 unitarios (artifact `cuotas.so` sha `751cba9d`, ver `programa/TEST_REPORT.md`). **No desplegado**: en devnet sigue el artifact viejo (`8d05b07f`, sin ciclo de crédito). El upgrade es Fase A3.
+- **Cliente Codama:** generado en `app/src/generated/` (`npm run generate` / `--check`).
+- **Front real:** `app/src/lib/cuotas/real.ts` completo (lecturas + `openPlan`/`payInstallment` simulados antes de firmar, guard de génesis devnet); `providers.tsx` lo cablea. `NEXT_PUBLIC_CUOTAS_MODE=real` activa. `scripts/seed.ts` arma las tx de init/fondeo como propuestas dry-run con aprobación por tx.
+- **Keeper:** `keeper/` con adapter Codama, journal idempotente y gateway Mobbex; 46 tests + 9 e2e con RPC scripteado.
+- **Fiador sandbox:** `/api/fiador/*` (invitaciones HMAC, Didit, Mobbex, cotización onchain, registro verify-only) + `app/src/components/cuenta/fiador/real.tsx`. Contrato en `docs/fiador-sandbox.md`.
+- **Cuenta:** `/app/estudiante` implementada (resuelve identidad compartida, falla cerrado en rol no-student); `/account` mantiene el tablero mock.
+- Verificado en esta sesión: `npm run typecheck` ✓, `npx vitest run` 178/178 ✓, `npm run lint` sin errores ✓, `npm run build` ✓, keeper 46/46 ✓.
+
+**Lo que falta (bloqueos reales):**
+
+1. **Fase A3 — upgrade devnet + init + fondeo** (`npm run seed`): necesita (a) la keypair del deployer `BY6ZB2…Mehf` — no está en esta máquina, la tiene el operador fuera del repo (`$CUOTAS_KEYS`); (b) ~2 SOL devnet más (deployer tiene 0.22 SOL; el buffer nuevo de ~610 KB cuesta ~4.3 SOL y el buffer varado `DUgcg4Y2…` puede cerrarse para recuperar 2.39 SOL); (c) aprobación explícita del usuario por cada tx.
+2. **Credenciales sandbox** (Didit `DIDIT_API_KEY`/`DIDIT_WORKFLOW_ID`/`DIDIT_WEBHOOK_SECRET`, Mobbex `MOBBEX_*`, `FIADOR_INVITE_SECRET`, `FIADOR_COVERAGE_POLICY` = decisión pendiente del usuario): sin ellas el alta de fiador queda en `didit_not_configured`/`coverage_policy_pending` (falla cerrado, por diseño).
+3. **E2E real contra devnet** post-upgrade (compra con Phantom visible en Explorer) y Fase D (Vercel, README en inglés, guion).
+4. Wiring estudiante→invitación server-side: `invitar-fiador.tsx` sigue minteando links mock (ver sección "Student-side wiring" en `docs/fiador-sandbox.md`).
+5. Gap conocido del programa: reopen en el mismo segundo acepta una cuote vieja (KNOWN-GAP en `plan_pay` tests; fix = discriminador de generación).

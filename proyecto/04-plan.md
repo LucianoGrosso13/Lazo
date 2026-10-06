@@ -117,28 +117,30 @@ Calendario (hora Argentina):
 
 ## Estado
 
-- [ ] T0.1 Next.js + wallet
-- [ ] T0.2 Deploy Vercel
-- [ ] T0.3 Spike Mobbex
-- [ ] T0.4 Spike Didit
-- [ ] T0.5 Workspace Anchor + devUSDC
-- [ ] T1.1 Núcleo del programa
-- [ ] T1.2 `open_plan`
-- [ ] T1.3 `pay_installment`
-- [ ] T1.4 Deploy devnet + Codama
-- [ ] T1.5 `lib/cuotas.ts` mock → real
-- [ ] T1.6 Tienda + checkout
-- [ ] T1.7 Panel del estudiante
-- [ ] T1.8 Panel del comercio
-- [ ] T1.9 Panel del pool
-- [ ] T2.1 Mora en el programa
-- [ ] T2.2 Pérdida al junior
-- [ ] T2.3 Onboarding del fiador
-- [ ] T2.4 Keeper
-- [ ] T2.5 Invitación al fiador
-- [ ] T3.1 Depósito senior
-- [ ] T3.2 Reloj de demo
-- [ ] T3.3 Seed
+> Actualizado 2026-10-06 (rama `t-demo-devnet`). Detalle fino y bloqueos: `proyecto/handoff-demo-devnet.md` § "Estado real".
+
+- [x] T0.1 Next.js + wallet
+- [x] T0.2 Deploy Vercel
+- [ ] T0.3 Spike Mobbex — código listo (`keeper/src/gateway.ts`), falta credencial sandbox
+- [ ] T0.4 Spike Didit — código listo (`app/src/lib/server/didit.ts`), falta credencial
+- [x] T0.5 Workspace Anchor + devUSDC (deployado, ver `programa/DEPLOYMENT_REPORT.md`)
+- [x] T1.1 Núcleo del programa
+- [x] T1.2 `open_plan` (137 tests LiteSVM en verde)
+- [x] T1.3 `pay_installment`
+- [x] T1.4 Cliente Codama en `app/src/generated/` (upgrade del programa en devnet pendiente — Fase A3)
+- [x] T1.5 `lib/cuotas.ts` mock → real (`real.ts` completo, cableado en `providers.tsx`)
+- [x] T1.6 Tienda + checkout
+- [x] T1.7 Panel del estudiante (`/app/estudiante`)
+- [x] T1.8 Panel del comercio
+- [x] T1.9 Panel del pool
+- [x] T2.1 Mora en el programa (`crank_mark_late` + `keeper_register_recovery`)
+- [x] T2.2 Pérdida al junior (`admin_apply_loss`, simulación cash provisoria)
+- [x] T2.3 Onboarding del fiador (código + APIs; live pendiente credenciales)
+- [x] T2.4 Keeper (`keeper/`, 46 tests + 9 e2e con RPC scripteado)
+- [x] T2.5 Invitación al fiador (HMAC server-side; wiring del lado estudiante pendiente)
+- [ ] T3.1 Depósito senior (fuera del alcance aprobado para la demo)
+- [ ] T3.2 Reloj de demo (mock OK; en real = `seconds_per_day` chico al init, pendiente Fase A3)
+- [ ] T3.3 Seed (`scripts/seed.ts` listo; correrlo necesita keypair + aprobación)
 - [ ] T3.4 UX
 - [ ] T3.5 Seguridad
 - [ ] TF.1-3 Entrega
