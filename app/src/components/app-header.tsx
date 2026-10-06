@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -10,27 +11,22 @@ import { useLocale, useT } from "@/i18n/locale";
 import { ChipButton, SegmentedControl } from "@/components/ui/chip";
 import { WalletButton } from "./wallet-button";
 
-/** Marca: un haz blanco entra al prisma y sale como espectro. */
+/**
+ * Marca 3D del prisma: render HyperFrames commiteado en /public/brand
+ * (composición reproducible en .scratch/demo-polish/brand). PNG RGBA, el
+ * header siempre va sobre fondo oscuro. Decorativa: el texto "Lazo" ya nombra.
+ */
 function PrismaGlyph({ className = "" }: { className?: string }) {
   return (
-    <svg
+    <Image
+      src="/brand/logo-prisma.png"
+      alt=""
       aria-hidden
-      viewBox="0 0 30 20"
-      fill="none"
-      strokeLinecap="round"
+      width={480}
+      height={320}
+      priority
       className={className}
-    >
-      <path d="M0.5 10H7.5" stroke="var(--color-beam)" strokeWidth="1.4" />
-      <path
-        d="M12.5 2.5 20 16.5H5L12.5 2.5Z"
-        stroke="var(--color-beam)"
-        strokeWidth="1.1"
-        strokeLinejoin="round"
-      />
-      <path d="M15.5 9.5 29 5.5" stroke="var(--color-violet)" strokeWidth="1.4" />
-      <path d="M15.8 11.5 29 10.5" stroke="var(--color-cyan)" strokeWidth="1.4" />
-      <path d="M15.5 13.5 29 15.5" stroke="var(--color-green)" strokeWidth="1.4" />
-    </svg>
+    />
   );
 }
 
@@ -246,7 +242,7 @@ export function AppHeader() {
             className="app-brand flex items-center gap-2.5 text-[1.375rem] font-medium tracking-[-0.01em] text-beam"
             onClick={() => setOpen(false)}
           >
-            <PrismaGlyph className="h-5 w-[1.875rem]" />
+            <PrismaGlyph className="h-9 w-[3.375rem]" />
             Lazo
           </Link>
 

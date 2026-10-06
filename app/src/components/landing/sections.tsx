@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
@@ -260,11 +261,47 @@ function Honest() {
   );
 }
 
+/**
+ * Marca 3D renderizada (HyperFrames): loop de luz recorriendo la dispersión.
+ * El video tiene fondo negro y se integra con mix-blend-mode: screen sobre el
+ * fondo casi negro de la página; con prefers-reduced-motion cae al PNG fijo.
+ */
+function BrandMark({ animated }: { animated: boolean }) {
+  if (!animated) {
+    return (
+      <Image
+        src="/brand/logo-prisma.png"
+        alt=""
+        aria-hidden
+        width={480}
+        height={320}
+        className={styles.closeMark}
+      />
+    );
+  }
+  return (
+    <video
+      className={`${styles.closeMark} ${styles.closeMarkVideo}`}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      poster="/brand/logo-prisma.png"
+      aria-hidden="true"
+    >
+      <source src="/brand/logo-prisma-loop.webm" type="video/webm" />
+      <source src="/brand/logo-prisma-loop.mp4" type="video/mp4" />
+    </video>
+  );
+}
+
 function Close() {
   const t = useT(landingSections).close;
   const reduceMotion = useReducedMotion();
   return (
     <footer className={styles.close}>
+      <BrandMark animated={!reduceMotion} />
       <h2 className={styles.closeTitle}>{t.title}</h2>
       <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
