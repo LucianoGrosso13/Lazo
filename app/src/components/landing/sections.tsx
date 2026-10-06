@@ -148,7 +148,7 @@ function Guarantor() {
             ))}
           </div>
           <div className={styles.timelineTrack} data-grace={t.events.grace}>
-            <motion.span className={styles.timelineProgress} initial={{ scaleX: 0 }} whileInView={{ scaleX: (marks.find((m) => m.kind === activeMark)?.day ?? 0) / end }} viewport={{ once: true }} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} />
+            <motion.span className={styles.timelineProgress} animate={{ scaleX: (marks.find((m) => m.kind === activeMark)?.day ?? 0) / end }} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} />
             <span className={styles.timelineGrace} style={{ width: at(config.graceDays) }} />
             {Array.from({ length: end + 1 }, (_, d) => (
               <span key={d} className={styles.tick} style={{ left: at(d) }} data-major={marks.some((m) => m.day === d) || undefined} />

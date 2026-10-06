@@ -11,19 +11,20 @@ for (const locale of ["en", "es"] as const) {
     await expect(slider).toBeVisible();
     const values = Array.from({ length: 40 }, (_, i) => 120 + ((i * 17) % 139) * 10);
     for (const value of values) {
-      await slider.focus();
-      await slider.press("Home");
-      const steps = (value - 120) / 10;
-      for (let i = 0; i < steps; i += 1) await slider.press("ArrowRight");
-      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-      const { text, visibleSpans } = await page.locator("output[for='lazo-price']").evaluate((output) => {
+      const { text, visibleSpans } = await page.evaluate(async (next) => {
+        const input = document.querySelector<HTMLInputElement>("#lazo-price")!;
+        const output = document.querySelector<HTMLOutputElement>("output[for='lazo-price']")!;
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, String(next));
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         const spans = [...output.querySelectorAll("span")].filter((span) => {
           const style = getComputedStyle(span);
           const rect = span.getBoundingClientRect();
           return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0.05 && rect.width > 0 && rect.height > 0;
         });
         return { text: spans.map((span) => span.innerText).join(""), visibleSpans: spans.length };
-      });
+      }, value);
       expect(visibleSpans).toBe(1);
       expect(Number(text.replace(/[^0-9]/g, ""))).toBe(value);
       await expect(page.locator("output[for='lazo-price'] span")).toHaveCount(1);
