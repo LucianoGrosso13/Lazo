@@ -90,17 +90,19 @@ function computeQuote(
   const reasons: QuoteBlockReason[] = [];
   if (cfg.state !== "Normal") reasons.push("protocol_halted");
   if (rep.blockedFromNewPlans) reasons.push("blocked_after_default");
-  if (
-    state.plans.some(
-      (p) =>
-        p.student === student &&
-        (p.status === "Active" || p.status === "Late"),
-    )
-  ) {
-    reasons.push("has_active_plan");
-  }
   if (!withGuarantee) reasons.push("no_guarantee");
   if (price > tierParams.maxPurchase) reasons.push("exceeds_tier_max");
+  // Margen de crédito por escalón (solo mock, decisión del usuario): el
+  // `maxPurchase` del escalón hace doble función — tope por compra y línea
+  // de crédito total, como el margen de una tarjeta. Varios planes en
+  // paralelo mientras `activeExposure + repayable ≤ maxPurchase`.
+  // Divergencia conocida: el programa on-chain fuerza UN plan por estudiante
+  // (Plan PDA con seeds [PLAN_SEED, student], `init` falla si existe) y el
+  // cliente real emite `has_active_plan`. Ver `.scratch/demo-polish/spec.md`
+  // §"Divergencia conocida".
+  if (rep.activeExposure + repayable > tierParams.maxPurchase) {
+    reasons.push("exceeds_credit_limit");
+  }
   if (withGuarantee && guarantee) {
     if (price > guarantee.maxPurchase)
       reasons.push("exceeds_guarantor_max_purchase");
@@ -212,6 +214,8 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     state.pool.nav = state.pool.available + state.pool.outstandingCredit;
     rep.lateCount += 1;
     rep.blockedFromNewPlans = true;
+    // Las cuotas cobradas al fiador también salen del margen (mismo criterio:
+    // exposure = Σ amounts de cuotas sin pagar ni cobrar).
     rep.activeExposure = Math.max(0, rep.activeExposure - principal);
     activity({
       kind: "GuarantorCharged",
@@ -492,7 +496,11 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       state.pool.available -= advance;
       state.pool.nav = state.pool.available + state.pool.outstandingCredit;
 
-      state.reputations[args.student].activeExposure += quote.financed;
+      // activeExposure = repayable del plan (financed + interest), igual que
+      // `active_exposure` on-chain. En la práctica interest = 0 en todos los
+      // escalones, así que equivale a la suma de amounts de sus cuotas.
+      state.reputations[args.student].activeExposure +=
+        quote.financed + quote.interest;
       activity({
         kind: "PlanOpened",
         student: args.student,
@@ -534,6 +542,9 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       state.pool.available += paid;
       state.pool.nav = state.pool.available + state.pool.outstandingCredit;
 
+      // Pagar libera margen: inst.amount ya es la parte de repayable de la
+      // cuota (las cuotas se cortan sobre financed + interest, no sobre
+      // financed). Con interest = 0, exposure = Σ amounts de cuotas impagas.
       const rep = state.reputations[student];
       rep.activeExposure = Math.max(0, rep.activeExposure - inst.amount);
       activity({ kind: "InstallmentPaid", student, planId, amount: paid });

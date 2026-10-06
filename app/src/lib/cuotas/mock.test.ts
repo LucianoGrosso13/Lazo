@@ -214,7 +214,12 @@ describe("quote", () => {
     // tramo S0: anticipo 50%, tope 150
     expect(q.downPayment).toBe(toMicro(50));
     const over = await c.quote(toMicro(500), W);
-    expect(over.reasons).toEqual(["no_guarantee", "exceeds_tier_max"]);
+    // Además del tope por compra, el financiado (250) supera la línea del tramo.
+    expect(over.reasons).toEqual([
+      "no_guarantee",
+      "exceeds_tier_max",
+      "exceeds_credit_limit",
+    ]);
   });
 
   it("protocolo pausado → protocol_halted", async () => {
