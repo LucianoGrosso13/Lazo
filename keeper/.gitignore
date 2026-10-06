@@ -1,0 +1,5 @@
+# Keeper runtime data: recovery journal and proposals. Never committed.
+data/*.jsonl
+data/*.json
+!data/.gitkeep
+node_modules/
