@@ -16,7 +16,7 @@
   --pad: clamp(1.25rem, 4vw, 4rem);
   max-width: 1440px;
   margin: 0 auto;
-  padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(1.75rem, 3.5vw, 2.75rem);
   color: var(--ink);
 }
 
@@ -73,7 +73,7 @@
   flex-wrap: wrap;
   align-items: end;
   gap: 0.75rem 2.5rem;
-  margin-top: clamp(1.25rem, 3vw, 2.25rem);
+  margin-top: clamp(0.9rem, 2vw, 1.5rem);
 }
 
 .headText {
@@ -138,6 +138,7 @@
   background: linear-gradient(90deg, var(--violet), var(--cyan));
   box-shadow: 0 0 8px rgb(0 194 255 / 0.5);
   animation: marginGrow 0.6s var(--ease) both;
+  transition: transform 0.5s var(--ease);
 }
 
 @keyframes marginGrow {
@@ -150,13 +151,13 @@
 
 .grid {
   display: grid;
-  gap: clamp(0.85rem, 1.6vw, 1.4rem);
-  margin-top: clamp(1.25rem, 2.5vw, 2rem);
+  gap: clamp(0.7rem, 1.3vw, 1.1rem);
+  margin-top: clamp(0.9rem, 1.8vw, 1.4rem);
 }
 
 .side {
   display: grid;
-  gap: clamp(0.85rem, 1.6vw, 1.4rem);
+  gap: clamp(0.7rem, 1.3vw, 1.1rem);
   align-content: start;
 }
 
@@ -176,6 +177,30 @@
 
 .card {
   overflow: hidden;
+  animation: cardIn 0.68s var(--ease) both;
+}
+
+/* Las láminas entran como la luz por el vidrio: corrimiento + foco,
+   la de la derecha un paso detrás. */
+.side .card:nth-child(1) {
+  animation-delay: 90ms;
+}
+
+.side .card:nth-child(2) {
+  animation-delay: 170ms;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
 }
 
 .cardLink {
@@ -200,6 +225,37 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.7s var(--ease);
+}
+
+/* La foto se acerca un paso al pasar el cursor: es vidrio, no goma. */
+.card:hover .media img,
+.cardLink:focus-visible .media img {
+  transform: scale(1.045);
+}
+
+/* Un barrido espectral cruza la foto: el haz que la card refracta. */
+.media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    transparent 32%,
+    rgb(153 69 255 / 0.16) 45%,
+    rgb(0 194 255 / 0.14) 53%,
+    rgb(25 251 155 / 0.12) 61%,
+    transparent 74%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.9s var(--ease);
+  pointer-events: none;
+}
+
+.card:hover .media::before,
+.cardLink:focus-visible .media::before {
+  transform: translateX(130%);
 }
 
 /* El haz del precio se refracta al pasar sobre la card: las bandas
@@ -210,6 +266,19 @@
   inset: 0;
   background: linear-gradient(180deg, transparent 55%, rgb(7 6 11 / 0.55));
   pointer-events: none;
+}
+
+/* El canto espectral de abajo (de .glass) se enciende con el hover. */
+.card::after {
+  transition:
+    opacity 0.5s var(--ease),
+    filter 0.5s var(--ease);
+}
+
+.card:hover::after,
+.card:focus-within::after {
+  opacity: 1;
+  filter: saturate(1.4);
 }
 
 .badge {
@@ -237,7 +306,7 @@
 .body {
   display: grid;
   gap: 0.5rem;
-  padding: clamp(0.9rem, 1.7vw, 1.3rem);
+  padding: clamp(0.7rem, 1.35vw, 1rem);
   align-content: start;
 }
 
@@ -413,7 +482,7 @@
   }
 
   .sideCard .body {
-    padding: 1.15rem 1.25rem;
+    padding: 0.9rem 1rem;
   }
 }
 
@@ -453,7 +522,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1.5rem;
-  margin-top: 1.1rem;
+  margin-top: 0.9rem;
   padding: 0.85rem 1.25rem;
 }
 
@@ -561,7 +630,7 @@
 /* ---------- Pie ---------- */
 
 .foot {
-  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  margin-top: clamp(1rem, 2vw, 1.75rem);
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
@@ -578,12 +647,26 @@
 
   .go,
   .go svg,
-  .bandsOut {
+  .bandsOut,
+  .media img,
+  .media::before,
+  .card::after,
+  .marginFill {
     transition: none;
   }
 
+  .card,
   .bandsOut,
   .marginFill {
     animation: none;
+  }
+
+  .card:hover .media img,
+  .cardLink:focus-visible .media img {
+    transform: none;
+  }
+
+  .media::before {
+    display: none;
   }
 }
