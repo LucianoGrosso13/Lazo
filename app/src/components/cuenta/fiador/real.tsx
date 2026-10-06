@@ -6,7 +6,7 @@
 // CuotasClient; everything off-chain goes through /api/fiador/*.
 // No card numbers are ever typed here: KYC and card entry happen on
 // provider-hosted pages opened in a new tab.
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
@@ -260,7 +260,7 @@ export function RealFiadorEntry({ token }: { token: string }) {
   if (invite.completed && invite.acceptance) {
     return <RealPanel token={token} invite={invite} />;
   }
-  return <RealAlta token={token} student={invite.student} expiresAt={invite.expiresAt} />;
+  return <RealAlta key={token} token={token} student={invite.student} expiresAt={invite.expiresAt} />;
 }
 
 // --- Completed invitation ------------------------------------------------------
@@ -381,6 +381,19 @@ interface Acceptance {
   };
 }
 
+// Resume hosted sessions after returning from Didit/Mobbex tabs (same
+// browser): the in-flight KYC/card session is stored under the invite token.
+function readSession<T>(token: string, kind: "kyc" | "card"): T | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = window.sessionStorage.getItem(`lazo.fiador.real.${token}.${kind}`);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    // Session storage blocked: the flow still works, without resume.
+    return null;
+  }
+}
+
 function RealAlta({ token, student, expiresAt }: { token: string; student: string; expiresAt: number }) {
   const t = useT(garanteCuenta);
   const l = useT(tReal);
@@ -389,8 +402,8 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
   const [paso, setPaso] = useState<Paso>(0);
   const [tope, setTope] = useState<Micro | null>(null);
   const [nombre, setNombre] = useState("");
-  const [kyc, setKyc] = useState<KycStart | null>(null);
-  const [card, setCard] = useState<CardStart | null>(null);
+  const [kyc, setKyc] = useState<KycStart | null>(() => readSession<KycStart>(token, "kyc"));
+  const [card, setCard] = useState<CardStart | null>(() => readSession<CardStart>(token, "card"));
   const [busy, setBusy] = useState<"kyc" | "card" | "accept" | "register" | null>(null);
   const [kycError, setKycError] = useState("");
   const [cardError, setCardError] = useState("");
@@ -400,21 +413,6 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
   const [registered, setRegistered] = useState<string | null>(null);
   const [registerNote, setRegisterNote] = useState("");
   const [signature, setSignature] = useState("");
-  const [resumeTick, setResumeTick] = useState(0);
-
-  // Resume hosted sessions after returning from Didit/Mobbex tabs (same browser).
-  useEffect(() => {
-    try {
-      const k = window.sessionStorage.getItem(`lazo.fiador.real.${token}.kyc`);
-      const c = window.sessionStorage.getItem(`lazo.fiador.real.${token}.card`);
-      if (k) setKyc(JSON.parse(k) as KycStart);
-      if (c) setCard(JSON.parse(c) as CardStart);
-    } catch {
-      // Session storage blocked: the flow still works, without resume.
-    }
-    // Returning from a hosted page (?kyc=callback) lands back on the wizard.
-    setResumeTick((n) => n + 1);
-  }, [token]);
 
   const configQ = useSWR("fiador-config-real", () => getAccountCuotas().getAccountConfig());
 
@@ -433,7 +431,6 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
     ([, tk, m]) => apiGet<Cotizar>(`/api/fiador/fianza/cotizar?token=${encodeURIComponent(tk)}&maxPurchase=${m}`),
   );
   const coverageMax = cotizarQ.data?.coverageMax ?? null;
-  const required = cotizarQ.data?.requiredCoverage ?? null;
 
   const docQ = useSWR(
     nombre.trim() && topeElegido != null && coverageMax != null
@@ -453,12 +450,12 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
   );
 
   const kycQ = useSWR(
-    kyc ? ["kyc-status", kyc.sessionId, resumeTick] : null,
+    kyc ? ["kyc-status", kyc.sessionId] : null,
     () => apiGet<KycStatus>(`/api/fiador/kyc/sesiones/${kyc!.sessionId}?token=${encodeURIComponent(token)}`),
     { refreshInterval: (latest) => (latest?.approved ? 0 : 5000), dedupingInterval: 4000 },
   );
   const cardQ = useSWR(
-    card ? ["card-status", card.subscriberId, resumeTick] : null,
+    card ? ["card-status", card.subscriberId] : null,
     () => apiGet<CardStatus>(`/api/fiador/tarjetas/estado?token=${encodeURIComponent(token)}`),
     { refreshInterval: (latest) => (latest?.linked ? 0 : 5000), dedupingInterval: 4000 },
   );

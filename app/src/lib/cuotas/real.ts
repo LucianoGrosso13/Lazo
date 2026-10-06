@@ -93,7 +93,6 @@ import type { AccountBaseHooks, AdminMerchantRef } from "./accounts-types";
 import { CuotasError, type CuotasClient, type Micro, type WalletAddress } from "./types";
 import type {
   Activity,
-  ActivityKind,
   DemoClock,
   Guarantee,
   Installment,
@@ -103,7 +102,6 @@ import type {
   PlanStatus,
   Pool,
   PoolEvent,
-  PoolEventKind,
   ProtocolConfig,
   Quote,
   QuoteBlockReason,

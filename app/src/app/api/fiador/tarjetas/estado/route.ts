@@ -1,7 +1,7 @@
 // GET /api/fiador/tarjetas/estado?token=... — live saved-card state for an
 // invitation. Re-queries the Mobbex subscriber and reports only a masked
 // label. Fails closed when the API shape is unrecognized.
-import { apiError, mapError } from "@/lib/server/http";
+import { mapError } from "@/lib/server/http";
 import { verifyInvitation } from "@/lib/server/invite-tokens";
 import { getMobbexSubscriber } from "@/lib/server/mobbex";
 import { getStore, tokenKey } from "@/lib/server/store";

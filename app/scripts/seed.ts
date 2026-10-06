@@ -43,7 +43,6 @@ import {
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import {
-  fetchMaybeMerchant,
   fetchMaybePool,
   fetchMaybeProtocolConfig,
   findConfigPda,
