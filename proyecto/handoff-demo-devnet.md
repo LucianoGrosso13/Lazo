@@ -53,7 +53,7 @@ La sesión del 5/10 ejecutó el plan directamente y quedó commiteado en 9 commi
 
 **Lo que falta (bloqueos reales):**
 
-1. **Fase A3 — upgrade devnet + init + fondeo** (`npm run seed`): necesita (a) la keypair del deployer `BY6ZB2…Mehf` — no está en esta máquina, la tiene el operador fuera del repo (`$CUOTAS_KEYS`); (b) ~2 SOL devnet más (deployer tiene 0.22 SOL; el buffer nuevo de ~610 KB cuesta ~4.3 SOL y el buffer varado `DUgcg4Y2…` puede cerrarse para recuperar 2.39 SOL); (c) aprobación explícita del usuario por cada tx.
+1. **Fase A3 — upgrade devnet + init + fondeo**: runbook completo y verificado en `programa/UPGRADE_DEVNET.md`. Necesita (a) la keypair del deployer `BY6ZB2…Mehf` — no está en esta máquina, vive fuera del repo (`$CUOTAS_KEYS`); si está perdida, el fallback de re-deploy está en el runbook; (b) ~2 SOL devnet de faucet (deployer 0.22 + cierre del buffer varado 2.39 = 2.61, falta ~1.25 para crear el buffer de 610 KB); (c) aprobación explícita del usuario por cada tx. El dry-run del seed ya simuló contra el binario viejo y confirmó que **el upgrade va primero** (`admin_init_config` falla con `InvalidConfig 6010` contra el layout viejo).
 2. **Credenciales sandbox** (Didit `DIDIT_API_KEY`/`DIDIT_WORKFLOW_ID`/`DIDIT_WEBHOOK_SECRET`, Mobbex `MOBBEX_*`, `FIADOR_INVITE_SECRET`, `FIADOR_COVERAGE_POLICY` = decisión pendiente del usuario): sin ellas el alta de fiador queda en `didit_not_configured`/`coverage_policy_pending` (falla cerrado, por diseño).
 3. **E2E real contra devnet** post-upgrade (compra con Phantom visible en Explorer) y Fase D (Vercel, README en inglés, guion).
 4. Wiring estudiante→invitación server-side: `invitar-fiador.tsx` sigue minteando links mock (ver sección "Student-side wiring" en `docs/fiador-sandbox.md`).
