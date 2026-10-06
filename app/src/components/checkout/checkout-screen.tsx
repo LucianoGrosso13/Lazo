@@ -25,7 +25,8 @@ import { useLocale, useT } from "@/i18n/locale";
 import { useWalletAddress } from "@/components/wallet-button";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { splitPurchase } from "@/components/landing/split";
-import { PrismStage, type StageBand } from "@/components/landing/prism-stage";
+import type { StageBand } from "@/components/landing/prism-stage";
+import { PrismStage3D } from "@/components/landing/prism-stage-3d";
 import { SPECTRUM } from "@/components/landing/hero";
 import { REFERENCE } from "@/components/landing/reference";
 import { GlassPanel } from "@/components/ui/glass";
@@ -235,7 +236,7 @@ export function CheckoutScreen({
                 {data ? (
                   <div className={styles.stageCrop}>
                     <div className={styles.stageWide}>
-                      <PrismStage
+                      <PrismStage3D
                         inputLabel={t.price}
                         inputValue={`US$ ${fmt(product.price, 0)}`}
                         bands={bands}

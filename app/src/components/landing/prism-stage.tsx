@@ -45,8 +45,11 @@ const off = (p: readonly number[]) => [p[0] + SLAB.depth[0], p[1] + SLAB.depth[1
 
 const easeOutExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
-/** Anima los montos hacia el objetivo (la luz se re-refracta, el vidrio no se mueve). */
-function useTweened(target: number[], duration = 620): number[] {
+/** Layout del escenario en coordenadas viewBox — lo comparten el SVG y el stage 3D. */
+export const STAGE_LAYOUT = { VB_W, VB_H, BEAM_Y, EXIT_TOP, EXIT_BOTTOM, FAN_END_X, rightX } as const;
+
+/** Anima los montos hacia el objetivo (la luz se re-refracta, el vidrio no se mueve). Exportado para el stage 3D. */
+export function useTweened(target: number[], duration = 620): number[] {
   const [shown, setShown] = useState(target);
   const fromRef = useRef(target);
   const shownRef = useRef(target);
@@ -77,8 +80,8 @@ function useTweened(target: number[], duration = 620): number[] {
   return shown;
 }
 
-/** Reparte la cara de salida y el abanico entre las bandas, proporcional al monto. */
-function layoutBands<B extends { shown: number }>(bands: B[], total: number, activeCount: number) {
+/** Reparte la cara de salida y el abanico entre las bandas, proporcional al monto. Exportado para el stage 3D. */
+export function layoutBands<B extends { shown: number }>(bands: B[], total: number, activeCount: number) {
   const exitSpan = EXIT_BOTTOM - EXIT_TOP;
   const fanSpan = FAN_BOTTOM - FAN_TOP - GAP * Math.max(0, activeCount - 1);
   let exitCursor = EXIT_TOP;
