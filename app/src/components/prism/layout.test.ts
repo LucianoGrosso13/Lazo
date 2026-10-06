@@ -9,7 +9,7 @@ const PC: PrismBandInput[] = [
   { id: "q3", label: "Cuota 3", amount: 233_333_334, kind: "installment" },
 ];
 const INPUT = { label: "Precio", amount: toMicro(1000) };
-const CMP = { label: "Mercado Pago", amount: toMicro(1290) };
+const CMP = { label: "La competencia", amount: toMicro(1290) };
 
 describe("computePrism", () => {
   const g = computePrism(INPUT, PC, CMP);
@@ -26,7 +26,7 @@ describe("computePrism", () => {
   it("la misma unidad para todo: largos comparables entre haz y comparación", () => {
     const cmpLen = g.comparison.x1 - g.comparison.x0;
     expect(cmpLen).toBeCloseTo(toMicro(1290) * g.unit, 9);
-    // el haz gris de MP es más largo que cualquier banda de Lazo
+    // el haz gris de la competencia es más largo que cualquier banda de Lazo
     for (const b of g.bands) expect(cmpLen).toBeGreaterThan(b.x1 - b.x0);
   });
 
@@ -65,7 +65,7 @@ describe("computePrism", () => {
         { id: "down", label: "Anticipo", amount: toMicro(36), kind: "down" },
         { id: "q1", label: "Cuota", amount: toMicro(28), kind: "installment" },
       ],
-      { label: "MP", amount: toMicro(155) },
+      { label: "Competencia", amount: toMicro(155) },
     );
     expect(small.bands[0].x1).toBeLessThanOrEqual(0.986);
     expect(small.comparison.x1).toBeLessThanOrEqual(0.985);

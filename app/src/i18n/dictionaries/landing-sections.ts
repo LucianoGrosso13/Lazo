@@ -40,12 +40,12 @@ export const landingSections = defineDict({
           who: "Cliente",
           value: "0%",
           label: "de interés en 3 cuotas",
-          vs: (x: string) => `Mercado Pago, sin tarjeta: ~${x}% más`,
+          vs: (x: string) => `La competencia, sin tarjeta: ~${x}% más`,
         },
         merchant: {
           who: "Comercio",
           label: "del precio de comisión, y cobra al instante",
-          vs: (cs: string, mp: string) => `Cuota Simple ${cs}% · Mercado Pago ~${mp}%`,
+          vs: (cs: string, mp: string) => `Financiación en mostrador ${cs}% · billeteras ~${mp}%`,
         },
         pool: {
           who: "Pool",
@@ -117,12 +117,12 @@ export const landingSections = defineDict({
           who: "Customer",
           value: "0%",
           label: "interest over 3 installments",
-          vs: (x: string) => `Mercado Pago, no-card: ~${x}% more`,
+          vs: (x: string) => `The competition, no-card: ~${x}% more`,
         },
         merchant: {
           who: "Merchant",
           label: "of the price in fees, paid instantly",
-          vs: (cs: string, mp: string) => `Cuota Simple ${cs}% · Mercado Pago ~${mp}%`,
+          vs: (cs: string, mp: string) => `Store financing ${cs}% · wallets ~${mp}%`,
         },
         pool: {
           who: "Pool",
