@@ -161,10 +161,69 @@ function BlockedReasons({
     : reasons;
   return (
     <div className={styles.blocked} role="alert">
+      <StateMark
+        state="cracked"
+        variant="bar"
+        title={t.blockedTitle}
+        className={styles.blockedBand}
+      />
       <p className={styles.blockedTitle}>{t.blockedTitle}</p>
-      {shown.map((r) => (
-        <Reason key={r} reason={r} data={data} guarantee={guarantee} config={config} />
-      ))}
+      <div className={styles.reasons}>
+        {shown.map((r) => (
+          <Reason key={r} reason={r} data={data} guarantee={guarantee} config={config} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Medidor del margen: lo usado en espectro + lo que sumaría esta compra. */
+function MarginMeter({
+  used,
+  needed,
+  limit,
+}: {
+  used: Micro;
+  needed: Micro;
+  limit: Micro;
+}) {
+  const m = useT(checkout).margin;
+  const { locale } = useLocale();
+  const fmt = (v: Micro) => formatUsdc(v, locale, 0);
+  const usedRatio = limit > 0 ? Math.min(1, used / limit) : 0;
+  const needRatio = limit > 0 ? Math.max(0, Math.min(needed, limit - used) / limit) : 0;
+  const over = used + needed > limit;
+  return (
+    <div
+      className={styles.meter}
+      role="meter"
+      aria-label={m.label}
+      aria-valuemin={0}
+      aria-valuemax={limit}
+      aria-valuenow={Math.min(used, limit)}
+      aria-valuetext={m.used(fmt(used), fmt(limit))}
+    >
+      <div className={styles.meterHead}>
+        <span className={styles.meterLabel}>{m.label}</span>
+        <span className={styles.meterNums}>{m.used(fmt(used), fmt(limit))}</span>
+      </div>
+      <div className={styles.meterTrack} data-over={over || undefined} aria-hidden>
+        <span className={styles.meterUsed} style={{ transform: `scaleX(${usedRatio})` }} />
+        {needRatio > 0 ? (
+          <span
+            className={styles.meterNeed}
+            style={{
+              insetInlineStart: `${usedRatio * 100}%`,
+              width: `${needRatio * 100}%`,
+            }}
+          />
+        ) : null}
+      </div>
+      <p className={styles.meterLegend}>
+        <span className={styles.meterSwatch} aria-hidden />
+        {m.needed(fmt(needed))}
+      </p>
+      <p className={styles.meterFrees}>{m.frees}</p>
     </div>
   );
 }
@@ -186,6 +245,7 @@ function Reason({
 
   let title: string;
   let desc: ReactNode = null;
+  let meter: ReactNode = null;
   let next: string | null = null;
   let cta: { label: string; href: string } | null = null;
   switch (reason) {
@@ -228,9 +288,14 @@ function Reason({
         : config?.unguaranteedTiers[
             Math.min(data.tier, config.unguaranteedTiers.length - 1)
           ];
-      desc = params
-        ? b.exceeds_credit_limit.d(fmt(data.activeExposure ?? 0), fmt(params.maxPurchase))
-        : null;
+      if (params) {
+        const used = data.activeExposure ?? 0;
+        // Lo que sumaría la compra al margen: repayable = Σ cuotas (como openPlan).
+        const needed = data.installments.reduce((sum, i) => sum + i, 0);
+        const missing = Math.max(0, used + needed - params.maxPurchase);
+        desc = b.exceeds_credit_limit.d(fmt(missing));
+        meter = <MarginMeter used={used} needed={needed} limit={params.maxPurchase} />;
+      }
       cta = b.exceeds_credit_limit.cta;
       break;
     }
@@ -253,12 +318,15 @@ function Reason({
         <p className={styles.reasonT}>{title}</p>
         {desc ? <p className={styles.reasonD}>{desc}</p> : null}
         {next ? <p className={styles.reasonNext}>{next}</p> : null}
-        {cta ? (
-          <Link href={cta.href} className={`${buttonClasses("secondary", "sm")} ${styles.reasonCta}`}>
+      </div>
+      {meter}
+      {cta ? (
+        <div className={styles.reasonFoot}>
+          <Link href={cta.href} className={buttonClasses("secondary", "sm")}>
             {cta.label}
           </Link>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

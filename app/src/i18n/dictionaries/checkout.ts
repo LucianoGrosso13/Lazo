@@ -56,8 +56,8 @@ export const checkout = defineDict({
       },
       exceeds_credit_limit: {
         t: "No te alcanza el margen",
-        d: (used: string, limit: string) =>
-          `Estás usando US$ ${used} de tu margen de US$ ${limit}. Pagando cuotas liberás margen, como una tarjeta.`,
+        d: (missing: string) =>
+          `Te faltan US$ ${missing} de margen para esta compra.`,
         cta: { label: "Ver mis planes", href: "/panel" },
       },
       exceeds_guarantor_max_purchase: {
@@ -71,9 +71,15 @@ export const checkout = defineDict({
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
     },
+    margin: {
+      label: "Margen en uso",
+      used: (used: string, limit: string) => `US$ ${used} / US$ ${limit}`,
+      needed: (needed: string) => `Esta compra suma US$ ${needed}`,
+      frees: "Pagando cuotas liberás margen, como una tarjeta.",
+    },
     compareTitle: "Lo mismo, pagando en cuotas",
     lazo: "Lazo · 3 cuotas",
-    mp: "Mercado Pago · cuotas sin tarjeta",
+    mp: "La competencia · cuotas sin tarjeta",
     reference: "referencia",
     savingsLead: "Te ahorrás",
     demoNote: "Compra simulada · el USDC es de prueba (devnet)",
@@ -181,8 +187,8 @@ export const checkout = defineDict({
       },
       exceeds_credit_limit: {
         t: "Not enough credit margin",
-        d: (used: string, limit: string) =>
-          `You're using US$ ${used} of your US$ ${limit} margin. Paying installments frees up margin, like a card.`,
+        d: (missing: string) =>
+          `You're US$ ${missing} short of margin for this purchase.`,
         cta: { label: "See my plans", href: "/panel" },
       },
       exceeds_guarantor_max_purchase: {
@@ -196,9 +202,15 @@ export const checkout = defineDict({
         cta: { label: "See something cheaper", href: "/tienda" },
       },
     },
+    margin: {
+      label: "Margin in use",
+      used: (used: string, limit: string) => `US$ ${used} / US$ ${limit}`,
+      needed: (needed: string) => `This purchase adds US$ ${needed}`,
+      frees: "Paying installments frees up margin, like a card.",
+    },
     compareTitle: "The same purchase, in installments",
     lazo: "Lazo · 3 installments",
-    mp: "Mercado Pago · no-card installments",
+    mp: "The competition · no-card installments",
     reference: "reference",
     savingsLead: "You save",
     demoNote: "Simulated purchase · the USDC is test money (devnet)",
