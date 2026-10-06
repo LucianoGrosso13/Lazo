@@ -37,13 +37,14 @@ function AutoHeight({
   ...props
 }: AutoHeightProps) {
   const { ref, height } = useAutoHeight<HTMLDivElement>(deps);
+  const measuredHeight = height > 0 ? height : 'auto';
 
   const Comp = asChild ? Slot : motion.div;
 
   return (
     <Comp
       style={{ overflow: 'hidden', ...style }}
-      animate={{ height, ...animate }}
+      animate={{ height: measuredHeight, ...animate }}
       transition={transition}
       {...props}
     >

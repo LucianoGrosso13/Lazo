@@ -1,31 +1,29 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { motion } from "motion/react";
-
-const reveal = {
-  hidden: { opacity: 0.92, y: 8, filter: "blur(2px)" },
-  visible: { opacity: 1, y: 0, filter: "blur(0px)" },
-};
-
-const revealTransition = { duration: 0.34, ease: [0.16, 1, 0.3, 1] as const };
+import { useReducedMotion } from "motion/react";
+import { Fade } from "@/components/animate-ui/primitives/effects/fade";
+import { revealTransition } from "@/components/ui/reveal";
 
 /**
  * Vidrio grueso: canto visible, brillo interior y canto inferior que atrapa
  * el espectro. Nunca una card translúcida plana.
  */
-type MotionGlassProps = Omit<ComponentProps<"div">, "onAnimationStart" | "onAnimationEnd" | "onAnimationIteration" | "onDrag" | "onDragStart" | "onDragEnd">;
+type MotionGlassProps = ComponentProps<"div">;
 
 export function GlassPanel({ className = "", ...props }: MotionGlassProps) {
-  return <motion.div
-    className={`glass ${className}`}
-    initial="hidden"
-    whileInView="visible"
-    viewport={{ once: true, amount: 0.08 }}
-    variants={reveal}
-    transition={revealTransition}
-    {...props}
-  />;
+  const reducedMotion = useReducedMotion();
+  return (
+    <Fade
+      asChild
+      inView
+      inViewOnce
+      initialOpacity={0.94}
+      transition={revealTransition(reducedMotion === true)}
+    >
+      <div className={`glass ${className}`} {...props} />
+    </Fade>
+  );
 }
 
 /**
@@ -33,16 +31,18 @@ export function GlassPanel({ className = "", ...props }: MotionGlassProps) {
  * El wrapper aporta la sombra de profundidad (clip-path se la comería).
  */
 export function GlassSlab({ className = "", ...props }: MotionGlassProps) {
+  const reducedMotion = useReducedMotion();
   return (
-    <motion.div
-      className={`slab-depth ${className}`}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.08 }}
-      variants={reveal}
-      transition={revealTransition}
+    <Fade
+      asChild
+      inView
+      inViewOnce
+      initialOpacity={0.94}
+      transition={revealTransition(reducedMotion === true)}
     >
-      <div className="slab h-full w-full" {...props} />
-    </motion.div>
+      <div className={`slab-depth ${className}`}>
+        <div className="slab h-full w-full" {...props} />
+      </div>
+    </Fade>
   );
 }

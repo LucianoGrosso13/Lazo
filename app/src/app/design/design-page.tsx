@@ -7,6 +7,7 @@ import { useCuotasQuery } from "@/lib/use-cuotas";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
+import { Reveal } from "@/components/ui/reveal";
 import { StateMark, type MarkState } from "@/components/ui/state-mark";
 import { BigNumber } from "@/components/ui/big-number";
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,10 @@ import { demoSplit } from "./split";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-t border-beam/8 py-14 first:border-0 first:pt-4">
+    <Reveal><section className="border-t border-beam/8 py-14 first:border-0 first:pt-4">
       <h2 className="text-3xl font-medium tracking-[-0.015em] text-beam sm:text-4xl">{title}</h2>
       <div className="mt-8">{children}</div>
-    </section>
+    </section></Reveal>
   );
 }
 

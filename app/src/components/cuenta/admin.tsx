@@ -23,7 +23,7 @@ import { BigNumber } from "@/components/ui/big-number";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipButton } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
-import { motion } from "motion/react";
+import { Reveal } from "@/components/ui/reveal";
 import { StateMark } from "@/components/ui/state-mark";
 import { WalletButton } from "@/components/wallet-button";
 import { adminCuenta } from "@/i18n/dictionaries/admin-cuenta";
@@ -375,7 +375,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
       </header>
 
       {/* Estado del protocolo: lectura + cambio con revisión */}
-      <motion.section data-testid="admin-estado" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-estado" className="glass p-5 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="text-lg font-semibold text-beam">{t.estadoTitle}</h2>
           <p data-testid="admin-estado-actual" className="flex items-center gap-2 text-sm">
@@ -426,10 +426,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </Button>
         </div>
         {slot("estado")}
-      </motion.section>
+      </section></Reveal>
 
       {/* Escalones y reglas: solo lectura desde la config */}
-      <motion.section data-testid="admin-escalones" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-escalones" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.escalonesTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.escalonesHint}
@@ -526,10 +526,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             </dd>
           </div>
         </dl>
-      </motion.section>
+      </section></Reveal>
 
       {/* Pool: NAV, tramos, utilización, crédito y movimientos */}
-      <motion.section data-testid="admin-pool" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-pool" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.poolTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{t.poolHint}</p>
         {s.pool ? (
@@ -543,10 +543,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             reintentar={t.reintentar}
           />
         )}
-      </motion.section>
+      </section></Reveal>
 
       {/* Mora: línea del keeper según config + eventos reales del estado */}
-      <motion.section data-testid="admin-mora" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-mora" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.moraTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{t.moraHint}</p>
         <ol className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -590,10 +590,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           {t.moraEventosTitle}
         </h3>
         <MoraEventos activity={s.activity} t={t} />
-      </motion.section>
+      </section></Reveal>
 
       {/* Bitácora completa del keeper */}
-      <motion.section data-testid="admin-bitacora" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-bitacora" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.bitacoraTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.bitacoraHint}
@@ -652,10 +652,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
               ))}
           </ul>
         )}
-      </motion.section>
+      </section></Reveal>
 
       {/* Comercios: lista + alta con revisión */}
-      <motion.section data-testid="admin-comercios" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+      <Reveal><section data-testid="admin-comercios" className="glass p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.comerciosTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.comerciosHint}
@@ -751,11 +751,11 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </Button>
         </form>
         {slot("comercio")}
-      </motion.section>
+      </section></Reveal>
 
       {/* Reloj de la demo: solo mock admin, nunca en real */}
       {mode === "mock" && (
-        <motion.section data-testid="admin-reloj" className="glass p-5 sm:p-6" initial={{ opacity: 0.92, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: 0.3 }}>
+        <Reveal><section data-testid="admin-reloj" className="glass p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-beam">{t.relojTitle}</h2>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
             {t.relojHint}
@@ -833,7 +833,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           </div>
           {slot("reloj-avance")}
           {slot("reloj-reset")}
-        </motion.section>
+        </section></Reveal>
       )}
     </div>
   );

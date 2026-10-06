@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Fade } from "@/components/animate-ui/primitives/effects/fade";
+import { Reveal } from "@/components/ui/reveal";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Highlight, HighlightItem } from "@/components/animate-ui/primitives/effects/highlight";
 import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
@@ -39,6 +40,7 @@ export function LandingSections() {
 function Ladder() {
   const t = useT(landingSections).ladder;
   const { locale } = useLocale();
+  const reduceMotion = useReducedMotion();
   const config = useProtocolConfig();
   const [active, setActive] = useState<TierIndex>(0);
   if (!config) return null;
@@ -46,7 +48,7 @@ function Ladder() {
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section id="how" className={styles.section} aria-labelledby="ladder-title">
+    <Reveal><section id="how" className={styles.section} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -86,10 +88,10 @@ function Ladder() {
           );
         })}
       </div>
-      <Fade className={styles.ladderExample} inView inViewOnce initialOpacity={0.9} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} aria-live="polite">
+      <Fade className={styles.ladderExample} inView inViewOnce initialOpacity={0.94} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} aria-live="polite">
         <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
       </Fade>
-    </section>
+    </section></Reveal>
   );
 }
 
@@ -210,7 +212,7 @@ function Benefits() {
   ];
 
   return (
-    <section className={styles.section} aria-labelledby="benefits-title">
+    <Reveal><section className={styles.section} aria-labelledby="benefits-title">
       <details className={styles.economicsDisclosure}>
         <summary className={`${styles.h2} ${styles.h2Wide} ${styles.disclosureSummary}`}>
           <span id="benefits-title">{t.title}</span>
@@ -232,14 +234,14 @@ function Benefits() {
           ))}
         </div>
       </details>
-    </section>
+    </section></Reveal>
   );
 }
 
 function Honest() {
   const t = useT(landingSections).honest;
   return (
-    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
+    <Reveal><section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="honest-title">
       <h2 id="honest-title" className={styles.h2}>
         {t.title}
       </h2>
@@ -261,7 +263,7 @@ function Honest() {
           </ul>
         </div>
       </div>
-    </section>
+    </section></Reveal>
   );
 }
 
@@ -269,12 +271,12 @@ function Close() {
   const t = useT(landingSections).close;
   const reduceMotion = useReducedMotion();
   return (
-    <footer className={styles.close}>
+    <Reveal><footer className={styles.close}>
       <h2 className={styles.closeTitle}>{t.title}</h2>
       <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
       </MotionLink>
       <p className={styles.closeFoot}>{t.foot}</p>
-    </footer>
+    </footer></Reveal>
   );
 }

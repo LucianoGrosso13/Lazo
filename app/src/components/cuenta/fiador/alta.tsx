@@ -9,6 +9,7 @@ import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
 import { useLocale, useT } from "@/i18n/locale";
@@ -148,8 +149,9 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
       </ol>
 
       <div className="mt-6">
+        <AutoHeight deps={[paso]} transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}>
         <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={paso} initial={{ opacity: 0.82, y: reduceMotion ? 0 : 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0.75, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>
+        <motion.div key={paso} initial={{ opacity: 0.94 }} animate={{ opacity: 1 }} exit={{ opacity: 0.94 }} transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}>
         {paso === 0 && (
           <section aria-label={t.alta.steps.resumen}>
             <p className="font-medium text-ink">{t.alta.resumenTitle}</p>
@@ -366,6 +368,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
         )}
         </motion.div>
         </AnimatePresence>
+        </AutoHeight>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
