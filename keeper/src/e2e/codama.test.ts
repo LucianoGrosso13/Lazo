@@ -64,6 +64,7 @@ const configBytes = (): Uint8Array =>
       feeBps: 700,
       penaltyBps: 500,
       graceDays: 5,
+      guarantorNoticeDay: 3,
       guarantorChargeDay: 15,
       secondsPerDay: 86_400,
       installmentIntervalDays: 30,
@@ -104,6 +105,7 @@ const planBytes = (installments: ReturnType<typeof installment>[], over: { opene
       withGuarantee: over.withGuarantee ?? true,
       counts: true,
       installments: padded,
+      generation: 1,
       bump: 1,
     }),
   );

@@ -20,7 +20,14 @@ plansCompleted: number;
 /** Overdue installments that were charged to the guarantor. */
 lateCount: number; 
 /** USDC base units currently outstanding for this student. */
-activeExposure: bigint; bump: number;  };
+activeExposure: bigint; 
+/**
+ * Monotonic per-student plan counter. `open_plan` increments it before
+ * stamping the new Plan: it is the generation discriminator that tells
+ * apart two plans sharing the same PDA — even when their `opened_at`
+ * lands on the same unix second. Never decreases while this account lives.
+ */
+plansOpened: bigint; bump: number;  };
 
 export type ReputationArgs = { 
 /** Ladder position on the guaranteed track (0-3). */
@@ -30,16 +37,23 @@ plansCompleted: number;
 /** Overdue installments that were charged to the guarantor. */
 lateCount: number; 
 /** USDC base units currently outstanding for this student. */
-activeExposure: number | bigint; bump: number;  };
+activeExposure: number | bigint; 
+/**
+ * Monotonic per-student plan counter. `open_plan` increments it before
+ * stamping the new Plan: it is the generation discriminator that tells
+ * apart two plans sharing the same PDA — even when their `opened_at`
+ * lands on the same unix second. Never decreases while this account lives.
+ */
+plansOpened: number | bigint; bump: number;  };
 
 /** Gets the encoder for {@link ReputationArgs} account data. */
 export function getReputationEncoder(): FixedSizeEncoder<ReputationArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['tier', getU8Encoder()], ['plansCompleted', getU32Encoder()], ['lateCount', getU32Encoder()], ['activeExposure', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: REPUTATION_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['tier', getU8Encoder()], ['plansCompleted', getU32Encoder()], ['lateCount', getU32Encoder()], ['activeExposure', getU64Encoder()], ['plansOpened', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: REPUTATION_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link Reputation} account data. */
 export function getReputationDecoder(): FixedSizeDecoder<Reputation> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['tier', getU8Decoder()], ['plansCompleted', getU32Decoder()], ['lateCount', getU32Decoder()], ['activeExposure', getU64Decoder()], ['bump', getU8Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['tier', getU8Decoder()], ['plansCompleted', getU32Decoder()], ['lateCount', getU32Decoder()], ['activeExposure', getU64Decoder()], ['plansOpened', getU64Decoder()], ['bump', getU8Decoder()]]);
 }
 
 /** Gets the codec for {@link Reputation} account data. */
@@ -92,5 +106,5 @@ export async function fetchAllMaybeReputation(
 }
 
 export function getReputationSize(): number {
-  return 26;
+  return 34;
 }

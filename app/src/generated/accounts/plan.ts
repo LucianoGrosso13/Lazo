@@ -44,6 +44,13 @@ withGuarantee: boolean;
 counts: boolean; 
 /** Fixed 3-installment schedule (last absorbs rounding). */
 installments: Array<Installment>; 
+/**
+ * Copy of `Reputation::plans_opened` at origination. The PDA is reused
+ * across plans (close frees it), and two plans may share `opened_at`;
+ * this value is what `pay_installment` checks to reject quotes issued
+ * for a previous occupant of the account.
+ */
+generation: bigint; 
 /** Canonical bump of this PDA. */
 bump: number;  };
 
@@ -78,17 +85,24 @@ withGuarantee: boolean;
 counts: boolean; 
 /** Fixed 3-installment schedule (last absorbs rounding). */
 installments: Array<InstallmentArgs>; 
+/**
+ * Copy of `Reputation::plans_opened` at origination. The PDA is reused
+ * across plans (close frees it), and two plans may share `opened_at`;
+ * this value is what `pay_installment` checks to reject quotes issued
+ * for a previous occupant of the account.
+ */
+generation: number | bigint; 
 /** Canonical bump of this PDA. */
 bump: number;  };
 
 /** Gets the encoder for {@link PlanArgs} account data. */
 export function getPlanEncoder(): FixedSizeEncoder<PlanArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['openedAt', getI64Encoder()], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()], ['installments', getArrayEncoder(getInstallmentEncoder(), { size: 3 })], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PLAN_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['openedAt', getI64Encoder()], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()], ['installments', getArrayEncoder(getInstallmentEncoder(), { size: 3 })], ['generation', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PLAN_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link Plan} account data. */
 export function getPlanDecoder(): FixedSizeDecoder<Plan> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['openedAt', getI64Decoder()], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()], ['installments', getArrayDecoder(getInstallmentDecoder(), { size: 3 })], ['bump', getU8Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['openedAt', getI64Decoder()], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()], ['installments', getArrayDecoder(getInstallmentDecoder(), { size: 3 })], ['generation', getU64Decoder()], ['bump', getU8Decoder()]]);
 }
 
 /** Gets the codec for {@link Plan} account data. */
@@ -141,5 +155,5 @@ export async function fetchAllMaybePlan(
 }
 
 export function getPlanSize(): number {
-  return 301;
+  return 309;
 }

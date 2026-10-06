@@ -95,7 +95,7 @@ describe("chain reads through generated codecs", () => {
   });
 
   it("reads tiers from chain or defaults new students to tier 0", async () => {
-    const repBytes = getReputationEncoder().encode({ tier: 2, plansCompleted: 2, lateCount: 0, activeExposure: 0, bump: 1 });
+    const repBytes = getReputationEncoder().encode({ tier: 2, plansCompleted: 2, lateCount: 0, activeExposure: 0, plansOpened: 2, bump: 1 });
     const b64 = Buffer.from(new Uint8Array(repBytes)).toString("base64");
     const present = {
       getAccountInfo: () => ({
@@ -111,7 +111,7 @@ describe("chain reads through generated codecs", () => {
   });
 
   it("gates new plans on late_count > 0", async () => {
-    const repBytes = getReputationEncoder().encode({ tier: 1, plansCompleted: 1, lateCount: 1, activeExposure: 0, bump: 1 });
+    const repBytes = getReputationEncoder().encode({ tier: 1, plansCompleted: 1, lateCount: 1, activeExposure: 0, plansOpened: 1, bump: 1 });
     const b64 = Buffer.from(new Uint8Array(repBytes)).toString("base64");
     const rpc = {
       getAccountInfo: () => ({

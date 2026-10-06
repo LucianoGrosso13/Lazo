@@ -1,6 +1,6 @@
 {
   "idlPath": "../programa/target/idl/cuotas.json",
-  "idlSha256": "9c5abccec793ae180a50316640db3cab7e283236deb3d068bf9f84db062a06ef",
+  "idlSha256": "99527745ffa2482178c541ed8b12e2dbcc9625a5e372f7241e2492be8a1aefa5",
   "programId": "E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ",
   "instructions": [
     "admin_apply_loss",
