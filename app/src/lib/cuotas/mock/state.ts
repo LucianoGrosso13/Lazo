@@ -15,7 +15,9 @@ import type {
   WalletAddress,
 } from "../types";
 
-export const STORAGE_KEY = "lazo.mock.v1";
+// v2: el comercio sembrado pasó a llamarse "Voltia"; la clave vieja no
+// resucita el nombre anterior desde localStorage.
+export const STORAGE_KEY = "lazo.mock.v2";
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const HEX = "0123456789abcdef";
@@ -130,7 +132,7 @@ export function seedState(config: ProtocolConfig): MockState {
     merchants: {
       [DEMO_MERCHANT]: {
         owner: DEMO_MERCHANT,
-        name: "Tienda Demo",
+        name: "Voltia",
         active: true,
         settlementBalance: 0,
         plansCount: 0,

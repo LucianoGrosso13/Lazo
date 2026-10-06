@@ -492,7 +492,7 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
           if (e instanceof CuotasError && e.code === "not_implemented") {
             merchants.push({
               owner: DEMO_MERCHANT,
-              name: "Tienda Demo",
+              name: "Voltia",
               active: true,
               source: "demo-fixture",
             });
