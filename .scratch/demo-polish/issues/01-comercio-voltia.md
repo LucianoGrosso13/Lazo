@@ -1,6 +1,6 @@
 # 01 — El comercio demo tiene nombre real: "Voltia"
 
-**Status:** ready-for-agent · **Depende de:** — · **Tamaño:** S
+**Status:** done · **Depende de:** — · **Tamaño:** S
 
 ## Objetivo
 
@@ -17,10 +17,10 @@ El comercio de la tienda demo hoy se llama "Tienda Demo" y su address dice `Lazo
 
 ## Criterios
 
-- [ ] `rg "Tienda Demo|LazoTiendaDemo"` no devuelve nada fuera de esta spec/históricos.
-- [ ] La tienda muestra "Cobra **Voltia**" y el comprobante/confirmación dicen Voltia.
-- [ ] Estado viejo en localStorage no resucita el nombre viejo (bump de `STORAGE_KEY`).
-- [ ] `npm run typecheck && npm run lint && npm test && npm run build` en verde.
+- [x] `rg "Tienda Demo|LazoTiendaDemo"` no devuelve nada fuera de esta spec/históricos.
+- [x] La tienda muestra "Cobra **Voltia**" y el comprobante/confirmación dicen Voltia.
+- [x] Estado viejo en localStorage no resucita el nombre viejo (bump de `STORAGE_KEY`).
+- [x] `npm run typecheck && npm run lint && npm test && npm run build` en verde.
 
 ## Notas
 
