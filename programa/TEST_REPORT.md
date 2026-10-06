@@ -12,18 +12,19 @@ compiled artifact does; it does not approve deployment or real funds.
 
 | item | value |
 |---|---|
-| SBF artifact | `target/deploy/cuotas.so`, 610320 bytes |
-| artifact SHA256 | `751cba9da6e1866d96ea486c9f75a7b30b4551074fb346910ce223e6f2a72374` |
-| IDL | `target/idl/cuotas.json`, 84581 bytes |
-| IDL SHA256 | `9c5abccec793ae180a50316640db3cab7e283236deb3d068bf9f84db062a06ef` |
+| SBF artifact | `target/deploy/cuotas.so`, 611688 bytes |
+| artifact SHA256 | `6cc01ba869ec1d56fe286a75a483eb25d55c506fcf55bc14b9f7befe5adc9400` |
+| IDL | `target/idl/cuotas.json`, 85600 bytes |
+| IDL SHA256 | `99527745ffa2482178c541ed8b12e2dbcc9625a5e372f7241e2492be8a1aefa5` |
 | build | `NO_DNA=1 anchor build --arch v1` (rebuilt immediately before this run) |
 | runtime | LiteSVM 0.16 in-process — no mocks, no stubs, no network, no `anchor test`, no deploy |
 
 The path-dependency on `programs/cuotas` keeps discriminators/layouts/error
 variants in sync with source, but path-dep alone does NOT prove the `.so`
 is fresh — the SHA256 above is the binding evidence that tests ran against
-the artifact rebuilt for this report (the `guarantor_notice_day` config
-addition re-tagged the artifact; earlier hash `dc80f11c…` is superseded).
+the artifact rebuilt for this report (the `plans_opened`/`generation`
+generation discriminator re-tagged the artifact; earlier hash `751cba9d…`
+is superseded).
 
 ## How to run
 
@@ -100,12 +101,13 @@ pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
 - **pay_installment**: happy-path settlement → plan PDA closed + rent
   returned + tier 0→1, day-5 grace boundary (no penalty) vs day-6
   auto-mark (5% penalty, disqualified from tier-up), `expected_index`/
-  `expected_opened_at` stale guards (`StaleInstallmentIndex`, `StalePlan`),
-  duplicate-payment rejection (`InstallmentAlreadyResolved`), pay on a
-  closed plan, guarantor-charged plan still payable but never counts,
-  under-100-financed plans settle but don't count, guaranteed ladder
-  0→1→2→3 capped, unguaranteed completion caps at S1, student-balance
-  rollback, account-integrity matrix, cross-student redirection.
+  `expected_opened_at`/`expected_generation` stale guards
+  (`StaleInstallmentIndex`, `StalePlan`), duplicate-payment rejection
+  (`InstallmentAlreadyResolved`), pay on a closed plan, guarantor-charged
+  plan still payable but never counts, under-100-financed plans settle but
+  don't count, guaranteed ladder 0→1→2→3 capped, unguaranteed completion
+  caps at S1, student-balance rollback, account-integrity matrix,
+  cross-student redirection.
 - **crank_mark_late**: permissionless caller, day-5 (grace) vs day-6
   boundary via clock warps, `MarkTooEarly`, `AlreadyMarkedLate`
   idempotence, invalid index, works under Halted/WithdrawsOnly.
@@ -120,15 +122,22 @@ pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
   rollback, `late_count > 0` blocks new plans forever (derived gate — no
   Reputation layout change), works under Halted/WithdrawsOnly.
 
-### Confirmed finding (reported to coordinator, fix pending)
+### Resolved finding (was KNOWN-GAP, fixed in this build)
 
 `same_second_reopen_rejects_stale_quote`: settle+close plan A, reopen plan
-B without advancing the clock → B inherits A's `opened_at`. Replaying A's
-stale `(index 0, opened_at_A)` is **accepted** and pays B's installment —
-`opened_at` is the only generation guard and collides on a same-second
-reopen. Low severity (student-signed, funds stay in the student's own
-plan); the test pins the observed behavior with a KNOWN-GAP marker and
-flips to `StalePlan` once a generation discriminator lands.
+B without advancing the clock → B inherits A's `opened_at`. The stale-quote
+guard used to be `expected_opened_at` alone, which collided on a
+same-second reopen. **Fix:** `Reputation` now carries a monotonic
+`plans_opened: u64` counter; `open_plan` increments it and stamps the
+value on `Plan.generation`; `pay_installment` takes a third arg
+`expected_generation` and rejects mismatches with `StalePlan`. The test
+pins the new behavior: the stale A-quote `(index 0, opened_at_A, gen_A)`
+fails `StalePlan` while the honest B-quote `(0, opened_at_A, gen_B)` pays.
+
+Account growth: `Reputation` 26→34 bytes, `Plan` 309→317 bytes (8-byte
+discriminator included). Safe on devnet because no Reputation/Plan
+accounts exist there — the deployed artifact predates the credit
+lifecycle and no protocol state was ever initialized.
 
 ## Regressions — all resolved on this source
 
@@ -277,8 +286,6 @@ still pending the user.
 - **Devnet deployment and real `devUSDC` mint creation — pending explicit
   approval.** Mint runbook when approved: classic SPL Token (not
   Token-2022), 6 decimals, freeze authority `None`.
-- **Stale-quote generation gap (confirmed above)** — same-second reopen
-  accepts a prior plan's quote; reported for a narrow program fix.
 - Business acceptance: cash-sim vs strict credit write-off for losses —
   **pending user decision**; this suite does not bless either.
 - `gain_allocation`/`book_gain` are exercised only by host unit tests
@@ -321,6 +328,10 @@ programa/TEST_REPORT.md        this file
 ```
 
 Coordinator-authorized narrow program edits in this report's build:
-`programs/cuotas/src/state/config.rs` + `programs/cuotas/src/instructions/
-admin_config.rs` (the `guarantor_notice_day` field, its validation, and
-host fixture literals). No handler/Plan/Reputation logic was touched.
+`programs/cuotas/src/state/reputation.rs` (`plans_opened` counter),
+`programs/cuotas/src/state/plan.rs` (`generation` field + host fixture
+literals), `programs/cuotas/src/instructions/student_init_reputation.rs`
+(init the counter), `programs/cuotas/src/instructions/open_plan.rs` (bump +
+stamp), `programs/cuotas/src/instructions/pay_installment.rs` +
+`programs/cuotas/src/lib.rs` (`expected_generation` arg + `StalePlan`
+check). No math or business rule changed.

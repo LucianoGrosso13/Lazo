@@ -120,17 +120,20 @@ pub mod cuotas {
     }
 
     /// Student pays the first unresolved installment (principal + penalty).
-    /// The quoted index and plan age must match, or the payment is rejected.
-    /// Closes the Plan on full settlement, tiering up counting plans.
+    /// The quoted index, plan age and plan generation must match, or the
+    /// payment is rejected. Closes the Plan on full settlement, tiering up
+    /// counting plans.
     pub fn pay_installment(
         ctx: Context<PayInstallment>,
         expected_installment_index: u8,
         expected_opened_at: i64,
+        expected_generation: u64,
     ) -> Result<()> {
         instructions::pay_installment::handle_pay_installment(
             ctx,
             expected_installment_index,
             expected_opened_at,
+            expected_generation,
         )
     }
 

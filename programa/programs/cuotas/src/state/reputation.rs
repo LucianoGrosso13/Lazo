@@ -13,5 +13,10 @@ pub struct Reputation {
     pub late_count: u32,
     /// USDC base units currently outstanding for this student.
     pub active_exposure: u64,
+    /// Monotonic per-student plan counter. `open_plan` increments it before
+    /// stamping the new Plan: it is the generation discriminator that tells
+    /// apart two plans sharing the same PDA — even when their `opened_at`
+    /// lands on the same unix second. Never decreases while this account lives.
+    pub plans_opened: u64,
     pub bump: u8,
 }

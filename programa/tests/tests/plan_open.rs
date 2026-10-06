@@ -58,6 +58,7 @@ fn pc1000_guaranteed_open_exact_terms_and_conservation() {
     assert_eq!(plan.merchant_fee, q.fee);
     assert_eq!(plan.opened_at, env.now());
     assert_eq!(plan.tier, 0);
+    assert_eq!(plan.generation, 1, "first plan stamps plans_opened 0->1");
     assert!(plan.with_guarantee);
     assert!(plan.counts, "financed 700 >= min 100 counts toward tier-ups");
     assert_eq!(plan.bump, pda::plan(&w.student).1);
@@ -103,6 +104,7 @@ fn pc1000_guaranteed_open_exact_terms_and_conservation() {
     let rep = env.reputation(&w.student);
     assert_eq!(rep.active_exposure, q.repayable);
     assert_eq!(rep.tier, 0, "open does not move the tier");
+    assert_eq!(rep.plans_opened, 1, "each open bumps the generation counter");
     assert_eq!(env.merchant(&w.merchant_wallet).plans_count, 1);
 
     // --- event matches the booked state, not just the request ---

@@ -16,11 +16,14 @@ use crate::state::{bps_of, Installment, Plan, Pool, ProtocolConfig, Reputation};
 /// the installment is past grace). Pays in order: a later installment cannot
 /// be paid while an earlier one is unresolved.
 ///
-/// Replay protection: the caller passes the `expected_installment_index` and
-/// `expected_opened_at` it quoted, and the handler rejects anything else. A
-/// duplicate approval for an already-paid installment fails instead of
-/// auto-advancing into the next one, and a stale quote for a previous plan
-/// (same PDA, new `opened_at`) fails instead of paying the new plan.
+/// Replay protection: the caller passes the `expected_installment_index`,
+/// `expected_opened_at` and `expected_generation` it quoted, and the handler
+/// rejects anything else. A duplicate approval for an already-paid
+/// installment fails instead of auto-advancing into the next one, and a
+/// stale quote for a previous plan fails instead of paying the new plan —
+/// `generation` (the `Reputation::plans_opened` counter copied onto the Plan)
+/// stays distinct even when two plans share the PDA and the `opened_at`
+/// second, which `expected_opened_at` alone could not distinguish.
 ///
 /// Self-sufficient: if the installment is past grace and was never marked,
 /// the penalty is applied here (same math as `crank_mark_late`) so the crank
@@ -118,6 +121,7 @@ pub fn handle_pay_installment(
     ctx: Context<PayInstallment>,
     expected_installment_index: u8,
     expected_opened_at: i64,
+    expected_generation: u64,
 ) -> Result<()> {
     let expected = expected_installment_index as usize;
     require!(
@@ -126,6 +130,10 @@ pub fn handle_pay_installment(
     );
     require!(
         ctx.accounts.plan.opened_at == expected_opened_at,
+        CuotasError::StalePlan
+    );
+    require!(
+        ctx.accounts.plan.generation == expected_generation,
         CuotasError::StalePlan
     );
     let index = ctx

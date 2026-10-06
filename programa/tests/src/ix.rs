@@ -310,11 +310,16 @@ pub fn open_plan(
 
 /// [student(mut,sig), config, pool(w), vault(w), usdc_mint, lp_junior_mint,
 ///  lp_senior_mint, student_usdc_ata(w), reputation(w), plan(w), token_program]
+///
+/// `expected_generation` is the Plan generation discriminator quoted by the
+/// caller (`plan.generation`); it distinguishes two plans that reuse the PDA
+/// in the same `opened_at` second.
 pub fn pay_installment(
     student: &Address,
     usdc_mint: &Address,
     expected_installment_index: u8,
     expected_opened_at: i64,
+    expected_generation: u64,
 ) -> Instruction {
     let pool = pda::pool(usdc_mint).0;
     ix(
@@ -334,6 +339,7 @@ pub fn pay_installment(
         instruction::PayInstallment {
             expected_installment_index,
             expected_opened_at,
+            expected_generation,
         }
         .data(),
     )

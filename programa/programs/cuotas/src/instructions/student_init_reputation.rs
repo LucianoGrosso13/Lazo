@@ -34,6 +34,7 @@ pub fn handle_student_init_reputation(ctx: Context<StudentInitReputation>) -> Re
     reputation.plans_completed = 0;
     reputation.late_count = 0;
     reputation.active_exposure = 0;
+    reputation.plans_opened = 0;
     reputation.bump = ctx.bumps.reputation;
 
     emit!(ReputationInitialized {

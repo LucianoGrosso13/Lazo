@@ -129,6 +129,7 @@ fn student_init_reputation_happy_path() {
     assert_eq!(r.plans_completed, 0);
     assert_eq!(r.late_count, 0);
     assert_eq!(r.active_exposure, 0);
+    assert_eq!(r.plans_opened, 0, "generation counter starts at 0");
     assert_eq!(r.bump, pda::reputation(&student).1);
 }
 

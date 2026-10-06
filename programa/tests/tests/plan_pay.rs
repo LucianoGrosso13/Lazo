@@ -140,24 +140,28 @@ fn pay_past_grace_auto_marks_penalty_and_disqualifies() {
     assert_eq!(env.accounting_delta(), 0);
 }
 
-/// Replay protection: quoted (index, opened_at) must match plan state —
-/// duplicates do NOT auto-advance into the next installment.
+/// Replay protection: quoted (index, opened_at, generation) must match plan
+/// state — duplicates do NOT auto-advance into the next installment.
 #[test]
 fn pay_rejects_stale_duplicate_and_bad_index() {
     let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 2_000 * USDC, 1_000 * USDC, 800 * USDC);
     let student = env.actors.alice.insecure_clone();
     let (_q, plan) = open_pc1000(&mut env, &w);
     let opened = plan.opened_at;
+    let gen = plan.generation;
 
     // out of schedule
-    let out = pay_with(&mut env, &student, 3, opened);
+    let out = pay_with(&mut env, &student, 3, opened, gen);
     expect_cuotas_err(&out, CuotasError::InvalidInstallmentIndex, "index 3");
     // later installment while an earlier one is unresolved
-    let out = pay_with(&mut env, &student, 1, opened);
+    let out = pay_with(&mut env, &student, 1, opened, gen);
     expect_cuotas_err(&out, CuotasError::StaleInstallmentIndex, "skip ahead");
     // quote from a different plan snapshot
-    let out = pay_with(&mut env, &student, 0, opened + 1);
+    let out = pay_with(&mut env, &student, 0, opened + 1, gen);
     expect_cuotas_err(&out, CuotasError::StalePlan, "wrong opened_at");
+    // same plan tuple but a generation that isn't this plan's
+    let out = pay_with(&mut env, &student, 0, opened, gen + 1);
+    expect_cuotas_err(&out, CuotasError::StalePlan, "wrong generation");
     // nothing moved
     let plan = env.plan(&w.student).unwrap();
     assert!(!plan.installments.iter().any(|i| i.resolved()));
@@ -165,33 +169,30 @@ fn pay_rejects_stale_duplicate_and_bad_index() {
     // happy path, then replay: the same approval must NOT pay the next one
     pay(&mut env, &student, 0).expect_ok("pay0");
     let s0 = env.token_balance(&w.student_ata);
-    let out = pay_with(&mut env, &student, 0, opened);
+    let out = pay_with(&mut env, &student, 0, opened, gen);
     expect_cuotas_err(&out, CuotasError::InstallmentAlreadyResolved, "duplicate approval");
     assert_eq!(env.token_balance(&w.student_ata), s0, "duplicate never double-charges");
 
     // settle the rest; once closed, the account is gone entirely
     pay(&mut env, &student, 1).expect_ok("pay1");
     pay(&mut env, &student, 2).expect_ok("pay2 settles");
-    let out = pay_with(&mut env, &student, 0, opened);
+    let out = pay_with(&mut env, &student, 0, opened, gen);
     expect_instruction_failure(out.expect_err("pay on closed plan"), "plan account closed");
 }
 
-/// Same-second reopen replay (coordinator-mandated regression, CONFIRMED
-/// FINDING — reported for program fix): settle and close plan A, reopen
-/// plan B WITHOUT advancing the LiteSVM clock — B gets the identical
-/// `opened_at`. `opened_at` is the only stale-quote guard, so replaying A's
-/// quote (index 0, opened_at_A) is indistinguishable from a fresh quote for
-/// B and is ACCEPTED, paying B's installment. Funds stay in the student's
-/// own plan (signed by the student, low severity) but the stale guard does
-/// not uniquely identify a plan generation. If the program adds a second
-/// discriminator (e.g. a per-student plan counter/nonce), this test must
-/// flip: the replay should then fail with `StalePlan`.
+/// Same-second reopen replay (regression for the confirmed stale-quote
+/// finding, now FIXED): settle and close plan A, reopen plan B WITHOUT
+/// advancing the LiteSVM clock — B gets the identical `opened_at`. A's stale
+/// quote (index 0, opened_at_A, generation_A) is rejected with `StalePlan`:
+/// `generation` — the `Reputation::plans_opened` counter stamped on the Plan
+/// — distinguishes PDA generations where `opened_at` collides.
 #[test]
 fn same_second_reopen_rejects_stale_quote() {
     let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_000 * USDC, 800 * USDC);
     let student = env.actors.alice.insecure_clone();
     let (_q, plan_a) = open_pc1000(&mut env, &w);
     let opened_a = plan_a.opened_at;
+    let gen_a = plan_a.generation;
 
     for i in 0..3 {
         pay(&mut env, &student, i).expect_ok("settle A");
@@ -202,17 +203,22 @@ fn same_second_reopen_rejects_stale_quote() {
     open(&mut env, &w, PC_PRICE).expect_ok("reopen B same second");
     let plan_b = env.plan(&w.student).unwrap();
     assert_eq!(plan_b.opened_at, opened_a, "same-second reopen shares opened_at");
-    let s0 = env.token_balance(&w.student_ata);
+    assert_eq!(plan_b.generation, gen_a + 1, "open_plan bumps plans_opened");
 
-    // OBSERVED: the stale A-quote is accepted and charges plan B — the
-    // opened_at guard collides across generations (see TEST_REPORT.md).
-    let out = pay_with(&mut env, &student, 0, opened_a);
-    out.expect_ok("KNOWN GAP: stale quote accepted on same-second reopen");
-    assert_eq!(
-        env.token_balance(&w.student_ata),
-        s0 - plan_b.installments[0].amount,
-        "stale replay moved B's installment 0"
+    // The stale A-quote replays index 0 at the same opened_at — the only
+    // differing field is the generation, so it must fail and touch nothing.
+    let out = pay_with(&mut env, &student, 0, opened_a, gen_a);
+    expect_cuotas_err(&out, CuotasError::StalePlan, "stale generation on reopened PDA");
+    assert!(
+        !env.plan(&w.student).unwrap().installments.iter().any(|i| i.resolved()),
+        "stale replay moved nothing"
     );
+
+    // The honest quote for B — same index, same opened_at, B's generation —
+    // is the fresh signature and pays installment 0 as usual.
+    pay_with(&mut env, &student, 0, opened_a, plan_b.generation)
+        .expect_ok("fresh quote pays B");
+    assert!(env.plan(&w.student).unwrap().installments[0].paid);
 }
 
 /// Student ATA short by the payment -> SPL failure, and every prior state
@@ -270,6 +276,7 @@ fn settle_frees_pda_reopen_works_and_stale_quotes_die() {
     let student = env.actors.alice.insecure_clone();
     let (_q, plan1) = open_pc1000(&mut env, &w);
     let opened1 = plan1.opened_at;
+    let gen1 = plan1.generation;
     for i in 0..3 {
         pay(&mut env, &student, i).expect_ok("settle plan1");
     }
@@ -279,10 +286,11 @@ fn settle_frees_pda_reopen_works_and_stale_quotes_die() {
     open(&mut env, &w, PC_PRICE).expect_ok("reopen on freed PDA");
     let plan2 = env.plan(&w.student).unwrap();
     assert_ne!(plan2.opened_at, opened1, "fresh plan, fresh schedule");
+    assert_eq!(plan2.generation, gen1 + 1, "generation bumps on every open");
     assert_eq!(plan2.tier, 1, "second plan at the earned tier");
 
     // a tx signed for the old plan's quote cannot touch the new plan
-    let out = pay_with(&mut env, &student, 0, opened1);
+    let out = pay_with(&mut env, &student, 0, opened1, gen1);
     expect_cuotas_err(&out, CuotasError::StalePlan, "stale quote on reopened PDA");
     pay(&mut env, &student, 0).expect_ok("honest quote pays");
     assert!(env.plan(&w.student).unwrap().installments[0].paid);
@@ -386,8 +394,9 @@ fn pay_rejects_corrupted_accounts_and_wrong_signer() {
     let student = env.actors.alice.insecure_clone();
     let (_q, plan) = open_pc1000(&mut env, &w);
     let opened = plan.opened_at;
+    let gen = plan.generation;
     let mint = env.usdc_mint;
-    let build = || ix::pay_installment(&w.student, &mint, 0, opened);
+    let build = || ix::pay_installment(&w.student, &mint, 0, opened, gen);
 
     // foreign 6-decimal mint
     let foreign_mint = solana_address::Address::new_unique();
@@ -446,7 +455,7 @@ fn pay_rejects_corrupted_accounts_and_wrong_signer() {
     );
 
     // a different real signer pays THEIR plan PDA: bob's plan doesn't exist
-    let i = ix::pay_installment(&other.pubkey(), &{ env.usdc_mint }, 0, 0);
+    let i = ix::pay_installment(&other.pubkey(), &{ env.usdc_mint }, 0, 0, 0);
     let out = env.send(&[i], &other, &[]);
     expect_instruction_failure(out.expect_err("no plan"), "no plan for signer");
 
@@ -468,13 +477,13 @@ fn pay_cannot_be_redirected_across_students() {
 
     // bob signs, but the plan slot points at ALICE's PDA: seeds
     // [plan, student] bind the plan to the signer — mismatch fails.
-    let mut i = ix::pay_installment(&bob.pubkey(), &{ env.usdc_mint }, 0, opened);
+    let mut i = ix::pay_installment(&bob.pubkey(), &{ env.usdc_mint }, 0, opened, 0);
     i.accounts[9].pubkey = w.plan_pda;
     let out = env.send(&[i], &bob, &[]);
     expect_instruction_failure(out.expect_err("cross-student plan"), "plan bound to student");
 
     // alice's ATA swapped in for bob's ATA: authority check fails
-    let mut i = ix::pay_installment(&bob.pubkey(), &{ env.usdc_mint }, 0, 0);
+    let mut i = ix::pay_installment(&bob.pubkey(), &{ env.usdc_mint }, 0, 0, 0);
     i.accounts[7].pubkey = w.student_ata;
     let out = env.send(&[i], &bob, &[]);
     expect_instruction_failure(out.expect_err("foreign ata"), "ata authority");

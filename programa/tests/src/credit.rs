@@ -116,20 +116,35 @@ pub fn open_as(
     env.send(&[i], student, &[])
 }
 
-/// Send `pay_installment` quoting the on-chain plan's `opened_at` — the
-/// honest-client path.
+/// Send `pay_installment` quoting the on-chain plan's `opened_at` and
+/// `generation` — the honest-client path.
 pub fn pay(env: &mut Env, student: &Keypair, expected_index: u8) -> TxOutcome {
-    let opened_at = env
-        .plan(&student.pubkey())
-        .expect("no open plan")
-        .opened_at;
-    let i = ix::pay_installment(&student.pubkey(), &env.usdc_mint, expected_index, opened_at);
+    let plan = env.plan(&student.pubkey()).expect("no open plan");
+    let i = ix::pay_installment(
+        &student.pubkey(),
+        &env.usdc_mint,
+        expected_index,
+        plan.opened_at,
+        plan.generation,
+    );
     env.send(&[i], student, &[])
 }
 
 /// Same but with caller-chosen args (stale-quote / duplicate probes).
-pub fn pay_with(env: &mut Env, student: &Keypair, expected_index: u8, opened_at: i64) -> TxOutcome {
-    let i = ix::pay_installment(&student.pubkey(), &env.usdc_mint, expected_index, opened_at);
+pub fn pay_with(
+    env: &mut Env,
+    student: &Keypair,
+    expected_index: u8,
+    opened_at: i64,
+    generation: u64,
+) -> TxOutcome {
+    let i = ix::pay_installment(
+        &student.pubkey(),
+        &env.usdc_mint,
+        expected_index,
+        opened_at,
+        generation,
+    );
     env.send(&[i], student, &[])
 }
 

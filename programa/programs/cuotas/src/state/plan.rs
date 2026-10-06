@@ -82,6 +82,11 @@ pub struct Plan {
     pub counts: bool,
     /// Fixed 3-installment schedule (last absorbs rounding).
     pub installments: [Installment; INSTALLMENT_COUNT],
+    /// Copy of `Reputation::plans_opened` at origination. The PDA is reused
+    /// across plans (close frees it), and two plans may share `opened_at`;
+    /// this value is what `pay_installment` checks to reject quotes issued
+    /// for a previous occupant of the account.
+    pub generation: u64,
     /// Canonical bump of this PDA.
     pub bump: u8,
 }
@@ -248,6 +253,7 @@ mod tests {
             with_guarantee: true,
             counts: true,
             installments: [inst(true, false), inst(false, false), inst(false, true)],
+            generation: 0,
             bump: 255,
         };
         assert_eq!(plan.first_unpaid(), Some(1));
@@ -288,6 +294,7 @@ mod tests {
                 marked_late: true,
                 receipt_hash: [9; 32],
             }; INSTALLMENT_COUNT],
+            generation: 0,
             bump: 255,
         };
         let mut serialized = Vec::new();

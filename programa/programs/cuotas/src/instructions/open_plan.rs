@@ -256,6 +256,13 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
         .active_exposure
         .checked_add(repayable)
         .ok_or(CuotasError::MathOverflow)?;
+    // Generation discriminator: bumped BEFORE the plan is stamped so two
+    // plans that reuse this PDA never share a generation — not even when
+    // their `opened_at` lands on the same unix second.
+    reputation.plans_opened = reputation
+        .plans_opened
+        .checked_add(1)
+        .ok_or(CuotasError::MathOverflow)?;
 
     let merchant = &mut ctx.accounts.merchant;
     merchant.plans_count = merchant
@@ -314,6 +321,7 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
     plan.with_guarantee = with_guarantee;
     plan.counts = counts;
     plan.installments = installments;
+    plan.generation = ctx.accounts.reputation.plans_opened;
     plan.bump = ctx.bumps.plan;
 
     emit!(PlanOpened {
