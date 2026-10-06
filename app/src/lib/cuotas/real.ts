@@ -1767,15 +1767,14 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         );
       }
       const config = await readConfig(ctx);
-      // Elegibilidad local primero: razones claras antes de simular.
+      // Elegibilidad local primero: razones claras antes de simular. Sin
+      // cuenta Reputation no es un error: la primera compra la crea en la
+      // misma transacción (initReputation antes que open_plan, una firma).
       let reputation: Reputation | null = null;
       try {
         reputation = await this.getReputation(args.student);
       } catch (e) {
         if (!(e instanceof CuotasError && e.code === "not_found")) throw e;
-      }
-      if (!reputation) {
-        throw new CuotasError("not_found", "Sin reputación: creala con initReputation antes de comprar");
       }
       const guarantee = await this.getGuarantee(args.student);
       const existing = await this.getPlans(args.student);
@@ -1854,18 +1853,36 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         plan: planPda,
         price: args.price,
       });
+      // Primera compra sin Reputation on-chain: la misma transacción lleva
+      // student_init_reputation ANTES de open_plan. Anchor deserializa cada
+      // cuenta al ejecutar su instrucción, así que la segunda lee la
+      // reputación que la primera acaba de crear — una sola firma.
+      const instructions = [
+        ...(reputation
+          ? []
+          : [
+              {
+                ix: getStudentInitReputationInstruction({
+                  student: ctx.signer,
+                  config: configPda,
+                  reputation: reputationPda,
+                }),
+                name: "StudentInitReputation",
+                summary: `Crear reputación (escalón 0) de ${args.student}`,
+              },
+            ]),
+        {
+          ix,
+          name: "OpenPlan",
+          summary: `Comprar por ${args.price} (anticipo ${quote.downPayment}, financia ${quote.financed})`,
+        },
+      ];
       const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
         label: "open_plan",
         version: ctx.version,
         feePayer: studentAddr,
         signer: ctx.signer,
-        instructions: [
-          {
-            ix,
-            name: "OpenPlan",
-            summary: `Comprar por ${args.price} (anticipo ${quote.downPayment}, financia ${quote.financed})`,
-          },
-        ],
+        instructions,
       }, { reviewer: overrides.reviewer });
       const created = await readProgramAccount(
         ctx.rpc,
@@ -1939,6 +1956,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         plan: planPda,
         expectedInstallmentIndex: firstUnpaid,
         expectedOpenedAt: plan.openedAt,
+        expectedGeneration: plan.generation,
       });
       const due = preImage.installments[firstUnpaid];
       const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {

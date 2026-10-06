@@ -209,6 +209,7 @@ describe("lecturas con RPC mockeado", () => {
         plansCompleted: 2,
         lateCount: 0,
         activeExposure: BigInt(toMicro(500)),
+        plansOpened: BigInt(2),
         bump: 1,
       }),
     );
@@ -384,6 +385,7 @@ describe("lecturas con RPC mockeado", () => {
         plansCompleted: 0,
         lateCount: 1,
         activeExposure: BigInt(0),
+        plansOpened: BigInt(1),
         bump: 1,
       }),
     );
@@ -428,6 +430,7 @@ function planData(over: Record<string, unknown> = {}) {
         installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
         installmentFixture({ amount: BigInt(233_333_334), dueAt: BigInt(OPENED_AT + 90 * 86_400) }),
       ],
+      generation: BigInt(1),
       bump: 1,
       ...over,
     }),
@@ -943,6 +946,7 @@ describe("openPlan y payInstallment", () => {
         plansCompleted: 0,
         lateCount: 0,
         activeExposure: BigInt(0),
+        plansOpened: BigInt(1),
         bump: 1,
         ...over,
       }),
@@ -1012,6 +1016,134 @@ describe("openPlan y payInstallment", () => {
     expect(res.value.id).toBe(String(planPda));
     expect(res.value.downPayment).toBe(toMicro(300));
     expect(res.value.installments).toHaveLength(3);
+  });
+
+  it("openPlan sin reputación bundla init+open en UNA transacción (una firma)", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    let plan: string | null = null;
+    const sig = "9".repeat(87) as Signature;
+    let simulations = 0;
+    let sends = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        // Sin Reputation PDA: la primera compra la crea en la misma tx.
+        if (s === String(repPda)) return { value: null };
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) {
+          return accountInfo(
+            b64(
+              getMerchantEncoder().encode({
+                owner: merchantOwner,
+                settlementAta: merchantAta,
+                active: true,
+                plansCount: BigInt(0),
+                bump: 1,
+              }),
+            ),
+          );
+        }
+        if (s === String(planPda)) return plan ? accountInfo(plan) : { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => {
+        simulations++;
+        return { value: { err: null, logs: [] } };
+      },
+      sendTransaction: () => {
+        sends++;
+        plan = planData({ openedAt: BigInt(OPENED_AT) });
+        return sig;
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    let proposed: string[] = [];
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: (p) => {
+        proposed = p.instructions.map((i) => i.name);
+        return true;
+      },
+    });
+    // Tier 0 garantizado: la primera compra cotiza como post-initReputation.
+    const res = await c.openPlan({
+      student: String(student),
+      merchant: String(merchantOwner),
+      price: toMicro(1000),
+    });
+    expect(res.signature).toBe(sig);
+    // initReputation va PRIMERO que openPlan en la misma propuesta.
+    expect(proposed).toEqual(["StudentInitReputation", "OpenPlan"]);
+    // Una simulación y un envío: una sola transacción, una sola firma.
+    expect(simulations).toBe(1);
+    expect(sends).toBe(1);
+    expect(res.value.id).toBe(String(planPda));
+  });
+
+  it("openPlan con reputación existente NO bundla initReputation", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    let plan: string | null = null;
+    const sig = "a".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) {
+          return accountInfo(
+            b64(
+              getMerchantEncoder().encode({
+                owner: merchantOwner,
+                settlementAta: merchantAta,
+                active: true,
+                plansCount: BigInt(0),
+                bump: 1,
+              }),
+            ),
+          );
+        }
+        if (s === String(planPda)) return plan ? accountInfo(plan) : { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        plan = planData({ openedAt: BigInt(OPENED_AT) });
+        return sig;
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    let proposed: string[] = [];
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: (p) => {
+        proposed = p.instructions.map((i) => i.name);
+        return true;
+      },
+    });
+    await c.openPlan({
+      student: String(student),
+      merchant: String(merchantOwner),
+      price: toMicro(1000),
+    });
+    expect(proposed).toEqual(["OpenPlan"]);
   });
 
   it("openPlan bloqueado por elegibilidad no toca la wallet", async () => {

@@ -250,7 +250,7 @@ export interface CuotasClient {
 
   /** `student_init_reputation` (idempotente desde la UI). */
   initReputation(student: WalletAddress): Promise<TxResult<Reputation>>;
-  /** `open_plan`: anticipo → comercio, pool → comercio (menos fee) y se crea el Plan. */
+  /** `open_plan`: anticipo → comercio, pool → comercio (menos fee) y se crea el Plan. Si el estudiante todavía no tiene Reputation on-chain, la misma transacción la crea primero (`student_init_reputation` + `open_plan`, una firma). */
   openPlan(args: OpenPlanArgs): Promise<TxResult<Plan>>;
   /** `pay_installment`: paga la próxima cuota impaga (con punitorio si corresponde). */
   payInstallment(student: WalletAddress, planId: string): Promise<TxResult<Plan>>;

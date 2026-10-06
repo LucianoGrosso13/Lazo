@@ -47,7 +47,7 @@ interface BaseSlice {
 interface WalletSlice {
   quote: Quote;
   guarantee: Guarantee | null;
-  reputation: Reputation;
+  reputation: Reputation | null;
   plans: Plan[];
 }
 
@@ -84,10 +84,15 @@ export function CheckoutScreen({
     wallet ? ["checkout-wallet", wallet, product.id] : null,
     async (c) => {
       if (!wallet) throw new CuotasError("not_found", "sin wallet");
+      // Estudiante sin Reputation on-chain: primera compra. No es error de
+      // la query — openPlan la crea en la misma transacción.
       const [quote, guarantee, reputation, plans] = await Promise.all([
         c.quote(product.price, wallet),
         c.getGuarantee(wallet),
-        c.getReputation(wallet),
+        c.getReputation(wallet).catch((e) => {
+          if (e instanceof CuotasError && e.code === "not_found") return null;
+          throw e;
+        }),
         c.getPlans(wallet),
       ]);
       return { quote, guarantee, reputation, plans };
