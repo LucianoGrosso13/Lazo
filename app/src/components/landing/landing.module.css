@@ -107,7 +107,7 @@
 
 .hero {
   overflow: hidden;
-  padding: clamp(1rem, 3vw, 2.5rem) var(--pad) clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(1rem, 3vw, 2.5rem) var(--pad) clamp(1.75rem, 3.5vw, 3rem);
   background:
     radial-gradient(60% 70% at 18% 42%, rgb(153 69 255 / 0.12), transparent 70%),
     radial-gradient(40% 50% at 70% 50%, rgb(0 194 255 / 0.07), transparent 70%),
@@ -128,7 +128,7 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.5rem, 3vw, 3rem);
+  gap: clamp(1.25rem, 2.4vw, 2.25rem);
   align-items: center;
   max-width: 1440px;
   margin: 0 auto;
@@ -554,8 +554,8 @@
 .compare {
   position: relative;
   max-width: 1440px;
-  margin: clamp(2rem, 4vw, 3.5rem) auto 0;
-  padding-top: clamp(1.25rem, 2vw, 1.75rem);
+  margin: clamp(1.4rem, 2.6vw, 2.25rem) auto 0;
+  padding-top: clamp(1rem, 1.8vw, 1.4rem);
   border-top: 1px solid var(--edge);
   display: grid;
   gap: 0.9rem;
@@ -686,7 +686,7 @@
   position: relative;
   max-width: 1440px;
   margin: 0 auto;
-  padding: clamp(4rem, 9vw, 8rem) var(--pad);
+  padding: clamp(2.5rem, 5vw, 4.5rem) var(--pad);
   scroll-margin-top: 4.5rem;
 }
 
@@ -717,7 +717,7 @@
   display: grid;
   gap: 1rem;
   max-width: 46rem;
-  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .h2 {
@@ -731,7 +731,7 @@
 
 .h2Wide {
   max-width: 52rem;
-  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .h3 {
@@ -879,7 +879,7 @@
 
 .split2 {
   display: grid;
-  gap: clamp(2rem, 5vw, 5rem);
+  gap: clamp(1.5rem, 3.5vw, 3rem);
   align-items: start;
 }
 
@@ -940,7 +940,7 @@
 /* Regla de días de la mora */
 
 .ruler {
-  margin-top: clamp(3.5rem, 7vw, 6rem);
+  margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
 .rulerTitle {
@@ -1115,7 +1115,7 @@
   column-gap: clamp(1rem, 3vw, 3rem);
   row-gap: 0.6rem;
   align-items: center;
-  padding: clamp(1.5rem, 3vw, 2.5rem) 0;
+  padding: clamp(1.1rem, 2.2vw, 1.75rem) 0;
   border-bottom: 1px solid var(--edge);
 }
 
@@ -1191,8 +1191,8 @@
 
 .honest {
   display: grid;
-  gap: 2.5rem;
-  margin-top: 2.5rem;
+  gap: 1.75rem;
+  margin-top: 1.75rem;
 }
 
 @media (min-width: 860px) {
@@ -1239,7 +1239,7 @@
   display: grid;
   justify-items: center;
   gap: 1.75rem;
-  padding: clamp(5rem, 10vw, 9rem) var(--pad) 3rem;
+  padding: clamp(3rem, 6vw, 5rem) var(--pad) 3rem;
   text-align: center;
   background: radial-gradient(50% 60% at 50% 30%, rgb(153 69 255 / 0.16), transparent 70%);
 }
@@ -1268,7 +1268,7 @@
 }
 
 .closeFoot {
-  margin-top: 3rem;
+  margin-top: 2rem;
   font-size: 0.82rem;
   color: var(--ink-3);
 }

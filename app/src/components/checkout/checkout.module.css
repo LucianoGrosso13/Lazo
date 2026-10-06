@@ -10,9 +10,9 @@
 .wrap {
   max-width: 76rem;
   margin: 0 auto;
-  padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(1.75rem, 3.5vw, 2.75rem);
   display: grid;
-  gap: clamp(1.1rem, 2vw, 1.75rem);
+  gap: clamp(0.85rem, 1.6vw, 1.3rem);
 }
 
 .back {
@@ -80,7 +80,7 @@
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.15rem, 2.2vw, 2rem);
+  gap: clamp(0.9rem, 1.8vw, 1.5rem);
   align-items: start;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .stageNote {
-  margin-top: 0.9rem;
+  margin-top: 0.65rem;
   font-size: 0.85rem;
   line-height: 1.5;
   color: var(--color-ink-3);
@@ -135,9 +135,9 @@
 /* ---------- Panel: vidrio grueso ---------- */
 
 .panel {
-  padding: clamp(1.15rem, 2.2vw, 1.7rem);
+  padding: clamp(0.95rem, 1.8vw, 1.35rem);
   display: grid;
-  gap: 0.9rem;
+  gap: 0.8rem;
   align-content: start;
 }
 
@@ -396,6 +396,7 @@
   background: linear-gradient(90deg, var(--color-violet), var(--color-cyan));
   box-shadow: 0 0 12px rgb(0 194 255 / 0.45);
   animation: meterGrow 0.7s var(--ease) both;
+  transition: transform 0.6s var(--ease);
 }
 
 /* Lo que sumaría esta compra: trama rajada que choca con el borde del tope */
@@ -409,6 +410,9 @@
     rgb(255 84 112 / 0.4) 3px 7px
   );
   animation: meterIn 0.5s var(--ease) 0.25s both;
+  transition:
+    inset-inline-start 0.5s var(--ease),
+    width 0.5s var(--ease);
 }
 
 /* La compra no entra: el borde del tope se marca */
@@ -514,7 +518,7 @@
 .compare {
   display: grid;
   gap: 0.7rem;
-  padding-top: clamp(1rem, 2vw, 1.5rem);
+  padding-top: clamp(0.8rem, 1.5vw, 1.1rem);
   border-top: 1px solid rgb(244 241 255 / 0.09);
 }
 
@@ -823,7 +827,9 @@
     animation: none;
   }
 
-  .beamLazo {
+  .beamLazo,
+  .meterUsed,
+  .meterNeed {
     transition: none;
   }
 }

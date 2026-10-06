@@ -1,6 +1,6 @@
 # 05 — Fotos reales en la tienda + ritmo vertical compacto
 
-**Status:** ready-for-agent · **Depende de:** 03 · **Tamaño:** M
+**Status:** done · **Depende de:** 03 · **Tamaño:** M
 
 ## Objetivo
 
@@ -31,7 +31,7 @@ Ya que estás en estos archivos, animaciones chicas con criterio (reglas de `hyp
 
 ## Criterios
 
-- [ ] Las 3 fotos son fotografía real, mismo lenguaje visual, peso razonable (<300 KB c/u), se ven bien en card featured y side (1440 y 390 px).
-- [ ] La landing se recorre con menos scroll "muerto": secciones claramente más juntas sin chocar.
-- [ ] Tienda y checkout más compactos, sin overflow ni textos pegados.
-- [ ] typecheck/lint/test/build en verde.
+- [x] Las 3 fotos son fotografía real, mismo lenguaje visual, peso razonable (<300 KB c/u), se ven bien en card featured y side (1440 y 390 px).
+- [x] La landing se recorre con menos scroll "muerto": secciones claramente más juntas sin chocar.
+- [x] Tienda y checkout más compactos, sin overflow ni textos pegados.
+- [x] typecheck/lint/test/build en verde.
