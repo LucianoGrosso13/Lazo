@@ -1,13 +1,23 @@
 # Lazo
 
-**Zero-interest installments, backed by family.**
+**Installment payments, built on Solana.**
 
-Lazo lets a student without a credit card buy in **3 interest-free USDC
-installments**. A family member acts as guarantor with a capped backup card
-(Didit KYC + Mobbex sandbox) and only pays if the student doesn't. An onchain
-liquidity pool pays the merchant instantly, and an onchain reputation ladder
-rewards paying on time: each completed plan lowers the down payment and raises
-the spending cap.
+Lazo uses Solana to make installment purchases clear, verifiable, and useful
+in everyday commerce. A buyer sees the payment schedule and costs before
+confirming. The merchant gets paid right away, while the buyer's payments build
+an onchain record that can unlock better terms over time.
+
+When a purchase needs a guarantor, a family member or another trusted person
+can accept a capped guarantee. Their card backs the obligation under the terms
+they approved; it is not used to pay for the purchase. Identity checks and
+card processing stay with external providers, while Solana records the plan,
+payments, reputation progress, and a verifiable reference to the guarantee.
+
+Lazo was made to turn crypto into practical payment infrastructure: stablecoin
+settlement, transparent records, and programmable payment plans. The merchant
+receives the buyer's initial payment and the pool's advance immediately, less
+a 7% fee on the financed amount. Each completed plan helps build a portable
+reputation on Solana.
 
 Built at the Colosseum Crypto World's Fair — Superteam Argentina track.
 
@@ -26,41 +36,46 @@ Built at the Colosseum Crypto World's Fair — Superteam Argentina track.
 >   this repo. Every transaction that signs or sends requires an explicit
 >   operator approval.
 
-## How it works
+## How Lazo works
 
-1. **Guarantor onboarding (no wallet needed).** The student sends a WhatsApp
-   invite link. The family member opens it, completes Didit-hosted KYC,
-   registers a test card on a Mobbex-hosted page, and accepts a surety cap —
-   the maximum they could ever be charged. Card data never touches our
-   server.
-2. **Purchase.** The student picks a product in the demo store and pays the
-   down payment in devUSDC. The pool finances the rest; the merchant is paid
-   instantly (price − 7% of the financed amount) and carries no default risk.
-3. **Repayment.** 3 installments, 0% interest. Grace days, a late penalty,
-   and the guarantor charge day all come from the onchain `ProtocolConfig` —
-   nothing business-related is hardcoded in the UI.
-4. **Default & recovery.** A permissionless crank marks a plan late; the
-   keeper proposes charging the guarantor's card and registers the recovery
-   onchain. A registered default drops the student's reputation tier
-   (`late_count`) and blocks new plans.
-5. **Reputation ladder.** Each fully-paid plan climbs a tier: lower down
-   payment, higher cap (30% down / US$1,000 cap at tier 0 → 0% down /
-   US$1,500 at tier 3). The reputation lives in the wallet — any merchant can
-   read it.
+1. **Choose a purchase.** At checkout, the buyer sees the initial payment,
+   financed amount, payment dates, applicable costs, and any guarantor exposure
+   before approving. The protocol configuration supplies business terms; the
+   interface does not invent them.
+2. **Accept a guarantee when required.** The guarantor reviews a clear maximum
+   exposure, completes identity verification, and registers a card through the
+   payment provider. Card details stay with the provider. The guarantor needs
+   no Solana wallet.
+3. **Approve the plan on Solana.** The buyer reviews the transaction in their
+   wallet. The `cuotas` program checks the configured limits and guarantee,
+   records the plan, and coordinates the pool advance. The merchant receives
+   the purchase funds immediately, minus 7% of the financed amount.
+4. **Make payments and build reputation.** Payments are made in USDC (the demo
+   uses devUSDC). Each completed plan can advance the buyer's onchain reputation
+   and improve terms for future purchases, such as the initial payment or
+   available spending limit.
+5. **Handle overdue plans transparently.** The program records overdue status
+   according to configured dates. The keeper can propose a guarantor card
+   recovery through the sandbox processor and register the verified recovery
+   reference onchain. A default affects reputation and eligibility for another
+   plan.
 
-```text
-Student (Phantom, devnet)                                    Guarantor (no wallet)
-   │ down payment + 3 cuotas                                  │ invite link (HMAC, 72h)
-   ▼                                                          ▼
-open_plan ──────────────▶  cuotas program (devnet)  ◀── keeper_register_guarantee
-   │                          ▲      │                          ▲
-   │ pool finances            │      └─ pays merchant instantly  │ mandate hash
-   ▼                          │                                 │
-Liquidity pool (junior/senior LP shares, auditable onchain)     │
-   │                                                          │
-   └── Keeper CLI (dry-run by default): mark late → propose ───┘
-        card charge (Mobbex sandbox) → register recovery onchain
-        — every effect needs --execute --approved-by <name> --yes
+KYC and card processing happen offchain through their providers; Solana stores
+the plan state, payment history, reputation, and a hash/reference for the
+guarantee. Personal identity and card data are never written to the chain.
+
+```mermaid
+flowchart LR
+    Buyer[Buyer and Solana wallet] -->|Reviews terms and approves| Checkout[Checkout]
+    Guarantor[Guarantor, if required] -->|Accepts capped guarantee| Providers[KYC and card providers]
+    Providers -->|Guarantee reference| Program[Cuotas program on Solana]
+    Checkout -->|Plan and payment| Program
+    Pool[USDC liquidity pool] -->|Finances purchase| Program
+    Program -->|Settlement less fee| Merchant[Merchant paid promptly]
+    Buyer -->|Scheduled payments| Program
+    Program -->|Payments and reputation| Record[Verifiable onchain history]
+    Program -->|Overdue recovery proposal| Keeper[Keeper and sandbox processor]
+    Keeper -->|Recovery reference| Program
 ```
 
 ## Architecture
@@ -86,7 +101,7 @@ cp .env.example .env.local   # NEXT_PUBLIC_CUOTAS_MODE=mock is the default
 npm run dev                  # http://localhost:3000
 ```
 
-Demo routes: `/tienda` (demo store) → `/checkout/[producto]` → student
+Demo routes: `/tienda` (demo store) → `/checkout/[producto]` → buyer
 account `/app/estudiante`, merchant panel `/comercio`, pool `/pool`,
 guarantor invite `/fiador/<token>` (`/account` is an earlier mock-only
 account dashboard).
@@ -209,7 +224,7 @@ Full detail in [`programa/TEST_REPORT.md`](programa/TEST_REPORT.md) and
   funds. The business decision (cash vs credit write-off) is still open.
 - Guarantor coverage policy (`FIADOR_COVERAGE_POLICY` A vs B) is a pending
   product decision — unset means `coverage_policy_pending`, fail closed.
-- The student-side invite button still mints local mock links; server-side
+- The buyer-side invite button still mints local mock links; server-side
   invite wiring is documented in `docs/fiador-sandbox.md`.
 - Senior-tranche deposits and the devnet demo clock are outside the approved
   demo scope.
