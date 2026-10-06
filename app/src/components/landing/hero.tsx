@@ -193,13 +193,13 @@ export function LandingHero() {
         </div>
       </div>
 
-      <details className={styles.compare}>
-        <summary className={styles.compareTitle}>{t.compareTitle}</summary>
+      <div className={styles.compare}>
+        <h2 className={styles.compareTitle}>{t.compareTitle}</h2>
         <div className={styles.compareDetails}>
           <div className={styles.compareRows}>
             <div className={styles.compareRow}>
               <span className={styles.compareWho}>{t.lazo}</span>
-              <span className={styles.compareTrack}>
+              <span className={styles.compareTrack} aria-hidden>
                 <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
               </span>
               <span className={styles.compareNum}>
@@ -208,7 +208,7 @@ export function LandingHero() {
             </div>
             <div className={styles.compareRow}>
               <span className={styles.compareWho}>{t.mp}</span>
-              <span className={styles.compareTrack}>
+              <span className={styles.compareTrack} aria-hidden>
                 <span className={styles.beamAlt} style={{ transform: "scaleX(1)" }} />
               </span>
               <span className={styles.compareNum}>
@@ -218,7 +218,7 @@ export function LandingHero() {
           </div>
           <p className={styles.savings}><ChangingNumber value={t.savings(fmt(mpTotal - lazoTotal, 0))} /></p>
         </div>
-      </details>
+      </div>
     </section>
   );
 }
