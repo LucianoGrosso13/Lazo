@@ -1,6 +1,6 @@
 # 02 — Margen de crédito por escalón en el mock (planes en paralelo)
 
-**Status:** ready-for-agent · **Depende de:** 01 · **Tamaño:** M
+**Status:** done · **Depende de:** 01 · **Tamaño:** M
 
 ## Objetivo
 
@@ -21,14 +21,14 @@ Decisión del usuario: "límite total por escalón, como el margen de la tarjeta
 ## Tests (`app/src/lib/cuotas/`)
 
 Reescribir en `mock.open-plan.test.ts`:
-- [ ] El test "una compra abierta bloquea la siguiente" (~l.91-97) → ahora: compra PC 1.000 (financiado 700) + curso 120 (financiado ~84) **sí se puede** (784 ≤ 1.000); y una notebook 650 (financiado 455) se bloquea con `exceeds_credit_limit` (1.239 > 1.000).
-- [ ] Nuevo: pagar cuotas libera margen (exposure baja → la compra que fallaba pasa).
-- [ ] Nuevo: el quote con margen insuficiente incluye `exceeds_credit_limit` en `reasons`.
-- [ ] `quote` sigue marcando `exceeds_tier_max` por compra individual sobre el tope.
-- [ ] El resto de la suite del mock en verde (mora, settle, escalera no cambian).
+- [x] El test "una compra abierta bloquea la siguiente" (~l.91-97) → ahora: compra PC 1.000 (financiado 700) + curso 120 (financiado ~84) **sí se puede** (784 ≤ 1.000); y una notebook 650 (financiado 455) se bloquea con `exceeds_credit_limit` (1.239 > 1.000).
+- [x] Nuevo: pagar cuotas libera margen (exposure baja → la compra que fallaba pasa).
+- [x] Nuevo: el quote con margen insuficiente incluye `exceeds_credit_limit` en `reasons`.
+- [x] `quote` sigue marcando `exceeds_tier_max` por compra individual sobre el tope.
+- [x] El resto de la suite del mock en verde (mora, settle, escalera no cambian). Única aserción ajustada: `mock.test.ts` "sin fiador" suma `exceeds_credit_limit` porque el financiado (250) supera la línea del tramo sin fiador (150).
 
 ## Criterios
 
-- [ ] Dos planes activos en paralelo dentro del margen; bloqueo por margen excedido con motivo nuevo.
-- [ ] `npm run typecheck && npm run lint && npm test && npm run build` en verde.
-- [ ] Comentario en `mock.ts` documentando la divergencia con el programa (ver spec §"Divergencia conocida").
+- [x] Dos planes activos en paralelo dentro del margen; bloqueo por margen excedido con motivo nuevo.
+- [x] `npm run typecheck && npm run lint && npm test && npm run build` en verde.
+- [x] Comentario en `mock.ts` documentando la divergencia con el programa (ver spec §"Divergencia conocida").
