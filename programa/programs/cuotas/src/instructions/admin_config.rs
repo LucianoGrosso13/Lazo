@@ -61,7 +61,9 @@ pub fn handle_admin_init_config(ctx: Context<AdminInitConfig>, params: ConfigPar
     config.penalty_bps = params.penalty_bps;
     config.grace_days = params.grace_days;
     config.guarantor_charge_day = params.guarantor_charge_day;
+    config.guarantor_notice_day = params.guarantor_notice_day;
     config.seconds_per_day = params.seconds_per_day;
+    config.installment_interval_days = params.installment_interval_days;
     config.min_financed_to_count = params.min_financed_to_count;
     config.guaranteed_tiers = params.guaranteed_tiers;
     config.unguaranteed_tiers = params.unguaranteed_tiers;
@@ -102,7 +104,9 @@ pub fn handle_admin_update_config(
     config.penalty_bps = params.penalty_bps;
     config.grace_days = params.grace_days;
     config.guarantor_charge_day = params.guarantor_charge_day;
+    config.guarantor_notice_day = params.guarantor_notice_day;
     config.seconds_per_day = params.seconds_per_day;
+    config.installment_interval_days = params.installment_interval_days;
     config.min_financed_to_count = params.min_financed_to_count;
     config.guaranteed_tiers = params.guaranteed_tiers;
     config.unguaranteed_tiers = params.unguaranteed_tiers;

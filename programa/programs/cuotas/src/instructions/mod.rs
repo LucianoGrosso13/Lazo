@@ -1,19 +1,27 @@
 pub mod admin_apply_loss;
 pub mod admin_config;
 pub mod admin_set_state;
+pub mod crank_mark_late;
 pub mod keeper_guarantee;
+pub mod keeper_register_recovery;
 pub mod lp_deposit;
 pub mod lp_withdraw;
 pub mod merchant_register;
+pub mod open_plan;
+pub mod pay_installment;
 pub mod pool_init;
 pub mod student_init_reputation;
 
 pub use admin_apply_loss::*;
 pub use admin_config::*;
 pub use admin_set_state::*;
+pub use crank_mark_late::*;
 pub use keeper_guarantee::*;
+pub use keeper_register_recovery::*;
 pub use lp_deposit::*;
 pub use lp_withdraw::*;
 pub use merchant_register::*;
+pub use open_plan::*;
+pub use pay_installment::*;
 pub use pool_init::*;
 pub use student_init_reputation::*;

@@ -56,4 +56,40 @@ pub enum CuotasError {
     MandateHashUnchanged,
     #[msg("A gain cannot be allocated without positive tranche capital")]
     NoCapitalForGain,
+    #[msg("Price must be greater than zero")]
+    InvalidPrice,
+    #[msg("Price exceeds the tier max_purchase")]
+    PriceExceedsTierMax,
+    #[msg("Price exceeds the guarantor's chosen max_purchase")]
+    PriceExceedsGuarantorMax,
+    #[msg("Required guarantor coverage exceeds the guarantee coverage_max")]
+    InsufficientGuaranteeCoverage,
+    #[msg("Student has a guarantor charge on record and cannot open new plans")]
+    BlockedFromNewPlans,
+    #[msg("Reputation tier is outside the guaranteed track (0-3)")]
+    InvalidReputationTier,
+    #[msg("Merchant is not active")]
+    MerchantInactive,
+    #[msg("Installment index is outside the fixed 3-installment schedule")]
+    InvalidInstallmentIndex,
+    #[msg("Installment is already paid or charged to the guarantor")]
+    InstallmentAlreadyResolved,
+    #[msg("Installment is not past the grace window yet")]
+    MarkTooEarly,
+    #[msg("Installment was already marked late")]
+    AlreadyMarkedLate,
+    #[msg("Installment is not past the guarantor charge day yet")]
+    RecoveryTooEarly,
+    #[msg("Plan has no unpaid installments")]
+    NothingDue,
+    #[msg("Expected installment index does not match the plan's first unpaid installment")]
+    StaleInstallmentIndex,
+    #[msg("Plan opened_at does not match the expected value; stale transaction")]
+    StalePlan,
+    #[msg("Receipt hash must be nonzero")]
+    InvalidReceiptHash,
+    #[msg("Receipt hash was already recorded on this plan")]
+    ReceiptAlreadyUsed,
+    #[msg("Recovery requires a plan backed by an active guarantee")]
+    PlanNotGuaranteed,
 }

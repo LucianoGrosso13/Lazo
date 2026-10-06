@@ -1,39 +1,37 @@
 # Cuotas — LiteSVM Acceptance Test Report
 
-**Result: 97/97 in-process LiteSVM tests GREEN + 29/29 host unit tests
+**Result: 137/137 in-process LiteSVM tests GREEN + 36/36 host unit tests
 GREEN. Zero failures, zero ignored, zero deliberately-red tests.**
 
 **Acceptance is NOT final business sign-off.** The technical suite passes
-against the final source, but two items remain explicitly pending the user:
-(1) the business choice between provisional *cash-simulation* loss
-accounting and a strict credit write-off, and (2) devnet deployment + real
-mint creation. This report proves what the compiled artifact does; it does
-not approve deployment or real funds.
+against the compiled artifact, but devnet deployment + real mint creation
+remain **pending explicit user approval**. This report proves what the
+compiled artifact does; it does not approve deployment or real funds.
 
 ## Program under test
 
 | item | value |
 |---|---|
-| source commit | `b7833ac653d5de3872d5c58982915d9aabf61f72` (clean tree) |
-| SBF artifact | `target/deploy/cuotas.so`, 469824 bytes |
-| artifact SHA256 | `8d05b07fd749c950d87d32396470402c5ae28749e53ab3e7079710269b7b2476` |
-| IDL | `target/idl/cuotas.json`, 52823 bytes |
-| IDL SHA256 | `f0231f0a67332d698cc14d0b17b8bd9e80202e218cdd3066eee90a78b2284774` |
-| build | `NO_DNA=1 anchor build --arch v1` (reproduces the same hash) |
+| SBF artifact | `target/deploy/cuotas.so`, 610320 bytes |
+| artifact SHA256 | `751cba9da6e1866d96ea486c9f75a7b30b4551074fb346910ce223e6f2a72374` |
+| IDL | `target/idl/cuotas.json`, 84581 bytes |
+| IDL SHA256 | `9c5abccec793ae180a50316640db3cab7e283236deb3d068bf9f84db062a06ef` |
+| build | `NO_DNA=1 anchor build --arch v1` (rebuilt immediately before this run) |
 | runtime | LiteSVM 0.16 in-process — no mocks, no stubs, no network, no `anchor test`, no deploy |
 
 The path-dependency on `programs/cuotas` keeps discriminators/layouts/error
 variants in sync with source, but path-dep alone does NOT prove the `.so`
 is fresh — the SHA256 above is the binding evidence that tests ran against
-compiled `b7833ac`, not a stale artifact.
+the artifact rebuilt for this report (the `guarantor_notice_day` config
+addition re-tagged the artifact; earlier hash `dc80f11c…` is superseded).
 
 ## How to run
 
 ```sh
 cd programa
-NO_DNA=1 anchor build --arch v1                                          # SBF artifact (evidence build, already verified)
-cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 97 tests)
-cargo test -p cuotas --lib                                               # host-only unit tests (serial, 29 tests)
+NO_DNA=1 anchor build --arch v1                                          # SBF artifact (evidence build, verified)
+cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 137 tests)
+cargo test -p cuotas --lib                                               # host-only unit tests (36 tests)
 ```
 
 Toolchain notes: `rust-toolchain.toml` pins Rust 1.89.0 for the workspace host commands (`cargo test -p cuotas --lib`); the SBF artifact is compiled by Solana's bundled platform tools via `anchor build`, independent of that pin. The `tests/` LiteSVM workspace needs a newer host rustc, so it must override the pin with `+stable` (verified on stable 1.99.0) — running it as plain `cargo test` under `programa/` fails to compile `solana-syscalls`.
@@ -45,7 +43,7 @@ deploy); the suite is in-process only.
 ## Results — suite executed against the verified artifact
 
 ```
-admin_config.rs        18 passed   bootstrap + ProgramData matrix below
+admin_config.rs        19 passed   bootstrap matrix, param validation, notice-day
 pool_lp.rs             33 passed   deposits, withdrawals, NAV, edge states
 loss.rs                 9 passed   waterfall, bounds, provisional cash sweep
 merchant_reputation.rs  7 passed   merchant + reputation registration
@@ -53,14 +51,84 @@ guarantee.rs           13 passed   lifecycle, mandate freshness, exposure
 pause_matrix.rs         5 passed   op x state matrix incl. pool_init gate
 adversarial.rs          7 passed   I-05 inflation attack, burns, conservation
 regressions.rs          5 passed   R1–R5 all GREEN (table below)
+plan_open.rs           12 passed   open_plan: terms, tracks, gates, adversarial
+plan_pay.rs            13 passed   pay_installment: settle, replay, tiers, rollback
+plan_recovery.rs       14 passed   crank_mark_late + keeper_register_recovery
 --------------------------------------
-TOTAL                  97 passed / 0 failed / 0 ignored   (~19 s in-process)
-+ cargo test -p cuotas --lib: 29/29 host unit tests pass (exact-divisibility,
-  inflation rejection, gain conservation, orphan/wipe handling)
+TOTAL                 137 passed / 0 failed / 0 ignored   (~21 s in-process)
++ cargo test -p cuotas --lib: 36/36 host unit tests pass (exact-divisibility,
+  inflation rejection, gain conservation, orphan/wipe handling, config
+  validation incl. notice-day ordering, plan schedule math)
 ```
 
-All 12 instruction builders in `ix.rs` match `target/idl/cuotas.json`
+All 16 instruction builders in `ix.rs` match `target/idl/cuotas.json`
 account-by-account (names, order, writable/signer flags): no ABI drift.
+
+## Credit lifecycle — real instructions, no fixtures
+
+`plan_open.rs` / `plan_pay.rs` / `plan_recovery.rs` exercise the four new
+instructions end-to-end against the compiled program. Worlds are seeded
+through REAL instructions only (`credit.rs` harness: config init, LP
+deposit, merchant registration, reputation init, guarantee registration,
+funded ATAs) — no hand-edited Plan state is ever used for lifecycle tests.
+
+**Canonical PC-1000 quote asserted exactly** (`pc1000_guaranteed_open_exact_terms_and_conservation`):
+price 1000 USDC → down payment 300 USDC, financed 700 USDC, merchant fee
+49 USDC (7% of financed), merchant receives 951 USDC, installments
+`233333333 / 233333333 / 233333334` micro-USDC — independently recomputed by
+`spec.rs` floor-division math and matched field-by-field on the decoded
+`Plan`, plus `PlanOpened` event payload.
+
+**Conservation + invariant** are asserted at every step: exact token deltas
+across student/merchant/keeper/LP/vault/treasury ATAs, and
+`vault + outstanding_credit == junior_capital + senior_capital`
+(`env.accounting_delta() == 0`) after every op, including the mixed
+pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
+
+### Coverage highlights
+
+- **open_plan**: guaranteed vs unguaranteed track selection, S0/S1 clamps
+  (incl. tier-3 reputation clamped to S1 without a guarantee), guarantor
+  `max_purchase`/`coverage_max` binding, revoked/hidden guarantee fallback,
+  `InvalidPrice`/`PriceExceedsTierMax`/`PriceExceedsGuarantorMax`/
+  `InsufficientGuaranteeCoverage`/`BlockedFromNewPlans`/
+  `InvalidReputationTier`/`MerchantInactive`, one-open-plan-per-student
+  (PDA `init` occupied → rejected), all 16 account slots corrupted
+  (foreign mint, non-canonical ATAs, wrong PDAs, wrong vault, inactive
+  merchant), wrong-signer rejection, insufficient-balance and
+  insufficient-liquidity full atomic rollback, `ProtocolNotNormal` gating.
+- **pay_installment**: happy-path settlement → plan PDA closed + rent
+  returned + tier 0→1, day-5 grace boundary (no penalty) vs day-6
+  auto-mark (5% penalty, disqualified from tier-up), `expected_index`/
+  `expected_opened_at` stale guards (`StaleInstallmentIndex`, `StalePlan`),
+  duplicate-payment rejection (`InstallmentAlreadyResolved`), pay on a
+  closed plan, guarantor-charged plan still payable but never counts,
+  under-100-financed plans settle but don't count, guaranteed ladder
+  0→1→2→3 capped, unguaranteed completion caps at S1, student-balance
+  rollback, account-integrity matrix, cross-student redirection.
+- **crank_mark_late**: permissionless caller, day-5 (grace) vs day-6
+  boundary via clock warps, `MarkTooEarly`, `AlreadyMarkedLate`
+  idempotence, invalid index, works under Halted/WithdrawsOnly.
+- **keeper_register_recovery**: first recovery charges exactly the first
+  unpaid installment (auto-marks + penalty once), second recovery
+  accelerates ALL remaining unresolved principal with NO penalty on
+  installments accelerated before their own grace period, receipt-hash
+  replay/double-recovery rejected (`ReceiptAlreadyUsed`), zero hash
+  rejected (`InvalidReceiptHash`), `RecoveryTooEarly`, `StaleInstallmentIndex`
+  on skipped indexes, `PlanNotGuaranteed` on unguaranteed plans, keeper-only
+  authority, account-integrity matrix, keeper-insufficient-balance full
+  rollback, `late_count > 0` blocks new plans forever (derived gate — no
+  Reputation layout change), works under Halted/WithdrawsOnly.
+
+### Confirmed finding (reported to coordinator, fix pending)
+
+`same_second_reopen_rejects_stale_quote`: settle+close plan A, reopen plan
+B without advancing the clock → B inherits A's `opened_at`. Replaying A's
+stale `(index 0, opened_at_A)` is **accepted** and pays B's installment —
+`opened_at` is the only generation guard and collides on a same-second
+reopen. Low severity (student-signed, funds stay in the student's own
+plan); the test pins the observed behavior with a KNOWN-GAP marker and
+flips to `StalePlan` once a generation discriminator lands.
 
 ## Regressions — all resolved on this source
 
@@ -76,7 +144,8 @@ account-by-account (names, order, writable/signer flags): no ABI drift.
 
 **Invariant: `vault.amount + outstanding_credit == junior_capital +
 senior_capital`** (`env.accounting_delta() == 0`) in every consistent
-fixture and after every executed op: deposits, withdrawals, losses.
+fixture and after every executed op: deposits, withdrawals, losses,
+plan origination, repayments, guarantor recoveries.
 
 - `accrued_fees` is a **cumulative informational counter** for recognized
   gains already folded into LP capital — NOT a treasury liability and NOT
@@ -130,6 +199,16 @@ Harness note: LiteSVM writes the loaded ProgramData with
 `upgrade_authority_address = None`; `env` patches bytes 12..45 so the real
 constraint is exercised both ways — nothing is mocked.
 
+## Config surface (`guarantor_notice_day` added)
+
+`ConfigParams`/`ProtocolConfig` carry `guarantor_notice_day: u8` (seeded 3,
+immediately after `guarantor_charge_day`). Validation is exactly
+`0 < notice_day < guarantor_charge_day` — no grace bound, so previously
+valid zero-grace configs stay valid (`notice_day_unbounded_by_grace`,
+`init_validates_params` mutants, `notice_day_is_configurable_not_hardcoded`
+proving a non-default value round-trips through init and update). Client
+and keeper must read the notice day from config — never hardcode 3.
+
 ## Guarantee mandate freshness (`keeper_update_guarantee`)
 
 Requires: configured keeper + Normal state + same-student reputation PDA
@@ -152,7 +231,8 @@ with `active_exposure == 0` + nonzero `mandate_hash != stored`.
 withdraw paths. LP-ATA slot variants verified: non-canonical token account
 → `NotCanonicalAta`, cross-tranche ATA, foreign-owner ATA, missing ATA,
 Token-2022-derived address. USDC-ATA / vault / pool / config substitutions
-and forged signers covered in `pool_lp.rs`/`adversarial.rs`.
+and forged signers covered in `pool_lp.rs`/`adversarial.rs` and in the new
+per-slot matrices of `plan_open.rs`/`plan_pay.rs`/`plan_recovery.rs`.
 
 ## Pause matrix (op × protocol state)
 
@@ -167,6 +247,10 @@ and forged signers covered in `pool_lp.rs`/`adversarial.rs`.
 | `keeper_update_guarantee` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
 | `keeper_revoke_guarantee` | ok | ok | ok (no gate — pinned) |
 | `pool_init` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` (new gate) |
+| `open_plan` | ok | `ProtocolNotNormal` | `ProtocolNotNormal` |
+| `pay_installment` | ok | ok | ok (repayment reduces risk — pinned) |
+| `crank_mark_late` | ok | ok | ok (risk marking ungated — pinned) |
+| `keeper_register_recovery` | ok | ok | ok (recovery reduces risk — pinned) |
 
 ## Loss waterfall — PROVISIONAL cash simulation
 
@@ -190,17 +274,18 @@ still pending the user.
 
 ## What remains unverified / pending
 
+- **Devnet deployment and real `devUSDC` mint creation — pending explicit
+  approval.** Mint runbook when approved: classic SPL Token (not
+  Token-2022), 6 decimals, freeze authority `None`.
+- **Stale-quote generation gap (confirmed above)** — same-second reopen
+  accepts a prior plan's quote; reported for a narrow program fix.
 - Business acceptance: cash-sim vs strict credit write-off for losses —
   **pending user decision**; this suite does not bless either.
-- Devnet deployment and real `devUSDC` mint creation — **not done here**.
-  Mint runbook when approved: classic SPL Token (not Token-2022), 6
-  decimals, freeze authority `None`.
 - `gain_allocation`/`book_gain` are exercised only by host unit tests
-  (29/29); no on-chain instruction calls them, so they are out of SBF
+  (36/36); no on-chain instruction calls them, so they are out of SBF
   scope by construction.
-- `originate_plan`/`pay_installment`/`default_plan` do not exist yet —
-  credit lifecycle is modeled via `edit_pool`/`edit_reputation` fixtures
-  (states unreachable by current instructions), clearly marked where used.
+- `guarantor_notice_day` is stored config only — no instruction consumes
+  it yet (keeper/backend read it off-chain).
 
 ## Harness notes
 
@@ -209,8 +294,10 @@ still pending the user.
   token account = 165 B, mint = 82 B.
 - `env.edit_pool`/`edit_reputation`/`set_token_amount`/`set_mint_supply`/
   `rewrite_mint`/`set_account_owner` model states no instruction produces
-  (outstanding credit, capital≫shares, tampered mints); the program's own
-  checks run for real against them.
+  (outstanding credit, capital≫shares, tampered mints, seeded late_count);
+  credit-lifecycle suites use real instructions only.
+- `events.rs` decodes `Program data:` log payloads so assertions cover
+  emitted event fields, not just account state.
 - Each `send` expires the blockhash afterwards so byte-identical retries
   get fresh signatures (duplicate-init tests).
 - Rebuild-before-test is recommended: the artifact hash above, not the
@@ -225,8 +312,15 @@ programa/tests/src/env.rs      LiteSVM boot, actors, fixtures, ProgramData patch
 programa/tests/src/err.rs      TxOutcome, custom-error extraction, CuotasError→code
 programa/tests/src/ix.rs       instruction builders bound to #[derive(Accounts)]
 programa/tests/src/pda.rs      PDA derivations
-programa/tests/src/spec.rs     spec parameters + independent exact-share math
+programa/tests/src/spec.rs     spec parameters + independent exact-share/plan math
 programa/tests/src/spl.rs      SPL wire layouts, ATA derivation, raw token ixs
-programa/tests/tests/*.rs      8 acceptance suites (97 tests)
+programa/tests/src/credit.rs   real-instruction credit-lifecycle fixture + helpers
+programa/tests/src/events.rs   emitted-event decoding from tx logs
+programa/tests/tests/*.rs      11 acceptance suites (137 tests)
 programa/TEST_REPORT.md        this file
 ```
+
+Coordinator-authorized narrow program edits in this report's build:
+`programs/cuotas/src/state/config.rs` + `programs/cuotas/src/instructions/
+admin_config.rs` (the `guarantor_notice_day` field, its validation, and
+host fixture literals). No handler/Plan/Reputation logic was touched.

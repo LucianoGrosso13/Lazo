@@ -50,6 +50,11 @@ pub fn guarantee(student_wallet: &Address) -> (Address, u8) {
     find(&[b"guarantee", student_wallet.as_ref()])
 }
 
+/// `["plan", student_wallet]` — Plan, one active plan per student.
+pub fn plan(student_wallet: &Address) -> (Address, u8) {
+    find(&[b"plan", student_wallet.as_ref()])
+}
+
 /// `[program_id]` under the upgradeable loader — the ProgramData account
 /// that stores the upgrade authority checked by `admin_init_config`.
 pub fn program_data() -> (Address, u8) {

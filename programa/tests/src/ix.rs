@@ -268,3 +268,120 @@ pub fn lp_deposit_raw(depositor: &Address, usdc_mint: &Address, tranche: Tranche
         data,
     )
 }
+
+/// [student(mut,sig), config, pool(w), vault(w), usdc_mint, lp_junior_mint,
+///  lp_senior_mint, merchant(w), merchant_wallet, settlement_ata(w),
+///  student_usdc_ata(w), reputation(w), guarantee(opt,r), plan(w),
+///  token_program, system_program]
+///
+/// `guarantee` is the Optional Account slot: pass `None` for an unguaranteed
+/// plan — the program ID is emitted in its place (Anchor maps it to `None`,
+/// there is no allow-missing-optionals feature on this cluster).
+pub fn open_plan(
+    student: &Address,
+    usdc_mint: &Address,
+    merchant_wallet: &Address,
+    price: u64,
+    guarantee: Option<Address>,
+) -> Instruction {
+    let pool = pda::pool(usdc_mint).0;
+    ix(
+        vec![
+            signer_rw(*student),
+            ro(pda::config().0),
+            rw(pool),
+            rw(pda::vault(&pool).0),
+            ro(*usdc_mint),
+            ro(pda::lp_junior(&pool).0),
+            ro(pda::lp_senior(&pool).0),
+            rw(pda::merchant(merchant_wallet).0),
+            ro(*merchant_wallet),
+            rw(ata(merchant_wallet, usdc_mint, &TOKEN_PROGRAM_ID)),
+            rw(ata(student, usdc_mint, &TOKEN_PROGRAM_ID)),
+            rw(pda::reputation(student).0),
+            ro(guarantee.unwrap_or_else(program_id)),
+            rw(pda::plan(student).0),
+            ro(TOKEN_PROGRAM_ID),
+            ro(system_program::ID),
+        ],
+        instruction::OpenPlan { price }.data(),
+    )
+}
+
+/// [student(mut,sig), config, pool(w), vault(w), usdc_mint, lp_junior_mint,
+///  lp_senior_mint, student_usdc_ata(w), reputation(w), plan(w), token_program]
+pub fn pay_installment(
+    student: &Address,
+    usdc_mint: &Address,
+    expected_installment_index: u8,
+    expected_opened_at: i64,
+) -> Instruction {
+    let pool = pda::pool(usdc_mint).0;
+    ix(
+        vec![
+            signer_rw(*student),
+            ro(pda::config().0),
+            rw(pool),
+            rw(pda::vault(&pool).0),
+            ro(*usdc_mint),
+            ro(pda::lp_junior(&pool).0),
+            ro(pda::lp_senior(&pool).0),
+            rw(ata(student, usdc_mint, &TOKEN_PROGRAM_ID)),
+            rw(pda::reputation(student).0),
+            rw(pda::plan(student).0),
+            ro(TOKEN_PROGRAM_ID),
+        ],
+        instruction::PayInstallment {
+            expected_installment_index,
+            expected_opened_at,
+        }
+        .data(),
+    )
+}
+
+/// [crank(sig), config, student, plan(w)] — permissionless delinquency crank.
+pub fn crank_mark_late(crank: &Address, student: &Address, installment_index: u8) -> Instruction {
+    ix(
+        vec![
+            signer_ro(*crank),
+            ro(pda::config().0),
+            ro(*student),
+            rw(pda::plan(student).0),
+        ],
+        instruction::CrankMarkLate { installment_index }.data(),
+    )
+}
+
+/// [keeper(mut,sig), config, pool(w), vault(w), usdc_mint, lp_junior_mint,
+///  lp_senior_mint, keeper_usdc_ata(w), student(w), reputation(w), plan(w),
+///  token_program]
+pub fn keeper_register_recovery(
+    keeper: &Address,
+    usdc_mint: &Address,
+    student: &Address,
+    installment_index: u8,
+    receipt_hash: [u8; 32],
+) -> Instruction {
+    let pool = pda::pool(usdc_mint).0;
+    ix(
+        vec![
+            signer_rw(*keeper),
+            ro(pda::config().0),
+            rw(pool),
+            rw(pda::vault(&pool).0),
+            ro(*usdc_mint),
+            ro(pda::lp_junior(&pool).0),
+            ro(pda::lp_senior(&pool).0),
+            rw(ata(keeper, usdc_mint, &TOKEN_PROGRAM_ID)),
+            rw(*student),
+            rw(pda::reputation(student).0),
+            rw(pda::plan(student).0),
+            ro(TOKEN_PROGRAM_ID),
+        ],
+        instruction::KeeperRegisterRecovery {
+            installment_index,
+            receipt_hash,
+        }
+        .data(),
+    )
+}

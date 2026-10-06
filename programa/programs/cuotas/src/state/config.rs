@@ -58,8 +58,14 @@ pub struct ProtocolConfig {
     pub grace_days: u8,
     /// Day on which the guarantor is charged for an overdue installment.
     pub guarantor_charge_day: u8,
+    /// Day on which the guarantor is notified about an overdue installment
+    /// (ahead of the charge day).
+    pub guarantor_notice_day: u8,
     /// Seconds that make one protocol "day". Short in demos, 86400 in production.
     pub seconds_per_day: u32,
+    /// Days between installments: due[i] = opened_at + (i+1) * this * spd.
+    /// Client-seeded at init; tunable via config update. Must be positive.
+    pub installment_interval_days: u16,
     /// Minimum financed amount (USDC base units) for a plan to count toward tier-ups.
     pub min_financed_to_count: u64,
     /// Ladder for students with a guarantor (tiers 0-3).
@@ -104,7 +110,9 @@ pub struct ConfigParams {
     pub penalty_bps: u16,
     pub grace_days: u8,
     pub guarantor_charge_day: u8,
+    pub guarantor_notice_day: u8,
     pub seconds_per_day: u32,
+    pub installment_interval_days: u16,
     pub min_financed_to_count: u64,
     pub guaranteed_tiers: [TierParams; 4],
     pub unguaranteed_tiers: [TierParams; 2],
@@ -126,7 +134,17 @@ impl ConfigParams {
             self.guarantor_charge_day > self.grace_days,
             CuotasError::InvalidConfig
         );
+        // The guarantor notice must be a real day strictly before the charge.
+        require!(
+            self.guarantor_notice_day > 0
+                && self.guarantor_notice_day < self.guarantor_charge_day,
+            CuotasError::InvalidConfig
+        );
         require!(self.seconds_per_day > 0, CuotasError::InvalidConfig);
+        require!(
+            self.installment_interval_days > 0,
+            CuotasError::InvalidConfig
+        );
 
         for tier in self
             .guaranteed_tiers
@@ -164,7 +182,9 @@ mod tests {
             penalty_bps: 500,
             grace_days: 5,
             guarantor_charge_day: 15,
+            guarantor_notice_day: 3,
             seconds_per_day: 86_400,
+            installment_interval_days: 30,
             min_financed_to_count: 100_000_000,
             guaranteed_tiers: [tier; 4],
             unguaranteed_tiers: [tier; 2],
@@ -191,6 +211,22 @@ mod tests {
         assert!(p.validate().is_err());
 
         let mut p = valid_params();
+        p.installment_interval_days = 0;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.guarantor_notice_day = 0;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.guarantor_notice_day = p.guarantor_charge_day;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.guarantor_notice_day = p.guarantor_charge_day + 1;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
         p.keeper = Pubkey::default();
         assert!(p.validate().is_err());
 
@@ -204,6 +240,21 @@ mod tests {
     }
 
     #[test]
+    fn notice_day_unbounded_by_grace() {
+        // grace=0 is a previously-valid config and must stay valid: the
+        // notice window only orders against the charge day.
+        let mut p = valid_params();
+        p.grace_days = 0;
+        p.guarantor_charge_day = 2;
+        p.guarantor_notice_day = 1;
+        assert!(p.validate().is_ok());
+
+        let mut p = valid_params();
+        p.guarantor_notice_day = 7; // > grace_days is allowed
+        assert!(p.validate().is_ok());
+    }
+
+    #[test]
     fn init_space_matches_borsh_layout() {
         let config = ProtocolConfig {
             admin: Pubkey::new_unique(),
@@ -214,7 +265,9 @@ mod tests {
             penalty_bps: 500,
             grace_days: 5,
             guarantor_charge_day: 15,
+            guarantor_notice_day: 3,
             seconds_per_day: 60,
+            installment_interval_days: 30,
             min_financed_to_count: 1,
             guaranteed_tiers: [TierParams {
                 down_payment_bps: 3_000,

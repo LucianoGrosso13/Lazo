@@ -42,3 +42,5 @@ solana-pubkey = "~3.0.0"
 # Same version the program crate pins — needed to name AccountDeserialize /
 # InstructionData in generic helpers.
 anchor-lang = "1.2.0"
+# Decodes `emit!` payloads out of tx logs (already in the tree via litesvm).
+base64 = "0.22"

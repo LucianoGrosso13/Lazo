@@ -24,6 +24,7 @@ fn init_stores_spec_config() {
     assert_eq!(c.penalty_bps, spec::PENALTY_BPS);
     assert_eq!(c.grace_days, spec::GRACE_DAYS);
     assert_eq!(c.guarantor_charge_day, spec::GUARANTOR_CHARGE_DAY);
+    assert_eq!(c.guarantor_notice_day, spec::GUARANTOR_NOTICE_DAY);
     assert_eq!(c.seconds_per_day, 60);
     assert_eq!(c.min_financed_to_count, spec::MIN_FINANCED_TO_COUNT);
     assert!(matches!(c.state, ProtocolState::Normal));
@@ -225,6 +226,9 @@ fn init_validates_params() {
         Box::new(|p| p.fee_bps = 10_001),
         Box::new(|p| p.penalty_bps = 10_001),
         Box::new(|p| p.guarantor_charge_day = p.grace_days),
+        Box::new(|p| p.guarantor_notice_day = 0),
+        Box::new(|p| p.guarantor_notice_day = p.guarantor_charge_day),
+        Box::new(|p| p.guarantor_notice_day = p.guarantor_charge_day + 1),
         Box::new(|p| p.seconds_per_day = 0),
         Box::new(|p| p.keeper = solana_pubkey::Pubkey::default()),
         Box::new(|p| p.treasury = solana_pubkey::Pubkey::default()),
@@ -294,6 +298,39 @@ fn update_replaces_params_and_rotates_keeper() {
     );
     env.send(&[new_keeper_ix], &{env.actors.attacker.insecure_clone()}, &[])
         .expect_ok("new keeper registers");
+}
+
+/// The guarantor notice day is a config field, not a literal: a non-default
+/// value must round-trip through init AND update, and a zero-grace config
+/// (previously valid) must still init when notice orders before charge.
+#[test]
+fn notice_day_is_configurable_not_hardcoded() {
+    let mut env = Env::new();
+    let admin = env.actors.admin.pubkey();
+    let keeper = env.actors.keeper.pubkey();
+    let treasury = env.actors.payer.pubkey();
+
+    // zero-grace config (grace=0, charge=2, notice=1) inits fine — the
+    // notice bound does not silently require a grace window
+    let mut params = spec::spec_params(&keeper, &treasury);
+    params.grace_days = 0;
+    params.guarantor_charge_day = 2;
+    params.guarantor_notice_day = 1;
+    let i = ix::admin_init_config(&admin, &{env.usdc_mint}, &params);
+    env.send(&[i], &{env.actors.admin.insecure_clone()}, &[])
+        .expect_ok("zero-grace init");
+    let c = cfg(&env);
+    assert_eq!(c.grace_days, 0);
+    assert_eq!(c.guarantor_charge_day, 2);
+    assert_eq!(c.guarantor_notice_day, 1);
+
+    // update to a non-default notice day (7 > grace would also be legal)
+    let mut params = spec::spec_params(&keeper, &treasury);
+    params.guarantor_notice_day = 7;
+    let i = ix::admin_update_config(&admin, &params);
+    env.send(&[i], &{env.actors.admin.insecure_clone()}, &[])
+        .expect_ok("update notice=7");
+    assert_eq!(cfg(&env).guarantor_notice_day, 7, "notice persisted, not hardcoded");
 }
 
 #[test]

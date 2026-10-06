@@ -94,3 +94,58 @@ pub struct GuaranteeRevoked {
     pub guarantee: Pubkey,
     pub student: Pubkey,
 }
+
+#[event]
+pub struct PlanOpened {
+    pub plan: Pubkey,
+    pub student: Pubkey,
+    pub merchant: Pubkey,
+    pub price: u64,
+    pub down_payment: u64,
+    pub financed: u64,
+    pub interest: u64,
+    pub merchant_fee: u64,
+    pub installments: [u64; 3],
+    pub tier: u8,
+    pub with_guarantee: bool,
+    pub counts: bool,
+}
+
+#[event]
+pub struct InstallmentPaid {
+    pub plan: Pubkey,
+    pub student: Pubkey,
+    pub index: u8,
+    pub amount: u64,
+    pub penalty: u64,
+}
+
+#[event]
+pub struct PlanSettled {
+    pub plan: Pubkey,
+    pub student: Pubkey,
+    pub counts: bool,
+    pub new_tier: u8,
+    pub plans_completed: u32,
+}
+
+#[event]
+pub struct InstallmentMarkedLate {
+    pub plan: Pubkey,
+    pub student: Pubkey,
+    pub index: u8,
+    pub penalty: u64,
+}
+
+#[event]
+pub struct RecoveryRegistered {
+    pub plan: Pubkey,
+    pub student: Pubkey,
+    pub charged_indexes: Vec<u8>,
+    pub principal: u64,
+    pub penalties: u64,
+    pub receipt_hash: [u8; 32],
+    pub accelerated: bool,
+    pub new_tier: u8,
+    pub late_count: u32,
+}

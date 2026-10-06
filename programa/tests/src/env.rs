@@ -3,6 +3,7 @@
 
 use std::path::PathBuf;
 
+use anchor_lang::AccountDeserialize;
 use litesvm::LiteSVM;
 use solana_account::Account;
 use solana_address::Address;
@@ -375,6 +376,43 @@ impl Env {
         self.decode::<cuotas::Reputation>(&pda::reputation(student).0)
     }
 
+    /// Read the student's Plan PDA. `None` when the account is absent or was
+    /// closed by the settling pay/recovery (`AccountClose` zeroes the data
+    /// and hands the lamports to the student, leaving a system-owned husk).
+    pub fn plan(&self, student: &Address) -> Option<cuotas::Plan> {
+        let addr = pda::plan(student).0;
+        let acc = self.svm.get_account(&addr)?;
+        if acc.data.len() < 8 || acc.owner != program_id() {
+            return None;
+        }
+        Some(cuotas::Plan::try_deserialize(&mut &acc.data[..]).expect("plan deserialize"))
+    }
+
+    /// Read the Merchant PDA for a merchant wallet.
+    pub fn merchant(&self, merchant_wallet: &Address) -> cuotas::Merchant {
+        self.decode::<cuotas::Merchant>(&pda::merchant(merchant_wallet).0)
+    }
+
+    /// Read the Guarantee PDA for a student, if the keeper ever registered one.
+    pub fn guarantee(&self, student: &Address) -> Option<cuotas::Guarantee> {
+        let addr = pda::guarantee(student).0;
+        let acc = self.svm.get_account(&addr)?;
+        if acc.data.len() < 8 || acc.owner != program_id() {
+            return None;
+        }
+        Some(cuotas::Guarantee::try_deserialize(&mut &acc.data[..]).expect("guarantee deserialize"))
+    }
+
+    /// True while `addr` holds a live program account (exists, owned by the
+    /// cuotas program, non-empty data). False for missing accounts and for
+    /// Anchor-closed husks (system-owned, zero lamports/data).
+    pub fn program_account_live(&self, addr: &Address) -> bool {
+        match self.svm.get_account(addr) {
+            Some(a) => a.owner == program_id() && a.data.len() >= 8 && a.lamports > 0,
+            None => false,
+        }
+    }
+
     /// Read the on-chain ProtocolConfig account.
     pub fn config(&self) -> cuotas::ProtocolConfig {
         self.decode::<cuotas::ProtocolConfig>(&pda::config().0)
@@ -416,6 +454,20 @@ impl Env {
         f(&mut rep);
         let mut data = Vec::new();
         anchor_lang::AccountSerialize::try_serialize(&rep, &mut data).unwrap();
+        let mut acc = self.svm.get_account(&addr).unwrap();
+        acc.data = data;
+        self.svm.set_account(addr, acc).unwrap();
+    }
+
+    /// Overwrite Merchant state directly. `active = false` is unreachable via
+    /// instructions (no deactivate exists); writing it exercises the
+    /// `MerchantInactive` gate on open_plan for real.
+    pub fn edit_merchant(&mut self, merchant_wallet: &Address, f: impl FnOnce(&mut cuotas::Merchant)) {
+        let addr = pda::merchant(merchant_wallet).0;
+        let mut m = self.decode::<cuotas::Merchant>(&addr);
+        f(&mut m);
+        let mut data = Vec::new();
+        anchor_lang::AccountSerialize::try_serialize(&m, &mut data).unwrap();
         let mut acc = self.svm.get_account(&addr).unwrap();
         acc.data = data;
         self.svm.set_account(addr, acc).unwrap();

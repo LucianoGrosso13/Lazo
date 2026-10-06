@@ -112,4 +112,47 @@ pub mod cuotas {
     pub fn keeper_revoke_guarantee(ctx: Context<KeeperRevokeGuarantee>) -> Result<()> {
         instructions::keeper_guarantee::handle_keeper_revoke_guarantee(ctx)
     }
+
+    /// Student opens a 3-installment plan: down payment to the merchant, pool
+    /// advance minus the merchant fee, Plan PDA created. Normal state only.
+    pub fn open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
+        instructions::open_plan::handle_open_plan(ctx, price)
+    }
+
+    /// Student pays the first unresolved installment (principal + penalty).
+    /// The quoted index and plan age must match, or the payment is rejected.
+    /// Closes the Plan on full settlement, tiering up counting plans.
+    pub fn pay_installment(
+        ctx: Context<PayInstallment>,
+        expected_installment_index: u8,
+        expected_opened_at: i64,
+    ) -> Result<()> {
+        instructions::pay_installment::handle_pay_installment(
+            ctx,
+            expected_installment_index,
+            expected_opened_at,
+        )
+    }
+
+    /// Permissionless crank: fix the penalty on an installment past grace and
+    /// disqualify the plan from tier-ups.
+    pub fn crank_mark_late(ctx: Context<CrankMarkLate>, installment_index: u8) -> Result<()> {
+        instructions::crank_mark_late::handle_crank_mark_late(ctx, installment_index)
+    }
+
+    /// Keeper deposits an off-chain guarantor charge into the vault and books
+    /// it. First recovery charges one installment; a second one accelerates
+    /// and charges everything left. Downgrades reputation; a charge on record
+    /// bars new plans.
+    pub fn keeper_register_recovery(
+        ctx: Context<KeeperRegisterRecovery>,
+        installment_index: u8,
+        receipt_hash: [u8; 32],
+    ) -> Result<()> {
+        instructions::keeper_register_recovery::handle_keeper_register_recovery(
+            ctx,
+            installment_index,
+            receipt_hash,
+        )
+    }
 }
