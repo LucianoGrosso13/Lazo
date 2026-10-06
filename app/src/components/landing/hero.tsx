@@ -7,7 +7,8 @@ import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { CATALOG, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
 import { useLocale, useT } from "@/i18n/locale";
-import { PrismStage, type StageBand } from "./prism-stage";
+import type { StageBand } from "./prism-stage";
+import { PrismStage3D } from "./prism-stage-3d";
 import { REFERENCE } from "./reference";
 import { splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
@@ -85,7 +86,7 @@ export function LandingHero() {
       <div className={styles.heroGrid}>
         <div className={styles.heroStage}>
           {split ? (
-            <PrismStage
+            <PrismStage3D
               inputLabel={t.priceLabel}
               inputValue={`US$ ${fmt(split.price, 0)}`}
               bands={bands}

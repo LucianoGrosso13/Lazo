@@ -1,6 +1,6 @@
 # 06 — Prisma 3D interactivo (hero + checkout)
 
-**Status:** ready-for-agent · **Depende de:** 04 · **Tamaño:** L
+**Status:** done · **Depende de:** 04 · **Tamaño:** L
 
 ## Objetivo
 
@@ -28,11 +28,20 @@ El prisma es la marca: hoy `PrismStage` es un SVG 2D (un slab con caras dibujada
 
 ## Criterios
 
-- [ ] El prisma se ve con volumen/vidrio real y las bandas salen del sólido con dispersión creíble (screenshot en el PR/commit).
-- [ ] Mover el slider de precio cambia los anchos de banda con el tween.
-- [ ] Sin WebGL → SVG actual idéntico. reduced-motion → estático.
-- [ ] Sin regresión de performance visible ni errores de consola.
-- [ ] typecheck/lint/test/build en verde.
+- [x] El prisma se ve con volumen/vidrio real y las bandas salen del sólido con dispersión creíble (screenshot en el PR/commit).
+- [x] Mover el slider de precio cambia los anchos de banda con el tween.
+- [x] Sin WebGL → SVG actual idéntico. reduced-motion → estático.
+- [x] Sin regresión de performance visible ni errores de consola.
+- [x] typecheck/lint/test/build en verde.
+
+## Resolución
+
+- `prism-stage-3d.tsx`: drop-in con el mismo contrato. `useSyncExternalStore` decide la mejora (WebGL2 + no reduced-motion); si no aplica, renderiza el `PrismStage` SVG tal cual. El SVG queda de underlay hasta que el canvas dibuja dos frames y hace crossfade; un fallo de init/context-lost/render vuelve al SVG.
+- `prism-3d-renderer.ts` (import dinámico, fuera del bundle inicial): `WebGLRenderer` alpha+antialias+`low-power`, DPR cap 1.75, `transmissionResolutionScale` 0.55, ACES. Vidrio = `CylinderGeometry` de 3 segmentos con `MeshPhysicalMaterial` (transmission 1, thickness 2.1, ior 1.52, dispersion 0.55, attenuation violeta, clearcoat) + `EdgesGeometry` para la silueta. Entorno PMREM con paneles violeta/cian/verde sobre abyss; cartelera opaca con halos para que la transmisión refracte algo legible. Haz entrante en 3 láminas aditivas + fotones (offset de textura); bandas en pool de quads deformables en el mismo layout viewBox del SVG (`STAGE_LAYOUT`/`layoutBands`), cada una con su z y su ángulo de punta → dispersión. `cracked` desdibuja color/brillo y graba una rajadura en la cara. Pausa por IntersectionObserver + `document.hidden`; dispose completo.
+- Reusa `useTweened` (620 ms ease-out expo) y `layoutBands` exportados del SVG: mismos números, mismas etiquetas HTML arriba.
+- Montado en `hero.tsx` y `checkout-screen.tsx`; estilos `.stage3d*` en `landing.module.css` (transiciones apagadas con reduced-motion).
+- `app/src/components/prism/` sin tocar. Sin deps nuevas.
+- Verificaciones: typecheck/lint/test (185)/build en verde; screenshots 1440 y 390 en hero y checkout, noGL y reduced-motion en `.scratch/demo-polish/evidence/` (prefijo `06-`), sin errores de consola.
 
 ## Notas
 
