@@ -74,5 +74,5 @@ Conflictos de archivos que definen el orden: 03 y 05 pisan `store.module.css`/`c
 
 - [x] Spec + 8 tickets + WORKER-RULES en `.scratch/demo-polish/`
 - [x] Decisiones del usuario asentadas arriba
-- [ ] Ejecutar tickets (sesión nueva)
+- [x] Ejecutar tickets — 8/8 done (rama de integración `main`; evidencia en `.scratch/demo-polish/evidence/`)
 - [ ] Commit/push: el coordinador integra en `front-esqueleto`; push solo si el usuario lo pide

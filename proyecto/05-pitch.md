@@ -50,4 +50,13 @@ ANIMADO: lower-third con nombres + "UNT, Tucumán"; placa final con URL demo + E
 - [ ] Decir "devnet / test USDC / sandbox" a cámara (no presentar como plata real)
 - [ ] Tomar Explorer real de cada transacción (2 links mínimo)
 
+## Nota técnica: margen de crédito (divergencia mock ↔ programa)
+
+Para el jurado y para quien retome el programa — que no quede escondida:
+
+- **Lo que se ve en la demo:** el estudiante puede tener varios planes en paralelo, como el margen de una tarjeta de crédito: el `maxPurchase` del escalón hace doble función (tope por compra y línea total). `quote()` bloquea con `exceeds_credit_limit` cuando `activeExposure + repayable` supera ese margen (`app/src/lib/cuotas/mock.ts:95-105`).
+- **Lo que hace el programa on-chain hoy:** fuerza **un solo plan por estudiante** — el `Plan` PDA se crea con seeds `[PLAN_SEED, student]` vía `init`, que falla si ya existe (`programa/programs/cuotas/src/instructions/open_plan.rs:146`). El cliente real (`app/src/lib/cuotas/real.ts`) mantiene la semántica vieja y emite `has_active_plan`.
+- **Por qué:** la demo corre sobre el cliente mock (`NEXT_PUBLIC_CUOTAS_MODE=mock`); el margen de crédito se implementó solo ahí (decisión del equipo, `.scratch/demo-polish/spec.md` §"Divergencia conocida"). No afecta lo que se muestra porque nada en la demo pega al programa real todavía (pendiente Fase A3, ver `proyecto/handoff-demo-devnet.md`).
+- **Evolución futura del programa (upgrade):** seeds `[PLAN_SEED, student, generation]` para permitir planes en paralelo + chequeo `active_exposure + repayable ≤ tope del escalón` en `open_plan`. Hasta entonces, el mock y el cliente real difieren en este punto.
+
 ✔ 4/6 (borrador). Pasos 1,2,3,5,6: [PENDIENTE].
