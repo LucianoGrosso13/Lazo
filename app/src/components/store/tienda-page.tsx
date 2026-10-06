@@ -6,6 +6,7 @@ import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
 import { CATALOG } from "@/lib/catalog";
 import {
+  CuotasError,
   DEMO_MERCHANT,
   formatUsdc,
   getCuotas,
@@ -13,6 +14,7 @@ import {
   type Micro,
   type ProtocolConfig,
   type Quote,
+  type Reputation,
 } from "@/lib/cuotas";
 import { DEMO_CONFIG } from "@/lib/cuotas/demo-config";
 import { splitPurchase } from "@/components/landing/split";
@@ -33,6 +35,7 @@ const useMounted = () => useSyncExternalStore(noopSubscribe, () => true, () => f
 
 interface WalletView {
   guarantee: Guarantee | null;
+  reputation: Reputation | null;
   quotes: Record<string, Quote>;
 }
 
@@ -43,6 +46,7 @@ function badgeText(
   quote: Quote | null,
   withinTier: boolean,
   guarantee: Guarantee | null,
+  exposure: Micro,
   config: ProtocolConfig,
   t: Dict,
   fmt: (m: Micro, d?: number) => string,
@@ -54,6 +58,21 @@ function badgeText(
     case "exceeds_tier_max": {
       const tier = quote?.tier ?? 0;
       return t.reasons.exceeds_tier_max(fmt(config.guaranteedTiers[tier].maxPurchase, 0));
+    }
+    case "exceeds_credit_limit": {
+      // Misma cuenta que computeQuote: el maxPurchase del escalón cotizado
+      // es la línea de crédito total; `exposure` es lo que ya está en uso.
+      const tier = quote?.tier ?? 0;
+      const params =
+        quote?.withGuarantee === false
+          ? config.unguaranteedTiers[
+              Math.min(tier, config.unguaranteedTiers.length - 1)
+            ]
+          : config.guaranteedTiers[tier];
+      return t.reasons.exceeds_credit_limit(
+        fmt(exposure, 0),
+        fmt(params.maxPurchase, 0),
+      );
     }
     case "exceeds_guarantor_max_purchase":
       return guarantee
@@ -92,12 +111,18 @@ export function TiendaPage() {
     async (c): Promise<WalletView> => {
       // La key solo se activa con una wallet conectada: address no es null acá.
       const student = address ?? "";
-      const [guarantee, ...quotes] = await Promise.all([
+      const [guarantee, reputation, ...quotes] = await Promise.all([
         c.getGuarantee(student),
+        // Estudiante sin Reputation on-chain todavía: primera compra, margen intacto.
+        c.getReputation(student).catch((e) => {
+          if (e instanceof CuotasError && e.code === "not_found") return null;
+          throw e;
+        }),
         ...CATALOG.map((p) => c.quote(p.price, student)),
       ]);
       return {
         guarantee,
+        reputation,
         quotes: Object.fromEntries(CATALOG.map((p, i) => [p.id, quotes[i]])),
       };
     },
@@ -123,16 +148,17 @@ export function TiendaPage() {
     if (address && walletQ.data) {
       const q = walletQ.data.quotes[id];
       if (!q) return null;
+      const exposure = walletQ.data.reputation?.activeExposure ?? 0;
       return {
         terms: { tier: q.tier, downPayment: q.downPayment, installments: q.installments, blocked: q.reasons[0] ?? null },
-        badge: badgeText(q, true, walletQ.data.guarantee, config, t, fmt),
+        badge: badgeText(q, true, walletQ.data.guarantee, exposure, config, t, fmt),
       };
     }
     // Sin wallet: cotiza el escalón 0 (la misma cuenta que `quote()`).
     const s = splitPurchase(config, price, 0);
     return {
       terms: { tier: 0, downPayment: s.downPayment, installments: s.installments, blocked: s.withinTier ? null : "exceeds_tier_max" },
-      badge: badgeText(null, s.withinTier, null, config, t, fmt),
+      badge: badgeText(null, s.withinTier, null, 0, config, t, fmt),
     };
   };
 

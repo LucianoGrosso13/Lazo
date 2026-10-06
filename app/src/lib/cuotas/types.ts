@@ -74,6 +74,10 @@ export interface Guarantee {
 
 export type QuoteBlockReason =
   | "exceeds_tier_max"
+  /** Solo la emite el mock: margen de crédito por escalón (varios planes en
+   * paralelo). El cliente real sigue emitiendo `has_active_plan` porque el
+   * programa on-chain fuerza un plan por estudiante vía PDA. */
+  | "exceeds_credit_limit"
   | "exceeds_guarantor_max_purchase"
   | "exceeds_guarantee_coverage"
   | "no_guarantee"

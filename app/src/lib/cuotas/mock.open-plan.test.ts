@@ -84,18 +84,66 @@ describe("openPlan", () => {
   });
 
   it("rechaza con el motivo de la cotización cuando no es elegible", async () => {
+    // Compra individual por encima del tope del escalón
     await expect(
       c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(1200) }),
     ).rejects.toMatchObject({ code: "exceeds_tier_max" });
+    expect((await c.quote(toMicro(1200), W)).reasons).toContain(
+      "exceeds_tier_max",
+    );
 
-    // Una compra abierta bloquea la siguiente (un plan activo por estudiante)
+    // Una compra abierta no bloquea la siguiente: lo que bloquea es el
+    // margen del escalón. PC 1.000 (financiado 700) + curso 120 (financiado
+    // 84): 784 ≤ 1.000 → ambos planes activos en paralelo.
     await c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(1000) });
+    const { value: curso } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(120),
+    });
+    expect(curso.status).toBe("Active");
+    expect(curso.financed).toBe(toMicro(84));
+    expect((await c.getReputation(W)).activeExposure).toBe(toMicro(784));
+    expect(
+      (await c.getPlans(W)).filter((p) => p.status === "Active"),
+    ).toHaveLength(2);
+
+    // Notebook 650 (financiado 455): 784 + 455 = 1.239 > 1.000 → sin margen
     await expect(
-      c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(200) }),
-    ).rejects.toMatchObject({ code: "has_active_plan" });
+      c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(650) }),
+    ).rejects.toMatchObject({ code: "exceeds_credit_limit" });
     await expect(
-      c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(200) }),
+      c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(650) }),
     ).rejects.toBeInstanceOf(CuotasError);
+  });
+
+  it("pagar cuotas libera margen y habilita la compra que no entraba", async () => {
+    const { value: pc } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+
+    // 700 en uso + 455 nuevos > 1.000: la notebook no entra
+    await expect(
+      c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(650) }),
+    ).rejects.toMatchObject({ code: "exceeds_credit_limit" });
+
+    // Pagar la cuota 1 baja la exposición a 466,666667 → +455 = 921,666667 ≤ 1.000
+    await c.payInstallment(W, pc.id);
+    expect((await c.getReputation(W)).activeExposure).toBe(
+      toMicro(700) - 233_333_333,
+    );
+
+    const { value: nb } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(650),
+    });
+    expect(nb.status).toBe("Active");
+    expect(
+      (await c.getPlans(W)).filter((p) => p.status === "Active"),
+    ).toHaveLength(2);
   });
 
   it("rechaza si el comercio no existe", async () => {
@@ -104,10 +152,19 @@ describe("openPlan", () => {
     ).rejects.toMatchObject({ code: "not_found" });
   });
 
-  it("quote del estudiante con plan activo incluye has_active_plan", async () => {
+  it("quote con plan activo: dentro del margen es elegible, sin margen marca exceeds_credit_limit", async () => {
+    // Financiado 350 en uso: nunca más has_active_plan
     await c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(500) });
-    const q = await c.quote(toMicro(300), W);
-    expect(q.eligible).toBe(false);
-    expect(q.reasons).toContain("has_active_plan");
+
+    // 350 + 210 (financiado de 300) = 560 ≤ 1.000 → entra
+    const dentro = await c.quote(toMicro(300), W);
+    expect(dentro.eligible).toBe(true);
+    expect(dentro.reasons).toEqual([]);
+
+    // 350 + 665 (financiado de 950) = 1.015 > 1.000 → sin margen
+    const over = await c.quote(toMicro(950), W);
+    expect(over.eligible).toBe(false);
+    expect(over.reasons).toContain("exceeds_credit_limit");
+    expect(over.reasons).not.toContain("has_active_plan");
   });
 });

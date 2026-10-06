@@ -111,6 +111,7 @@ export function CheckoutScreen({
         eligible: q.eligible,
         reasons: q.reasons,
         withGuarantee: q.withGuarantee,
+        activeExposure: mine.reputation?.activeExposure ?? 0,
       };
     }
     if (config) {

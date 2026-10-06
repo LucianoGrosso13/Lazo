@@ -54,6 +54,12 @@ export const checkout = defineDict({
           `Al llegar al escalón ${n} el tope sube a US$ ${max}: se gana pagando planes a tiempo.`,
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
+      exceeds_credit_limit: {
+        t: "No te alcanza el margen",
+        d: (used: string, limit: string) =>
+          `Estás usando US$ ${used} de tu margen de US$ ${limit}. Pagando cuotas liberás margen, como una tarjeta.`,
+        cta: { label: "Ver mis planes", href: "/panel" },
+      },
       exceeds_guarantor_max_purchase: {
         t: "Supera el tope de tu garante",
         d: (max: string) => `Tu garante te cubre compras hasta US$ ${max}.`,
@@ -95,6 +101,7 @@ export const checkout = defineDict({
       errorTitle: "No se pudo abrir el plan",
       errors: {
         exceeds_tier_max: "El precio supera el tope de tu escalón.",
+        exceeds_credit_limit: "No te alcanza el margen: pagando cuotas lo liberás.",
         exceeds_guarantor_max_purchase: "Supera el tope de tu garante.",
         exceeds_guarantee_coverage: "Tu garante no llega a cubrir esta compra.",
         no_guarantee: "Necesitás un garante activo para comprar.",
@@ -172,6 +179,12 @@ export const checkout = defineDict({
           `At tier ${n} the cap rises to US$ ${max}: you get there by paying plans on time.`,
         cta: { label: "See something cheaper", href: "/tienda" },
       },
+      exceeds_credit_limit: {
+        t: "Not enough credit margin",
+        d: (used: string, limit: string) =>
+          `You're using US$ ${used} of your US$ ${limit} margin. Paying installments frees up margin, like a card.`,
+        cta: { label: "See my plans", href: "/panel" },
+      },
       exceeds_guarantor_max_purchase: {
         t: "It's over your guarantor's cap",
         d: (max: string) => `Your guarantor covers purchases up to US$ ${max}.`,
@@ -213,6 +226,7 @@ export const checkout = defineDict({
       errorTitle: "The plan couldn't be opened",
       errors: {
         exceeds_tier_max: "The price is over your tier's cap.",
+        exceeds_credit_limit: "Not enough credit margin: paying installments frees it up.",
         exceeds_guarantor_max_purchase: "It's over your guarantor's cap.",
         exceeds_guarantee_coverage: "Your guarantor can't cover this purchase.",
         no_guarantee: "You need an active guarantor to buy.",
