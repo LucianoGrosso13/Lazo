@@ -8,7 +8,7 @@ import {
   useTweened,
   type StageBand,
 } from "./prism-stage";
-import type { BandSlice, Stage3DRenderer } from "./prism-3d-renderer";
+import { toSlices, type Stage3DRenderer } from "./prism-3d-renderer";
 import styles from "./landing.module.css";
 
 interface Props {
@@ -61,19 +61,6 @@ export function PrismStage3D(props: Props) {
   return <Stage3DScene {...props} onFail={fail} />;
 }
 
-interface BandGeom extends StageBand {
-  shown: number;
-  e0: number;
-  e1: number;
-  f0: number;
-  f1: number;
-  on: boolean;
-}
-
-function toSlices(geom: BandGeom[]): BandSlice[] {
-  return geom.map((g) => ({ e0: g.e0, e1: g.e1, f0: g.f0, f1: g.f1, color: g.color, on: g.on }));
-}
-
 function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabel }: Props & { onFail: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Stage3DRenderer | null>(null);
@@ -102,6 +89,17 @@ function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabe
     crackedRef.current = cracked;
     rendererRef.current?.setCracked(cracked);
   }, [cracked]);
+
+  // Pulso de re-refracción: precio, producto o escalón cambiaron y la luz
+  // se reparte de nuevo. Salta el primer render (montaje, no cambio).
+  const firstBands = useRef(true);
+  useEffect(() => {
+    if (firstBands.current) {
+      firstBands.current = false;
+      return;
+    }
+    rendererRef.current?.pulse();
+  }, [bands]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
