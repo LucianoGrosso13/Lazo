@@ -1,10 +1,15 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
 import { CATALOG } from "@/lib/catalog";
+import {
+  DIRECTORY,
+  DIRECTORY_CATEGORIES,
+  type DirectoryCategory,
+} from "@/lib/directory";
 import {
   CuotasError,
   DEMO_MERCHANT,
@@ -29,7 +34,7 @@ import { useLocale, useT } from "@/i18n/locale";
 import { useWalletAddress, WalletButton } from "@/components/wallet-button";
 import { GlassPanel } from "@/components/ui/glass";
 import { ReferenceTag } from "@/components/ui/badges";
-import { Chip } from "@/components/ui/chip";
+import { Chip, SegmentedControl } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { ProductCard, type ProductTerms } from "./product-card";
@@ -37,6 +42,14 @@ import styles from "./store.module.css";
 
 const noopSubscribe = () => () => {};
 const useMounted = () => useSyncExternalStore(noopSubscribe, () => true, () => false);
+
+/** Cada categoría es una banda del espectro: el directorio es el haz ya partido. */
+const DIR_COLORS: Record<DirectoryCategory, string> = {
+  tech: "#9945FF",
+  books: "#6C63FF",
+  gear: "#00C2FF",
+  courses: "#19FB9B",
+};
 
 interface WalletView {
   guarantee: Guarantee | null;
@@ -178,6 +191,13 @@ export function TiendaPage() {
     };
   };
 
+  // Directorio editorial: filtra en cliente, no depende del protocolo.
+  const [cat, setCat] = useState<"all" | DirectoryCategory>("all");
+  const dirFiltered =
+    cat === "all" ? DIRECTORY : DIRECTORY.filter((e) => e.category === cat);
+  // El nombre del comercio de la demo sale del merchant real cuando cargó.
+  const demoMerchantName = merchantQ.data?.name ?? DIRECTORY[0].name;
+
   const [featured, ...rest] = CATALOG;
   const featuredQuote = walletQ.data?.quotes[featured.id];
   const tier = featuredQuote?.tier;
@@ -276,6 +296,73 @@ export function TiendaPage() {
           </div>
         </div>
       )}
+
+      <GlassPanel className={styles.dir} role="region" aria-labelledby="dir-title">
+        <div className={styles.dirHead}>
+          <div className={styles.dirHeadText}>
+            <h2 id="dir-title" className={styles.dirTitle}>
+              {t.dir.title}
+              <ReferenceTag>{t.dir.fictionalTag}</ReferenceTag>
+            </h2>
+            <div className={styles.dirBeam} aria-hidden>
+              <span className={styles.refractIn} />
+              <span className={styles.prismNotch} />
+              <span className={styles.dirBands}>
+                {DIRECTORY_CATEGORIES.map((c) => (
+                  <i key={c} style={{ background: DIR_COLORS[c] }} />
+                ))}
+              </span>
+            </div>
+            <p className={styles.dirLede}>{t.dir.lede}</p>
+          </div>
+          <div className={styles.dirTools}>
+            <SegmentedControl
+              options={[
+                { value: "all" as const, label: t.dir.filterAll },
+                ...DIRECTORY_CATEGORIES.map((c) => ({ value: c, label: t.dir.cats[c] })),
+              ]}
+              value={cat}
+              onChange={setCat}
+              label={t.dir.filterAria}
+            />
+            <span className={styles.dirCount} aria-live="polite">
+              {t.dir.count(dirFiltered.length, DIRECTORY.length)}
+            </span>
+          </div>
+        </div>
+        <ul className={styles.dirList}>
+          {dirFiltered.map((e) => (
+            <li key={e.id} className={styles.dirRow} data-demo={e.handlesDemo || undefined}>
+              <div className={styles.dirMain}>
+                <div className={styles.dirNameRow}>
+                  <span
+                    className={styles.dirTick}
+                    style={{ "--band": DIR_COLORS[e.category] } as CSSProperties}
+                    aria-hidden
+                  />
+                  <h3 className={styles.dirName}>
+                    {e.handlesDemo ? demoMerchantName : e.name}
+                  </h3>
+                  <Chip>{t.dir.cats[e.category]}</Chip>
+                  {e.handlesDemo ? <Chip on>{t.dir.demoTag}</Chip> : null}
+                </div>
+                <p className={styles.dirBlurb}>{e.blurb[locale]}</p>
+              </div>
+              <dl className={styles.dirMeta}>
+                <div className={styles.term}>
+                  <dt>{t.dir.zoneLabel}</dt>
+                  <dd>{e.zone[locale]}</dd>
+                </div>
+                <div className={styles.term}>
+                  <dt>{t.dir.fulfillmentLabel}</dt>
+                  <dd>{t.dir.fulfillment[e.fulfillment]}</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.dirFoot}>{t.dir.foot(demoMerchantName)}</p>
+      </GlassPanel>
 
       <p className={styles.foot}>{t.footer}</p>
     </div>

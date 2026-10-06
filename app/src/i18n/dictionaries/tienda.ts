@@ -37,6 +37,30 @@ export const tienda = defineDict({
     cardAria: (name: string, price: string, down: string, inst: string, n: number) =>
       `${name}, US$ ${price}. Anticipo US$ ${down} y ${n} cuotas de US$ ${inst}, sin interés.`,
     footer: "Los montos salen de la configuración del protocolo y de tu escalón. Nada es real: corre en devnet.",
+    dir: {
+      title: "Comercios adheridos",
+      fictionalTag: "ejemplos ficticios",
+      lede: "Ejemplos de comercios para estudiar, equiparte y dar tus primeros pasos. Son perfiles ficticios, sin acuerdos comerciales reales.",
+      filterAria: "Filtrar comercios por categoría",
+      filterAll: "Todos",
+      count: (n: number, total: number) => `${n} de ${total}`,
+      cats: {
+        tech: "Tecnología",
+        books: "Librería",
+        gear: "Equipamiento",
+        courses: "Cursos online",
+      },
+      zoneLabel: "Zona",
+      fulfillmentLabel: "Entrega",
+      fulfillment: {
+        pickup: "Retiro en local",
+        delivery: "Envío local",
+        online: "Acceso online",
+      },
+      demoTag: "Cobra en la demo",
+      foot: (name: string) =>
+        `Las compras de prueba se procesan con ${name} en devnet; los demás perfiles son ilustrativos.`,
+    },
   },
   en: {
     title: "The shop window",
@@ -73,5 +97,29 @@ export const tienda = defineDict({
     cardAria: (name: string, price: string, down: string, inst: string, n: number) =>
       `${name}, US$ ${price}. US$ ${down} down payment and ${n} installments of US$ ${inst}, interest-free.`,
     footer: "Amounts come from the protocol config and your tier. Nothing is real: it runs on devnet.",
+    dir: {
+      title: "Example stores",
+      fictionalTag: "fictional examples",
+      lede: "Sample stores for studying, gearing up and taking your first steps. These are fictional profiles — no real commercial agreements exist.",
+      filterAria: "Filter stores by category",
+      filterAll: "All",
+      count: (n: number, total: number) => `${n} of ${total}`,
+      cats: {
+        tech: "Technology",
+        books: "Bookstore",
+        gear: "Equipment",
+        courses: "Online courses",
+      },
+      zoneLabel: "Area",
+      fulfillmentLabel: "Fulfillment",
+      fulfillment: {
+        pickup: "Store pickup",
+        delivery: "Local delivery",
+        online: "Online access",
+      },
+      demoTag: "Runs the demo checkout",
+      foot: (name: string) =>
+        `Test purchases are processed through ${name} on devnet; the other profiles are illustrative.`,
+    },
   },
 });

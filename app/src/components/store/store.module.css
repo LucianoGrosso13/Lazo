@@ -627,6 +627,224 @@
   line-height: 1.5;
 }
 
+/* ---------- Directorio: la red de ejemplo ---------- */
+/* Una losa-registro: cada comercio es una banda del haz ya partido
+   arriba. Editorial, no transaccional: ninguna fila compra nada. */
+
+.dir {
+  margin-top: clamp(1.4rem, 3vw, 2.4rem);
+  padding: clamp(1.2rem, 2.6vw, 2rem) clamp(1rem, 2.4vw, 1.9rem) clamp(1rem, 2.2vw, 1.5rem);
+  animation: cardIn 0.68s var(--ease) 0.24s both;
+}
+
+.dirHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.85rem 2rem;
+  padding-bottom: 1.05rem;
+}
+
+.dirHeadText {
+  flex: 1 1 24rem;
+  min-width: min(100%, 18rem);
+}
+
+.dirTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* El haz del directorio: una necesidad entra blanca y sale partida
+   en las cuatro bandas-categoría. */
+.dirBeam {
+  display: flex;
+  align-items: center;
+  margin-top: 0.85rem;
+  height: 12px;
+}
+
+.dirBands {
+  display: flex;
+  width: 9rem;
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  box-shadow:
+    0 0 14px rgb(108 99 255 / 0.35),
+    inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+
+.dirBands i {
+  flex: 1;
+  display: block;
+}
+
+.dirLede {
+  margin-top: 0.7rem;
+  max-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.dirTools {
+  margin-left: auto;
+  display: grid;
+  justify-items: end;
+  align-content: end;
+  gap: 0.5rem;
+}
+
+.dirCount {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.dirList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dirRow {
+  --band: var(--violet);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.95rem clamp(0.15rem, 0.5vw, 0.4rem);
+  border-top: 1px solid rgb(244 241 255 / 0.08);
+  animation: cardIn 0.55s var(--ease) both;
+  transition: background-color 0.45s var(--ease);
+}
+
+.dirRow:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.dirRow:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.dirRow:nth-child(4) {
+  animation-delay: 210ms;
+}
+
+/* El comercio de la demo queda iluminado por su propia banda. */
+.dirRow[data-demo] {
+  box-shadow: inset 28px 0 44px -34px rgb(153 69 255 / 0.7);
+}
+
+.dirRow:hover {
+  background-color: rgb(244 241 255 / 0.03);
+}
+
+/* Tick horizontal: la marca de haz de cada comercio, mismo motivo
+   que el segmento blanco que entra al prisma. */
+.dirTick {
+  flex: none;
+  width: 1.4rem;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--band);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--band) 55%, transparent);
+  transition: box-shadow 0.45s var(--ease);
+}
+
+.dirRow:hover .dirTick {
+  box-shadow: 0 0 16px color-mix(in oklab, var(--band) 80%, transparent);
+}
+
+.dirMain {
+  display: grid;
+  gap: 0.2rem;
+  align-content: start;
+}
+
+.dirNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+
+.dirName {
+  font-size: clamp(1.05rem, 1.35vw, 1.2rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.dirBlurb {
+  max-width: 46ch;
+  font-size: 0.89rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.dirMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 2.25rem;
+  margin: 0;
+  padding-left: calc(1.4rem + 0.6rem);
+}
+
+.dirMeta .term dd {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.dirFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0 0;
+  padding: 0 clamp(0.15rem, 0.5vw, 0.4rem);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.dirFoot::before {
+  content: "";
+  flex: none;
+  width: 1.4rem;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, rgb(244 241 255 / 0.85), rgb(153 69 255 / 0.55), transparent);
+}
+
+@media (min-width: 1024px) {
+  .dirRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem 1.25rem;
+  }
+
+  .dirMeta {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .dirTools {
+    margin-left: 0;
+    justify-items: start;
+    width: 100%;
+  }
+}
+
 /* ---------- Pie ---------- */
 
 .foot {
@@ -651,11 +869,15 @@
   .media img,
   .media::before,
   .card::after,
+  .dirRow,
+  .dirTick,
   .marginFill {
     transition: none;
   }
 
   .card,
+  .dir,
+  .dirRow,
   .bandsOut,
   .marginFill {
     animation: none;
