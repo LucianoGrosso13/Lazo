@@ -18,7 +18,7 @@ export interface PrismProps {
   input: PrismInput;
   /** Las bandas espectrales: anticipo, cuotas, comercio. */
   bands: PrismBandInput[];
-  /** La alternativa en gris (Mercado Pago u otra). */
+  /** La alternativa en gris (la competencia). */
   comparison?: PrismComparison | null;
   /** Marcas por banda: { [bandId]: "cracked" | "refilled" | "etched" }. */
   state?: PrismState;

@@ -207,27 +207,25 @@ function Benefits() {
 
   return (
     <section className={styles.section} aria-labelledby="benefits-title">
-      <details className={styles.economicsDisclosure}>
-        <summary className={`${styles.h2} ${styles.h2Wide} ${styles.disclosureSummary}`}>
-          <span id="benefits-title">{t.title}</span>
-        </summary>
-        <div className={styles.ledger}>
-          {rows.map((r, i) => (
-            <div key={r.who} className={styles.ledgerRow} style={{ ["--band" as string]: SPECTRUM[i + 1] }}>
-              <span className={styles.ledgerWho}>{r.who}</span>
-              <span className={styles.ledgerValue}>{r.value}</span>
-              <span className={styles.ledgerLabel}>{r.label}</span>
-              <span className={styles.ledgerBeams} aria-hidden>
-                <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
-                <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
-              </span>
-              <span className={styles.ledgerVs}>
-                {r.vs} <small className={styles.refTag}>{s.reference}</small>
-              </span>
-            </div>
-          ))}
-        </div>
-      </details>
+      <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>
+        {t.title}
+      </h2>
+      <div className={styles.ledger}>
+        {rows.map((r, i) => (
+          <div key={r.who} className={styles.ledgerRow} style={{ ["--band" as string]: SPECTRUM[i + 1] }}>
+            <span className={styles.ledgerWho}>{r.who}</span>
+            <span className={styles.ledgerValue}>{r.value}</span>
+            <span className={styles.ledgerLabel}>{r.label}</span>
+            <span className={styles.ledgerBeams} aria-hidden>
+              <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
+              <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
+            </span>
+            <span className={styles.ledgerVs}>
+              {r.vs} <small className={styles.refTag}>{s.reference}</small>
+            </span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

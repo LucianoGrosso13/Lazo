@@ -20,9 +20,9 @@ export const landingHero = defineDict({
     merchant: "El comercio cobra hoy",
     interest: "interés",
     overTier: (max: string) => `En este escalón el tope es US$ ${max}. Pagá tus planes a tiempo para subir.`,
-    compareTitle: "Ver una comparación ilustrativa",
+    compareTitle: "Comparación ilustrativa",
     lazo: "Lazo",
-    mp: "Mercado Pago, cuotas sin tarjeta",
+    mp: "La competencia · cuotas sin tarjeta",
     reference: "referencia",
     savings: (x: string) => `Diferencia ilustrativa: ~US$ ${x}`,
     stageAria: (price: string, down: string, inst: string) =>
@@ -47,9 +47,9 @@ export const landingHero = defineDict({
     merchant: "Merchant gets paid today",
     interest: "interest",
     overTier: (max: string) => `This tier caps at US$ ${max}. Pay your plans on time to move up.`,
-    compareTitle: "See an illustrative price comparison",
+    compareTitle: "An illustrative comparison",
     lazo: "Lazo",
-    mp: "Mercado Pago, no-card installments",
+    mp: "The competition · no-card installments",
     reference: "reference",
     savings: (x: string) => `Illustrative difference: ~US$ ${x}`,
     stageAria: (price: string, down: string, inst: string) =>

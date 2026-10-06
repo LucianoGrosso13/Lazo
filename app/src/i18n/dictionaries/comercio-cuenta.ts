@@ -47,12 +47,12 @@ export const comercioCuenta = defineDict({
     alternativasNote:
       "Cifras de terceros publicadas por el equipo como referencia (ene–abr 2026); no son cotizaciones vigentes ni una promesa.",
     refLazo: "Lazo · sobre lo financiado",
-    refCuotaSimple: "Cuota Simple (pymes)",
-    refMp: "Mercado Pago",
+    refCuotaSimple: "Financiación en mostrador (pymes)",
+    refMp: "Billeteras digitales",
     sobreElPrecio: "sobre el precio",
     referenciaTag: "referencia",
     refInstant:
-      "Cobrás al instante en USDC. GOcuotas, por ejemplo, le paga al comercio a 22 días hábiles (referencia).",
+      "Cobrás al instante en USDC. La competencia, por ejemplo, le paga al comercio a 22 días hábiles (referencia).",
     checkoutTitle: "Checkout integrable",
     checkoutBody:
       "Cada producto de la tienda demo tiene su checkout en 3 cuotas. Este es el enlace que iría en tu tienda.",
@@ -116,12 +116,12 @@ export const comercioCuenta = defineDict({
     alternativasNote:
       "Third-party figures published by the team as reference (Jan–Apr 2026); not live quotes or a promise.",
     refLazo: "Lazo · on the financed amount",
-    refCuotaSimple: "Cuota Simple (SMBs)",
-    refMp: "Mercado Pago",
+    refCuotaSimple: "Store financing (SMBs)",
+    refMp: "Digital wallets",
     sobreElPrecio: "on the price",
     referenciaTag: "reference",
     refInstant:
-      "You settle instantly in USDC. GOcuotas, for example, pays merchants 22 business days later (reference).",
+      "You settle instantly in USDC. The competition, for example, pays merchants 22 business days later (reference).",
     checkoutTitle: "Embeddable checkout",
     checkoutBody:
       "Every product in the demo store has its own 3-installment checkout. This is the link that would live in your store.",
