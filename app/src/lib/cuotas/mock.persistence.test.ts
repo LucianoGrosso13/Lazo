@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockCuotas } from "./mock";
 import { toMicro } from "./format";
+import { STORAGE_KEY } from "./mock/state";
+import { MERCHANTS } from "../merchants";
 
 const W = "WalletPersistencia1111111111111111111111111";
 
@@ -25,6 +27,33 @@ describe("persistencia (localStorage)", () => {
     expect(g).not.toBeNull();
     expect(g!.maxPurchase).toBe(toMicro(500));
     expect(g!.display?.guarantorName).toBe("Abuela");
+  });
+
+  it("la clave de storage es v3", () => {
+    expect(STORAGE_KEY).toBe("lazo.mock.v3");
+  });
+
+  it("siembra todos los comercios del directorio y persisten entre instancias", async () => {
+    const a = createMockCuotas();
+    await a.resetDemo();
+
+    // El estado persistido bajo la clave v3 trae todos los comercios.
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const saved = JSON.parse(raw!) as { merchants: Record<string, unknown> };
+    for (const m of MERCHANTS) expect(saved.merchants[m.address]).toBeTruthy();
+
+    // Y una instancia nueva que carga ese estado responde por todos.
+    const b = createMockCuotas();
+    for (const m of MERCHANTS) {
+      const merchant = await b.getMerchant(m.address);
+      expect(merchant).toMatchObject({
+        owner: m.address,
+        name: m.name,
+        active: true,
+        settlementBalance: 0,
+      });
+    }
   });
 
   it("resetDemo vuelve al estado sembrado y lo ven otras instancias", async () => {

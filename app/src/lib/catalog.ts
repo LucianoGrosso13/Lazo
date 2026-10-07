@@ -1,36 +1,19 @@
-import { toMicro, type Micro } from "./cuotas";
+import type { WalletAddress } from "./cuotas";
+import { MERCHANTS, type DirectoryProduct } from "./merchants";
 
-// Catálogo de la tienda demo (simulada). Precios en micro-USDC.
-export interface Product {
-  id: "pc" | "notebook" | "curso";
-  name: { es: string; en: string };
-  blurb: { es: string; en: string };
-  price: Micro;
-  image: string;
+// Catálogo de la tienda demo (simulada): junta los productos de todos los
+// comercios del directorio (`src/lib/merchants`). Precios en micro-USDC.
+export interface Product extends DirectoryProduct {
+  /** Comercio dueño: su cuenta Merchant del mock (dirección base58). */
+  merchant: WalletAddress;
 }
 
-export const CATALOG: Product[] = [
-  {
-    id: "pc",
-    name: { es: "PC de escritorio", en: "Desktop PC" },
-    blurb: { es: "Para programar, diseñar y rendir finales.", en: "For coding, design and finals." },
-    price: toMicro(1000),
-    image: "/products/pc.webp",
-  },
-  {
-    id: "notebook",
-    name: { es: "Notebook", en: "Laptop" },
-    blurb: { es: "Liviana, para cursar todo el día.", en: "Light enough for a full day of classes." },
-    price: toMicro(650),
-    image: "/products/notebook.webp",
-  },
-  {
-    id: "curso",
-    name: { es: "Curso online", en: "Online course" },
-    blurb: { es: "Un curso de desarrollo web completo.", en: "A full web development course." },
-    price: toMicro(120),
-    image: "/products/curso.webp",
-  },
-];
+export const CATALOG: Product[] = MERCHANTS.flatMap((m) =>
+  m.products.map((p) => ({ ...p, merchant: m.address })),
+);
 
 export const getProduct = (id: string) => CATALOG.find((p) => p.id === id) ?? null;
+
+/** Productos de un comercio del directorio (la tienda filtra por Voltia). */
+export const productsByMerchant = (merchant: WalletAddress): Product[] =>
+  CATALOG.filter((p) => p.merchant === merchant);

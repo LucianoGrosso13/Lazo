@@ -1,6 +1,7 @@
 // Estado interno del mock: serializable, persistido en localStorage
 // (clave versionada) y SSR-safe (en servidor vive solo en memoria).
-import { DEMO_MERCHANT, DEMO_STUDENT_TIER3 } from "../format";
+import { DEMO_STUDENT_TIER3 } from "../format";
+import { MERCHANTS } from "../../merchants";
 import type {
   Activity,
   Guarantee,
@@ -15,9 +16,10 @@ import type {
   WalletAddress,
 } from "../types";
 
-// v2: el comercio sembrado pasó a llamarse "Voltia"; la clave vieja no
-// resucita el nombre anterior desde localStorage.
-export const STORAGE_KEY = "lazo.mock.v2";
+// v3: el mock siembra todos los comercios del directorio demo
+// (`src/lib/merchants`), no solo Voltia; la clave vieja no resucita el
+// directorio anterior desde localStorage.
+export const STORAGE_KEY = "lazo.mock.v3";
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const HEX = "0123456789abcdef";
@@ -129,16 +131,23 @@ export function seedState(config: ProtocolConfig): MockState {
     reputations: {},
     guarantees: {},
     plans: [],
-    merchants: {
-      [DEMO_MERCHANT]: {
-        owner: DEMO_MERCHANT,
-        name: "Voltia",
-        active: true,
-        settlementBalance: 0,
-        plansCount: 0,
-        sales: [],
-      },
-    },
+    // Todos los comercios del directorio (Voltia incluida): se puede
+    // comprar en cualquiera y la venta se atribuye al comercio correcto.
+    merchants: Object.fromEntries(
+      MERCHANTS.map(
+        (m): [WalletAddress, Merchant] => [
+          m.address,
+          {
+            owner: m.address,
+            name: m.name,
+            active: true,
+            settlementBalance: 0,
+            plansCount: 0,
+            sales: [],
+          },
+        ],
+      ),
+    ),
     pool: {
       juniorCapital: junior,
       seniorCapital: senior,
