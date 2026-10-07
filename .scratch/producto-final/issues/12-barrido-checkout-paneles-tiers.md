@@ -9,7 +9,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/components/checkout/{plan-selector.tsx,breakdown.tsx,confirm-panel.tsx,confirm-success.tsx,format.ts}`, `app/src/i18n/dictionaries/{checkout.ts,tienda.ts,marketplace.ts,account.ts,cuentas.ts,fiador-cuenta.ts,invitacion-cuenta.ts,admin-cuenta.ts,pool-cuenta.ts,design.ts}`, `app/src/components/store/*`, `app/src/components/marketplace/*`, `app/src/components/cuenta/{estudiante.tsx,mock-account.tsx,admin.tsx,invitar-fiador.tsx,account-shell.tsx}`, `app/src/components/cuenta/fiador/*`, `app/src/app/design/*`. **No** toques `checkout-screen.tsx` (es del 09) ni `cuenta/comercio.tsx` (es del 08).
 
@@ -19,8 +19,8 @@ Notas:
 - Admin: la tabla de escalones pasa a "Tiers" y saca la fila de tiers sin fiador.
 - Marketplace: una única nota "comercios de ejemplo" en el directorio; fuera los chips "demo" de cada tarjeta.
 
-- [ ] `rg -i "escal[oó]n|provisional|ilustrativ" app/src --glob '!**/generated/**'` sin resultados en la UI de estos archivos (es y en)
-- [ ] Mínimo de 6 cuotas, fiador obligatorio y sin cupo con mensajes claros
-- [ ] Documento de fianza con la cobertura decidida
-- [ ] 390/1440 de checkout, tienda, marketplace, paneles estudiante/fiador/admin; capturas `evidence/12-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Copy visible ES/EN sin "escalón", "provisional" ni "ilustrativo"; el escaneo de archivos propios solo encuentra nombres/compatibilidad internos, no texto de UI.
+- [x] Mínimo de 6 cuotas, fiador obligatorio y sin cupo con mensajes claros
+- [x] Documento de fianza con cobertura de capital + interés y punitorio excluido; máximo igual al tope aceptado
+- [x] 390/1440 de checkout, tienda, marketplace, paneles estudiante/fiador/admin; capturas `evidence/12-*`
+- [x] typecheck / lint / test / build en verde

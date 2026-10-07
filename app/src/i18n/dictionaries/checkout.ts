@@ -1,12 +1,13 @@
 import { defineDict } from "../locale";
+import { tierLabel } from "./tiers";
 
 export const checkout = defineDict({
   es: {
     back: "Tienda",
     price: "Precio",
     breakdownTitle: "Tu desglose",
-    tierChip: (n: number) => `Escalón ${n}`,
-    previewNote: "Vista previa del escalón 0: conectá tu wallet para ver el tuyo.",
+    tierChip: (n: number) => tierLabel(n),
+    previewNote: "Vista previa del Tier 1 · Starter: conectá tu wallet para ver el tuyo.",
     stageDown: "Anticipo",
     down: "Anticipo · hoy",
     installment: (i: number) => `Cuota ${i}`,
@@ -20,7 +21,9 @@ export const checkout = defineDict({
       interestTotal: (pct: string) => `+${pct}% de interés en total`,
       each: (amt: string) => `US$ ${amt} cada una`,
       unavailable: "Esta opción no está disponible en la demo.",
-      provisional: "provisional",
+      belowMin: (n: number, min: string) => `${n} cuotas desde US$ ${min}`,
+      guarantorRequired: "Necesitás un fiador activo para abrir un plan.",
+      noCapacity: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
     },
     interestRow: "Interés del plan",
     interestChip: (pct: string) => `+${pct}%`,
@@ -28,9 +31,9 @@ export const checkout = defineDict({
       `${name} cobra US$ ${x} hoy, sin esperar.`,
     merchantDeferred: (name: string, today: string, rest: string, days: number) =>
       `${name} cobra US$ ${today} hoy y US$ ${rest} a ${days} días.`,
-    guarantorLabel: "Garante",
+    guarantorLabel: "Fiador",
     guarantorLine: (card: string | null, max: string) =>
-      `Garante${card ? ` · ${card}` : ""} · tope US$ ${max}`,
+      `Fiador${card ? ` · ${card}` : ""} · tope US$ ${max}`,
     checking: "Buscando tu wallet…",
     connectTitle: "Conectá tu wallet para comprar",
     connectBody:
@@ -57,15 +60,15 @@ export const checkout = defineDict({
         cta: { label: "Ir a mi plan", href: "/panel" },
       },
       no_guarantee: {
-        t: "Necesitás un garante",
-        d: "Lazo te presta porque un garante te respalda con su tarjeta: solo paga si vos no pagás. Mandale la invitación para activarlo.",
-        cta: { label: "Invitar a mi garante", href: "/app/estudiante" },
+        t: "Necesitás un fiador",
+        d: "Para abrir un plan necesitás un fiador. Invitalo en 2 minutos.",
+        cta: { label: "Invitar a mi fiador", href: "/app/estudiante#invite-guarantor" },
       },
       exceeds_tier_max: {
-        t: "Supera el tope de tu escalón",
-        d: (max: string) => `En tu escalón el tope es US$ ${max}.`,
+        t: "Supera el tope de tu Tier",
+        d: (max: string) => `En tu Tier el tope es US$ ${max}.`,
         next: (n: number, max: string) =>
-          `Al llegar al escalón ${n} el tope sube a US$ ${max}: se gana pagando planes a tiempo.`,
+          `Al llegar a Tier ${n + 1} el tope sube a US$ ${max}: se gana pagando planes a tiempo.`,
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
       exceeds_credit_limit: {
@@ -88,6 +91,15 @@ export const checkout = defineDict({
         t: "Esa opción no está disponible",
         d: "La opción de cuotas o de cobro que pediste no existe o está en pausa en la demo.",
         cta: null,
+      },
+      below_option_min: {
+        t: (n: number, min: string) => `${n} cuotas desde US$ ${min}`,
+        d: (n: number, min: string) => `Para elegir ${n} cuotas, la compra debe ser de al menos US$ ${min}.`,
+        fallback: "Esta opción requiere alcanzar el precio mínimo configurado.",
+      },
+      pool_liquidity: {
+        t: "Sin cupo disponible",
+        d: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
       },
     },
     margin: {
@@ -128,11 +140,14 @@ export const checkout = defineDict({
       back: "Volver",
       errorTitle: "No se pudo abrir el plan",
       errors: {
-        exceeds_tier_max: "El precio supera el tope de tu escalón.",
+        exceeds_tier_max: "El precio supera el tope de tu Tier.",
         exceeds_credit_limit: "No te alcanza el margen: pagando cuotas lo liberás.",
         exceeds_guarantor_max_purchase: "Supera el tope de tu garante.",
         exceeds_guarantee_coverage: "Tu garante no llega a cubrir esta compra.",
         no_guarantee: "Necesitás un garante activo para comprar.",
+        guarantor_required: "Para abrir un plan necesitás un fiador. Invitalo en 2 minutos.",
+        below_option_min: "La compra no alcanza el mínimo configurado para esa opción.",
+        pool_liquidity: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
         blocked_after_default: "Tu cuenta está bloqueada para planes nuevos.",
         has_active_plan: "Ya tenés un plan activo: pagalo antes de abrir otro.",
         protocol_halted: "El protocolo está en pausa. Probá más tarde.",
@@ -150,7 +165,6 @@ export const checkout = defineDict({
         youPaid: (x: string) => `Pagaste el anticipo: US$ ${x}`,
         installments: (n: number, amt: string) => `Quedan ${n} cuotas de US$ ${amt}`,
         interestFact: (x: string) => `Incluye US$ ${x} de interés`,
-        provisionalFact: "Términos provisionales de la demo",
         beamYou: "tu wallet",
         beamAria: (x: string) =>
           `La luz de tu pago viaja hasta el comercio, que cobra US$ ${x} al instante.`,
@@ -164,8 +178,8 @@ export const checkout = defineDict({
     back: "Store",
     price: "Price",
     breakdownTitle: "Your breakdown",
-    tierChip: (n: number) => `Tier ${n}`,
-    previewNote: "Tier 0 preview: connect your wallet to see yours.",
+    tierChip: (n: number) => tierLabel(n),
+    previewNote: "Tier 1 · Starter preview: connect your wallet to see yours.",
     stageDown: "Down payment",
     down: "Down payment · today",
     installment: (i: number) => `Installment ${i}`,
@@ -179,7 +193,9 @@ export const checkout = defineDict({
       interestTotal: (pct: string) => `+${pct}% total interest`,
       each: (amt: string) => `US$ ${amt} each`,
       unavailable: "This option isn't available in the demo.",
-      provisional: "provisional",
+      belowMin: (n: number, min: string) => `${n} installments from US$ ${min}`,
+      guarantorRequired: "You need an active guarantor to open a plan.",
+      noCapacity: "There is no capacity for new plans right now. Try again later.",
     },
     interestRow: "Plan interest",
     interestChip: (pct: string) => `+${pct}%`,
@@ -217,14 +233,14 @@ export const checkout = defineDict({
       },
       no_guarantee: {
         t: "You need a guarantor",
-        d: "Lazo lends to you because a family member backs you with their card: they only pay if you don't. Send them the invite to activate it.",
-        cta: { label: "Invite my guarantor", href: "/app/estudiante" },
+        d: "You need a guarantor to open a plan. Invite them in 2 minutes.",
+        cta: { label: "Invite my guarantor", href: "/app/estudiante#invite-guarantor" },
       },
       exceeds_tier_max: {
-        t: "It's over your tier's cap",
-        d: (max: string) => `Your tier caps at US$ ${max}.`,
+        t: "It's over your Tier's cap",
+        d: (max: string) => `Your Tier caps at US$ ${max}.`,
         next: (n: number, max: string) =>
-          `At tier ${n} the cap rises to US$ ${max}: you get there by paying plans on time.`,
+          `At Tier ${n + 1} the cap rises to US$ ${max}: you get there by paying plans on time.`,
         cta: { label: "See something cheaper", href: "/tienda" },
       },
       exceeds_credit_limit: {
@@ -247,6 +263,15 @@ export const checkout = defineDict({
         t: "That option isn't available",
         d: "The installment or settlement option you asked for doesn't exist or is paused in the demo.",
         cta: null,
+      },
+      below_option_min: {
+        t: (n: number, min: string) => `${n} installments from US$ ${min}`,
+        d: (n: number, min: string) => `To choose ${n} installments, the purchase must be at least US$ ${min}.`,
+        fallback: "This option requires meeting its configured minimum price.",
+      },
+      pool_liquidity: {
+        t: "No capacity available",
+        d: "There is no capacity for new plans right now. Try again later.",
       },
     },
     margin: {
@@ -292,6 +317,9 @@ export const checkout = defineDict({
         exceeds_guarantor_max_purchase: "It's over your guarantor's cap.",
         exceeds_guarantee_coverage: "Your guarantor can't cover this purchase.",
         no_guarantee: "You need an active guarantor to buy.",
+        guarantor_required: "You need a guarantor to open a plan. Invite them in 2 minutes.",
+        below_option_min: "The purchase doesn't meet this option's configured minimum.",
+        pool_liquidity: "There is no capacity for new plans right now. Try again later.",
         blocked_after_default: "Your account is blocked from new plans.",
         has_active_plan: "You already have an active plan: pay it off first.",
         protocol_halted: "The protocol is paused. Try again later.",
@@ -309,7 +337,6 @@ export const checkout = defineDict({
         youPaid: (x: string) => `You paid the down payment: US$ ${x}`,
         installments: (n: number, amt: string) => `${n} installments of US$ ${amt} left`,
         interestFact: (x: string) => `Includes US$ ${x} of interest`,
-        provisionalFact: "Provisional demo terms",
         beamYou: "your wallet",
         beamAria: (x: string) =>
           `The light of your payment travels to the merchant, who gets US$ ${x} instantly.`,

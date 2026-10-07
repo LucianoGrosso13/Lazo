@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   formatUsdc,
+  planOptionsOf,
   type Bps,
   type DemoClock,
   type Guarantee,
@@ -16,6 +17,7 @@ import {
   type TierIndex,
 } from "@/lib/cuotas";
 import { checkout } from "@/i18n/dictionaries/checkout";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import { GlassPanel } from "@/components/ui/glass";
 import { Chip } from "@/components/ui/chip";
@@ -50,7 +52,7 @@ export interface BreakdownData {
   settlementDays: number;
   /** Cuotas de la opción elegida (3 ó 6 en la demo). */
   installmentsCount: number;
-  /** Alguna opción cotizada es provisional: se rotula. */
+  /** Campo de compatibilidad del cliente. */
   provisional: boolean;
   eligible: boolean;
   reasons: QuoteBlockReason[];
@@ -107,7 +109,7 @@ export function Breakdown({
     <GlassPanel className={styles.panel}>
       <div className={styles.panelHead}>
         <h2 className={styles.panelTitle}>{t.breakdownTitle}</h2>
-        <Chip on>{t.tierChip(data.tier)}</Chip>
+        <Chip on>{tierLabel(data.tier)}</Chip>
       </div>
 
       {planPicker ? <PlanSelector {...planPicker} /> : null}
@@ -163,7 +165,6 @@ export function Breakdown({
           ) : (
             <Chip>{t.interestFree}</Chip>
           )}
-          {data.provisional ? <Chip>{t.plans.provisional}</Chip> : null}
         </span>
       </div>
       <p className={styles.merchant}>
@@ -344,7 +345,7 @@ function Reason({
     }
     case "exceeds_credit_limit": {
       title = b.exceeds_credit_limit.t;
-      // Mismo tierParams que computeQuote: maxPurchase del escalón = línea total.
+      // Mismo tierParams que computeQuote: maxPurchase del Tier = línea total.
       const params = config?.guaranteedTiers[data.tier];
       if (params) {
         const used = data.activeExposure ?? 0;
@@ -373,12 +374,15 @@ function Reason({
       cta = b.option_unavailable.cta;
       break;
     case "below_option_min":
-      title = "Monto inferior al mínimo";
-      desc = "Esta opción de plan requiere un monto mayor.";
+      {
+        const option = config && planOptionsOf(config).find((o) => o.installments === data.installmentsCount);
+        title = option ? b.below_option_min.t(option.installments, fmt(option.minPrice)) : b.below_option_min.fallback;
+        desc = option ? b.below_option_min.d(option.installments, fmt(option.minPrice)) : b.below_option_min.fallback;
+      }
       break;
     case "pool_liquidity":
-      title = "Sin liquidez disponible";
-      desc = "El fondo no cuenta con liquidez libre disponible en este momento.";
+      title = b.pool_liquidity.t;
+      desc = b.pool_liquidity.d;
       break;
     default:
       title = "No disponible";

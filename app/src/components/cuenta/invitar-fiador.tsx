@@ -91,7 +91,7 @@ export function InviteGuarantor({ student }: { student: string }) {
   const wa = `https://wa.me/?text=${encodeURIComponent(`${waMessage} ${url}`)}`;
 
   return (
-    <GlassPanel className="p-6" data-testid="invite-guarantor">
+    <GlassPanel id="invite-guarantor" className="p-6" data-testid="invite-guarantor">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-medium text-ink">{t.title}</p>

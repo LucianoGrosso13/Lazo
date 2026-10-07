@@ -46,7 +46,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
 
   const configQ = useSWR("fiador-config", () => getAccountCuotas().getAccountConfig());
 
-  // Topes de compra respaldables: techos de los escalones configurados, sin inventar.
+  // Topes de compra respaldables: techos de los Tiers configurados, sin inventar.
   const topes = useMemo(() => {
     const c = configQ.data?.protocol;
     if (!c) return [];
@@ -57,15 +57,15 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
 
   const topeElegido = tope ?? (topes.length ? topes[topes.length - 1] : null);
 
-  // Cobertura exigida por la compra elegida según el escalón del estudiante.
+  // Cobertura exigida por la compra elegida según el Tier del estudiante.
   const quoteQ = useSWR(
     topeElegido != null ? ["fiador-quote", topeElegido, invitation.student] : null,
     ([, m, s]) => getCuotas().quote(m, s),
   );
 
-  // Cobertura sobre el capital pendiente (bps): si todos los escalones con
+  // Cobertura sobre el saldo pendiente (bps): si todos los Tiers con
   // fiador exigen lo mismo se declara ese porcentaje; si varía, la del
-  // escalón cotizado. `null` mientras la cotización no responde.
+  // Tier cotizado. `null` mientras la cotización no responde.
   const protocol = configQ.data?.protocol;
   const tierCoverage = protocol
     ? [...new Set(protocol.guaranteedTiers.map((x) => x.guarantorCoverageBps))]
@@ -82,10 +82,8 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
       ? ["fiador-doc", invitation.student, nombre.trim(), topeElegido, coverageBps ?? -1, locale]
       : null,
     async ([, student, name, maxPurchase, covBps, lang]) => {
-      // Q1 pendiente: la fórmula del máximo de la fianza aún no existe, así
-      // que el documento lo declara "pendiente de definición" y el alta no
-      // puede aceptarse con un número inventado.
-      const coverageMax = null;
+      // El fiador fija su máximo al aceptar el tope elegido por compra.
+      const coverageMax = maxPurchase;
       const texto = textoMandato({
         student,
         guarantorName: name,
@@ -208,14 +206,14 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                   </li>
                   <li className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="max-w-prose">{t.alta.coberturaMaxima}</span>
-                    <strong className="text-ink-2">{t.alta.maxPending}</strong>
+                    <strong className="text-ink-2">{topeElegido != null ? fmt(topeElegido) : "—"}</strong>
                   </li>
                 </ul>
                 <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
                   {coverageBps != null &&
                     `${(tierCoverage.length === 1
                       ? t.alta.coberturaAlcanceTodos
-                      : t.alta.coberturaAlcanceEscalon
+                      : t.alta.coberturaAlcanceTier
                     ).replace("{pct}", fmtPct(coverageBps / 10_000, locale))} `}
                   {t.alta.coberturaFuera}
                 </p>
@@ -353,9 +351,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
               <div>
                 <dt className="text-ink-2">{t.alta.confirmMax}</dt>
                 <dd className="text-ink-2">
-                  {docQ.data?.coverageMax != null
-                    ? fmt(docQ.data.coverageMax)
-                    : t.alta.maxPending}
+                  {docQ.data?.coverageMax != null ? fmt(docQ.data.coverageMax) : "—"}
                 </dd>
               </div>
               <div>
@@ -378,14 +374,6 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
             <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
               {t.alta.confirmLegal}
             </p>
-            <div
-              role="status"
-              data-testid="fiador-q1-bloqueado"
-              className="mt-4 rounded-2xl border border-hairline bg-beam/5 p-4"
-            >
-              <p className="text-sm font-medium text-ink">{t.alta.q1Title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-ink-2">{t.alta.q1Body}</p>
-            </div>
             {fase === "error" && (
               <p role="alert" className="mt-3 text-sm text-bad">
                 {t.alta.confirmError} {errorMsg}
@@ -420,7 +408,6 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
             type="button"
             disabled={docQ.data?.coverageMax == null || fase === "registrando"}
             onClick={() => void registrar()}
-            title={docQ.data?.coverageMax == null ? t.alta.q1Title : undefined}
             className={`${buttonClasses("primary", "md")} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {fase === "registrando" ? t.alta.confirmWorking : t.alta.confirmCta}

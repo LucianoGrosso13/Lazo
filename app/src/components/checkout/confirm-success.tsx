@@ -113,7 +113,6 @@ export function ConfirmSuccess({
         {pending > 0 ? (
           <span>{t.merchantLaterFact(merchantName, fmt(pending), settleDays)}</span>
         ) : null}
-        {plan.terms?.provisional ? <span>{t.provisionalFact}</span> : null}
       </div>
 
       <div className={styles.successCtas}>

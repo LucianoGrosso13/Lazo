@@ -20,7 +20,7 @@ export const cuentas = defineDict({
       demoHint: "Selector de ejemplo: solo recorre, no autoriza operaciones reales.",
       demoOptions: {
         "student-new": "Estudiante nuevo",
-        "student-tier3": "Estudiante escalón 3",
+        "student-tier3": "Estudiante · Tier 4 · Full",
         merchant: "Comercio",
         admin: "Admin",
         guarantor: "Garante (por invitación)",
@@ -54,7 +54,7 @@ export const cuentas = defineDict({
       reputationUnavailable: "No se pudo leer tu reputación; se muestra apenas esté disponible.",
       balanceLabel: "Saldo devUSDC",
       balanceUnavailable: "Saldo no disponible todavía.",
-      tier: "Escalón",
+      tier: "Tier",
       publicTitle: "Consulta pública",
       publicBlurb:
         "El pool y el comercio se pueden mirar sin conectar wallet: cada adelanto, pago y recupero queda a la vista.",
@@ -77,7 +77,7 @@ export const cuentas = defineDict({
     },
     student: {
       title: "Mi cuenta",
-      subtitle: "Tu saldo, tu escalón, tus planes y tu fiador. Datos simulados de la demo.",
+      subtitle: "Tu saldo, tu Tier, tus planes y tu fiador. Datos simulados de la demo.",
       pickTitle: "Elegí con qué identidad mirar la demo",
       pickBlurb:
         "Cada identidad muestra su propia cuenta. Son ejemplos simulados: recorren, no autorizan nada real.",
@@ -85,7 +85,7 @@ export const cuentas = defineDict({
       pickWallet: "O conectá tu wallet",
       personas: {
         "student-new": "Sin planes todavía: ideal para probar la primera compra.",
-        "student-tier3": "Tres planes pagados, escalón 3 y fianza con tope.",
+        "student-tier3": "Tres planes pagados, Tier 4 · Full y fianza con tope.",
         merchant: "Cobra al instante y mira sus ventas.",
         admin: "Config del protocolo y vista del pool.",
         guarantor: "Entra por invitación, sin wallet.",
@@ -96,7 +96,7 @@ export const cuentas = defineDict({
       notStudentBody: "La identidad actual resolvió como {rol}. Esta pantalla es solo para estudiantes.",
       balance: "Saldo devUSDC",
       balanceUnavailable: "Saldo no disponible todavía.",
-      tier: "Escalón",
+      tier: "Tier",
       plansCompleted: "Planes pagados",
       lateCount: "Atrasos",
       activeExposure: "Exposición activa",
@@ -138,7 +138,7 @@ export const cuentas = defineDict({
       demoHint: "Example selector: browse only, it does not grant real permissions.",
       demoOptions: {
         "student-new": "New student",
-        "student-tier3": "Tier-3 student",
+        "student-tier3": "Student · Tier 4 · Full",
         merchant: "Merchant",
         admin: "Admin",
         guarantor: "Guarantor (by invitation)",

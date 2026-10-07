@@ -1,6 +1,6 @@
 // Vista previa de un plan para mostrar "desde N cuotas de X" sin wallet ni
 // consulta: `quoteTerms` de `lib/cuotas/terms.ts`, la misma cuenta que
-// `computeQuote` del mock para un estudiante nuevo con fiador (escalón 0 de
+// `computeQuote` del mock para un estudiante nuevo con fiador (Tier 1 de
 // `guaranteedTiers`). Es solo presentación — el checkout cotiza de verdad
 // con `quote()`. Ningún número vive acá: todo sale de la `ProtocolConfig`.
 import {
@@ -15,7 +15,7 @@ import {
 export interface PlanPreview {
   /** Cuotas de la opción (mock: 3 ó 6). */
   installments: number;
-  /** Anticipo del escalón inicial con fiador. */
+  /** Anticipo del Tier inicial con fiador. */
   downPayment: Micro;
   /** Interés total del plan (0 si la opción es sin interés). */
   interest: Micro;
@@ -25,9 +25,7 @@ export interface PlanPreview {
   perInstallment: Micro;
   /** Precio + interés: lo que paga el estudiante en total. */
   total: Micro;
-  /** La opción lleva términos provisionales: la UI la rotula. */
-  provisional: boolean;
-  /** Interés total aplicado (opción + escalón), en bps. */
+  /** Interés total aplicado (opción + Tier), en bps. */
   interestTotalBps: number;
 }
 
@@ -52,7 +50,6 @@ export function previewPlan(
     installmentAmounts: terms.installments,
     perInstallment: terms.installments[0] ?? 0,
     total: terms.total,
-    provisional: option.provisional,
     interestTotalBps: terms.interestTotalBps,
   };
 }

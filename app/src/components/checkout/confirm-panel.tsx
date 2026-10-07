@@ -13,7 +13,6 @@ import { checkout } from "@/i18n/dictionaries/checkout";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
 import { GlassPanel } from "@/components/ui/glass";
-import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { ReferenceTag } from "@/components/ui/badges";
@@ -72,7 +71,6 @@ export function ConfirmPanel({
     <GlassPanel className={styles.panel}>
       <div className={styles.panelHead}>
         <h2 className={styles.panelTitle}>{t.title}</h2>
-        {quote.provisional ? <Chip>{all.plans.provisional}</Chip> : null}
         {mock ? <ReferenceTag>{d.chrome.simulated}</ReferenceTag> : null}
       </div>
 

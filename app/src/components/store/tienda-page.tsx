@@ -74,7 +74,7 @@ function badgeText(
       return t.reasons.exceeds_tier_max(fmt(config.guaranteedTiers[tier].maxPurchase, 0));
     }
     case "exceeds_credit_limit": {
-      // Misma cuenta que computeQuote: el maxPurchase del escalón cotizado
+      // Misma cuenta que computeQuote: el maxPurchase del Tier cotizado
       // es la línea de crédito total; `exposure` es lo que ya está en uso.
       const tier = quote?.tier ?? 0;
       const params = config.guaranteedTiers[tier];
@@ -202,14 +202,14 @@ export function TiendaPage() {
               ? {
                   installments: qa.installments,
                   interestTotalBps: qa.interestTotalBps,
-                  provisional: qa.provisional,
+                  minPrice: altOpt?.minPrice ?? 0,
                 }
               : null,
         },
         badge: badgeText(q, true, walletQ.data.guarantee, exposure, config, t, fmt),
       };
     }
-    // Sin wallet: cotiza el escalón 0 (la misma cuenta que `quote()`).
+    // Sin wallet: cotiza Tier 1 · Starter (la misma cuenta que `quote()`).
     const s = splitPurchase(config, price, 0);
     return {
       terms: {
@@ -222,7 +222,7 @@ export function TiendaPage() {
               installments: installmentsForOption(config, price, 0, altOpt),
               interestTotalBps:
                 altOpt.interestTotalBps + config.guaranteedTiers[0].interestBps,
-              provisional: altOpt.provisional,
+              minPrice: altOpt.minPrice,
             }
           : null,
       },
@@ -235,7 +235,7 @@ export function TiendaPage() {
   const tier = featuredQuote?.tier;
   const reputation = walletQ.data?.reputation ?? null;
 
-  // Margen tipo tarjeta: la línea del escalón menos lo comprometido
+  // Margen tipo tarjeta: la línea del Tier menos lo comprometido
   // (`reputation.activeExposure`). Misma cuenta que `computeQuote` en el mock.
   let margin: { used: Micro; limit: Micro } | null = null;
   if (reputation && config && featuredQuote) {
@@ -251,7 +251,6 @@ export function TiendaPage() {
           defOpt.installments,
           altOpt.installments,
           formatBps(altOpt.interestTotalBps, locale),
-          altOpt.provisional,
         )
       : t.lede;
 

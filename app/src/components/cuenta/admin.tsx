@@ -26,6 +26,7 @@ import { GlassPanel } from "@/components/ui/glass";
 import { StateMark } from "@/components/ui/state-mark";
 import { WalletButton } from "@/components/wallet-button";
 import { adminCuenta } from "@/i18n/dictionaries/admin-cuenta";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import {
@@ -429,20 +430,20 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
         {slot("estado")}
       </section>
 
-      {/* Escalones y reglas: solo lectura desde la config */}
+      {/* Tiers y reglas: solo lectura desde la config */}
       <section data-testid="admin-escalones" className="glass p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-beam">{t.escalonesTitle}</h2>
+        <h2 className="text-lg font-semibold text-beam">{t.tiersTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
-          {t.escalonesHint}
+          {t.tiersHint}
         </p>
-        {/* En móvil cada escalón es una tarjeta; la tabla completa queda desde sm. */}
+        {/* En móvil cada Tier es una tarjeta; la tabla completa queda desde sm. */}
         <ul className="mt-4 space-y-3 sm:hidden">
           {cfg.guaranteedTiers.map((tier: TierParams, i: number) => (
             <li
               key={i}
               className="rounded-xl border border-beam/10 bg-beam/[0.03] p-4"
             >
-              <p className="font-medium text-ink">{put(t.escalonN, { n: String(i) })}</p>
+              <p className="font-medium text-ink">{tierLabel(i)}</p>
               <dl className="mt-2 space-y-1.5">
                 {(
                   [
@@ -465,7 +466,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
           <table className="w-full min-w-[34rem] text-sm">
             <thead>
               <tr className="border-b border-beam/10 text-left font-num text-measure uppercase tracking-[0.14em] text-ink-ghost">
-                <th className="py-2 pr-4 font-medium">{t.colEscalon}</th>
+                <th className="py-2 pr-4 font-medium">{t.colTier}</th>
                 <th className="py-2 pr-4 font-medium">{t.colAnticipo}</th>
                 <th className="py-2 pr-4 font-medium">{t.colCobertura}</th>
                 <th className="py-2 pr-4 font-medium">{t.colTope}</th>
@@ -476,7 +477,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
               {cfg.guaranteedTiers.map((tier: TierParams, i: number) => (
                 <tr key={i} className="border-b border-beam/5 last:border-0">
                   <td className="py-2.5 pr-4 font-medium text-ink">
-                    {put(t.escalonN, { n: String(i) })}
+                    {tierLabel(i)}
                   </td>
                   <td className="py-2.5 pr-4 font-num tabular-nums text-ink-2">
                     {fmtPct01(tier.downPaymentBps / 10_000, locale)}
@@ -495,20 +496,6 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             </tbody>
           </table>
         </div>
-        {"unguaranteedTiers" in cfg && Array.isArray((cfg as { unguaranteedTiers?: TierParams[] }).unguaranteedTiers) ? (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-ink">{t.sinFiadorTitle}</p>
-            <p className="mt-0.5 text-xs text-ink-ghost">{t.sinFiadorHint}</p>
-            <ul className="mt-2 space-y-1">
-              {((cfg as { unguaranteedTiers?: TierParams[] }).unguaranteedTiers ?? []).map((tier: TierParams, i: number) => (
-                <li key={i} className="font-num text-sm tabular-nums text-ink-2">
-                  {put(t.escalonN, { n: String(i) })}: {fmtPct01(tier.downPaymentBps / 10_000, locale)}{" "}
-                  {t.colAnticipo.toLowerCase()} · {formatUsdc(tier.maxPurchase, locale)} devUSDC
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
         <dl className="mt-5 grid gap-x-8 gap-y-2 border-t border-beam/10 pt-4 text-sm sm:grid-cols-2">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-ink-3">{t.reglaGracia}</dt>

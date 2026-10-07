@@ -15,6 +15,7 @@ import { Chip } from "@/components/ui/chip";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { defineDict, useLocale, useT } from "@/i18n/locale";
 import { formatUsdc, getAccountCuotas, type Micro } from "@/lib/cuotas";
 import { fmtPct } from "../consulta";
@@ -30,9 +31,9 @@ const tReal = defineDict({
     altaSubtitle: "Verificás tu identidad y tu tarjeta en páginas externas (Didit y Mobbex, sandbox). Acá nunca escribís documentos ni números de tarjeta.",
     requiredCoverage: "Cobertura exigida por compra",
     coveragePctLabel: "Cobertura sobre el capital pendiente",
-    coverageScope: "La fianza cubre el capital pendiente de cada compra respaldada; no cubre intereses del plan ni punitorios por mora (alcance pendiente de definición).",
+    coverageScope: "La fianza cubre el 100% de lo que falta pagar del plan (capital + interés); el punitorio por mora queda afuera.",
     acceptedCap: "Máximo de la fianza (calculado por el protocolo)",
-    capTier: "Escalón del estudiante",
+    capTier: "Tier del estudiante",
     capPolicy: "Fórmula aplicada",
     policyPendingTitle: "Falta definir la fórmula del máximo",
     policyPendingBody: "El equipo todavía no eligió entre las dos fórmulas candidatas para el máximo de la fianza. Sin esa decisión no se puede seguir.",
@@ -94,9 +95,9 @@ const tReal = defineDict({
     altaSubtitle: "You verify your identity and card on external pages (Didit and Mobbex, sandbox). You never type documents or card numbers here.",
     requiredCoverage: "Coverage required per purchase",
     coveragePctLabel: "Coverage of outstanding principal",
-    coverageScope: "The guarantee covers the outstanding principal of each backed purchase; it does not cover plan interest or late fees (scope pending definition).",
+    coverageScope: "The guarantee covers 100% of the remaining plan balance (principal + interest); late fees are excluded.",
     acceptedCap: "Guarantee maximum (computed by the protocol)",
-    capTier: "Student tier",
+    capTier: "Student Tier",
     capPolicy: "Formula applied",
     policyPendingTitle: "The maximum formula is still undecided",
     policyPendingBody: "The team has not chosen between the two candidate formulas for the guarantee maximum. This cannot continue without that decision.",
@@ -734,7 +735,7 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
                     </li>
                     <li className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="max-w-prose">{l.capTier}</span>
-                      <span className="text-ink">{cotizarQ.data.tier}</span>
+                      <span className="text-ink">{tierLabel(cotizarQ.data.tier)}</span>
                     </li>
                     <li className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="max-w-prose">{l.capPolicy}</span>

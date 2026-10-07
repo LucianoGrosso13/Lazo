@@ -1,13 +1,13 @@
 import { defineDict } from "../locale";
 
 // Panel admin (/app/admin): snapshot del protocolo, pool, bitácora del keeper,
-// escalones (solo lectura), estado del protocolo y alta de comercio con
+// Tiers (solo lectura), estado del protocolo y alta de comercio con
 // revisión, y el reloj de la demo (solo mock). Todo lo simulado se declara.
 export const adminCuenta = defineDict({
   es: {
     titulo: "Administración",
     subtitulo:
-      "El panel de la autoridad del protocolo: estado, escalones, pool, actividad del keeper y comercios. Todo en devnet; en la demo los datos son simulados.",
+      "El panel de la autoridad del protocolo: estado, Tiers, pool, actividad del keeper y comercios. Todo en devnet; en la demo los datos son simulados.",
     sinCuentaTitle: "Sin cuenta activa",
     sinCuentaBody:
       "Esta cuenta es solo para la autoridad del protocolo. Conectá la wallet administradora o elegí la identidad de ejemplo «Admin».",
@@ -50,16 +50,14 @@ export const adminCuenta = defineDict({
     estadoRevisionNota:
       "Es una operación de la autoridad: afecta compras y recuperos de todas las cuentas.",
 
-    escalonesTitle: "Escalones y reglas",
-    escalonesHint:
+    tiersTitle: "Tiers y reglas",
+    tiersHint:
       "Solo lectura: salen de la configuración vigente del protocolo, no de esta pantalla.",
-    colEscalon: "Escalón",
+    colTier: "Tier",
     colAnticipo: "Anticipo",
     colCobertura: "Cobertura del fiador",
     colTope: "Tope de compra",
     colInteres: "Interés",
-    sinFiadorTitle: "Sin fiador",
-    sinFiadorHint: "Escalones sin respaldo familiar: anticipo mayor y tope chico.",
     reglasTitulo: "Reglas de mora y cargos",
     reglaGracia: "Días de gracia",
     reglaAviso: "Aviso al fiador",
@@ -75,7 +73,6 @@ export const adminCuenta = defineDict({
     sobreLaCuota: "sobre la cuota vencida",
     sobreLoFinanciado: "sobre lo financiado",
     diaN: "día {n}",
-    escalonN: "Escalón {n}",
     pendienteTag: "pendiente",
 
     poolTitle: "Pool",
@@ -114,7 +111,7 @@ export const adminCuenta = defineDict({
       "Desde el día {day}: {pct}% sobre la cuota vencida.",
     moraPasoCargo: "Cargo al fiador",
     moraPasoCargoBody:
-      "Día {charge}: se cobra al fiador, el estudiante baja un escalón y queda bloqueado. Una segunda cuota al día {charge} acelera todo el saldo.",
+      "Día {charge}: se cobra al fiador, el estudiante baja un Tier y queda bloqueado. Una segunda cuota al día {charge} acelera todo el saldo.",
     moraEventosTitle: "Eventos de mora",
     moraVacio:
       "Sin eventos de mora todavía. Cuando una cuota venza y el reloj avance, el aviso, el punitorio y los cargos aparecen acá.",
@@ -131,8 +128,8 @@ export const adminCuenta = defineDict({
       MarkedLate: "Cuota marcada en mora",
       GuarantorCharged: "Cargo al fiador",
       RecoveryRegistered: "Recupero registrado",
-      TierUp: "Sube de escalón",
-      TierDown: "Baja de escalón",
+      TierUp: "Sube de Tier",
+      TierDown: "Baja de Tier",
       GuaranteeRegistered: "Fianza registrada",
       GuaranteeRevoked: "Fianza revocada",
       PayoutReleased: "Liquidación liberada",
@@ -227,16 +224,14 @@ export const adminCuenta = defineDict({
     estadoRevisionNota:
       "This is an authority operation: it affects purchases and recoveries across every account.",
 
-    escalonesTitle: "Tiers and rules",
-    escalonesHint:
+    tiersTitle: "Tiers and rules",
+    tiersHint:
       "Read-only: they come from the live protocol config, not from this screen.",
-    colEscalon: "Tier",
+    colTier: "Tier",
     colAnticipo: "Down payment",
     colCobertura: "Guarantor coverage",
     colTope: "Purchase cap",
     colInteres: "Interest",
-    sinFiadorTitle: "Without guarantor",
-    sinFiadorHint: "Tiers without family backing: bigger down payment, small cap.",
     reglasTitulo: "Delinquency and charge rules",
     reglaGracia: "Grace days",
     reglaAviso: "Guarantor notice",
@@ -252,7 +247,6 @@ export const adminCuenta = defineDict({
     sobreLaCuota: "on the overdue installment",
     sobreLoFinanciado: "on the financed amount",
     diaN: "day {n}",
-    escalonN: "Tier {n}",
     pendienteTag: "pending",
 
     poolTitle: "Pool",
