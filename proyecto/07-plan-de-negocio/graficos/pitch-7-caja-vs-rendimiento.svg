@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="820" height="460" fill="#ffffff" rx="12"/>
+<text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">Más plata quieta para retiros = menos rendimiento</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Rendimiento anual según qué parte del pool está prestada (el resto queda en caja o en Kamino al ~4,5%)</text>
+<line x1="78" x2="796" y1="368.0" y2="368.0" stroke="#1d1b2e" stroke-width="1.2"/>
+<text x="70.0" y="372.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">0%</text>
+<line x1="78" x2="796" y1="305.5" y2="305.5" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="309.5" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">20%</text>
+<line x1="78" x2="796" y1="243.0" y2="243.0" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="247.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">40%</text>
+<line x1="78" x2="796" y1="180.5" y2="180.5" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="184.5" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">60%</text>
+<line x1="78" x2="796" y1="118.0" y2="118.0" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="122.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">80%</text>
+<text x="167.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">60% prestado</text>
+<rect x="111.3" y="321.9" width="36.3" height="46.1" rx="3" fill="#7c3aed"/>
+<text x="129.5" y="315.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">14,8%</text>
+<rect x="149.6" y="237.5" width="36.3" height="130.5" rx="3" fill="#0f9d6b"/>
+<text x="167.8" y="231.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">41,8%</text>
+<rect x="187.9" y="343.0" width="36.3" height="25.0" rx="3" fill="#0284c7"/>
+<text x="206.0" y="337.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8,0%</text>
+<text x="347.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">70% prestado</text>
+<rect x="290.8" y="316.6" width="36.3" height="51.4" rx="3" fill="#7c3aed"/>
+<text x="309.0" y="310.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">16,5%</text>
+<rect x="329.1" y="210.8" width="36.3" height="157.2" rx="3" fill="#0f9d6b"/>
+<text x="347.2" y="204.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">50,3%</text>
+<rect x="367.4" y="343.0" width="36.3" height="25.0" rx="3" fill="#0284c7"/>
+<text x="385.5" y="337.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8,0%</text>
+<text x="526.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">80% prestado</text>
+<rect x="470.3" y="311.2" width="36.3" height="56.8" rx="3" fill="#7c3aed"/>
+<text x="488.5" y="305.2" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">18,2%</text>
+<rect x="508.6" y="184.1" width="36.3" height="183.9" rx="3" fill="#0f9d6b"/>
+<text x="526.8" y="178.1" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">58,9%</text>
+<rect x="546.9" y="343.0" width="36.3" height="25.0" rx="3" fill="#0284c7"/>
+<text x="565.0" y="337.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8,0%</text>
+<text x="706.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">90% prestado</text>
+<rect x="649.8" y="305.9" width="36.3" height="62.1" rx="3" fill="#7c3aed"/>
+<text x="668.0" y="299.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">19,9%</text>
+<rect x="688.1" y="157.4" width="36.3" height="210.6" rx="3" fill="#0f9d6b"/>
+<text x="706.2" y="151.4" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">67,4%</text>
+<rect x="726.4" y="343.0" width="36.3" height="25.0" rx="3" fill="#0284c7"/>
+<text x="744.5" y="337.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8,0%</text>
+<rect x="24" y="86" width="14" height="14" rx="3" fill="#7c3aed"/>
+<text x="44.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Pool total</text>
+<rect x="124.0" y="86" width="14" height="14" rx="3" fill="#0f9d6b"/>
+<text x="144.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Junior</text>
+<rect x="197.6" y="86" width="14" height="14" rx="3" fill="#0284c7"/>
+<text x="217.6" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Senior</text>
+<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Propuesta: 80% prestado, 20% en caja. El senior cobra 8% en todos los casos; lo que cambia es lo que le queda al junior.</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Escenario de modelo-v2.py §8-9: mora 30%, recupero del fiador 80%. No es un pronóstico. Todo corre en devnet.</text>
+</svg>
