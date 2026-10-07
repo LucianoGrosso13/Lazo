@@ -89,8 +89,8 @@ Borrador revisado por pedido de Luciano: capa de crédito antes de las condicion
 |---|---|---|
 | 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “You work. You earn. But when you want to pay in installments, you need a credit card you don't have.” |
 | 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. For workers paid off the books, or with only part of their income officially recorded, getting bank credit can be difficult. Students without a credit history face a similar barrier.” |
-| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “We're building Lazo as the credit layer connecting these people with the fintech wallets they already use. A guarantor helps back purchases that would otherwise be out of reach.” |
-| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “Three installments without interest, or six with a small interest charge. Buyers pay their own installments. A guarantor with a credit card backs the plan and pays only if they don't.” |
+| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “We're building Lazo as the credit layer connecting these people with the fintech wallets they already use.” |
+| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “Three installments without interest, or six with a small interest charge. A trusted person backs your plan and only pays if you don't.” |
 | 0:57–1:15 | Comercio y esquema simple del fondo | “Merchants can receive the sale upfront for a small fee, while customers pay over time. A shared credit pool advances the funds, and repayments replenish it.” |
 | 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “We're designing a familiar payment experience: choose your installments, confirm the purchase, and track your payments.” |
 | 1:25–1:45 | Diseño del fondo y registro; “Prototype” | “Solana makes payments fast, keeps network costs low and gives us verifiable records of plans and repayments. Our demo uses Solana devnet: a test network with tokens that have no value.” |
@@ -99,6 +99,7 @@ Borrador revisado por pedido de Luciano: capa de crédito antes de las condicion
 **Notas de esta revisión:**
 
 - La frase de capa de crédito aparece al presentar la solución. Es diseño/estrategia; la integración con una fintech o tarjeta aún no está demostrada.
+- Respaldo: frase aprobada por Luciano, mencionada una sola vez después de las cuotas: “A trusted person backs your plan and only pays if you don't.” La demo explica el requisito de tarjeta del fiador y el alcance de la garantía.
 - La escena de mostrador/QR sale del pitch breve para no fijar el mecanismo de una integración pendiente. Se muestra el checkout disponible con su rótulo verdadero de simulación. El guion de demo conserva el QR propio existente.
 - “Small fee” expresa el posicionamiento comercial provisional. La tarifa completa sigue pendiente de validación; no es una comparación demostrada con terceros. El comercio paga comisión por el servicio; no se le atribuye un rendimiento. Se consultó a Luciano si “leve interés” quería decir esa comisión; si propone rendimiento al comercio, hay que definirlo como una modalidad nueva antes de afirmarlo.
 - La mención del pool explica de dónde sale el adelanto. El rendimiento del capital sigue como modelo a validar; no se promete tasa ni fondeo de un partner ya conseguido.
