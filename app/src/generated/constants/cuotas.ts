@@ -18,6 +18,8 @@ export const LP_SENIOR_SEED: ReadonlyUint8Array = new Uint8Array([108, 112, 95, 
 
 export const MERCHANT_SEED: ReadonlyUint8Array = new Uint8Array([109, 101, 114, 99, 104, 97, 110, 116]);
 
+export const PAYOUT_SEED: ReadonlyUint8Array = new Uint8Array([112, 97, 121, 111, 117, 116]);
+
 export const PLAN_SEED: ReadonlyUint8Array = new Uint8Array([112, 108, 97, 110]);
 
 export const POOL_SEED: ReadonlyUint8Array = new Uint8Array([112, 111, 111, 108]);

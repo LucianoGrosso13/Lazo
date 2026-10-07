@@ -1,6 +1,6 @@
 {
   "idlPath": "../programa/target/idl/cuotas.json",
-  "idlSha256": "99527745ffa2482178c541ed8b12e2dbcc9625a5e372f7241e2492be8a1aefa5",
+  "idlSha256": "f77d8eaa44e3c7e3d721dbd01ae6e70c1d26d7ab3ebb2c3f44965bed8c5206f5",
   "programId": "E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ",
   "instructions": [
     "admin_apply_loss",
@@ -18,11 +18,13 @@
     "open_plan",
     "pay_installment",
     "pool_init",
+    "release_payout",
     "student_init_reputation"
   ],
   "accounts": [
     "Guarantee",
     "Merchant",
+    "PayoutSchedule",
     "Plan",
     "Pool",
     "ProtocolConfig",
@@ -73,7 +75,14 @@
     "StalePlan",
     "InvalidReceiptHash",
     "ReceiptAlreadyUsed",
-    "PlanNotGuaranteed"
+    "PlanNotGuaranteed",
+    "GuarantorRequired",
+    "BelowOptionMin",
+    "OptionUnavailable",
+    "PoolLiquidity",
+    "PayoutTooEarly",
+    "PayoutAlreadyReleased",
+    "InvalidPayoutIndex"
   ],
   "note": "Generado con `npm run generate`. No editar a mano: se pisa en cada corrida."
 }

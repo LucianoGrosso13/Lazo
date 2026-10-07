@@ -6,7 +6,7 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { combineCodec, containsBytes, fixEncoderSize, getAddressDecoder, getAddressEncoder, getArrayDecoder, getArrayEncoder, getBooleanDecoder, getBooleanEncoder, getBytesEncoder, getConstantDecoder, getConstantEncoder, getHiddenPrefixDecoder, getHiddenPrefixEncoder, getStructDecoder, getStructEncoder, getU64Decoder, getU64Encoder, getU8Decoder, getU8Encoder, type Address, type FixedSizeCodec, type FixedSizeDecoder, type FixedSizeEncoder, type ReadonlyUint8Array } from '@solana/kit';
+import { combineCodec, containsBytes, fixEncoderSize, getAddressDecoder, getAddressEncoder, getArrayDecoder, getArrayEncoder, getBooleanDecoder, getBooleanEncoder, getBytesEncoder, getConstantDecoder, getConstantEncoder, getHiddenPrefixDecoder, getHiddenPrefixEncoder, getStructDecoder, getStructEncoder, getU64Decoder, getU64Encoder, getU8Decoder, getU8Encoder, type Address, type Codec, type Decoder, type Encoder, type ReadonlyUint8Array } from '@solana/kit';
 
 export const PLAN_OPENED_EVENT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([180, 40, 139, 132, 248, 34, 213, 58]);
 
@@ -17,17 +17,17 @@ export type PlanOpenedEvent = { plan: Address; student: Address; merchant: Addre
 export type PlanOpenedEventArgs = { plan: Address; student: Address; merchant: Address; price: number | bigint; downPayment: number | bigint; financed: number | bigint; interest: number | bigint; merchantFee: number | bigint; installments: Array<number | bigint>; tier: number; withGuarantee: boolean; counts: boolean;  };
 
 /** Gets the encoder for {@link PlanOpenedEventArgs} event data. */
-export function getPlanOpenedEventEncoder(): FixedSizeEncoder<PlanOpenedEventArgs> {
-    return getHiddenPrefixEncoder(getStructEncoder([['plan', getAddressEncoder()], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['installments', getArrayEncoder(getU64Encoder(), { size: 3 })], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()]]), [getConstantEncoder(PLAN_OPENED_EVENT_DISCRIMINATOR)]);
+export function getPlanOpenedEventEncoder(): Encoder<PlanOpenedEventArgs> {
+    return getHiddenPrefixEncoder(getStructEncoder([['plan', getAddressEncoder()], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['installments', getArrayEncoder(getU64Encoder())], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()]]), [getConstantEncoder(PLAN_OPENED_EVENT_DISCRIMINATOR)]);
 }
 
 /** Gets the decoder for {@link PlanOpenedEvent} event data. */
-export function getPlanOpenedEventDecoder(): FixedSizeDecoder<PlanOpenedEvent> {
-    return getHiddenPrefixDecoder(getStructDecoder([['plan', getAddressDecoder()], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['installments', getArrayDecoder(getU64Decoder(), { size: 3 })], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()]]), [getConstantDecoder(PLAN_OPENED_EVENT_DISCRIMINATOR)]);
+export function getPlanOpenedEventDecoder(): Decoder<PlanOpenedEvent> {
+    return getHiddenPrefixDecoder(getStructDecoder([['plan', getAddressDecoder()], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['installments', getArrayDecoder(getU64Decoder())], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()]]), [getConstantDecoder(PLAN_OPENED_EVENT_DISCRIMINATOR)]);
 }
 
 /** Gets the codec for {@link PlanOpenedEvent} event data. */
-export function getPlanOpenedEventCodec(): FixedSizeCodec<PlanOpenedEventArgs, PlanOpenedEvent> {
+export function getPlanOpenedEventCodec(): Codec<PlanOpenedEventArgs, PlanOpenedEvent> {
     return combineCodec(getPlanOpenedEventEncoder(), getPlanOpenedEventDecoder());
 }
 

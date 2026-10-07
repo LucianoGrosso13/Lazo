@@ -16,6 +16,7 @@ export * from './installmentMarkedLate';
 export * from './installmentPaid';
 export * from './lossApplied';
 export * from './merchantRegistered';
+export * from './payoutReleased';
 export * from './planOpened';
 export * from './planSettled';
 export * from './poolInitialized';

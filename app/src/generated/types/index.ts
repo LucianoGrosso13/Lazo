@@ -8,6 +8,9 @@
 
 export * from './configParams';
 export * from './installment';
+export * from './payoutTranche';
+export * from './planOption';
 export * from './protocolState';
+export * from './settlementOption';
 export * from './tierParams';
 export * from './tranche';

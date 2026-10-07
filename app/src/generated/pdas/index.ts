@@ -12,6 +12,7 @@ export * from './lpJuniorMint';
 export * from './lpMint';
 export * from './lpSeniorMint';
 export * from './merchant';
+export * from './payoutSchedule';
 export * from './plan';
 export * from './pool';
 export * from './reputation';

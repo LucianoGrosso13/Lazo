@@ -24,7 +24,7 @@ price: bigint;
 downPayment: bigint; 
 /** Principal advanced by the pool: `price - down_payment`. */
 financed: bigint; 
-/** Interest over financed (`interest_bps`, 0 in every current tier). */
+/** Interest over financed (`interest_total_bps`). */
 interest: bigint; 
 /** Merchant fee over financed (`fee_bps`), credited to LPs at open. */
 merchantFee: bigint; 
@@ -42,7 +42,9 @@ withGuarantee: boolean;
  * Set false permanently the first time an installment goes past grace.
  */
 counts: boolean; 
-/** Fixed 3-installment schedule (last absorbs rounding). */
+/** Number of active installments in this plan (e.g. 3 or 6). */
+installmentCount: number; 
+/** Schedule with up to MAX_INSTALLMENTS (unused slots empty and resolved). */
 installments: Array<Installment>; 
 /**
  * Copy of `Reputation::plans_opened` at origination. The PDA is reused
@@ -65,7 +67,7 @@ price: number | bigint;
 downPayment: number | bigint; 
 /** Principal advanced by the pool: `price - down_payment`. */
 financed: number | bigint; 
-/** Interest over financed (`interest_bps`, 0 in every current tier). */
+/** Interest over financed (`interest_total_bps`). */
 interest: number | bigint; 
 /** Merchant fee over financed (`fee_bps`), credited to LPs at open. */
 merchantFee: number | bigint; 
@@ -83,7 +85,9 @@ withGuarantee: boolean;
  * Set false permanently the first time an installment goes past grace.
  */
 counts: boolean; 
-/** Fixed 3-installment schedule (last absorbs rounding). */
+/** Number of active installments in this plan (e.g. 3 or 6). */
+installmentCount: number; 
+/** Schedule with up to MAX_INSTALLMENTS (unused slots empty and resolved). */
 installments: Array<InstallmentArgs>; 
 /**
  * Copy of `Reputation::plans_opened` at origination. The PDA is reused
@@ -97,12 +101,12 @@ bump: number;  };
 
 /** Gets the encoder for {@link PlanArgs} account data. */
 export function getPlanEncoder(): FixedSizeEncoder<PlanArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['openedAt', getI64Encoder()], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()], ['installments', getArrayEncoder(getInstallmentEncoder(), { size: 3 })], ['generation', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PLAN_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['student', getAddressEncoder()], ['merchant', getAddressEncoder()], ['price', getU64Encoder()], ['downPayment', getU64Encoder()], ['financed', getU64Encoder()], ['interest', getU64Encoder()], ['merchantFee', getU64Encoder()], ['openedAt', getI64Encoder()], ['tier', getU8Encoder()], ['withGuarantee', getBooleanEncoder()], ['counts', getBooleanEncoder()], ['installmentCount', getU8Encoder()], ['installments', getArrayEncoder(getInstallmentEncoder(), { size: 6 })], ['generation', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PLAN_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link Plan} account data. */
 export function getPlanDecoder(): FixedSizeDecoder<Plan> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['openedAt', getI64Decoder()], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()], ['installments', getArrayDecoder(getInstallmentDecoder(), { size: 3 })], ['generation', getU64Decoder()], ['bump', getU8Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['student', getAddressDecoder()], ['merchant', getAddressDecoder()], ['price', getU64Decoder()], ['downPayment', getU64Decoder()], ['financed', getU64Decoder()], ['interest', getU64Decoder()], ['merchantFee', getU64Decoder()], ['openedAt', getI64Decoder()], ['tier', getU8Decoder()], ['withGuarantee', getBooleanDecoder()], ['counts', getBooleanDecoder()], ['installmentCount', getU8Decoder()], ['installments', getArrayDecoder(getInstallmentDecoder(), { size: 6 })], ['generation', getU64Decoder()], ['bump', getU8Decoder()]]);
 }
 
 /** Gets the codec for {@link Plan} account data. */
@@ -155,5 +159,5 @@ export async function fetchAllMaybePlan(
 }
 
 export function getPlanSize(): number {
-  return 309;
+  return 487;
 }

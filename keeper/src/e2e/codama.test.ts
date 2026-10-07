@@ -11,7 +11,10 @@ import { randomBytes } from "node:crypto";
 import { address, createKeyPairSignerFromPrivateKeyBytes, generateKeyPairSigner, getAddressEncoder } from "@solana/kit";
 import { getGuaranteeEncoder } from "../../../app/src/generated/accounts/guarantee";
 import { getPlanEncoder } from "../../../app/src/generated/accounts/plan";
+import { getPayoutScheduleEncoder } from "../../../app/src/generated/accounts/payoutSchedule";
 import { getProtocolConfigEncoder } from "../../../app/src/generated/accounts/protocolConfig";
+import { parseReleasePayoutInstruction } from "../../../app/src/generated/instructions/releasePayout";
+import { findPayoutSchedulePda } from "../../../app/src/generated/pdas/payoutSchedule.ts";
 import { findGuaranteePda } from "../../../app/src/generated/pdas/guarantee.ts";
 import { ProtocolState } from "../../../app/src/generated/types/protocolState";
 import { ReceiptAlreadyUsedError } from "../adapter.ts";
@@ -69,8 +72,17 @@ const configBytes = (): Uint8Array =>
       secondsPerDay: 86_400,
       installmentIntervalDays: 30,
       minFinancedToCount: 100_000_000,
-      guaranteedTiers: [tier(3000, 1_000_000_000, 10_000), tier(2000, 1_000_000_000, 9000), tier(1000, 1_250_000_000, 8000), tier(0, 1_500_000_000, 7000)],
-      unguaranteedTiers: [tier(5000, 150_000_000, 0), tier(3000, 300_000_000, 0)],
+      guaranteedTiers: [tier(3000, 1_000_000_000, 10_000), tier(2000, 1_000_000_000, 10_000), tier(1000, 1_250_000_000, 10_000), tier(0, 1_500_000_000, 10_000)],
+      planOptions: [
+        { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true },
+        { installments: 6, interestTotalBps: 300, minPrice: 350_000_000, enabled: true },
+      ],
+      settlementOptions: [
+        { days: 0, tranches: 0, feeBps: 700, enabled: true },
+        { days: 30, tranches: 1, feeBps: 625, enabled: true },
+        { days: 60, tranches: 2, feeBps: 575, enabled: true },
+        { days: 90, tranches: 3, feeBps: 525, enabled: true },
+      ],
       state: ProtocolState.Normal,
       bump: 1,
     }),
@@ -87,10 +99,10 @@ const installment = (over: { amount?: number; dueAt?: number; penalty?: number; 
 });
 
 const planBytes = (installments: ReturnType<typeof installment>[], over: { openedAt?: number; withGuarantee?: boolean } = {}): Uint8Array => {
-  // The on-chain plan holds exactly 3 installments: pad with far-future
-  // unpaid ones so short fixtures stay semantically neutral.
+  // The account reserves six slots; inactive slots are resolved and inert.
   const padded = [...installments];
-  while (padded.length < 3) padded.push(installment({ dueAt: NOW + 400 * 86_400 }));
+  const installmentCount = padded.length;
+  while (padded.length < 6) padded.push(installment({ dueAt: NOW + 400 * 86_400, paid: true }));
   return new Uint8Array(
     getPlanEncoder().encode({
       student: STUDENT,
@@ -104,6 +116,7 @@ const planBytes = (installments: ReturnType<typeof installment>[], over: { opene
       tier: 0,
       withGuarantee: over.withGuarantee ?? true,
       counts: true,
+      installmentCount,
       installments: padded,
       generation: 1,
       bump: 1,
@@ -113,6 +126,7 @@ const planBytes = (installments: ReturnType<typeof installment>[], over: { opene
 
 interface FakeOpts {
   plans?: Array<{ address: string; bytes: Uint8Array }>;
+  payoutSchedules?: Array<{ address: string; bytes: Uint8Array }>;
   /** Explicit per-address accounts (null = missing). Non-plan, non-explicit -> config fixture. */
   extra?: Record<string, Uint8Array | null>;
   simulateErr?: unknown;
@@ -145,7 +159,7 @@ const fakeRpc = (opts: FakeOpts = {}) => {
     }),
     getProgramAccounts: () => ({
       send: async () =>
-        (opts.plans ?? []).map((p) => ({
+        [...(opts.plans ?? []), ...(opts.payoutSchedules ?? [])].map((p) => ({
           pubkey: p.address,
           account: { data: [b64(p.bytes), "base64"], executable: false, lamports: 1, owner: PROGRAM, space: p.bytes.length },
         })),
@@ -202,6 +216,42 @@ const okGateway: Gateway = {
 };
 
 describe("codama adapter e2e (scripted RPC, real codecs)", () => {
+  it("discovers due PayoutSchedule tranches and proposes release_payout without sending", async () => {
+    __resetCodamaGenesisCacheForTests();
+    const e = env();
+    const caller = await generateKeyPairSigner();
+    const [scheduleAddress] = await findPayoutSchedulePda({ plan: address(PLAN_ADDR) }, { programAddress: address(PROGRAM) });
+    const bytes = new Uint8Array(getPayoutScheduleEncoder().encode({
+      plan: address(PLAN_ADDR),
+      merchant: address(KEEPER),
+      trancheCount: 2,
+      tranches: [
+        { amount: 100_000_000, releaseAt: NOW - 10, released: false },
+        { amount: 100_000_000, releaseAt: NOW + 10, released: false },
+        { amount: 0, releaseAt: NOW + 20, released: true },
+      ],
+      bump: 1,
+    }));
+    const sentWires: string[] = [];
+    const adapter = new CodamaAdapter({
+      rpcUrl: e.rpcUrl,
+      program: PROGRAM,
+      keeperKeypairPath: null,
+      fiadorDataDir: null,
+      rpc: fakeRpc({ payoutSchedules: [{ address: scheduleAddress, bytes }], extra: { [String(scheduleAddress)]: bytes }, sentWires }),
+    });
+    const schedules = await adapter.listPayoutSchedules();
+    assert.equal(schedules.length, 1);
+    assert.equal(schedules[0].tranches.length, 2);
+    const report = await runOnce({ adapter, gateway: okGateway, journal: new Journal(e.dataDir), env: e, now: NOW });
+    assert.equal(report.proposed.length, 1);
+    assert.equal(report.proposed[0].kind, "release_payout");
+    assert.equal(report.proposed[0].amountMicro, 100_000_000);
+    const ix = await adapter.buildReleasePayoutInstruction(String(PLAN_ADDR), 0, caller);
+    assert.equal(parseReleasePayoutInstruction(ix as never).data.index, 0);
+    assert.deepEqual(sentWires, []);
+  });
+
   it("discovers an overdue plan and proposes a charge for it", async () => {
     __resetCodamaGenesisCacheForTests();
     const e = env();

@@ -19,7 +19,7 @@ import { GatewayError, MobbexGateway, chargeReference, microUsdcToArs } from "./
 import type { ChargeResult, Gateway, SimulatedCharge } from "./gateway.ts";
 import { Journal, chargeKey, lossKey, parseKey, recoveryKey } from "./journal.ts";
 import type { Proposal } from "./journal.ts";
-import { evaluatePlan } from "./policy.ts";
+import { duePayouts, evaluatePlan } from "./policy.ts";
 import type { PlanView } from "./policy.ts";
 
 export interface RunDeps {
@@ -56,9 +56,9 @@ export interface ExecuteReport {
 }
 
 export class ExecuteError extends Error {
-  readonly code: "proposal_unknown" | "proposal_closed" | "plan_unknown" | "already_settled";
+  readonly code: "proposal_unknown" | "proposal_closed" | "plan_unknown" | "already_settled" | "dry_run_only";
   constructor(
-    code: "proposal_unknown" | "proposal_closed" | "plan_unknown" | "already_settled",
+    code: "proposal_unknown" | "proposal_closed" | "plan_unknown" | "already_settled" | "dry_run_only",
     message?: string,
   ) {
     super(message ?? code);
@@ -131,6 +131,34 @@ export async function runOnce(deps: RunDeps): Promise<RunReport> {
     }
   }
 
+  // Permissionless merchant payouts are proposed for operator review only.
+  const payoutSchedules = await deps.adapter.listPayoutSchedules?.() ?? [];
+  for (const schedule of payoutSchedules) {
+    for (const tranche of schedule.tranches.filter((item) => item.released)) {
+      const key = `payout:${schedule.address}:${tranche.index}`;
+      if (done.has(key)) continue;
+      deps.journal.append({
+        kind: "PAYOUT_RELEASED", key, proposalId: null, planId: schedule.planId,
+        installment: tranche.index, amountMicro: tranche.amountMicro, amountArs: null,
+        receipt: null, detail: "synced from chain: payout tranche already released",
+      });
+      done.add(key);
+      synced.push(key);
+    }
+  }
+  for (const { address: scheduleAddress, planId, tranche } of duePayouts(payoutSchedules, now)) {
+    const key = `payout:${scheduleAddress}:${tranche.index}`;
+    if (done.has(key) || openByKey.has(key)) continue;
+    const p = deps.journal.propose({
+      kind: "release_payout", key, planId, installment: tranche.index,
+      amountMicro: tranche.amountMicro, amountArs: null, createdAt: now,
+      detail: `release_payout plan=${planId} schedule=${scheduleAddress} tranche=${tranche.index} amount=${tranche.amountMicro} release_at=${tranche.releaseAt}`,
+    });
+    openByKey.set(p.key, p);
+    proposed.push(p);
+    log(`proposed ${p.id} ${p.detail}`);
+  }
+
   // Recovery follow-ups: verified charges still awaiting on-chain registration.
   // Generation comes from the charge key (legacy keys without it are skipped:
   // they cannot be safely attributed to a plan generation).
@@ -181,6 +209,9 @@ export async function executeProposal(
       throw new ExecuteError("proposal_closed", `proposal_closed: ${args.proposalId} already reached a terminal state`);
     }
     throw new ExecuteError("proposal_unknown", `proposal_unknown: ${args.proposalId}`);
+  }
+  if (proposal.kind === "release_payout") {
+    throw new ExecuteError("dry_run_only", "release_payout stays dry-run in this ticket; no transaction was signed or sent");
   }
   const ready = await deps.adapter.ready();
   if (!ready.ready) {

@@ -19,7 +19,7 @@ downPaymentBps: number;
 maxPurchase: bigint; 
 /** Interest charged on the financed amount, in bps. Currently 0 everywhere. */
 interestBps: number; 
-/** Fraction of the financed amount the guarantor must cover, in bps. */
+/** Required guarantor coverage, fixed at 10,000 bps (the full balance). */
 guarantorCoverageBps: number;  };
 
 export type TierParamsArgs = { 
@@ -29,7 +29,7 @@ downPaymentBps: number;
 maxPurchase: number | bigint; 
 /** Interest charged on the financed amount, in bps. Currently 0 everywhere. */
 interestBps: number; 
-/** Fraction of the financed amount the guarantor must cover, in bps. */
+/** Required guarantor coverage, fixed at 10,000 bps (the full balance). */
 guarantorCoverageBps: number;  };
 
 export function getTierParamsEncoder(): FixedSizeEncoder<TierParamsArgs> {
