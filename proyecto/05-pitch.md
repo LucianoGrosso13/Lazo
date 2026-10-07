@@ -72,7 +72,7 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 
 | Slide | Headline EN | Qué mostrar / límite |
 |---|---|---|
-| 1 — Hook + Team | “In Argentina, you can earn a living and still struggle to buy in installments.” | Luciano e Ignacio al inicio. Experiencia personal solo si la confirman; no usar “unbanked” para afirmar que no tienen cuenta |
+| 1 — Hook + Team | “You can earn a living and still have no way to pay in installments.” | Luciano e Ignacio al inicio. Experiencia personal solo si la confirman; no usar “unbanked” para afirmar que no tienen cuenta |
 | 2 — Problem | “Having income doesn't always mean having access to credit.” | Trabajadores con ingresos informales/parciales y estudiantes. Pie de fuente: INDEC, 45% informal employment, 31 urban areas, Q2 2026, provisional; no llamarlo tamaño de mercado |
 | 3 — Solution | “A credit layer connecting people and fintech wallets.” | Integración propuesta, comprador paga y fiador respalda. Tres cuotas sin interés y seis con interés pequeño; sin porcentaje en la voz del pitch |
 | 4 — Demo | “Choose installments. Confirm. Track your payments.” | Mostrar el checkout disponible y su estado de simulación. El recorrido final con fintech/tarjeta queda pendiente; el QR propio sigue como demo existente, no alcance universal |
@@ -83,18 +83,18 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 
 ## Guion video pitch — 2:00
 
-Borrador revisado por pedido de Luciano: capa de crédito antes de las condiciones, tres cuotas sin interés y seis con un interés pequeño, mención breve del pool y beneficio simple para el comercio. Duración estimada, **ensayo pendiente**. “Un mínimo” se interpreta como un interés pequeño, no como una nueva tasa ni un cambio del mínimo de compra. Los números de la demo siguen en la sección de condiciones y en configuración.
+Borrador revisado por pedido de Luciano: capa de crédito antes de las condiciones, tres cuotas sin interés y seis con un interés pequeño, mención breve del pool y beneficio simple para el comercio. Duración estimada, **ensayo pendiente**. “Un mínimo” se interpreta como un interés pequeño, no como una nueva tasa ni un cambio del mínimo de compra. Los números de la demo siguen en la sección de condiciones y en configuración. **Pulido de inglés (7/10):** misma estructura, tiempos y contenido; solo se reescribieron las frases para que suenen pensadas en inglés.
 
 | Tiempo | Pantalla | Guion EN |
 |---|---|---|
-| 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “In Argentina, you can earn a living and still struggle to buy in installments.” |
-| 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. For workers paid off the books, or with only part of their income officially recorded, getting bank credit can be difficult. Students without a credit history face a similar barrier.” |
-| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “We're building Lazo as the credit layer connecting these people with the fintech wallets they already use.” |
-| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “Three installments without interest, or six with a small interest charge. A trusted person backs your plan and only pays if you don't.” |
-| 0:57–1:15 | Comercio y esquema simple del fondo | “Merchants can receive the sale upfront for a small fee, while customers pay over time. A shared credit pool advances the funds, and repayments replenish it.” |
-| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “We're designing a familiar payment experience: choose your installments, confirm the purchase, and track your payments.” |
-| 1:25–1:45 | Diseño del fondo y registro; “Prototype” | “Solana makes payments fast, keeps network costs low and gives us verifiable records of plans and repayments. Our demo uses Solana devnet: a test network with tokens that have no value.” |
-| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “Tucumán is our proposed first pilot. We're looking for a fintech partner to validate the integration, funding and economics, then expand through the wallets people already use.” |
+| 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “In Argentina, you can have a job, earn a living, and still have no way to pay in installments.” |
+| 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. Lots of people here are paid off the books, or only have part of their income on record, and that makes it hard to get credit from a bank. Students hit the same wall, because they don't have a credit history yet.” |
+| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “That's why we're building Lazo: a credit layer that plugs into the fintech wallets these people already use.” |
+| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “You can split a purchase into three interest-free installments, or six with a small interest charge. Someone you trust backs your plan, and they only pay if you don't.” |
+| 0:57–1:15 | Comercio y esquema simple del fondo | “For merchants, it's simple: they get paid upfront for a small fee, while the customer pays over time. The money comes from a shared credit pool, and every repayment fills it back up.” |
+| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “We want it to feel like any checkout you already know: pick your installments, confirm, and keep track of every payment.” |
+| 1:25–1:45 | Diseño del fondo y registro; “Prototype” | “We chose Solana because payments are fast, fees are low, and every plan and repayment leaves a record anyone can verify. What you're seeing runs on Solana devnet, a test network where the tokens have no real value.” |
+| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “We want to start right here in Tucumán, with a first pilot. What we're looking for is a fintech partner to test the integration, the funding and the economics with us, and then grow through the wallets people already use.” |
 
 **Notas de esta revisión:**
 
