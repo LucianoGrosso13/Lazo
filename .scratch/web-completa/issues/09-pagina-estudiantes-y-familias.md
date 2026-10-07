@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/audience/para-estudiantes.tsx` (reemplazás el placeholder), nuevo diccionario `app/src/i18n/dictionaries/para-estudiantes.ts`, la `metadata` de `app/src/app/para-estudiantes/page.tsx`. Usá las primitivas de `components/audience/`; si te falta una, pedila al coordinador o hacela local en tu archivo.
 
@@ -18,8 +18,8 @@ Contenido mínimo:
 - FAQ (5–7): ¿necesito tarjeta?, ¿qué es una wallet?, ¿en pesos o en dólares? (riesgo cambiario, sin prometer que es barato), ¿puedo tener más de un plan? (en la demo, dentro del margen de tu escalón), ¿qué pasa con mis datos? (identidad fuera de la cadena), ¿es real? (demo en devnet).
 - CTAs: ir a la tienda / ver comercios / mi cuenta.
 
-- [ ] Todo lo de arriba en ES y EN, con números de la config y etiquetas "provisional"/"demo" donde corresponda
-- [ ] Sin competidores ni billeteras nombradas; sin testimonios ni métricas inventadas
-- [ ] Sin scroll horizontal a 390 px; FAQ accesible por teclado
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/09-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Todo lo de arriba en ES y EN, con números de la config y etiquetas "provisional"/"demo" donde corresponda
+- [x] Sin competidores ni billeteras nombradas; sin testimonios ni métricas inventadas
+- [x] Sin scroll horizontal a 390 px; FAQ accesible por teclado
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/09-*`
+- [x] typecheck / lint / test / build en verde
