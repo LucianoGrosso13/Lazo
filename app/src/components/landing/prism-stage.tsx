@@ -17,6 +17,13 @@ interface Props {
   bands: StageBand[];
   cracked: boolean;
   ariaLabel: string;
+  /**
+   * "overlay" (default): las etiquetas de banda van sobre el abanico, a la
+   * derecha del escenario. "below": el stage no las dibuja — el llamador las
+   * muestra debajo (el checkout las necesita legibles a 390 px, donde el
+   * abanico ocupa todo el ancho). La etiqueta de entrada va siempre arriba.
+   */
+  labelsPlacement?: "overlay" | "below";
 }
 
 // Geometría del escenario (viewBox 960 × 560). La luz entra por la izquierda,
@@ -99,7 +106,7 @@ export function layoutBands<B extends { shown: number }>(bands: B[], total: numb
   });
 }
 
-export function PrismStage({ inputLabel, inputValue, bands, cracked, ariaLabel }: Props) {
+export function PrismStage({ inputLabel, inputValue, bands, cracked, ariaLabel, labelsPlacement = "overlay" }: Props) {
   const uid = useId().replace(/:/g, "");
   const stageRef = useRef<HTMLDivElement>(null);
   const amounts = useTweened(bands.map((b) => b.amount));
@@ -260,19 +267,21 @@ export function PrismStage({ inputLabel, inputValue, bands, cracked, ariaLabel }
         <span className={styles.labelKey}>{inputLabel}</span>
         <span className={styles.labelValue}>{inputValue}</span>
       </div>
-      {geom.map((g) =>
-        g.on ? (
-          <div
-            key={g.id}
-            className={styles.bandLabel}
-            style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, left: `${(FAN_END_X / VB_W) * 100 + 1.6}%`, ["--band" as string]: g.color }}
-            aria-hidden
-          >
-            <span className={styles.labelKey}>{g.label}</span>
-            <span className={styles.labelValue}>{g.value}</span>
-          </div>
-        ) : null,
-      )}
+      {labelsPlacement === "overlay"
+        ? geom.map((g) =>
+            g.on ? (
+              <div
+                key={g.id}
+                className={styles.bandLabel}
+                style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, left: `${(FAN_END_X / VB_W) * 100 + 1.6}%`, ["--band" as string]: g.color }}
+                aria-hidden
+              >
+                <span className={styles.labelKey}>{g.label}</span>
+                <span className={styles.labelValue}>{g.value}</span>
+              </div>
+            ) : null,
+          )
+        : null}
     </div>
   );
 }

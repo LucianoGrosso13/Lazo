@@ -4,10 +4,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   formatUsdc,
+  type Bps,
   type DemoClock,
   type Guarantee,
+  type InstallmentsOption,
   type Micro,
+  type PlanOption,
   type ProtocolConfig,
+  type Quote,
   type QuoteBlockReason,
   type TierIndex,
 } from "@/lib/cuotas";
@@ -19,23 +23,48 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { BigNumber } from "@/components/ui/big-number";
 import { WalletButton } from "@/components/wallet-button";
+import { PlanSelector } from "./plan-selector";
+import { pctOfBps } from "./format";
 import styles from "./checkout.module.css";
 
 export type WalletStatus = "connected" | "connecting" | "disconnected" | "disconnecting" | "pending" | "reconnecting";
 
-/** Desglose normalizado: viene de `quote()` (wallet) o de `splitPurchase` (sin wallet). */
+/** Desglose normalizado: viene de `quote()` (wallet o vista previa) o de
+ * `splitPurchase` (modo real sin wallet ni opciones de plan). */
 export interface BreakdownData {
   price: Micro;
   tier: TierIndex;
   downPayment: Micro;
   installments: Micro[];
+  /** Interés total del plan (0 en 3 cuotas). */
+  interest: Micro;
+  /** Interés total de la opción elegida, en bps sobre lo financiado. */
+  interestTotalBps: Bps;
   total: Micro;
   merchantReceives: Micro;
+  /** Lo que el comercio cobra al abrir (todo si la liquidación es inmediata). */
+  merchantAdvance: Micro;
+  /** Lo que el comercio cobra a `settlementDays` días (0 si es inmediata). */
+  merchantPending: Micro;
+  /** Días hasta el cobro diferido del comercio (0 = cobra hoy). */
+  settlementDays: number;
+  /** Cuotas de la opción elegida (3 ó 6 en la demo). */
+  installmentsCount: number;
+  /** Alguna opción cotizada es provisional: se rotula. */
+  provisional: boolean;
   eligible: boolean;
   reasons: QuoteBlockReason[];
   withGuarantee: boolean;
   /** Margen en uso (`reputation.activeExposure`) al momento de cotizar. */
   activeExposure?: Micro;
+}
+
+/** Datos del selector de plan para el panel (visible solo con >1 opción). */
+export interface PlanPickerProps {
+  options: PlanOption[];
+  quotes: Quote[] | undefined;
+  value: InstallmentsOption;
+  onChange: (n: InstallmentsOption) => void;
 }
 
 const warming = (s: WalletStatus) => s !== "connected" && s !== "disconnected";
@@ -47,6 +76,8 @@ export function Breakdown({
   config,
   walletStatus,
   onConfirm,
+  merchantName,
+  planPicker,
 }: {
   data: BreakdownData;
   guarantee: Guarantee | null;
@@ -54,6 +85,8 @@ export function Breakdown({
   config: ProtocolConfig | undefined;
   walletStatus: WalletStatus;
   onConfirm?: () => void;
+  merchantName: string;
+  planPicker?: PlanPickerProps;
 }) {
   const t = useT(checkout);
   const { locale } = useLocale();
@@ -76,6 +109,8 @@ export function Breakdown({
         <h2 className={styles.panelTitle}>{t.breakdownTitle}</h2>
         <Chip on>{t.tierChip(data.tier)}</Chip>
       </div>
+
+      {planPicker ? <PlanSelector {...planPicker} /> : null}
 
       {connected && guarantee ? (
         <p className={styles.guarantor}>
@@ -106,16 +141,41 @@ export function Breakdown({
             <dd className={styles.rowVal}>US$ {fmt(amount)}</dd>
           </div>
         ))}
+        {data.interest > 0 ? (
+          <div className={styles.row}>
+            <dt className={styles.rowKey}>
+              {t.interestRow}
+              <span className={styles.due}>
+                {t.interestChip(pctOfBps(data.interestTotalBps, locale))}
+              </span>
+            </dt>
+            <dd className={styles.rowVal}>+US$ {fmt(data.interest)}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <div className={styles.totalRow}>
         <span className={styles.totalKey}>{t.total}</span>
         <span className={styles.totalVal}>
           <BigNumber amount={data.total} size="md" decimals={0} />
-          <Chip>{t.interestFree}</Chip>
+          {data.interestTotalBps > 0 ? (
+            <Chip>{t.interestChip(pctOfBps(data.interestTotalBps, locale))}</Chip>
+          ) : (
+            <Chip>{t.interestFree}</Chip>
+          )}
+          {data.provisional ? <Chip>{t.plans.provisional}</Chip> : null}
         </span>
       </div>
-      <p className={styles.merchant}>{t.merchantToday(fmt(data.merchantReceives))}</p>
+      <p className={styles.merchant}>
+        {data.settlementDays === 0
+          ? t.merchantToday(merchantName, fmt(data.merchantReceives))
+          : t.merchantDeferred(
+              merchantName,
+              fmt(data.merchantAdvance),
+              fmt(data.merchantPending),
+              data.settlementDays,
+            )}
+      </p>
 
       {blocked ? (
         <BlockedReasons reasons={data.reasons} data={data} guarantee={guarantee} config={config} />
@@ -310,9 +370,10 @@ function Reason({
       cta = b.exceeds_guarantee_coverage.cta;
       break;
     case "option_unavailable":
-      // Hoy el checkout solo cotiza términos por defecto: el motivo queda
-      // cubierto por el tipo; el copy dedicado llega con el ticket de UI.
-      return null;
+      title = b.option_unavailable.t;
+      desc = b.option_unavailable.d;
+      cta = b.option_unavailable.cta;
+      break;
   }
 
   return (

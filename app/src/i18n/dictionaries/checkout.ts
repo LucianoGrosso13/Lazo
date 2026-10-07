@@ -13,7 +13,21 @@ export const checkout = defineDict({
     dueOn: (date: string) => `vence ${date}`,
     total: "Total",
     interestFree: "0% de interés",
-    merchantToday: (x: string) => `El comercio cobra US$ ${x} hoy, sin esperar.`,
+    plans: {
+      label: "Elegí en cuántas cuotas",
+      option: (n: number) => `${n} cuotas`,
+      free: "sin interés",
+      interestTotal: (pct: string) => `+${pct}% de interés en total`,
+      each: (amt: string) => `US$ ${amt} cada una`,
+      unavailable: "Esta opción no está disponible en la demo.",
+      provisional: "provisional",
+    },
+    interestRow: "Interés del plan",
+    interestChip: (pct: string) => `+${pct}%`,
+    merchantToday: (name: string, x: string) =>
+      `${name} cobra US$ ${x} hoy, sin esperar.`,
+    merchantDeferred: (name: string, today: string, rest: string, days: number) =>
+      `${name} cobra US$ ${today} hoy y US$ ${rest} a ${days} días.`,
     guarantorLabel: "Garante",
     guarantorLine: (card: string | null, max: string) =>
       `Garante${card ? ` · ${card}` : ""} · tope US$ ${max}`,
@@ -70,6 +84,11 @@ export const checkout = defineDict({
         d: (max: string) => `La cobertura de tu garante llega a US$ ${max}.`,
         cta: { label: "Ver algo más barato", href: "/tienda" },
       },
+      option_unavailable: {
+        t: "Esa opción no está disponible",
+        d: "La opción de cuotas o de cobro que pediste no existe o está en pausa en la demo.",
+        cta: null,
+      },
     },
     margin: {
       label: "Margen en uso",
@@ -78,13 +97,13 @@ export const checkout = defineDict({
       frees: "Pagando cuotas liberás margen, como una tarjeta.",
     },
     compareTitle: "Lo mismo, pagando en cuotas",
-    lazo: "Lazo · 3 cuotas",
+    lazoPlan: (n: number) => `Lazo · ${n} cuotas`,
     mp: "La competencia · cuotas sin tarjeta",
     reference: "referencia",
     savingsLead: "Te ahorrás",
     demoNote: "Compra simulada · el USDC es de prueba (devnet)",
-    stageAria: (price: string, down: string, inst: string) =>
-      `La compra de US$ ${price} se divide en un anticipo de US$ ${down} y tres cuotas de US$ ${inst}, sin interés.`,
+    stageAria: (price: string, down: string, inst: string, n: number) =>
+      `La compra de US$ ${price} se divide en un anticipo de US$ ${down} y ${n} cuotas de US$ ${inst}.`,
     confirm: {
       title: "Revisá lo que firmás",
       rows: {
@@ -93,12 +112,15 @@ export const checkout = defineDict({
         token: "Token",
         network: "Red",
         merchant: "El comercio recibe",
+        interest: "Interés",
         after: "Después",
       },
-      merchantFallback: "Voltia",
+      merchantFallback: "comercio demo",
       tokenValue: "devUSDC · USDC de prueba",
       networkValue: "Solana devnet · plata de prueba",
       instantly: "al instante",
+      merchantLater: (advance: string, rest: string, date: string) =>
+        `US$ ${advance} hoy · US$ ${rest} el ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} cuotas de US$ ${amt}`,
       mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
       sign: "Firmar y abrir plan",
@@ -114,15 +136,21 @@ export const checkout = defineDict({
         blocked_after_default: "Tu cuenta está bloqueada para planes nuevos.",
         has_active_plan: "Ya tenés un plan activo: pagalo antes de abrir otro.",
         protocol_halted: "El protocolo está en pausa. Probá más tarde.",
+        option_unavailable: "Esa opción de cuotas o de cobro no está disponible en la demo.",
         not_found: "No encontramos el comercio o tu cuenta. Recargá la página.",
         generic: "Algo falló del otro lado. Probá de nuevo.",
       },
       success: {
         title: "Listo, plan abierto",
-        merchantPaidLead: "El comercio cobró",
-        merchantPaidTail: "al instante",
+        merchantPaidLead: (name: string) => `${name} cobró`,
+        merchantPaidTail: (days: number) =>
+          days === 0 ? "al instante" : `el anticipo hoy`,
+        merchantLaterFact: (name: string, rest: string, days: number) =>
+          `${name} cobra el resto (US$ ${rest}) a ${days} días`,
         youPaid: (x: string) => `Pagaste el anticipo: US$ ${x}`,
         installments: (n: number, amt: string) => `Quedan ${n} cuotas de US$ ${amt}`,
+        interestFact: (x: string) => `Incluye US$ ${x} de interés`,
+        provisionalFact: "Términos provisionales de la demo",
         beamYou: "tu wallet",
         beamAria: (x: string) =>
           `La luz de tu pago viaja hasta el comercio, que cobra US$ ${x} al instante.`,
@@ -144,7 +172,21 @@ export const checkout = defineDict({
     dueOn: (date: string) => `due ${date}`,
     total: "Total",
     interestFree: "0% interest",
-    merchantToday: (x: string) => `The merchant gets US$ ${x} today, no waiting.`,
+    plans: {
+      label: "Choose your installments",
+      option: (n: number) => `${n} installments`,
+      free: "interest-free",
+      interestTotal: (pct: string) => `+${pct}% total interest`,
+      each: (amt: string) => `US$ ${amt} each`,
+      unavailable: "This option isn't available in the demo.",
+      provisional: "provisional",
+    },
+    interestRow: "Plan interest",
+    interestChip: (pct: string) => `+${pct}%`,
+    merchantToday: (name: string, x: string) =>
+      `${name} gets US$ ${x} today, no waiting.`,
+    merchantDeferred: (name: string, today: string, rest: string, days: number) =>
+      `${name} gets US$ ${today} today and US$ ${rest} in ${days} days.`,
     guarantorLabel: "Guarantor",
     guarantorLine: (card: string | null, max: string) =>
       `Guarantor${card ? ` · ${card}` : ""} · up to US$ ${max}`,
@@ -201,6 +243,11 @@ export const checkout = defineDict({
         d: (max: string) => `Your guarantor's coverage reaches US$ ${max}.`,
         cta: { label: "See something cheaper", href: "/tienda" },
       },
+      option_unavailable: {
+        t: "That option isn't available",
+        d: "The installment or settlement option you asked for doesn't exist or is paused in the demo.",
+        cta: null,
+      },
     },
     margin: {
       label: "Margin in use",
@@ -209,13 +256,13 @@ export const checkout = defineDict({
       frees: "Paying installments frees up margin, like a card.",
     },
     compareTitle: "The same purchase, in installments",
-    lazo: "Lazo · 3 installments",
+    lazoPlan: (n: number) => `Lazo · ${n} installments`,
     mp: "The competition · no-card installments",
     reference: "reference",
     savingsLead: "You save",
     demoNote: "Simulated purchase · the USDC is test money (devnet)",
-    stageAria: (price: string, down: string, inst: string) =>
-      `The US$ ${price} purchase splits into a US$ ${down} down payment and three US$ ${inst} installments, interest-free.`,
+    stageAria: (price: string, down: string, inst: string, n: number) =>
+      `The US$ ${price} purchase splits into a US$ ${down} down payment and ${n} US$ ${inst} installments.`,
     confirm: {
       title: "Check what you're signing",
       rows: {
@@ -224,12 +271,15 @@ export const checkout = defineDict({
         token: "Token",
         network: "Network",
         merchant: "Merchant receives",
+        interest: "Interest",
         after: "Then",
       },
-      merchantFallback: "Voltia",
+      merchantFallback: "demo merchant",
       tokenValue: "devUSDC · test USDC",
       networkValue: "Solana devnet · test money",
       instantly: "instantly",
+      merchantLater: (advance: string, rest: string, date: string) =>
+        `US$ ${advance} today · US$ ${rest} on ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} installments of US$ ${amt}`,
       mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
       sign: "Sign & open plan",
@@ -245,15 +295,21 @@ export const checkout = defineDict({
         blocked_after_default: "Your account is blocked from new plans.",
         has_active_plan: "You already have an active plan: pay it off first.",
         protocol_halted: "The protocol is paused. Try again later.",
+        option_unavailable: "That installment or settlement option isn't available in the demo.",
         not_found: "We couldn't find the merchant or your account. Reload the page.",
         generic: "Something failed on the other side. Try again.",
       },
       success: {
         title: "Done, plan opened",
-        merchantPaidLead: "The merchant got",
-        merchantPaidTail: "instantly",
+        merchantPaidLead: (name: string) => `${name} got`,
+        merchantPaidTail: (days: number) =>
+          days === 0 ? "instantly" : `today as down payment`,
+        merchantLaterFact: (name: string, rest: string, days: number) =>
+          `${name} gets the rest (US$ ${rest}) in ${days} days`,
         youPaid: (x: string) => `You paid the down payment: US$ ${x}`,
         installments: (n: number, amt: string) => `${n} installments of US$ ${amt} left`,
+        interestFact: (x: string) => `Includes US$ ${x} of interest`,
+        provisionalFact: "Provisional demo terms",
         beamYou: "your wallet",
         beamAria: (x: string) =>
           `The light of your payment travels to the merchant, who gets US$ ${x} instantly.`,

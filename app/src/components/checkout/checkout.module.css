@@ -12,6 +12,8 @@
   margin: 0 auto;
   padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(1.75rem, 3.5vw, 2.75rem);
   display: grid;
+  /* La pista no puede crecer por el contenido: en 390 px nada empuja el ancho. */
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(0.85rem, 1.6vw, 1.3rem);
 }
 
@@ -105,13 +107,49 @@
 }
 
 @media (max-width: 680px) {
+  /* El prisma se ve íntegro (sin zoom que recorte las bandas); las
+     etiquetas pasan a la lista de abajo. */
   .stageCrop {
     overflow: hidden;
   }
+}
 
-  .stageWide {
-    width: 128%;
-  }
+/* En pantallas angostas las etiquetas del prisma viven como lista debajo
+   del haz: cada banda con su color y su número, siempre legible. */
+.bandList {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+  padding: 0;
+  list-style: none;
+}
+
+.bandItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 1.75rem;
+  font-size: 0.875rem;
+}
+
+.bandDot {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+  background: var(--band, var(--color-violet));
+  box-shadow: 0 0 8px var(--band, var(--color-violet));
+}
+
+.bandKey {
+  color: var(--color-ink-2);
+}
+
+.bandVal {
+  margin-left: auto;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-beam);
 }
 
 .stageSkeleton {
@@ -143,9 +181,10 @@
 
 .panelHead {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.3rem 0.75rem;
 }
 
 .panelTitle {
@@ -170,6 +209,107 @@
 .previewNote {
   font-size: 0.8rem;
   line-height: 1.45;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Selector de plan (cuotas) ---------- */
+
+.planPicker {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.planPickerLabel {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.planOpts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.55rem;
+}
+
+.planOpt {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 0;
+  border-radius: 0.8rem;
+  text-align: left;
+  font: inherit;
+  color: var(--color-ink-2);
+  background: rgb(244 241 255 / 0.03);
+  box-shadow: inset 0 0 0 1px rgb(244 241 255 / 0.1);
+  cursor: pointer;
+  transition:
+    background 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+
+.planOpt:hover {
+  background: rgb(244 241 255 / 0.055);
+}
+
+.planOpt:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+.planOpt[aria-checked="true"] {
+  color: var(--color-beam);
+  background: rgb(153 69 255 / 0.1);
+  box-shadow:
+    inset 0 0 0 1px rgb(153 69 255 / 0.55),
+    0 0 18px -6px rgb(153 69 255 / 0.5);
+}
+
+.planOpt[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.planOptTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.planDot {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgb(244 241 255 / 0.35);
+  transition:
+    background 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+
+.planOpt[aria-checked="true"] .planDot {
+  background: var(--color-violet);
+  box-shadow:
+    inset 0 0 0 1.5px var(--color-violet),
+    0 0 10px rgb(153 69 255 / 0.8);
+}
+
+.planOptName {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.planOptSub {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  line-height: 1.4;
   color: var(--color-ink-3);
 }
 
@@ -219,9 +359,10 @@
 
 .totalRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.3rem 1rem;
   padding-top: 0.4rem;
 }
 
@@ -233,8 +374,10 @@
 
 .totalVal {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: flex-end;
+  gap: 0.3rem 0.6rem;
 }
 
 .merchant {
@@ -517,6 +660,8 @@
 
 .compare {
   display: grid;
+  /* Sin pista explícita el grid crece al max-content y desborda a 390 px. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.7rem;
   padding-top: clamp(0.8rem, 1.5vw, 1.1rem);
   border-top: 1px solid rgb(244 241 255 / 0.09);
@@ -530,6 +675,7 @@
 
 .compareRows {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.7rem;
 }
 
@@ -603,7 +749,7 @@
 
 @media (max-width: 640px) {
   .compareRow {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .compareTrack {
