@@ -213,7 +213,7 @@
 }
 .app-menu-chev[data-open] { transform: rotate(180deg); }
 
-.app-menu-panel {
+.app-menu .app-menu-panel {
   position: absolute;
   top: calc(100% + 0.6rem);
   left: 0;
