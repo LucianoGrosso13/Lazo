@@ -35,7 +35,7 @@ pub struct CrankMarkLate<'info> {
 pub fn handle_crank_mark_late(ctx: Context<CrankMarkLate>, installment_index: u8) -> Result<()> {
     let index = installment_index as usize;
     require!(
-        index < crate::constants::INSTALLMENT_COUNT,
+        index < ctx.accounts.plan.installment_count as usize,
         CuotasError::InvalidInstallmentIndex
     );
     require!(

@@ -134,7 +134,7 @@ pub fn handle_keeper_register_recovery(
 ) -> Result<()> {
     let index = installment_index as usize;
     require!(
-        index < crate::constants::INSTALLMENT_COUNT,
+        index < ctx.accounts.plan.installment_count as usize,
         CuotasError::InvalidInstallmentIndex
     );
     require!(receipt_hash != [0; 32], CuotasError::InvalidReceiptHash);
@@ -168,11 +168,15 @@ pub fn handle_keeper_register_recovery(
 
     // Second recovery on the same plan accelerates: charge everything left.
     let accelerated = ctx.accounts.plan.charged_count() > 0;
-    let mut charged: Vec<u8> = Vec::with_capacity(crate::constants::INSTALLMENT_COUNT);
+    let count = ctx.accounts.plan.installment_count as usize;
+    let mut charged: Vec<u8> = Vec::with_capacity(count);
     let mut principal: u64 = 0;
     let mut penalties: u64 = 0;
 
-    for (i, inst) in ctx.accounts.plan.installments.iter_mut().enumerate() {
+    for (i, inst) in ctx.accounts.plan.installments[..count]
+        .iter_mut()
+        .enumerate()
+    {
         if inst.resolved() {
             continue;
         }

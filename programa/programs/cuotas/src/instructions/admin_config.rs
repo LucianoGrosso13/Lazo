@@ -66,7 +66,7 @@ pub fn handle_admin_init_config(ctx: Context<AdminInitConfig>, params: ConfigPar
     config.installment_interval_days = params.installment_interval_days;
     config.min_financed_to_count = params.min_financed_to_count;
     config.guaranteed_tiers = params.guaranteed_tiers;
-    config.unguaranteed_tiers = params.unguaranteed_tiers;
+    config.plan_options = params.plan_options;
     config.state = ProtocolState::Normal;
     config.bump = ctx.bumps.config;
 
@@ -109,7 +109,7 @@ pub fn handle_admin_update_config(
     config.installment_interval_days = params.installment_interval_days;
     config.min_financed_to_count = params.min_financed_to_count;
     config.guaranteed_tiers = params.guaranteed_tiers;
-    config.unguaranteed_tiers = params.unguaranteed_tiers;
+    config.plan_options = params.plan_options;
     // admin, usdc_mint, state and bump are immutable here by design.
 
     emit!(ConfigUpdated {

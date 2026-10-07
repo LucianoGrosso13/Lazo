@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 };
 
 use crate::constants::{
-    CONFIG_SEED, INSTALLMENT_COUNT, LP_JUNIOR_SEED, LP_SENIOR_SEED, PLAN_SEED, POOL_SEED,
-    REPUTATION_SEED, USDC_DECIMALS, VAULT_SEED,
+    CONFIG_SEED, LP_JUNIOR_SEED, LP_SENIOR_SEED, PLAN_SEED, POOL_SEED, REPUTATION_SEED,
+    USDC_DECIMALS, VAULT_SEED,
 };
 use crate::error::CuotasError;
 use crate::events::{InstallmentPaid, PlanSettled};
@@ -125,7 +125,7 @@ pub fn handle_pay_installment(
 ) -> Result<()> {
     let expected = expected_installment_index as usize;
     require!(
-        expected < INSTALLMENT_COUNT,
+        expected < ctx.accounts.plan.installment_count as usize,
         CuotasError::InvalidInstallmentIndex
     );
     require!(

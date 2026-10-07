@@ -19,11 +19,12 @@ pub const GUARANTEE_SEED: &[u8] = b"guarantee";
 #[constant]
 pub const PLAN_SEED: &[u8] = b"plan";
 
-/// Fixed installment count per plan (ronda 4: "3 cuotas mensuales fijas").
-/// Structural, not tunable: every schedule, quote and crank assumes 3.
-/// The spacing between installments is NOT fixed here: it lives in
-/// `ProtocolConfig.installment_interval_days` (client-seeded at init).
-pub const INSTALLMENT_COUNT: usize = 3;
+/// Maximum installment slots allocated per plan (supports 3 or 6 installments).
+pub const MAX_INSTALLMENTS: usize = 6;
+
+/// Configurable total interest is capped at 10% to prevent accidental
+/// misconfiguration while leaving room above the current 3% option.
+pub const MAX_PLAN_INTEREST_BPS: u16 = 1_000;
 
 /// devUSDC is a classic SPL Token mint with 6 decimals (same as real USDC).
 #[constant]

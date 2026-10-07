@@ -2,7 +2,7 @@
 //! tier table + 02-validacion.md pricing decisions). Tests assert THESE
 //! values — if the implementation diverges, the suite fails, which is the point.
 
-use cuotas::{ConfigParams, TierParams};
+use cuotas::{ConfigParams, PlanOption, TierParams};
 
 use crate::env::{pk, USDC};
 use solana_address::Address;
@@ -24,15 +24,24 @@ pub const MIN_FINANCED_TO_COUNT: u64 = 100 * USDC;
 /// (down_payment_bps, interest_bps, guarantor_coverage_bps, max_purchase).
 pub const GUARANTEED_TIERS: [(u16, u16, u16, u64); 4] = [
     (3_000, 0, 10_000, 1_000 * USDC),
-    (2_000, 0, 9_000, 1_000 * USDC),
-    (1_000, 0, 8_000, 1_250 * USDC),
-    (0, 0, 7_000, 1_500 * USDC),
+    (2_000, 0, 10_000, 1_000 * USDC),
+    (1_000, 0, 10_000, 1_250 * USDC),
+    (0, 0, 10_000, 1_500 * USDC),
 ];
 
-/// Tier table, unguaranteed track (S0-S1).
-pub const UNGUARANTEED_TIERS: [(u16, u16, u16, u64); 2] = [
-    (5_000, 0, 0, 150 * USDC),
-    (3_000, 0, 0, 300 * USDC),
+pub const PLAN_OPTIONS: [PlanOption; 2] = [
+    PlanOption {
+        installments: 3,
+        interest_total_bps: 0,
+        min_price: 0,
+        enabled: true,
+    },
+    PlanOption {
+        installments: 6,
+        interest_total_bps: 300,
+        min_price: 350 * USDC,
+        enabled: true,
+    },
 ];
 
 /// Days between installments, seeded by the client at init (30 monthly).
@@ -64,7 +73,7 @@ pub fn spec_params(keeper: &Address, treasury: &Address) -> ConfigParams {
         installment_interval_days: INSTALLMENT_INTERVAL_DAYS,
         min_financed_to_count: MIN_FINANCED_TO_COUNT,
         guaranteed_tiers: GUARANTEED_TIERS.map(tier),
-        unguaranteed_tiers: UNGUARANTEED_TIERS.map(tier),
+        plan_options: PLAN_OPTIONS,
     }
 }
 
@@ -128,29 +137,35 @@ pub struct SpecQuote {
     pub advance: u64,
     /// total the merchant collects on-chain: down + advance.
     pub merchant_total: u64,
-    /// [floor(r/3), floor(r/3), r - 2*floor(r/3)] — last absorbs rounding.
-    pub installments: [u64; 3],
-    /// financed * guarantor_coverage_bps, the surety the keeper must cover.
+    /// [floor(r/n)...] — last absorbs rounding.
+    pub installments: Vec<u64>,
+    /// Full outstanding balance (principal + interest) the surety must cover.
     pub required_coverage: u64,
 }
 
-/// Quote for the GUARANTEED track at `tier` (0-3).
+/// Quote for the GUARANTEED track at `tier` (0-3), defaulting to 3 installments.
 pub fn spec_quote_guaranteed(price: u64, tier: usize) -> SpecQuote {
-    quote(price, GUARANTEED_TIERS[tier])
+    spec_quote_guaranteed_options(price, tier, 3)
 }
 
-/// Quote for the UNGUARANTEED track at reputation `tier` (clamped to S1).
-pub fn spec_quote_unguaranteed(price: u64, tier: usize) -> SpecQuote {
-    quote(price, UNGUARANTEED_TIERS[tier.min(1)])
-}
-
-fn quote(price: u64, t: (u16, u16, u16, u64)) -> SpecQuote {
+/// Quote for the GUARANTEED track at `tier` (0-3) for a specific installment option.
+pub fn spec_quote_guaranteed_options(price: u64, tier: usize, installments: u8) -> SpecQuote {
+    let t = GUARANTEED_TIERS[tier];
+    let opt = PLAN_OPTIONS
+        .iter()
+        .find(|o| o.installments == installments)
+        .expect("valid plan option");
     let down = bps_floor(price, t.0);
     let financed = price - down;
-    let interest = bps_floor(financed, t.1);
+    let interest = bps_floor(financed, opt.interest_total_bps);
     let repayable = financed + interest;
     let fee = bps_floor(financed, FEE_BPS);
-    let base = repayable / 3;
+    let n = installments as u64;
+    let base = repayable / n;
+    let mut insts = vec![base; installments as usize];
+    if let Some(last) = insts.last_mut() {
+        *last = repayable - base * (n - 1);
+    }
     SpecQuote {
         down,
         financed,
@@ -159,8 +174,8 @@ fn quote(price: u64, t: (u16, u16, u16, u64)) -> SpecQuote {
         fee,
         advance: financed - fee,
         merchant_total: down + (financed - fee),
-        installments: [base, base, repayable - 2 * base],
-        required_coverage: bps_floor(financed, t.2),
+        installments: insts,
+        required_coverage: repayable,
     }
 }
 

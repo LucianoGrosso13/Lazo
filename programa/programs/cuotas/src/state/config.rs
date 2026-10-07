@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::BPS_DENOMINATOR;
+use crate::constants::{BPS_DENOMINATOR, MAX_PLAN_INTEREST_BPS};
 use crate::error::CuotasError;
 
 /// Terms that apply to one reputation tier. All values live on-chain in
@@ -13,8 +13,21 @@ pub struct TierParams {
     pub max_purchase: u64,
     /// Interest charged on the financed amount, in bps. Currently 0 everywhere.
     pub interest_bps: u16,
-    /// Fraction of the financed amount the guarantor must cover, in bps.
+    /// Required guarantor coverage, fixed at 10,000 bps (the full balance).
     pub guarantor_coverage_bps: u16,
+}
+
+/// An installment option offered by the protocol (e.g. 3 installments 0 bps, 6 installments 300 bps).
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace, PartialEq, Eq, Debug)]
+pub struct PlanOption {
+    /// Number of installments (e.g. 3 or 6).
+    pub installments: u8,
+    /// Total interest charged over the financed amount, in bps.
+    pub interest_total_bps: u16,
+    /// Minimum purchase price required for this option, in USDC base units (0 = no minimum).
+    pub min_price: u64,
+    /// Whether this option is enabled.
+    pub enabled: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
@@ -70,8 +83,8 @@ pub struct ProtocolConfig {
     pub min_financed_to_count: u64,
     /// Ladder for students with a guarantor (tiers 0-3).
     pub guaranteed_tiers: [TierParams; 4],
-    /// Ladder for students without a guarantor (S0-S1).
-    pub unguaranteed_tiers: [TierParams; 2],
+    /// Plan options offered (3 or 6 installments).
+    pub plan_options: [PlanOption; 2],
     /// Lifecycle gate.
     pub state: ProtocolState,
     /// Canonical bump of this PDA.
@@ -115,7 +128,7 @@ pub struct ConfigParams {
     pub installment_interval_days: u16,
     pub min_financed_to_count: u64,
     pub guaranteed_tiers: [TierParams; 4],
-    pub unguaranteed_tiers: [TierParams; 2],
+    pub plan_options: [PlanOption; 2],
 }
 
 impl ConfigParams {
@@ -136,8 +149,7 @@ impl ConfigParams {
         );
         // The guarantor notice must be a real day strictly before the charge.
         require!(
-            self.guarantor_notice_day > 0
-                && self.guarantor_notice_day < self.guarantor_charge_day,
+            self.guarantor_notice_day > 0 && self.guarantor_notice_day < self.guarantor_charge_day,
             CuotasError::InvalidConfig
         );
         require!(self.seconds_per_day > 0, CuotasError::InvalidConfig);
@@ -146,19 +158,40 @@ impl ConfigParams {
             CuotasError::InvalidConfig
         );
 
-        for tier in self
-            .guaranteed_tiers
-            .iter()
-            .chain(self.unguaranteed_tiers.iter())
-        {
+        for tier in self.guaranteed_tiers.iter() {
             require!(
                 tier.down_payment_bps as u64 <= bps_max
                     && tier.interest_bps as u64 <= bps_max
-                    && tier.guarantor_coverage_bps as u64 <= bps_max,
+                    && tier.guarantor_coverage_bps as u64 == bps_max,
                 CuotasError::InvalidConfig
             );
             require!(tier.max_purchase > 0, CuotasError::InvalidConfig);
         }
+
+        for (i, opt) in self.plan_options.iter().enumerate() {
+            require!(
+                opt.interest_total_bps as u64 <= u64::from(MAX_PLAN_INTEREST_BPS),
+                CuotasError::InvalidConfig
+            );
+            require!(
+                opt.installments == 3 || opt.installments == 6,
+                CuotasError::InvalidConfig
+            );
+            require!(
+                !self.plan_options[..i]
+                    .iter()
+                    .any(|prior| prior.installments == opt.installments),
+                CuotasError::InvalidConfig
+            );
+        }
+        // Three installments remain the baseline option and cannot be disabled.
+        require!(
+            self.plan_options
+                .iter()
+                .any(|opt| opt.installments == 3 && opt.enabled),
+            CuotasError::InvalidConfig
+        );
+
         Ok(())
     }
 }
@@ -175,6 +208,20 @@ mod tests {
             interest_bps: 0,
             guarantor_coverage_bps: 10_000,
         };
+        let options = [
+            PlanOption {
+                installments: 3,
+                interest_total_bps: 0,
+                min_price: 0,
+                enabled: true,
+            },
+            PlanOption {
+                installments: 6,
+                interest_total_bps: 300,
+                min_price: 350_000_000,
+                enabled: true,
+            },
+        ];
         ConfigParams {
             keeper: Pubkey::new_unique(),
             treasury: Pubkey::new_unique(),
@@ -187,7 +234,7 @@ mod tests {
             installment_interval_days: 30,
             min_financed_to_count: 100_000_000,
             guaranteed_tiers: [tier; 4],
-            unguaranteed_tiers: [tier; 2],
+            plan_options: options,
         }
     }
 
@@ -235,7 +282,45 @@ mod tests {
         assert!(p.validate().is_err());
 
         let mut p = valid_params();
-        p.unguaranteed_tiers[1].max_purchase = 0;
+        p.guaranteed_tiers[1].max_purchase = 0;
+        assert!(p.validate().is_err());
+
+        // plan_options validations
+        let mut p = valid_params();
+        p.plan_options[0].interest_total_bps = 10_001;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[1].interest_total_bps = MAX_PLAN_INTEREST_BPS + 1;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[0].installments = 0;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[0].installments = 7;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[1].installments = 4;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[1].installments = 3;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.plan_options[0].enabled = false;
+        assert!(p.validate().is_err());
+
+        let mut p = valid_params();
+        p.guaranteed_tiers[2].guarantor_coverage_bps = 9_999;
+        assert!(p.validate().is_err());
+
+        // missing 3-installment option
+        let mut p = valid_params();
+        p.plan_options[0].installments = 6;
         assert!(p.validate().is_err());
     }
 
@@ -275,12 +360,20 @@ mod tests {
                 interest_bps: 0,
                 guarantor_coverage_bps: 10_000,
             }; 4],
-            unguaranteed_tiers: [TierParams {
-                down_payment_bps: 5_000,
-                max_purchase: 1,
-                interest_bps: 0,
-                guarantor_coverage_bps: 0,
-            }; 2],
+            plan_options: [
+                PlanOption {
+                    installments: 3,
+                    interest_total_bps: 0,
+                    min_price: 0,
+                    enabled: true,
+                },
+                PlanOption {
+                    installments: 6,
+                    interest_total_bps: 300,
+                    min_price: 350_000_000,
+                    enabled: true,
+                },
+            ],
             state: ProtocolState::Normal,
             bump: 255,
         };

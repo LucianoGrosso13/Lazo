@@ -473,6 +473,18 @@ impl Env {
         self.svm.set_account(addr, acc).unwrap();
     }
 
+    /// Overwrite Plan state directly.
+    pub fn edit_plan(&mut self, student: &Address, f: impl FnOnce(&mut cuotas::Plan)) {
+        let addr = pda::plan(student).0;
+        let mut p = self.decode::<cuotas::Plan>(&addr);
+        f(&mut p);
+        let mut data = Vec::new();
+        anchor_lang::AccountSerialize::try_serialize(&p, &mut data).unwrap();
+        let mut acc = self.svm.get_account(&addr).unwrap();
+        acc.data = data;
+        self.svm.set_account(addr, acc).unwrap();
+    }
+
     /// Write the supply field of an SPL mint account directly. Only way to
     /// make supply exceed the pool's share counters (mint authority is the
     /// pool PDA) and exercise the LpSupplyMismatch guard.
