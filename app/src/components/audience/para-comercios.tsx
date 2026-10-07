@@ -11,7 +11,6 @@ import { EstadoConsulta } from "@/components/cuenta/consulta";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { paraComercios } from "@/i18n/dictionaries/para-comercios";
 import { useLocale, useT } from "@/i18n/locale";
@@ -19,6 +18,7 @@ import {
   DEMO_STUDENT_NEW,
   formatUsdc,
   planOptionsOf,
+  payoutSchedule,
   REFERENCE_FIGURES,
   settlementAvailable,
   settlementOptionsOf,
@@ -68,7 +68,7 @@ interface CobroRow {
   quote: Quote | null;
 }
 
-/** El reparto del neto: lo que entra hoy (cyan→green) y lo que entra en la fecha (violet). */
+/** El reparto del neto: anticipo hoy y cada tramo garantizado en su fecha. */
 function BandaCobro({
   quote,
   option,
@@ -84,22 +84,21 @@ function BandaCobro({
   if (total <= 0) return null;
   const hoy = quote.merchantAdvance;
   const fecha = quote.merchantPending;
+  const schedule = payoutSchedule(fecha, option, 0);
   return (
     <div className="mt-auto">
       <div
         className="flex h-2.5 w-full overflow-hidden rounded-full bg-beam/8"
         role="img"
         aria-label={t.cobroBarraAria
-          .replace("{hoy}", formatUsdc(hoy, locale))
-          .replace("{despues}", formatUsdc(fecha, locale))}
+          .replace("{anticipo}", formatUsdc(hoy, locale))
+          .replace("{tramos}", schedule.map((tramo) => formatUsdc(tramo.amount, locale)).join(", "))}
       >
         <div
           className="h-full bg-gradient-to-r from-cyan to-green"
           style={{ width: `${(hoy / total) * 100}%` }}
         />
-        {fecha > 0 ? (
-          <div className="h-full bg-violet/70" style={{ width: `${(fecha / total) * 100}%` }} />
-        ) : null}
+        {fecha > 0 ? <div className="h-full bg-violet/70" style={{ width: `${(fecha / total) * 100}%` }} /> : null}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">
         <span className="inline-flex items-center gap-1.5">
@@ -107,13 +106,16 @@ function BandaCobro({
           <span className="font-num tabular-nums">{formatUsdc(hoy, locale)}</span>
           {t.cobroHoyLabel}
         </span>
-        {fecha > 0 ? (
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="size-2 flex-none rounded-full bg-violet" />
-            <span className="font-num tabular-nums">{formatUsdc(fecha, locale)}</span>
-            {t.cobroEnFechaLabel.replace("{dias}", String(option.days))}
+        {schedule.length > 0 ? (
+          <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 flex-none rounded-full bg-violet" />{t.tramosGarantizados}</span>
+            {schedule.map((tramo) => (
+              <span key={tramo.index} className="font-num tabular-nums">
+                {t.tramoItem.replace("{dia}", String(tramo.releaseAt / 86_400)).replace("{monto}", formatUsdc(tramo.amount, locale))}
+              </span>
+            ))}
           </span>
-        ) : null}
+        ) : <span>{t.cobroInmediatoTodo}</span>}
       </div>
     </div>
   );
@@ -230,18 +232,9 @@ export function ParaComercios() {
     settlements.find((o) => o.id === "immediate")?.feeBps ?? config?.feeBps ?? null;
   const pctInmediato = feeBpsInmediato !== null ? fmtBps(feeBpsInmediato, locale) : "…";
 
-  const lazoFees = settlements.map((o) => (o.feeBps ?? 0) / 100);
-  const lazoMin = lazoFees.length ? Math.min(...lazoFees) : 0;
-  const lazoMax = lazoFees.length ? Math.max(...lazoFees) : 0;
-  const maxRef = Math.max(
-    lazoMax,
-    REFERENCE_FIGURES.cuotaMipymeMerchantPct,
-    REFERENCE_FIGURES.mercadoPagoMerchantPct,
-  );
-  const lazoPctLabel =
-    lazoMin === lazoMax
-      ? fmtPct(lazoMax, locale)
-      : `${fmtPct(lazoMin, locale)}–${fmtPct(lazoMax, locale)}`;
+  const cftea = REFERENCE_FIGURES.mercadoPagoCfteaPct;
+  const maxRef = cftea.max;
+  const interesCliente = planConInteres ? planConInteres.interestTotalBps / 100 : 0;
 
   return (
     <div className="page-shell py-12 sm:py-16">
@@ -250,8 +243,8 @@ export function ParaComercios() {
         title={common.pages.comercios.title}
         lede={common.pages.comercios.lede}
       >
-        <Link href="/app/comercio" className={buttonClasses("primary")}>
-          {t.ctaPanel}
+        <Link href="/app/comercio/mostrador" className={buttonClasses("primary")}>
+          {t.ctaHeroMostrador}
         </Link>
         <Link href="/comercio" className={buttonClasses("secondary")}>
           {t.ctaMarketplace}
@@ -314,7 +307,6 @@ export function ParaComercios() {
                 <li key={option.id} className="glass flex flex-col gap-2 p-4 sm:p-5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium text-beam">{plazoLabel(option, t)}</p>
-                    {option.provisional ? <Chip>{t.provisionalTag}</Chip> : null}
                   </div>
                   {quote ? (
                     <>
@@ -353,11 +345,6 @@ export function ParaComercios() {
                   )}
               </p>
             ) : null}
-            <div className="mt-5 max-w-2xl">
-              <Callout variant="provisional" title={t.provisionalCalloutTitle}>
-                {t.provisionalCalloutBody}
-              </Callout>
-            </div>
           </>
         )}
       </AudienceSection>
@@ -368,60 +355,49 @@ export function ParaComercios() {
           <div className="glass p-4 sm:p-5">
             <p className="font-medium text-beam">{t.operarOnlineTitle}</p>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarOnlineBody}</p>
+            <Link href="/comercio" className={`${buttonClasses("secondary")} mt-4`}>{t.operarOnlineCta}</Link>
           </div>
           <div className="glass p-4 sm:p-5">
             <p className="flex flex-wrap items-center gap-2 font-medium text-beam">
               {t.operarMostradorTitle}
-              <Chip>{t.roadmapTag}</Chip>
             </p>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarMostradorBody}</p>
+            <Link href="/app/comercio/mostrador" className={`${buttonClasses("primary")} mt-4`}>{t.operarMostradorCta}</Link>
           </div>
           <div className="glass p-4 sm:p-5">
             <p className="font-medium text-beam">{t.operarPanelTitle}</p>
             <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarPanelBody}</p>
+            <Link href="/app/comercio" className={`${buttonClasses("secondary")} mt-4`}>{t.operarPanelCta}</Link>
           </div>
         </div>
       </AudienceSection>
 
       {/* Frente a otras formas de vender en cuotas */}
-      <AudienceSection title={t.comparacionTitle} intro={t.comparacionIntro}>
+      <AudienceSection title={t.comparacionTitle} intro={t.comparacionIntro
+        .replace("{tres}", joinNums(planesSinInteres.map((o) => o.installments), locale))
+        .replace("{seis}", planConInteres ? String(planConInteres.installments) : "")
+        .replace("{pct}", fmtBps(planConInteres?.interestTotalBps ?? 0, locale))}>
         <div className="glass p-4 sm:p-5">
           <ul className="space-y-5">
             <FilaComparacion
               nombre={t.comparacionLazo}
-              detalle={t.comparacionLazoDetalle.replace("{pct}", lazoPctLabel)}
-              valorPct={lazoMax}
-              rangoMin={lazoMin}
+              detalle={t.comparacionLazoDetalle
+                .replace("{tres}", String(planesSinInteres.map((o) => o.installments).join("/")))
+                .replace("{seis}", planConInteres ? String(planConInteres.installments) : "")
+                .replace("{pct}", fmtBps(planConInteres?.interestTotalBps ?? 0, locale))}
+              valorPct={interesCliente}
               maxPct={maxRef}
               espectro
             />
             <FilaComparacion
-              nombre={t.comparacionMipyme}
-              detalle={t.comparacionMipymeDetalle.replace(
-                "{pct}",
-                fmtPct(REFERENCE_FIGURES.cuotaMipymeMerchantPct, locale),
-              )}
-              valorPct={REFERENCE_FIGURES.cuotaMipymeMerchantPct}
-              maxPct={maxRef}
-              referencia
-            />
-            <FilaComparacion
-              nombre={t.comparacionBilletera}
-              detalle={t.comparacionBilleteraDetalle.replace(
-                "{pct}",
-                fmtPct(REFERENCE_FIGURES.mercadoPagoMerchantPct, locale),
-              )}
-              valorPct={REFERENCE_FIGURES.mercadoPagoMerchantPct}
+              nombre={t.comparacionCfteaTitle}
+              detalle={t.comparacionCfteaDetalle.replace("{min}", fmtPct(cftea.min, locale)).replace("{max}", fmtPct(cftea.max, locale))}
+              valorPct={cftea.max}
+              rangoMin={cftea.min}
               maxPct={maxRef}
               referencia
             />
           </ul>
-          <p className="mt-5 text-sm leading-relaxed text-ink-2">
-            {t.comparacionDemora.replace(
-              "{dias}",
-              String(REFERENCE_FIGURES.gocuotasSettlementBusinessDays),
-            )}
-          </p>
           <p className="mt-2 text-sm leading-relaxed text-ink-ghost">{t.comparacionNote}</p>
         </div>
       </AudienceSection>
@@ -429,21 +405,20 @@ export function ParaComercios() {
       {/* Marketplace */}
       <AudienceSection title={t.marketplaceTitle} intro={t.marketplaceBody}>
         <div className="flex flex-col items-start gap-4">
-          <Callout variant="demo">{t.marketplaceDemoNote}</Callout>
+          <p className="max-w-2xl text-sm leading-relaxed text-ink-2">{t.marketplaceExampleNote}</p>
           <Link href="/comercio" className={buttonClasses("secondary")}>
             {t.marketplaceCta}
           </Link>
         </div>
       </AudienceSection>
 
-      {/* Riesgos y pendientes */}
+      {/* Riesgos */}
       <AudienceSection title={t.riesgosTitle}>
         <ul>
           {[
-            { title: t.riesgoDevolucionesTitle, body: t.riesgoDevolucionesBody },
+            { title: t.riesgoCompromisoTitle, body: t.riesgoCompromisoBody },
             { title: t.riesgoFiadorTitle, body: t.riesgoFiadorBody },
-            { title: t.riesgoPartesTitle, body: t.riesgoPartesBody },
-            { title: t.riesgoAlcanceTitle, body: t.riesgoAlcanceBody },
+            { title: t.riesgoLiquidezTitle, body: t.riesgoLiquidezBody },
           ].map((item) => (
             <li
               key={item.title}
@@ -470,8 +445,8 @@ export function ParaComercios() {
       <AudienceSection title={t.cierreTitle} intro={t.cierreBody}>
         <div className="flex flex-col items-start gap-5">
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/app/comercio" className={buttonClasses("primary")}>
-              {t.ctaPanel}
+            <Link href="/app/comercio/mostrador" className={buttonClasses("primary")}>
+              {t.operarMostradorCta}
             </Link>
             <Link href="/comercio" className={buttonClasses("secondary")}>
               {t.ctaMarketplace}
