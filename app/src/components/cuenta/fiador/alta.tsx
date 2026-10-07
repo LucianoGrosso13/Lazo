@@ -19,6 +19,7 @@ import {
   type Invitation,
   type Micro,
 } from "@/lib/cuotas";
+import { fmtPct } from "../consulta";
 import { descargarMandato, hashMandato, textoMandato } from "./documento";
 
 // Tarjetas de ejemplo del procesador sandbox — nunca se pide PAN/CVV.
@@ -62,12 +63,25 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
     ([, m, s]) => getCuotas().quote(m, s),
   );
 
+  // Cobertura sobre el capital pendiente (bps): si todos los escalones con
+  // fiador exigen lo mismo se declara ese porcentaje; si varía, la del
+  // escalón cotizado. `null` mientras la cotización no responde.
+  const protocol = configQ.data?.protocol;
+  const tierCoverage = protocol
+    ? [...new Set(protocol.guaranteedTiers.map((x) => x.guarantorCoverageBps))]
+    : [];
+  const quoteCoverageBps =
+    quoteQ.data?.withGuarantee && protocol
+      ? (protocol.guaranteedTiers[quoteQ.data.tier]?.guarantorCoverageBps ?? null)
+      : null;
+  const coverageBps = tierCoverage.length === 1 ? tierCoverage[0] : quoteCoverageBps;
+
   // Documento + hash: se generan una vez con los valores elegidos.
   const docQ = useSWR(
     nombre.trim() && topeElegido != null
-      ? ["fiador-doc", invitation.student, nombre.trim(), topeElegido, locale]
+      ? ["fiador-doc", invitation.student, nombre.trim(), topeElegido, coverageBps ?? -1, locale]
       : null,
-    async ([, student, name, maxPurchase, lang]) => {
+    async ([, student, name, maxPurchase, covBps, lang]) => {
       // Q1 pendiente: la fórmula del máximo de la fianza aún no existe, así
       // que el documento lo declara "pendiente de definición" y el alta no
       // puede aceptarse con un número inventado.
@@ -77,6 +91,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
         guarantorName: name,
         maxPurchase,
         coverageMax,
+        coverageBps: covBps < 0 ? null : covBps,
         issuedAt: Math.floor(Date.now() / 1000),
         locale: lang === "en" ? "en" : "es",
       });
@@ -165,7 +180,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                 {topes.map((m) => (
                   <label
                     key={String(m)}
-                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam"
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam max-sm:min-h-10"
                   >
                     <input
                       type="radio"
@@ -196,6 +211,14 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                     <strong className="text-ink-2">{t.alta.maxPending}</strong>
                   </li>
                 </ul>
+                <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
+                  {coverageBps != null &&
+                    `${(tierCoverage.length === 1
+                      ? t.alta.coberturaAlcanceTodos
+                      : t.alta.coberturaAlcanceEscalon
+                    ).replace("{pct}", fmtPct(coverageBps / 10_000, locale))} `}
+                  {t.alta.coberturaFuera}
+                </p>
               </div>
             </GlassSlab>
 
@@ -291,7 +314,7 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                 {DEMO_CARDS.map((c, i) => (
                   <label
                     key={c.pan}
-                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam"
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam max-sm:min-h-10"
                   >
                     <input
                       type="radio"
@@ -333,6 +356,12 @@ export function AltaFiador({ invitation }: { invitation: Invitation }) {
                   {docQ.data?.coverageMax != null
                     ? fmt(docQ.data.coverageMax)
                     : t.alta.maxPending}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-2">{t.alta.confirmCoverage}</dt>
+                <dd className="text-ink">
+                  {coverageBps != null ? fmtPct(coverageBps / 10_000, locale) : "—"}
                 </dd>
               </div>
               <div>

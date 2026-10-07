@@ -116,7 +116,8 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`whitespace-nowrap rounded-md px-3 py-1.5 font-num text-measure uppercase transition-colors ${
+                  // Tap target ≥ 40 px en táctil chico: solo crece bajo `sm`.
+                  className={`inline-flex items-center whitespace-nowrap rounded-md px-3 py-1.5 font-num text-measure uppercase transition-colors max-sm:min-h-10 ${
                     active ? "bg-beam/10 text-beam" : "text-ink-2 hover:text-beam"
                   }`}
                 >

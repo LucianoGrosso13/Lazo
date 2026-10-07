@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/cuenta/estudiante.tsx`, `cuenta/fiador/*`, `cuenta/account-shell.tsx`, `cuenta/account-context.tsx` (solo si hace falta), `cuenta/mock-account.tsx`, `cuenta/invitar-fiador.tsx`, `cuenta/consulta.tsx`, `cuenta/evidencia.tsx`, `app/src/app/(cuenta)/app/page.tsx`, `app/src/app/(cuenta)/app/estudiante/page.tsx`, `app/src/app/account/*`, `app/src/app/fiador/*`, diccionarios `account.ts`, `cuentas.ts`, `fiador-cuenta.ts`, `invitacion-cuenta.ts`. **No tocar** `cuenta/comercio.tsx`, `pool.tsx`, `admin.tsx`.
 
@@ -14,8 +14,8 @@ Notas:
 - Audit 390 px: `/account` no tiene padding lateral (el contenedor `max-w-3xl space-y-6` toca los bordes); tabs de rol en `/app` de 24 px de alto → ≥ 40.
 - No tocar la lógica de fianza server-side (`lib/server/*`, `FIADOR_COVERAGE_POLICY`): solo presentación.
 
-- [ ] Panel del estudiante con cuotas/interés/provisional/comercio por plan
-- [ ] Fiador: texto de cobertura 100% del capital pendiente, sin prometer cobertura de interés/recargos
-- [ ] `/account`, `/app`, `/app/estudiante`, `/fiador/<token>` sin scroll horizontal y con padding correcto a 390 px; tap targets ≥ 40×40
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/13-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Panel del estudiante con cuotas/interés/provisional/comercio por plan
+- [x] Fiador: texto de cobertura 100% del capital pendiente, sin prometer cobertura de interés/recargos
+- [x] `/account`, `/app`, `/app/estudiante`, `/fiador/<token>` sin scroll horizontal y con padding correcto a 390 px; tap targets ≥ 40×40
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/13-*`
+- [x] typecheck / lint / test / build en verde
