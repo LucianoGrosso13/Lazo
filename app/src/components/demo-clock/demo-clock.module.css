@@ -13,12 +13,12 @@
   gap: 0.5rem;
 }
 
-/* En pantallas chicas el CTA suele estar abajo: el reloj se ancla arriba,
-   bajo el header, para no taparlo. */
+/* En móvil también abajo a la derecha: arriba tapaba el badge DEVNET del
+   header de cuentas, el chip MOCK y la esquina de la tienda. El panel abierto
+   queda acotado para no llegar al header pegajoso ni a los CTAs. */
 @media (max-width: 640px) {
-  .wrap {
-    bottom: auto;
-    top: calc(4.5rem + env(safe-area-inset-top));
+  .panel {
+    max-height: calc(100dvh - 10.5rem);
   }
 }
 
@@ -55,11 +55,6 @@
       left 0.8s var(--ease-beam),
       background-color 0.8s var(--ease-beam),
       box-shadow 0.8s var(--ease-beam);
-  }
-  @media (max-width: 640px) {
-    .panel {
-      transform-origin: top right;
-    }
   }
 }
 @keyframes clockIn {

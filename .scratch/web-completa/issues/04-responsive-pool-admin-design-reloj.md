@@ -7,13 +7,13 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/cuenta/pool.tsx`, `app/src/components/cuenta/admin.tsx`, `app/src/app/pool/page.tsx`, `app/src/app/(cuenta)/app/admin/page.tsx`, `app/src/app/design/*`, `app/src/components/demo-clock/*`, `app/src/components/ui/*` (solo tamaños táctiles, sin cambiar API ni look de escritorio), diccionarios `pool-cuenta.ts`, `admin-cuenta.ts`, `demo-clock.ts`. **No tocar** `design.ts` (lo usa el header del 03).
 
-- [ ] `/design`, `/pool`, `/app/admin` sin scroll horizontal a 390 px
-- [ ] Reloj de demo sin tapar header, badges ni CTAs en `/`, `/tienda`, `/checkout/pc`, `/app/*`, `/account` a 390 px; versión escritorio sin regresiones
-- [ ] Tablas del pool/admin legibles en móvil (tarjetas o scroll contenido con indicación)
-- [ ] Tap targets ≥ 40×40 en esas pantallas y en `components/ui`
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/04-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] `/design`, `/pool`, `/app/admin` sin scroll horizontal a 390 px
+- [x] Reloj de demo sin tapar header, badges ni CTAs en `/`, `/tienda`, `/checkout/pc`, `/app/*`, `/account` a 390 px; versión escritorio sin regresiones
+- [x] Tablas del pool/admin legibles en móvil (tarjetas o scroll contenido con indicación)
+- [x] Tap targets ≥ 40×40 en esas pantallas y en `components/ui`
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/04-*`
+- [x] typecheck / lint / test / build en verde

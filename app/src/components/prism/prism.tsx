@@ -42,6 +42,20 @@ function useReducedMotion() {
   );
 }
 
+/** Viewport angosto: las etiquetas de banda se anclan al filo derecho del
+ *  figure (dentro del lienzo) en vez de salirse a la derecha de la punta. */
+function useNarrow() {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia("(max-width: 640px)");
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia("(max-width: 640px)").matches,
+    () => false,
+  );
+}
+
 let webglCache: boolean | null = null;
 function detectWebGL(): boolean {
   if (webglCache === null) {
@@ -88,6 +102,7 @@ export function Prism({ input, bands, comparison = null, state = {}, size = "her
   }, [geom]);
 
   const compact = size === "compact";
+  const narrow = useNarrow();
   const usd = (m: Micro) => formatUsdc(m, locale);
   const entry = { x: geom.slab.x0, y: geom.input.y };
 
@@ -131,19 +146,29 @@ export function Prism({ input, bands, comparison = null, state = {}, size = "her
         </div>
       </div>
 
-      {/* etiquetas en la punta de cada banda (se dan vuelta cerca del borde) */}
+      {/* etiquetas en la punta de cada banda (se dan vuelta cerca del borde;
+          en viewport angosto van al filo derecho para no salir del lienzo) */}
       {geom.bands.map((b) => {
         const flip = b.x1 > 0.78;
         return (
           <div
             key={b.id}
-            className={`absolute ${flip ? "text-right" : ""}`}
-            style={{
-              left: `${b.x1 * 100}%`,
-              top: `${b.y * 100}%`,
-              transform: flip ? "translate(calc(-100% - 10px),-50%)" : "translate(10px,-50%)",
-              textShadow: "0 1px 10px rgb(7 6 11 / 0.85)",
-            }}
+            className={`absolute ${flip || narrow ? "text-right" : ""}`}
+            style={
+              narrow
+                ? {
+                    right: 0,
+                    top: `${b.y * 100}%`,
+                    transform: "translateY(-50%)",
+                    textShadow: "0 1px 10px rgb(7 6 11 / 0.85)",
+                  }
+                : {
+                    left: `${b.x1 * 100}%`,
+                    top: `${b.y * 100}%`,
+                    transform: flip ? "translate(calc(-100% - 10px),-50%)" : "translate(10px,-50%)",
+                    textShadow: "0 1px 10px rgb(7 6 11 / 0.85)",
+                  }
+            }
           >
             <div
               className={`font-num text-measure uppercase whitespace-nowrap ${compact ? "text-[9px]" : ""}`}

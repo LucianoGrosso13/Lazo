@@ -115,12 +115,12 @@ export function DesignPage() {
       {/* ------------------------- Tipografías -------------------------- */}
       <Section title={t.sections.type}>
         <div className="grid gap-6 lg:grid-cols-2">
-          <GlassPanel className="p-7">
-            <p className="font-display text-4xl leading-tight text-beam">{t.type.sample}</p>
+          <GlassPanel className="min-w-0 p-7">
+            <p className="break-words font-display text-4xl leading-tight text-beam">{t.type.sample}</p>
             <p className="mt-4 text-[0.9375rem] leading-relaxed text-ink-2">{t.type.display}</p>
           </GlassPanel>
-          <GlassPanel className="flex flex-col justify-center p-7">
-            <p className="font-num text-4xl tracking-[-0.02em] text-beam">0123456789,30%</p>
+          <GlassPanel className="flex min-w-0 flex-col justify-center p-7">
+            <p className="break-all font-num text-3xl tracking-[-0.02em] text-beam sm:text-4xl">0123456789,30%</p>
             <p className="mt-2 font-num text-measure uppercase text-cyan">{t.type.sampleNum}</p>
             <p className="mt-4 text-[0.9375rem] leading-relaxed text-ink-2">{t.type.num}</p>
           </GlassPanel>
@@ -130,11 +130,11 @@ export function DesignPage() {
       {/* --------------------------- Vidrio ----------------------------- */}
       <Section title={t.sections.glass}>
         <div className="grid gap-6 lg:grid-cols-5">
-          <GlassPanel className="p-7 lg:col-span-2">
+          <GlassPanel className="min-w-0 p-7 lg:col-span-2">
             <h3 className="font-num text-measure uppercase text-ink-3">{t.glass.panelTitle}</h3>
             <p className="mt-4 leading-relaxed text-ink-2">{t.glass.panelBody}</p>
           </GlassPanel>
-          <GlassSlab className="min-h-44 lg:col-span-3">
+          <GlassSlab className="min-h-44 min-w-0 lg:col-span-3">
             <div className="flex h-full flex-col justify-center p-8">
               <h3 className="font-num text-measure uppercase text-ink-3">{t.glass.slabTitle}</h3>
               <p className="mt-4 max-w-md leading-relaxed text-ink-2">{t.glass.slabBody}</p>
@@ -147,7 +147,7 @@ export function DesignPage() {
       <Section title={t.sections.states}>
         <p className="mb-8 max-w-2xl text-ink-3">{t.states.caption}</p>
         <div className="grid gap-6 lg:grid-cols-2">
-          <GlassPanel className="p-6">
+          <GlassPanel className="min-w-0 p-6">
             <ul className="divide-y divide-beam/6">
               {MARKS.map((state) => (
                 <li key={state} className="flex items-center gap-4 py-3.5">
@@ -158,7 +158,7 @@ export function DesignPage() {
               ))}
             </ul>
           </GlassPanel>
-          <GlassPanel className="p-6" aria-label={t.states.noColor}>
+          <GlassPanel className="min-w-0 p-6" aria-label={t.states.noColor}>
             <p className="mb-2 font-num text-measure uppercase text-ink-3">{t.states.noColor}</p>
             <ul className="divide-y divide-beam/6 [filter:grayscale(1)]">
               {MARKS.map((state) => (
