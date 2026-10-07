@@ -103,11 +103,23 @@ Si ambos confirman que trabajan y no tienen tarjeta propia, reemplazar la segund
 
 No afirmar “we're unbanked” sin confirmar que no tienen cuentas. No inventar un rechazo de banco. Si el problema es límite insuficiente, adaptar la experiencia a ese dato. El guion general se puede seguir editando mientras falta la respuesta.
 
-### Cierre: recomendación para definir con el equipo
+### Cierre: dirección elegida y propuesta tras el handoff
 
-Recomiendo **alianzas con billeteras existentes** como estrategia de distribución. La aplicación propia sirve para probar el producto. Ripio/belo son candidatos a infraestructura; Lemon tiene un canal explícito de Mini-Apps, pero el SDK documentado no incluye Solana y Lemon **ya ofrece crédito respaldado en bitcoin**. No decir que hay una alianza ni que una API aporta usuarios automáticamente. Investigación y costos a cotizar en [informe fintech](research/h-distribucion-fintech-y-billetera.md).
+**Actualización tras leer `handoff-masividad-alianza.md` y `11-masividad-billetera-vs-alianza.md` §7:** Luciano ya eligió presentar Lazo como **capa de crédito con fiador para billeteras cripto**, con infraestructura repetible entre partners. Tucumán es la primera cohorte propuesta, no el mercado total. La búsqueda de alianzas es dirección elegida; aceptación, integración y resultados siguen sin demostrar.
 
-El cierre actual es una propuesta, no una decisión de lanzar otro negocio. Antes de negociar reparto: margen por compra después de pérdidas, capital, rampa, cobros, operación y socio; quién financia y asume pérdidas; ubicación/atribución de distribución. No cerrar un 50/50 ni prometer volumen. Un socio de infraestructura y uno de distribución pueden ser distintos.
+El handoff registra esta frase aprobada: “Lazo doesn't compete as a wallet: it's the guarantor-backed credit layer a wallet plugs in to approve the users it rejects today.” Para el cierre hablado propongo la versión siguiente, que expresa la intención de atender a esa cohorte sin asegurar aprobación automática ni integración ya disponible.
+
+**Alternativa para sustituir la última fila del guion (a elegir con el equipo):**
+
+> “We're building Lazo as the guarantor-backed credit layer for wallets to serve people their existing credit products leave out. Tucumán is our proposed first pilot; wallet integrations are our path to scale. We're looking for a fintech to validate distribution, funding and the economics of that pilot.”
+
+La fila actual del guion queda conservada hasta elegir el cierre. Esta alternativa no promete funcionar en cualquier QR y permite avanzar en el relato mientras falta esa decisión. El alcance de compra sigue abierto: comercios adheridos, QR abierto o dos recorridos con costos distintos. No asumir que el comercio paga la comisión fuera de un acuerdo de adhesión; tres cuotas sin interés requieren una fuente de ingresos que cubra la financiación.
+
+**Fondeo del partner:** el equipo propuso que la fintech aporte capital a los tramos senior y junior. El senior recibe pagos con prioridad; el junior absorbe primero las pérdidas. Es una hipótesis de acuerdo, no capital comprometido ni rendimiento demostrado. Si la fintech invierte en el junior, asume riesgo de crédito: no combinar esa propuesta con la promesa de que no usa su balance o no arriesga capital. En el pitch breve alcanza con pedir validación de fondeo; el reparto se explica en preguntas, cuando esté definido.
+
+**Antes de negociar:** medir la cohorte que la billetera rechaza o limita, verificar aceptación del fiador, margen por compra después del socio y capacidad de fondeo. Definir si el partner cobra servicio/distribución, rendimiento por su capital o ambos, y registrar cada ingreso una vez. El aporte de capital y la promoción dentro de la app son acuerdos diferentes. No anunciar porcentaje de reparto, aprobación universal o piloto reclutado.
+
+Ripio/belo son candidatos de infraestructura; Lemon publica Mini-Apps pero su SDK no incluye Solana y ya ofrece crédito respaldado en bitcoin. No usar cifras de audiencia como clientes adquiridos. Tampoco trasladar al guion la mora juvenil de fuentes secundarias ni los ejemplos históricos de CFTEA del handoff sin fuente primaria vigente y condiciones completas. El guion actual no contiene la comparación errónea de “tres cuotas → 2,5 veces”. Evidencia y límites en [informe fintech](research/h-distribucion-fintech-y-billetera.md).
 
 Antes de grabar: confirmar pantallas disponibles, rótulos de simulación y estado del programa. Mostrar Explorer únicamente para una operación realmente observada en devnet; una cuenta de programa no prueba el checkout completo. No mostrar logos que sugieran acuerdos. Toda firma/envío de transacción requiere aprobación explícita.
 
