@@ -119,6 +119,10 @@ Calendario (hora Argentina):
 
 > Actualizado 2026-10-06 (rama `t-demo-devnet`). Detalle fino y bloqueos: `proyecto/handoff-demo-devnet.md` § "Estado real".
 >
+> **Análisis de viabilidad para inversores/tribunales (6/10):** `proyecto/06-viabilidad/` — modelo financiero reproducible, investor paper EN, flujos de caja, memo legal y `04-cambios-rentabilidad.md` con las reglas de negocio a ajustar (esquema de precios, split de fee, cobertura por escalón, invariantes del pool).
+>
+> **Plan de negocio (6/10):** `proyecto/07-plan-de-negocio/plan-de-negocio.md` — esquema "el comercio elige" (H1/H2), escalera v2, flujos por actor, proyección 36 meses y ronda, ideas nuevas. `modelo-v2.py` corrige el v1 (desembolso del pool y servicing). Versión de 5 minutos con gráficos: `pitch-negocio.md`. Integración y flujo de la plata: `integracion-y-flujo-del-dinero.md`. **D8 decidida (Lazo cobra 4% + 2%/año); pendientes D1-D7 y D9-D11 (§14) antes de tocar código, landing o pitch.**
+>
 > Pulido demo (margen, fotos, prisma 3D, Voltia): ver `.scratch/demo-polish/spec.md` — tanda cerrada (8/8 tickets done), ejecución `proyecto/handoff-pulido-demo.md`. Ojo: la divergencia mock↔programa del margen está anotada en `proyecto/05-pitch.md` § "Nota técnica".
 
 - [x] T0.1 Next.js + wallet
