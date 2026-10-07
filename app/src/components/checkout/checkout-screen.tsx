@@ -333,9 +333,8 @@ export function CheckoutScreen({
 
   const quoteSel = quotes?.find((x) => x.installmentsCount === installments);
   const cracked = walletStatus === "connected" && !!quoteSel && !quoteSel.eligible;
-  const mpTotal = Math.round(currentItem.price * (1 + REFERENCE.mpInstallmentMarkup));
   const lazoTotal = data?.total ?? currentItem.price;
-  const savings = Math.max(0, mpTotal - lazoTotal);
+  const cftea = REFERENCE.cfteaRangePct;
   const merchantName = base?.merchant.name ?? t.confirm.merchantFallback;
   const displayName = typeof currentItem.name === "string" ? currentItem.name : currentItem.name[locale];
   const displayBlurb = typeof currentItem.blurb === "string" ? currentItem.blurb : (currentItem.blurb?.[locale] ?? "");
@@ -479,7 +478,7 @@ export function CheckoutScreen({
                   <span className={styles.compareTrack} aria-hidden>
                     <span
                       className={styles.beamLazo}
-                      style={{ transform: `scaleX(${lazoTotal / mpTotal})` }}
+                      style={{ transform: `scaleX(${currentItem.price / lazoTotal})` }}
                     />
                   </span>
                   <span className={styles.compareNum}>
@@ -498,22 +497,14 @@ export function CheckoutScreen({
                     <span className={styles.beamAlt} />
                   </span>
                   <span className={styles.compareNum}>
-                    ~US$ {fmt(mpTotal, 0)}{" "}
+                    {t.cfteaRange(cftea.min, cftea.max)}{" "}
                     <small>
                       <ReferenceTag>{t.reference}</ReferenceTag>
                     </small>
                   </span>
                 </div>
               </div>
-              <p className={styles.savings}>
-                {t.savingsLead}{" "}
-                <BigNumber
-                  amount={savings}
-                  size="lg"
-                  decimals={0}
-                  className={styles.savingsNum}
-                />
-              </p>
+              <p className={styles.savings}>{t.fixedCostNote}</p>
             </section>
           </>
         )}

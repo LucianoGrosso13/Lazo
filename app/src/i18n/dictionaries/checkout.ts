@@ -112,7 +112,8 @@ export const checkout = defineDict({
     lazoPlan: (n: number) => `Lazo · ${n} cuotas`,
     mp: "La competencia · cuotas sin tarjeta",
     reference: "referencia",
-    savingsLead: "Te ahorrás",
+    cfteaRange: (min: number, max: number) => `CFTEA publicada del ${min}% al ${max}% anual`,
+    fixedCostNote: "Con Lazo, el costo total es fijo y lo ves antes de confirmar.",
     demoNote: "Compra simulada · el USDC es de prueba (devnet)",
     stageAria: (price: string, down: string, inst: string, n: number) =>
       `La compra de US$ ${price} se divide en un anticipo de US$ ${down} y ${n} cuotas de US$ ${inst}.`,
@@ -284,7 +285,8 @@ export const checkout = defineDict({
     lazoPlan: (n: number) => `Lazo · ${n} installments`,
     mp: "The competition · no-card installments",
     reference: "reference",
-    savingsLead: "You save",
+    cfteaRange: (min: number, max: number) => `Published annual CFTEA of ${min}% to ${max}%`,
+    fixedCostNote: "With Lazo, the total cost is fixed and you see it before you confirm.",
     demoNote: "Simulated purchase · the USDC is test money (devnet)",
     stageAria: (price: string, down: string, inst: string, n: number) =>
       `The US$ ${price} purchase splits into a US$ ${down} down payment and ${n} US$ ${inst} installments.`,
