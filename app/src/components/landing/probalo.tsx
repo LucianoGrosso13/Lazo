@@ -17,12 +17,11 @@ export function Probalo() {
     // Busca el control flotante del reloj de demo para desplegarlo
     const panel = document.getElementById("demo-clock-panel");
     if (panel) {
+      e.preventDefault();
       panel.scrollIntoView({ behavior: "smooth" });
       return;
     }
-    const clockToggle = document.querySelector<HTMLButtonElement>(
-      'button[aria-label*="reloj" i], button[aria-label*="clock" i], button[aria-label*="demo" i]'
-    );
+    const clockToggle = document.querySelector<HTMLButtonElement>("[data-demo-clock-toggle]");
     if (clockToggle) {
       e.preventDefault();
       clockToggle.click();

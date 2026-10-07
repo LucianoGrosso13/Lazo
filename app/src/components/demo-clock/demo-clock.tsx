@@ -583,6 +583,7 @@ export function DemoClock({ hasTranches }: DemoClockProps = {}) {
       <ChipButton
         className={styles.toggle}
         aria-expanded={open}
+        data-demo-clock-toggle
         aria-controls={open ? "demo-clock-panel" : undefined}
         aria-label={open ? t.collapse : t.expand}
         onClick={() => (open ? collapse() : setOpen(true))}
