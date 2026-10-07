@@ -55,6 +55,9 @@ pub fn plan(student_wallet: &Address) -> (Address, u8) {
     find(&[b"plan", student_wallet.as_ref()])
 }
 
+/// `["payout", plan]` — merchant payout schedule for a plan.
+pub fn payout(plan: &Address) -> (Address, u8) { find(&[b"payout", plan.as_ref()]) }
+
 /// `[program_id]` under the upgradeable loader — the ProgramData account
 /// that stores the upgrade authority checked by `admin_init_config`.
 pub fn program_data() -> (Address, u8) {

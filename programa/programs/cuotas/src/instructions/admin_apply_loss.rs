@@ -13,7 +13,8 @@ use crate::state::{Pool, ProtocolConfig};
 /// between cash loss and existing-credit write-off. `amount` USDC moves from
 /// the vault to the canonical treasury ATA; tranche capital falls junior-first
 /// and `outstanding_credit` is unchanged. Without unallocated donations,
-/// `vault + outstanding_credit == junior + senior`; `accrued_fees` is only
+/// `vault + outstanding_credit - committed_payouts == junior + senior`;
+/// `accrued_fees` is only
 /// cumulative information, not an additional treasury liability.
 /// An existing-credit write-off instead needs an outstanding-credit bound
 /// and reduction without moving vault tokens; it is not implemented here.
@@ -66,8 +67,19 @@ pub struct AdminApplyLoss<'info> {
 }
 
 pub fn handle_admin_apply_loss(ctx: Context<AdminApplyLoss>, amount: u64) -> Result<()> {
+    let committed_payouts = ctx.accounts.pool.committed_payouts;
     let pool = &mut ctx.accounts.pool;
     let breakdown = pool.apply_loss(amount)?;
+    require!(
+        amount
+            <= ctx
+                .accounts
+                .vault
+                .amount
+                .checked_sub(committed_payouts)
+                .ok_or(CuotasError::PoolLiquidity)?,
+        CuotasError::PoolLiquidity
+    );
 
     let pool_signer_seeds: &[&[&[u8]]] = &[&[
         POOL_SEED,

@@ -30,6 +30,16 @@ pub struct PlanOption {
     pub enabled: bool,
 }
 
+/// Merchant settlement terms. `days` selects the delayed settlement window;
+/// the tranche count and fee are fixed by protocol config.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace, PartialEq, Eq, Debug)]
+pub struct SettlementOption {
+    pub days: u16,
+    pub tranches: u8,
+    pub fee_bps: u16,
+    pub enabled: bool,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
 pub enum ProtocolState {
     /// Everything allowed.
@@ -85,6 +95,7 @@ pub struct ProtocolConfig {
     pub guaranteed_tiers: [TierParams; 4],
     /// Plan options offered (3 or 6 installments).
     pub plan_options: [PlanOption; 2],
+    pub settlement_options: [SettlementOption; 4],
     /// Lifecycle gate.
     pub state: ProtocolState,
     /// Canonical bump of this PDA.
@@ -129,6 +140,7 @@ pub struct ConfigParams {
     pub min_financed_to_count: u64,
     pub guaranteed_tiers: [TierParams; 4],
     pub plan_options: [PlanOption; 2],
+    pub settlement_options: [SettlementOption; 4],
 }
 
 impl ConfigParams {
@@ -184,6 +196,34 @@ impl ConfigParams {
                 CuotasError::InvalidConfig
             );
         }
+        for (i, opt) in self.settlement_options.iter().enumerate() {
+            require!(
+                opt.tranches <= 3 && opt.fee_bps as u64 <= bps_max,
+                CuotasError::InvalidConfig
+            );
+            require!(
+                if opt.days == 0 {
+                    opt.tranches == 0
+                } else {
+                    opt.tranches > 0
+                        && u32::from(opt.days)
+                            == u32::from(opt.tranches) * u32::from(self.installment_interval_days)
+                },
+                CuotasError::InvalidConfig
+            );
+            require!(
+                !self.settlement_options[..i]
+                    .iter()
+                    .any(|prior| prior.days == opt.days),
+                CuotasError::InvalidConfig
+            );
+        }
+        require!(
+            self.settlement_options
+                .iter()
+                .any(|o| o.days == 0 && o.enabled),
+            CuotasError::InvalidConfig
+        );
         // Three installments remain the baseline option and cannot be disabled.
         require!(
             self.plan_options
@@ -222,6 +262,32 @@ mod tests {
                 enabled: true,
             },
         ];
+        let settlement_options = [
+            SettlementOption {
+                days: 0,
+                tranches: 0,
+                fee_bps: 700,
+                enabled: true,
+            },
+            SettlementOption {
+                days: 30,
+                tranches: 1,
+                fee_bps: 625,
+                enabled: true,
+            },
+            SettlementOption {
+                days: 60,
+                tranches: 2,
+                fee_bps: 575,
+                enabled: true,
+            },
+            SettlementOption {
+                days: 90,
+                tranches: 3,
+                fee_bps: 525,
+                enabled: true,
+            },
+        ];
         ConfigParams {
             keeper: Pubkey::new_unique(),
             treasury: Pubkey::new_unique(),
@@ -235,6 +301,7 @@ mod tests {
             min_financed_to_count: 100_000_000,
             guaranteed_tiers: [tier; 4],
             plan_options: options,
+            settlement_options,
         }
     }
 
@@ -371,6 +438,32 @@ mod tests {
                     installments: 6,
                     interest_total_bps: 300,
                     min_price: 350_000_000,
+                    enabled: true,
+                },
+            ],
+            settlement_options: [
+                SettlementOption {
+                    days: 0,
+                    tranches: 0,
+                    fee_bps: 700,
+                    enabled: true,
+                },
+                SettlementOption {
+                    days: 30,
+                    tranches: 1,
+                    fee_bps: 625,
+                    enabled: true,
+                },
+                SettlementOption {
+                    days: 60,
+                    tranches: 2,
+                    fee_bps: 575,
+                    enabled: true,
+                },
+                SettlementOption {
+                    days: 90,
+                    tranches: 3,
+                    fee_bps: 525,
                     enabled: true,
                 },
             ],

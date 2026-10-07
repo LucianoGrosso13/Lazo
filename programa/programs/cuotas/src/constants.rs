@@ -18,6 +18,8 @@ pub const REPUTATION_SEED: &[u8] = b"reputation";
 pub const GUARANTEE_SEED: &[u8] = b"guarantee";
 #[constant]
 pub const PLAN_SEED: &[u8] = b"plan";
+#[constant]
+pub const PAYOUT_SEED: &[u8] = b"payout";
 
 /// Maximum installment slots allocated per plan (supports 3 or 6 installments).
 pub const MAX_INSTALLMENTS: usize = 6;

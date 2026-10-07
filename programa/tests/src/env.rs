@@ -427,7 +427,7 @@ impl Env {
     pub fn accounting_delta(&self) -> i128 {
         let p = self.protocol();
         let pool = self.pool();
-        (self.token_balance(&p.vault) as i128 + pool.outstanding_credit as i128)
+        (self.token_balance(&p.vault) as i128 + pool.outstanding_credit as i128 - pool.committed_payouts as i128)
             - (pool.junior_capital + pool.senior_capital) as i128
     }
 

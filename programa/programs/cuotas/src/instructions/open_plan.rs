@@ -6,16 +6,16 @@ use anchor_spl::token_interface::{
 
 use crate::constants::{
     CONFIG_SEED, GUARANTEE_SEED, LP_JUNIOR_SEED, LP_SENIOR_SEED, MAX_INSTALLMENTS, MERCHANT_SEED,
-    PLAN_SEED, POOL_SEED, REPUTATION_SEED, USDC_DECIMALS, VAULT_SEED,
+    PAYOUT_SEED, PLAN_SEED, POOL_SEED, REPUTATION_SEED, USDC_DECIMALS, VAULT_SEED,
 };
 use crate::error::CuotasError;
 use crate::events::PlanOpened;
 use crate::state::{
-    bps_of, due_at, split_installments, Guarantee, Installment, Merchant, Plan, Pool,
-    ProtocolConfig, Reputation, TierParams,
+    bps_of, due_at, split_installments, Guarantee, Installment, Merchant, PayoutSchedule,
+    PayoutTranche, Plan, Pool, ProtocolConfig, Reputation, TierParams,
 };
 
-/// Originate a 3-installment plan (Normal state only). One atomic transaction:
+/// Originate a 3- or 6-installment plan (Normal state only). One atomic transaction:
 /// the student pays the down payment to the merchant, the pool advances the
 /// financed amount minus the merchant fee, and the Plan PDA is created.
 ///
@@ -29,19 +29,23 @@ use crate::state::{
 /// - `down = price * down_bps`, `financed = price - down`,
 ///   `interest = financed * interest_bps` (0 in every current tier),
 ///   `repayable = financed + interest` split into 3 (last absorbs rounding);
-/// - `fee = financed * fee_bps`, `advance = financed - fee`;
-/// - vault -= advance, `outstanding_credit` += repayable,
+/// - settlement fee = `financed * settlement.fee_bps`, merchant net is the
+///   financed amount less that fee;
+/// - immediate settlement: vault -= net merchant payout; deferred settlement:
+///   vault is unchanged and `committed_payouts` += merchant net; in both cases
+///   `outstanding_credit` += repayable,
 ///   LP capital += fee + interest via `Pool::book_gain` (interest recognized
-///   at origination; a no-op at 0%, keeps `vault + outstanding == capital`
-///   exact in every tier configuration);
+///   at origination; a no-op at 0%, keeps `vault + outstanding - commitments`
+///   equal to pool capital in every tier configuration);
 /// - `reputation.active_exposure` += repayable, `merchant.plans_count` += 1.
 ///
 /// Eligibility: price > 0, price <= tier and guarantor caps, required coverage
 /// (`financed * coverage_bps`) <= `coverage_max`, no guarantor charge on record
 /// (`reputation.late_count == 0`), no active plan (`init` fails if the PDA
-/// exists), merchant active, and the vault must hold the advance.
+/// exists), merchant active, and vault liquidity must cover the new payout and
+/// all existing merchant commitments.
 #[derive(Accounts)]
-#[instruction(price: u64, installments: u8)]
+#[instruction(price: u64, installments: u8, settlement: u8)]
 pub struct OpenPlan<'info> {
     #[account(mut)]
     pub student: Signer<'info>,
@@ -100,7 +104,8 @@ pub struct OpenPlan<'info> {
     /// CHECK: merchant wallet, PDA seed and settlement authority.
     pub merchant_wallet: UncheckedAccount<'info>,
     /// Merchant settlement account: must be the canonical ATA recorded at
-    /// registration. Receives down payment + pool advance.
+    /// registration. Receives the down payment and, for immediate settlement,
+    /// the pool payout; deferred options transfer only the down payment here.
     #[account(
         mut,
         token::mint = usdc_mint,
@@ -147,6 +152,8 @@ pub struct OpenPlan<'info> {
         bump
     )]
     pub plan: Account<'info, Plan>,
+    #[account(init, payer = student, space = 8 + PayoutSchedule::INIT_SPACE, seeds = [PAYOUT_SEED, plan.key().as_ref()], bump)]
+    pub payout_schedule: Account<'info, PayoutSchedule>,
     /// `Interface` accepts Token or Token-2022; pinned to classic SPL Token.
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID @ CuotasError::InvalidTokenProgram
@@ -155,7 +162,12 @@ pub struct OpenPlan<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) -> Result<()> {
+pub fn handle_open_plan(
+    ctx: Context<OpenPlan>,
+    price: u64,
+    installments: u8,
+    settlement: u8,
+) -> Result<()> {
     let config = &ctx.accounts.config;
     require!(price > 0, CuotasError::InvalidPrice);
     require!(
@@ -197,23 +209,35 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) ->
     let repayable = financed
         .checked_add(interest)
         .ok_or(CuotasError::MathOverflow)?;
-    let merchant_fee = bps_of(financed, config.fee_bps)?;
-    let advance = financed
+    let settlement = *config
+        .settlement_options
+        .get(settlement as usize)
+        .filter(|o| o.enabled)
+        .ok_or(CuotasError::OptionUnavailable)?;
+    let merchant_fee = bps_of(financed, settlement.fee_bps)?;
+    let merchant_net = financed
         .checked_sub(merchant_fee)
         .ok_or(CuotasError::MathOverflow)?;
 
     require!(
-        repayable <= guarantee.coverage_max,
+        bps_of(repayable, tier.guarantor_coverage_bps)? <= guarantee.coverage_max,
         CuotasError::InsufficientGuaranteeCoverage
     );
 
     require!(
-        advance <= ctx.accounts.vault.amount,
-        CuotasError::InsufficientLiquidity
+        ctx.accounts
+            .pool
+            .committed_payouts
+            .checked_add(merchant_net)
+            .ok_or(CuotasError::MathOverflow)?
+            <= ctx.accounts.vault.amount,
+        CuotasError::PoolLiquidity
     );
 
     let opened_at = Clock::get()?.unix_timestamp;
     let amounts = split_installments(repayable, installments);
+    let tranche_count = settlement.tranches;
+    let payout_amounts = split_installments(merchant_net, tranche_count.max(1));
     let mut plan_installments = [Installment {
         amount: 0,
         due_at: 0,
@@ -261,6 +285,12 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) ->
         .outstanding_credit
         .checked_add(repayable)
         .ok_or(CuotasError::MathOverflow)?;
+    if settlement.days > 0 {
+        pool.committed_payouts = pool
+            .committed_payouts
+            .checked_add(merchant_net)
+            .ok_or(CuotasError::MathOverflow)?;
+    }
 
     let reputation = &mut ctx.accounts.reputation;
     reputation.active_exposure = reputation
@@ -296,7 +326,7 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) ->
             ctx.accounts.usdc_mint.decimals,
         )?;
     }
-    if advance > 0 {
+    if settlement.days == 0 && merchant_net > 0 {
         let pool_signer_seeds: &[&[&[u8]]] = &[&[
             POOL_SEED,
             ctx.accounts.config.usdc_mint.as_ref(),
@@ -313,9 +343,37 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) ->
                 },
                 pool_signer_seeds,
             ),
-            advance,
+            merchant_net,
             ctx.accounts.usdc_mint.decimals,
         )?;
+    }
+
+    let schedule = &mut ctx.accounts.payout_schedule;
+    schedule.plan = ctx.accounts.plan.key();
+    schedule.merchant = ctx.accounts.merchant_wallet.key();
+    schedule.tranche_count = tranche_count;
+    schedule.bump = ctx.bumps.payout_schedule;
+    let empty = PayoutTranche {
+        amount: 0,
+        release_at: 0,
+        released: true,
+    };
+    schedule.tranches = [empty; 3];
+    if settlement.days > 0 {
+        for (i, amount) in payout_amounts
+            .iter()
+            .take(tranche_count as usize)
+            .enumerate()
+        {
+            let release_days = (i as u16 + 1) * config.installment_interval_days;
+            schedule.tranches[i] = PayoutTranche {
+                amount: *amount,
+                release_at: opened_at
+                    .checked_add(i64::from(release_days) * i64::from(config.seconds_per_day))
+                    .ok_or(CuotasError::MathOverflow)?,
+                released: false,
+            };
+        }
     }
 
     let counts = financed >= config.min_financed_to_count;
@@ -350,5 +408,12 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) ->
         with_guarantee: true,
         counts,
     });
+    // Immediate settlements have no outstanding schedule and must not leave
+    // the reusable `payout` PDA occupied for the student's next plan.
+    if settlement.days == 0 {
+        ctx.accounts
+            .payout_schedule
+            .close(ctx.accounts.student.to_account_info())?;
+    }
     Ok(())
 }

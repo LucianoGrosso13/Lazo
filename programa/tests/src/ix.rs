@@ -285,6 +285,18 @@ pub fn open_plan(
     installments: u8,
     guarantee: Option<Address>,
 ) -> Instruction {
+    open_plan_settlement(student, usdc_mint, merchant_wallet, price, installments, 0, guarantee)
+}
+
+pub fn open_plan_settlement(
+    student: &Address,
+    usdc_mint: &Address,
+    merchant_wallet: &Address,
+    price: u64,
+    installments: u8,
+    settlement: u8,
+    guarantee: Option<Address>,
+) -> Instruction {
     let pool = pda::pool(usdc_mint).0;
     ix(
         vec![
@@ -302,11 +314,21 @@ pub fn open_plan(
             rw(pda::reputation(student).0),
             ro(guarantee.unwrap_or_else(program_id)),
             rw(pda::plan(student).0),
+            rw(pda::payout(&pda::plan(student).0).0),
             ro(TOKEN_PROGRAM_ID),
             ro(system_program::ID),
         ],
-        instruction::OpenPlan { price, installments }.data(),
+        instruction::OpenPlan { price, installments, settlement }.data(),
     )
+}
+
+pub fn release_payout(caller: &Address, usdc_mint: &Address, merchant_wallet: &Address, plan: &Address, index: u8) -> Instruction {
+    let pool = pda::pool(usdc_mint).0;
+    ix(vec![
+        signer_rw(*caller), ro(pda::config().0), rw(pool), rw(pda::vault(&pool).0),
+        ro(*usdc_mint), ro(*merchant_wallet), ro(pda::merchant(merchant_wallet).0),
+        rw(pda::payout(plan).0), rw(ata(merchant_wallet, usdc_mint, &TOKEN_PROGRAM_ID)), ro(TOKEN_PROGRAM_ID),
+    ], instruction::ReleasePayout { index }.data())
 }
 
 /// [student(mut,sig), config, pool(w), vault(w), usdc_mint, lp_junior_mint,

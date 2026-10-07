@@ -10,4 +10,6 @@ pub use guarantee::*;
 pub use merchant::*;
 pub use plan::*;
 pub use pool::*;
+pub mod payout;
+pub use payout::*;
 pub use reputation::*;
