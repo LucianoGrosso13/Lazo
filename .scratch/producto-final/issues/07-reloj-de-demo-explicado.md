@@ -4,7 +4,7 @@
 
 **Blocked by:** —
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/components/demo-clock/{demo-clock.tsx,demo-clock.module.css}`, `app/src/i18n/dictionaries/demo-clock.ts`.
 
@@ -14,8 +14,8 @@ Notas:
 - La explicación inicial se puede cerrar y no vuelve a aparecer (localStorage). Tiene que funcionar con teclado y lector de pantalla.
 - Que no tape contenido en 390 px.
 
-- [ ] Explicación al primer uso, se puede cerrar y queda recordada
-- [ ] Leyenda accesible de cada marca, valores desde la config
-- [ ] "Tier", no "escalón"
-- [ ] 390/1440; capturas `evidence/07-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Explicación al primer uso, se puede cerrar y queda recordada
+- [x] Leyenda accesible de cada marca, valores desde la config
+- [x] "Tier", no "escalón"
+- [x] 390/1440; capturas `evidence/07-*`
+- [x] typecheck / lint / test / build en verde

@@ -31,6 +31,30 @@ export const demoClock = defineDict({
     },
     rulerAria: (daysLate: string, stage: string) =>
       `La cuota más atrasada lleva ${daysLate} días de mora, en el tramo ${stage}.`,
+    explanation:
+      "Adelantá el tiempo para ver qué pasa con un plan: vencimientos, mora y cobros",
+    explanationTitle: "Cómo funciona el reloj de demo",
+    explanationDismiss: "Cerrar explicación",
+    legendTitle: "Hitos de la regla",
+    tooltipHint: "Pasá el cursor o tocá un hito para ver detalles",
+    legend: {
+      day0: "Día 0: compra",
+      due: "Vence la cuota",
+      grace: (days: number) => `Gracia: ${days} días sin recargo`,
+      notice: (day: number) => `Día ${day}: aviso al fiador`,
+      penalty: (pct: string) => `Recargo del ${pct}`,
+      charge: (day: number) => `Día ${day}: se cobra al fiador y bajás un tier`,
+      tranche: "Tramo del comercio liberado",
+    },
+    tooltips: {
+      day0: "Día 0: compra y desembolso inicial",
+      due: "Vence la cuota según el calendario del plan",
+      grace: (days: number) => `Gracia: ${days} días sin recargo ni penalización`,
+      notice: (day: number) => `Día ${day}: notificación preventiva al fiador`,
+      penalty: (fromDay: number, pct: string) => `Día ${fromDay}: se aplica un recargo del ${pct} por mora`,
+      charge: (day: number) => `Día ${day}: se cobra al fiador y bajás un tier`,
+      tranche: (day: number) => `Día ${day}: tramo del comercio liberado`,
+    },
   },
   en: {
     toggle: (days: string) => `Day ${days}`,
@@ -61,5 +85,29 @@ export const demoClock = defineDict({
     },
     rulerAria: (daysLate: string, stage: string) =>
       `The most overdue installment is ${daysLate} days late, in the ${stage} stage.`,
+    explanation:
+      "Advance time to see what happens with a plan: due dates, delinquency, and payouts",
+    explanationTitle: "How the demo clock works",
+    explanationDismiss: "Dismiss explanation",
+    legendTitle: "Timeline milestones",
+    tooltipHint: "Hover or tap a milestone for details",
+    legend: {
+      day0: "Day 0: purchase",
+      due: "Installment due",
+      grace: (days: number) => `Grace: ${days} days with no late fee`,
+      notice: (day: number) => `Day ${day}: guarantor notice`,
+      penalty: (pct: string) => `Late fee of ${pct}`,
+      charge: (day: number) => `Day ${day}: guarantor charged and drop a tier`,
+      tranche: "Merchant tranche released",
+    },
+    tooltips: {
+      day0: "Day 0: purchase and initial disbursement",
+      due: "Installment due date according to schedule",
+      grace: (days: number) => `Grace: ${days} days with no late fee or penalty`,
+      notice: (day: number) => `Day ${day}: preventive warning sent to guarantor`,
+      penalty: (fromDay: number, pct: string) => `Day ${fromDay}: ${pct} late fee applied`,
+      charge: (day: number) => `Day ${day}: guarantor charged and drop a tier`,
+      tranche: (day: number) => `Day ${day}: merchant tranche released`,
+    },
   },
 });
