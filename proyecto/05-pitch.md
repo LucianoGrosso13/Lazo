@@ -1,112 +1,142 @@
-# 05 — Pitch y demo de Lazo
+# 05 — Pitch y entrega de Lazo
 
-Actualizado 2026-10-07. Borrador para ensayar; el equipo adapta los guiones a su voz. Textos de video/deck en inglés; instrucciones internas en español. Los campos del formulario los redacta el equipo con sus palabras, usando esta estructura como guía.
+Actualizado 2026-10-07 (tanda "producto final", ticket 14). Fuente de números y decisiones: `.scratch/producto-final/spec.md` § "Decisiones". Los guiones de video van en inglés (la entrega es en inglés); las instrucciones internas, en español. Textos listos para pegar en el formulario: [`05-entrega-en.md`](05-entrega-en.md).
+
+Lazo **corre en Solana devnet** (la red de prueba de Solana: la plata es de prueba y no vale nada). Nunca mainnet. Decirlo en los dos videos y en el formulario.
 
 ## Fuentes de entrega y consejos de From the chapter
 
 Consultadas el 7/10/2026:
 
-- [Road to Colosseum, entrega](https://superteam.ar/colosseum#entrega): pitch de 2 minutos, demo hasta 3, nombre/descripción, imagen, herramientas, repo, validación/distribución y equipo. Repo privado: habilitar revisión para hackathon@superteam.ar y hackathon@colosseum.com. Envío en Colosseum y Earn. Cierre del track: **12/10 a las 23:59 de Argentina**; preparar todo para ese horario.
-- [Listing del track](https://superteam.fun/earn/listing/colosseum-crypto-worlds-fair-hackathon-superteam-argentina-track): mostrar producto accesible, evidencia, punto de partida, changelog, aportes y uso material de IA. Esos requisitos se agregan al checklist visual enviado por el equipo.
+- [Road to Colosseum, entrega](https://superteam.ar/colosseum#entrega): pitch de 2 minutos, demo hasta 3, nombre/descripción, imagen, herramientas, repo, validación/distribución y equipo. Repo privado: habilitar revisión para hackathon@superteam.ar y hackathon@colosseum.com. Envío en Colosseum y Earn. Cierre del track según esa página: **12/10 a las 23:59 de Argentina**; preparar todo para ese horario. (El spec anota "límite 13/10 03:59 ART, a confirmar": ante la duda, vale el horario más temprano.)
+- [Listing del track](https://superteam.fun/earn/listing/colosseum-crypto-worlds-fair-hackathon-superteam-argentina-track): mostrar producto accesible, evidencia, punto de partida, changelog, aportes y uso material de IA.
 - [Colosseum FAQ](https://colosseum.com/hackathon): presentación de 2–3 minutos y demo máximo 3. Usamos 2 para cumplir también Superteam. Evaluación: equipo/mercado, insight, ejecución, tamaño potencial, comunicación, viabilidad y tracción.
-- [What a winning hackathon submission looks like](https://superteam.ar/blog/hackathon-submission-that-wins): abrir con producto funcionando, mostrar un recorrido corto y el motivo de usar cadena; probar link móvil/incógnito, repo e instrucciones antes de entregar. Se consultó la página pública directamente porque el lector web no la recuperaba.
-- [Pitching when every deck is AI-generated](https://superteam.ar/blog/pitching-in-the-ai-era): empezar por una persona concreta; respaldar afirmaciones con evidencia y reconocer qué sigue incierto. El equipo aporta su voz y sus datos; IA ayuda a cuestionar y editar. Sin tomar sus ejemplos como métricas propias.
-- [How to pitch, when nobody knows who you are](https://superteam.ar/blog/how-to-pitch): explicar el resultado en una frase entendible, ordenar problema/solución/aprendizaje y terminar con un pedido concreto. Consejos editoriales, no reglas adicionales de entrega. Su ejemplo de mainnet no aplica: Lazo sigue sólo devnet.
+- [What a winning hackathon submission looks like](https://superteam.ar/blog/hackathon-submission-that-wins): abrir con producto funcionando, mostrar un recorrido corto y el motivo de usar cadena; probar link móvil/incógnito, repo e instrucciones antes de entregar.
+- [Pitching when every deck is AI-generated](https://superteam.ar/blog/pitching-in-the-ai-era): empezar por una persona concreta; respaldar afirmaciones con evidencia y reconocer qué sigue incierto. El equipo aporta su voz y sus datos; la IA ayuda a cuestionar y editar.
+- [How to pitch, when nobody knows who you are](https://superteam.ar/blog/how-to-pitch): explicar el resultado en una frase entendible, ordenar problema/solución/aprendizaje y terminar con un pedido concreto. Su ejemplo de mainnet no aplica: Lazo sigue solo en devnet.
 
-## Historia y evidencia disponible
+## Historia
 
-**One-liner para practicar:** “Lazo helps students without their own credit card pay in installments, backed by a guarantor, and build a payment history they can use across stores.”
+**El problema.** En Argentina, comprar en cuotas es la forma normal de acceder a algo que cuesta más que un sueldo o que una mensualidad. Pero las cuotas sin interés viven en la tarjeta de crédito, y un estudiante joven no suele tenerla: no está bancarizado o no tiene historial. Le quedan tres caminos: pedir prestada la tarjeta de un familiar, pagar la alternativa de cuotas sin tarjeta (con un costo financiero mucho más alto) o no comprar. Y en ninguno construye un historial propio.
 
-**Producto decidido:** 1/3 sin interés, 6 con interés moderado aún sin tasa; comercio elige plazo y comisión; cobertura del fiador 100% en todos los escalones. **Producto demostrable hoy:** recorrido mock de 3 cuotas; integración real pendiente del upgrade y credenciales, según `04-plan.md` y `handoff-demo-devnet.md`. No se volvió a probar el runtime en esta sesión documental.
+**Lo que ya pasa.** En el test de mesa del equipo (3 personas del entorno, `02-validacion.md`), dos resolvieron con la tarjeta de los padres y descartaron la alternativa sin tarjeta por el costo; la tercera no compró. Es una muestra chica y casi interna: la contamos como indicio, no como validación.
 
-**Evidencia propia registrada:** test de mesa con tres casos del entorno; dos compras de PC usaron tarjeta de los padres. No equivale a tres clientes, ni demanda minorista validada. No hay nueva alianza, venta ni rendimiento acreditado. Las cifras de competidores del guion viejo no se usan sin una cotización comparable y actual.
+**La idea.** Lazo formaliza el "prestame la tarjeta": el familiar no presta el plástico, **firma como fiador**. El estudiante paga sus propias cuotas en dólares digitales (USDC: un token que sigue el valor del dólar; en devnet usamos devUSDC, un token de prueba propio). El fiador solo paga si el estudiante no paga. Cada plan pagado a tiempo sube al estudiante de Tier, con menos anticipo y más tope.
 
-**Lo que debe resultar cierto:** comercios aceptan pagar por esta conversión/financiación; compradores y fiadores completan el alta; recupero efectivo y costos dejan margen; una billetera acepta distribuirlo. Son hipótesis. Investigación y experimentos: `07-go-to-market-y-alianzas.md` y `08-minorista-y-economia.md`.
+**One-liner:** "Lazo lets students without a credit card buy in installments, backed by a family guarantor, and build their own payment history on Solana."
 
-**Roadmap comercial recuperado:** H se adapta al pedido actual; las ideas elegidas son seis cuotas, fecha de liquidación, descuentos para el fiador al día y tesorería propia ociosa. Detalle en `09-alcance-opcion-h-y-mejoras.md`. Presentar las dos últimas como roadmap; no atribuirles menor mora o rentabilidad lograda. Las tasas/TIR del pitch histórico de `07-plan-de-negocio/` no aplican automáticamente a esta política. D8 registra originación 4% + administración 2% anual como reparto, no como margen neto.
+### El producto decidido
+
+| Pieza | Regla |
+|---|---|
+| Cuotas | **3 cuotas sin interés** (sin mínimo) o **6 cuotas con 3% de interés total** sobre lo financiado, **desde US$ 350** (mínimo configurable) |
+| Fiador | **Obligatorio: sin fiador no hay plan.** Cubre el **100% de lo que falta pagar** (capital + interés); el recargo por mora queda afuera. Paga solo si el estudiante no paga |
+| Tiers | **Tier 1 · Starter** (anticipo 30%, tope US$ 1.000), **Tier 2 · Steady** (20%, US$ 1.000), **Tier 3 · Trusted** (10%, US$ 1.250), **Tier 4 · Full** (0%, US$ 1.500). Todos con fiador al 100% |
+| Reglas de Tier | Subís 1 Tier al saldar un plan con financiado ≥ US$ 100 sin pagos después de la gracia. Si pagaste después de la gracia, ese plan no suma ni resta. Bajás 1 Tier si se le cobra al fiador |
+| Mora | Día 0 vence la cuota · días 1–5 de gracia sin recargo · día 3 aviso al fiador · día 6 recargo del 5% sobre la cuota vencida · día 15 se le cobra al fiador (cuota + recargo) y el estudiante baja 1 Tier |
+| Cobro del comercio | El anticipo lo cobra siempre en el momento. Lo financiado, según elija: **hoy 7%** · **30 días 6,25%** (100% el día 30) · **60 días 5,75%** (50% día 30, 50% día 60) · **90 días 5,25%** (⅓ a los 30, 60 y 90 días). Comisión sobre lo financiado. **Lazo garantiza cada tramo en su fecha**, pague o no el estudiante |
+| Liquidez | No se abre un plan si el pool no tiene liquidez libre para el desembolso de hoy más todos los tramos ya comprometidos |
+| Venta en mostrador | El cajero carga monto y descripción, muestra un QR (un link de Lazo, no un QR de pagos interoperable) y el cliente confirma en su celular con su fianza vigente |
+
+**Ejemplo base (compra de US$ 1.000, Tier 1 · Starter):** anticipo 300, financiado 700.
+- 3 cuotas: 3 × 233,33; total 1.000.
+- 6 cuotas: interés 21; 6 cuotas que suman 721 (≈ 120,17 cada una); total 1.021. El fiador cubre hasta 721.
+- Comercio: hoy cobra 951 · a 30 días 300 hoy + 656,25 el día 30 · a 60 días 300 hoy + 2 × 329,875 · a 90 días 300 hoy + 3 tramos de ≈ 221,08 (663,25 en total).
+
+**Modelo de negocio.** Ingresos: comisión del comercio (5,25–7% sobre lo financiado según el plazo) e interés de 6 cuotas. Reparto registrado (D8): 4% de originación sobre lo financiado para Lazo, incluido en la comisión, y 2% anual de administración sobre saldo, a cargo del pool. Las comisiones por plazo salen de un modelo que deja a Lazo con el mismo margen que cobrar hoy (comisiones neutras con tramos: 6,10 / 5,65 / 5,23% en 3 cuotas; `10-tasa-6-cuotas-y-cobro-diferido.md`). Pool: tesorería del equipo en devnet; tramo junior (primera pérdida) y senior con **rendimiento objetivo del 8%** (objetivo, no resultado).
+
+**Supuestos del modelo (hipótesis, no métricas medidas):** anticipo 30%, default 8%, recupero del fiador 80%, costo de capital 12% anual. Con eso, 6 cuotas al 3% cubren su costo desde ~US$ 217 para un cliente nuevo (al 2% harían falta ~US$ 267): por eso el mínimo de US$ 350. Ninguna tasa salva el escenario adverso (default 20%, recupero 50%); lo que decide es el fiador y los topes.
+
+**Lo que tiene que resultar cierto (hipótesis a validar):** que los comercios paguen esta comisión por vender a quien no tiene tarjeta; que estudiantes y fiadores completen el alta; que el recupero real sobre la tarjeta del fiador deje margen; que una billetera argentina acepte distribuirlo. Investigación y experimentos: `07-go-to-market-y-alianzas.md` y `08-minorista-y-economia.md`.
+
+**Qué viene (solo dos cosas):** billeteras argentinas como canal de distribución y conversión pesos↔USDC (candidatas a investigar, **ninguna alianza**), y una tesorería propia en DeFi, simulada y separada del pool.
 
 ## Video de pitch — 2:00
 
-Reservar pausas; aproximadamente 230 palabras. Equipo y problema en cámara, producto en pantalla. No abrir con animación de logo.
+Unas 260 palabras con pausas. Equipo en cámara al principio y al final; producto en pantalla en el medio. Sin animación de logo al arrancar. Lo dice quien esté más cómodo; no contar la anécdota de la PC.
 
-| Tiempo | Pantalla | Guion EN para adaptar |
+| Tiempo | Pantalla | Guion EN |
 |---|---|---|
-| 0:00–0:20 | Founder + checkout | “When we needed a computer for university, we used our parents' credit cards. The purchase was ours, but the payment history was not. Lazo gives students without their own card an installment plan backed by a guarantor.” |
-| 0:20–0:40 | Comprador y fiador | “The buyer pays their own installments. The guarantor accepts a clear maximum and is only charged after a missed payment under the agreed terms. Each completed plan builds a payment record that can unlock a lower down payment or a higher limit.” |
-| 0:40–1:00 | Tres opciones, rotuladas roadmap | “Our model offers one or three installments without buyer interest, and six with a modest interest charge. Merchants choose when to receive their money and pay a fee for that option. Pricing for the new options is still being tested.” |
-| 1:00–1:20 | Registro del plan/pool, modo visible | “Solana is designed to make the plan, pool movements and payment record verifiable across stores. This prototype uses test tokens on devnet. The current browser demo is simulated; end-to-end blockchain and provider verification remain pending.” |
-| 1:20–1:40 | Aprendizaje y canal inicial | “Our first conversations exposed reliance on family cards. Next we will test smaller retail purchases with students, guarantors and local merchants, measuring completion, repeat use and contribution margin. We are researching wallet partnerships for distribution and peso conversion.” |
-| 1:40–2:00 | Equipo + pedido | “We are building from Tucumán, Argentina. Our next milestone is a verified devnet flow and documented merchant demand. We are looking for merchant design partners and a wallet team willing to evaluate a bounded pilot.” |
+| 0:00–0:18 | Luciano e Ignacio en cámara | "In Argentina, installments are how people buy anything that matters. But interest-free installments live on credit cards, and a student without their own card is left out. They borrow a parent's card, pay a much higher cost for no-card installments, or simply don't buy." |
+| 0:18–0:38 | Home de Lazo, hero | "We're Lazo. Students pay in three interest-free installments, or six with a three percent total charge, from three hundred fifty dollars. A family member doesn't lend their card: they sign as guarantor, and they're only charged if the student stops paying." |
+| 0:38–0:58 | Checkout 6 cuotas + Tiers | "No guarantor, no plan: that's what makes the numbers work. The guarantor covers exactly what's left to pay, nothing more. Every plan paid on time moves the student up a Tier, from Starter to Full: a lower down payment and a higher limit." |
+| 0:58–1:18 | Cuenta del comercio con tramos | "Merchants choose when to get paid: today for seven percent of the financed amount, or in monthly tranches over thirty, sixty or ninety days, down to five and a quarter. Lazo guarantees every tranche on its date, whether the student pays or not." |
+| 1:18–1:38 | Pool y registro en Explorer de devnet | "Why Solana? The plan, the pool and the merchant's payout schedule are public accounts anyone can audit, and the student's Tier travels with their wallet to any store. Lazo runs on Solana devnet, with test dollars." |
+| 1:38–1:50 | Mostrador con QR | "And it works at the counter: the cashier shows a QR, the student confirms on their phone." |
+| 1:50–2:00 | Equipo en cámara | "We're Luciano and Ignacio, computer engineering students at UNSTA in Tucumán. We're looking for merchants and an Argentine wallet to run a small pilot with us." |
 
-Antes de grabar: completar nombres, contribución de cada integrante y experiencia real. La apertura sólo la dice el integrante que vivió esa compra. Las alianzas son candidatas; no poner logos de Lemon/Ripio/belo como respaldo ni decir “partnered with”. Si cambia la evidencia técnica, reemplazar el bloque de estado por hechos y links observados, no por objetivos.
+Antes de grabar: confirmar que la toma de Explorer (1:18) muestra una cuenta real del programa en devnet; si el upgrade todavía no está, mostrar el program ID y el pool del simulador y cambiar la frase por "The program is deployed on Solana devnet". No mostrar logos de billeteras ni decir "partnered with".
 
-## Video demo — hasta 3:00
+## Video demo — 3:00
 
-Un recorrido en pantalla, controles visibles, sin maquillar errores. Guion principal para **mock**, que es el modo registrado hoy. Antes de cada toma verificar modo y datos. Se puede actualizar a real sólo tras completar el gate devnet y observar cada operación; toda firma/envío requiere aprobación explícita del usuario.
+Un solo recorrido en pantalla, controles visibles, sin cortes que escondan errores. Grabar desde la URL pública o `localhost` en modo simulador. Verificar antes de cada toma que el aviso de devnet esté visible.
 
 | Tiempo | Acción visible | Voiceover EN |
 |---|---|---|
-| 0:00–0:15 | Abrir checkout, badge mock/test tokens | “This is Lazo's browser simulation. It uses test amounts and does not send blockchain transactions or charge a card. We will show one purchase, a payment and an overdue recovery.” |
-| 0:15–0:35 | Fiador: link, límites y consentimiento | “The guarantor reviews the maximum exposure. Identity checks and card onboarding are mocked in this recording. Our new policy keeps the guarantee at one hundred percent; the implementation and contractual cap still need alignment.” |
-| 0:35–1:10 | PC 1.000; anticipo 300; 3 cuotas; confirmar | “The buyer sees a three-hundred down payment and seven hundred financed without interest in three installments. In this immediate-settlement example, the merchant fee is seven percent of the financed amount, leaving nine hundred fifty-one. These are simulated balances.” |
-| 1:10–1:30 | Pagar primera cuota; panel | “A simulated payment reduces the outstanding balance. The full schedule adds up to the amount accepted at checkout. Completing an eligible plan can improve the buyer's terms for the next purchase.” |
-| 1:30–2:05 | Reloj; mora; recupero mock | “We advance the demo clock. After the grace period and the configured recovery date, the prototype simulates the guarantor recovery and updates the record. A real charge can fail or be disputed; a guarantee is not a promise of full recovery.” |
-| 2:05–2:30 | Comercio y pool | “The merchant's earlier advance is separate from the buyer's remaining obligation. The pool view follows advances, payments and recoveries. There are no real investors or verified investment returns in this demo.” |
-| 2:30–3:00 | Cierre y estado futuro | “Next we will verify this flow on Solana devnet with sandbox providers. One and six installments, merchant settlement choices and the retail QR flow are planned additions. No real money is used. The repository documents what works, what is simulated and what remains.” |
+| 0:00–0:12 | Home, línea de devnet del hero, "Probalo en 2 minutos" | "This is Lazo, running on Solana devnet with test dollars. The web app includes a built-in simulator, so you can try the full flow without a wallet." |
+| 0:12–0:35 | Fiador: link de invitación, cobertura, aceptación | "First, the guarantor. A student invites a family member by link. The guarantor sees exactly what they cover: one hundred percent of what's left to pay, principal plus interest, never late fees. Identity check and card registration run in sandbox mode." |
+| 0:35–1:05 | `/tienda` → producto de 1.000 → checkout, Tier 1 · Starter, 3 vs 6 cuotas | "Now the student buys a thousand-dollar item at Tier 1, Starter: three hundred down, seven hundred financed. Three installments, no interest, total one thousand. Or six installments at three percent total: twenty-one dollars of interest, one thousand twenty-one in total. Under three hundred fifty dollars, the six-installment option is locked, and without an active guarantor the plan won't open." |
+| 1:05–1:25 | Elegir cobro a 90 días; calendario de tramos | "The merchant chose to get paid over ninety days, at five and a quarter percent. They get the down payment today and three tranches of about two hundred twenty-one dollars on days thirty, sixty and ninety. That schedule is a commitment recorded at purchase." |
+| 1:25–2:05 | Reloj de demo: leyenda; adelantar 30 días; dejar vencer una cuota hasta el día 15 | "This clock moves time forward. At day thirty, the first tranche is released to the merchant. Now the student misses a payment: five days of grace with no surcharge, the guarantor is notified on day three, a five percent surcharge on day six, and on day fifteen the guarantor's card is charged and the student drops one Tier. The merchant's next tranche is still paid on time." |
+| 2:05–2:35 | `/app/comercio/mostrador`: monto, QR, "Abrir como cliente", confirmar, venta pagada | "In-store sales work the same way. The cashier enters an amount, Lazo shows a QR, and the student scans it and confirms with their existing guarantee. The sale shows up instantly on the merchant's panel." |
+| 2:35–3:00 | Tiers y reglas; sección "Qué corre en la cadena y qué en el simulador"; program ID | "Every rule is visible: how to move up a Tier and what moves you down. Here is what runs on chain and what runs in the simulator. Lazo runs on Solana devnet, never mainnet. Thanks for watching." |
 
-No mostrar 1/6 cuotas, calendario diferido ni cobertura nueva como botones funcionando si el código no los ofrece. Si el alta falla por política/credenciales, mostrar ese estado; no afirmar que se aceptó una fianza. Los paneles de mock que conserven cobertura vieja deben rotularse como prototipo anterior hasta C2–C6.
+Reglas para la grabación:
+- No mostrar como "en la cadena" algo que en la toma corre en el simulador. Si se muestra Explorer, que sea una transacción u operación realmente observada en devnet; un hash no prueba identidad, cobro de tarjeta ni recupero.
+- Si alguna pantalla del mostrador o de tramos no quedó mergeada al momento de grabar, cortar ese bloque y redistribuir el tiempo; no simularlo con capturas.
+- Toda firma o envío de transacciones para la toma necesita aprobación explícita de Luciano.
 
-**Después del gate real:** separar en el video los pasos devnet confirmados, los pasos del procesador sandbox y cualquier simulación restante. Mostrar firma aprobada, confirmación y Explorer reales sólo para operaciones realizadas. Un hash acredita el registro, no acredita por sí solo KYC, cobro de tarjeta o recupero fiat.
+## Equipo
 
-## Deck breve para ensayo / preselección
+Mismos datos que la sección "Quiénes somos" de la web (ticket 06):
 
-Una idea por slide; se adapta al formato que confirme la organización. Títulos en inglés:
-
-1. **A purchase of our own, a card borrowed from family** — caso real y aprendizaje.
-2. **Installments with a clear, capped guarantee** — roles y quién paga.
-3. **See the working prototype** — recorrido probado, modo visible.
-4. **A shared payment record on Solana** — adelantos/repagos/reputación; dependencia offchain explícita.
-5. **What we learned, and what remains unproven** — tres casos de entorno y los límites.
-6. **Start with students and local retail** — un canal inicial; experimento de 07/08.
-7. **Wallet distribution is a hypothesis** — candidato elegido tras investigación, responsabilidades y piloto acotado; ningún acuerdo.
-8. **Pricing must cover capital and operations** — 1/3 cero, 6 interés, comisión por plazo; sin APY ni margen logrado.
-9. **Built in Tucumán, Argentina** — nombres, experiencia y contribuciones verificadas.
-10. **Our next milestone and ask** — completar gate devnet y conseguir feedback/compromisos de comercios, no inversión masiva sin validación.
-
-## Checklist de entrega y ensayo
-
-- [ ] Pitch 2:00 y demo ≤3:00, ambos en inglés, audio claro y links accesibles.
-- [ ] Nombre/descripcion escritos por el equipo; logo con derechos; equipo y país completos.
-- [ ] Herramientas separadas entre integradas, pendientes y sandbox; arquitectura y riesgos descritos.
-- [ ] Repo público o acceso privado revisable; README EN, modo mock/devnet, instrucciones y program ID.
-- [ ] GTM y validación con evidencia; metas futuras separadas de resultados; sin alianzas inventadas.
-- [ ] Punto de partida, cambios semanales, trabajo previo, uso material de IA y aportes registrados.
-- [ ] Registro de integrantes y ubicación del proyecto revisados; doble envío Colosseum + Earn.
-- [ ] Revisar cierre operativo 12/10 23:59 Argentina y guardar recibos de ambos envíos.
-- [ ] Link en móvil/incógnito; repetir recorrido sin ayuda; si falla, corregir o declarar el bloqueo.
-- [ ] Completar nombres, horas y estado técnico real antes de grabar. No se verificaron esos datos en esta sesión.
+- **Luciano Grosso**, 22 · Product Owner.
+- **Ignacio Albarracín**, 22 · Full Stack Developer.
+- Los dos estudian Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), en Tucumán, Argentina; se reciben en diciembre de 2026. Son amigos desde hace años.
+- Aportes de cada uno al repo para el formulario: [A CONFIRMAR].
+- Uso de IA (lo pide el listing): el equipo construyó con agentes de código (Claude Code como coordinador y workers Devin/GPT en worktrees, ver `04-plan.md` § Estado) bajo su revisión. Declararlo tal cual.
 
 ## Preguntas duras para ensayar
 
-- ¿Por qué el estudiante no usaría directamente las cuotas sin interés de la tarjeta del familiar?
-- ¿Por qué un comercio paga esta comisión y cuándo le conviene esperar para cobrar?
-- ¿Qué cuesta adquirir y verificar a alguien que compra un ticket chico?
-- ¿Qué pasa si el cargo al fiador falla y quién absorbe la pérdida?
-- ¿Quién aporta el capital, quién gana cada comisión y quién asume riesgo cambiario?
-- ¿Qué parte necesita Solana y qué depende de un proveedor fuera de la cadena?
-- ¿Qué observaron con usuarios reales y qué sigue siendo una hipótesis?
+Respuestas cortas de borrador, con la fuente al lado. Si una respuesta no tiene fuente, se dice "no lo sabemos todavía".
 
-## Nota técnica: divergencias mock ↔ programa
+1. **¿Por qué no usa directamente la tarjeta de un familiar con cuotas sin interés?** Porque no todos tienen un familiar con tarjeta que la preste, la promo sin interés no está en todos lados y prestarla consume el límite del familiar en cada compra. Con Lazo el familiar no presta nada: solo paga si hay impago, y el estudiante construye su propio historial (02, ronda 3).
+2. **¿Cómo garantizan los tramos del comercio si el estudiante no paga?** Al abrir el plan se registra el calendario de tramos a favor del comercio; la plata queda en el pool y se libera en cada fecha (la libera el keeper o la reclama el comercio). El riesgo de crédito lo asume el pool, que recupera del fiador. El tramo se paga aunque el estudiante esté en mora.
+3. **¿Y si el pool se queda sin liquidez?** Regla dura: no se abre un plan nuevo si la liquidez libre no alcanza para el desembolso de hoy más todos los tramos comprometidos, y los retiros de inversores no pueden dejar el pool por debajo de lo comprometido. Hoy el pool es tesorería del equipo en devnet; capital de terceros solo con un régimen regulado (02, hallazgo 5).
+4. **¿Por qué 6 cuotas recién desde US$ 350?** Porque 6 cuotas inmoviliza el capital casi el doble de tiempo que 3. Con los supuestos del modelo, al 3% una compra de un cliente nuevo cubre su costo desde ~US$ 217; 350 deja margen. Es configurable y se recalibra con datos reales (10).
+5. **¿Por qué no hay plan sin fiador?** Porque el modelo solo cierra con fiador: en el análisis del 3/10, con 30% de mora (cerca de la irregularidad del crédito no bancario argentino, 26,9% en feb-2026) el mismo libro perdía ~48% anual sin fiador y rendía ~+20% con fiador (hipótesis de recupero 80%). Además, con anticipo alto y sin respaldo, alguien se lleva el producto y no paga el resto (02, hallazgos 3 y D).
+6. **¿Qué pasa si el cargo al fiador falla o lo desconoce?** Pasa: el 83–86% de los desconocimientos de cargos se resuelve a favor del titular de la tarjeta (BCRA, 2025, en 02). Por eso la cobertura es una fianza escrita con tope y el recupero del 80% es una hipótesis, no un dato. La primera pérdida la absorbe el tramo junior.
+7. **¿Por qué un comercio pagaría hasta 7%?** Porque vende a alguien que hoy no le compra, y puede bajar a 5,25% si espera en tramos. Las comisiones de referencia del mercado varían mucho según el canal; no afirmamos ser más baratos. Falta validarlo con comercios reales: no tenemos ninguno firmado.
+8. **¿Para qué Solana?** El plan, el pool y el compromiso de cobro del comercio son cuentas públicas que cualquiera audita, y el Tier del estudiante (solo Tier y contadores, nunca el detalle de cada compra) es legible por cualquier comercio. Identidad, tarjeta y conversión a pesos quedan fuera de la cadena, con proveedores.
+9. **¿Qué validaron con usuarios reales?** Solo un test de mesa de 3 personas del entorno. No hay ventas, comercios aliados ni tracción. La próxima prueba es un piloto chico con estudiantes, fiadores y comercios de Tucumán.
+10. **¿Y el riesgo cambiario?** La deuda está en USDC; el estudiante puede pagar en pesos al tipo del día y asume ese riesgo en plazos cortos. Se muestra claro en el checkout. Cuotas fijas en pesos quedan fuera del MVP.
 
-Para el jurado y para quien retome el programa — que no quede escondida:
+## Nota técnica: qué corre en la cadena y qué en el simulador
 
-- **Lo que se ve en la demo:** el estudiante puede tener varios planes en paralelo, como el margen de una tarjeta de crédito: el `maxPurchase` del escalón hace doble función (tope por compra y línea total). `quote()` bloquea con `exceeds_credit_limit` cuando `activeExposure + repayable` supera ese margen (`app/src/lib/cuotas/mock.ts:95-105`).
-- **Lo que hace el programa on-chain hoy:** fuerza **un solo plan por estudiante** — el `Plan` PDA se crea con seeds `[PLAN_SEED, student]` vía `init`, que falla si ya existe (`programa/programs/cuotas/src/instructions/open_plan.rs:146`). El cliente real (`app/src/lib/cuotas/real.ts`) mantiene la semántica vieja y emite `has_active_plan`.
-- **Por qué:** la demo corre sobre el cliente mock (`NEXT_PUBLIC_CUOTAS_MODE=mock`); el margen de crédito se implementó solo ahí (decisión del equipo, `.scratch/demo-polish/spec.md` §"Divergencia conocida"). No afecta lo que se muestra porque nada en la demo pega al programa real todavía (pendiente Fase A3, ver `proyecto/handoff-demo-devnet.md`).
-- **Evolución futura del programa (upgrade):** seeds `[PLAN_SEED, student, generation]` para permitir planes en paralelo + chequeo `active_exposure + repayable ≤ tope del escalón` en `open_plan`. Hasta entonces, el mock y el cliente real difieren en este punto.
+Para el jurado y para quien retome el código. Misma información que la sección de la web.
 
-### Términos comerciales de la demo (tanda web completa, 2026-10-07)
+**En la cadena (programa `cuotas`, Anchor, Solana devnet, program ID `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ`):**
+- Pool con tramos junior y senior, `open_plan`, `pay_installment`, mora (`crank_mark_late`), registro del recupero del fiador, reputación (Tier y contadores) y registro de la garantía (hash de la fianza).
+- Ticket 02: **3 y 6 cuotas** (`open_plan(price, installments)`, hasta 6 slots), **fiador obligatorio** (`GuarantorRequired`), **cobertura con interés** (`required_coverage = financiado + interés`) y mínimo por opción. Se quita el tramo sin fiador.
+- Ticket 03, **si entra**: cuenta `PayoutSchedule` con los tramos del comercio, `release_payout` (cualquiera puede llamarla en fecha), `Pool.committed_payouts` y error `PoolLiquidity`. Estado al cierre: [A CONFIRMAR: si 03 se mergeó].
+- Estado del deploy: el binario que corre hoy en devnet es el anterior al ciclo de crédito; el upgrade y la inicialización de la config los aprueba Luciano aparte (`programa/UPGRADE_DEVNET.md`). Si al grabar o entregar ya está hecho: [A CONFIRMAR: upgrade e init en devnet con las 6 cuotas].
 
-- **Lo que se ve en la demo:** 3 cuotas sin interés o 6 con 3% total sobre lo financiado (provisional); el comercio elige cobrar hoy (7%), a 30 (6,25%), 60 (5,5%) o 90 días (5,25%) y su venta queda pendiente hasta la fecha; cobertura del fiador 100% del capital pendiente en todos los escalones. Todo sale de `ProtocolConfig` del mock (`app/src/lib/cuotas/demo-config.ts`) y se calcula en `app/src/lib/cuotas/terms.ts`.
-- **Lo que hace el programa on-chain hoy:** solo 3 cuotas y cobro inmediato; el seed (`app/scripts/seed.ts`) conserva la cobertura 100/90/80/70 por escalón.
-- **Cómo decirlo en el pitch:** "la demo corre en devnet con un cliente simulado; las 6 cuotas y el cobro diferido son términos provisionales que todavía no están en el programa". No mostrarlos como funcionalidad on-chain.
+**En el simulador (cliente mock del navegador, el que usa la web pública):**
+- El recorrido completo para el jurado, sin wallet ni tarjeta: checkout 3/6 cuotas, Tiers, mora y cobro al fiador, cuentas de estudiante, fiador, comercio y pool.
+- **Reloj de demo** para adelantar días.
+- **Venta en mostrador con QR** (solo simulador; el cliente real responde `option_unavailable`).
+- **Cobro en tramos** del comercio, si 03 no entró en la cadena.
+- Identidad (Didit) y cobro a la tarjeta del fiador (Mobbex): código listo, en modo sandbox; credenciales y flujo real pendientes.
+- Comercios del marketplace: de ejemplo.
+
+**Divergencia conocida que sigue:** el simulador permite varios planes en paralelo dentro del tope del Tier (como el margen de una tarjeta); el programa permite **un plan activo por estudiante** (`Plan` PDA con seeds `[PLAN_SEED, student]`). Evolución prevista: seeds con generación y chequeo de exposición total en `open_plan`.
+
+## Checklist de entrega
+
+- [ ] Pitch 2:00 y demo ≤ 3:00, en inglés, audio claro, links públicos.
+- [ ] Formulario: pegar [`05-entrega-en.md`](05-entrega-en.md); revisar cada `[A CONFIRMAR]` antes de enviar.
+- [ ] Repo con acceso para hackathon@superteam.ar y hackathon@colosseum.com si es privado; README en inglés con modo simulador, instrucciones y program ID.
+- [ ] Evidencia y GTM: solo el test de mesa y la investigación; metas separadas de resultados; sin alianzas.
+- [ ] Punto de partida, changelog, aportes de cada integrante y uso material de IA.
+- [ ] Doble envío Colosseum + Earn; guardar comprobantes. Cierre 12/10 23:59 ART.
+- [ ] Probar el link en celular e incógnito y repetir "Probalo en 2 minutos" sin ayuda.
