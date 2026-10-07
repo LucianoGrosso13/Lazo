@@ -3,11 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/catalog";
-import { formatUsdc, type Micro, type QuoteBlockReason, type TierIndex } from "@/lib/cuotas";
+import {
+  formatUsdc,
+  type Bps,
+  type Micro,
+  type QuoteBlockReason,
+  type TierIndex,
+} from "@/lib/cuotas";
 import { useLocale } from "@/i18n/locale";
 import type { tienda } from "@/i18n/dictionaries/tienda";
 import { BigNumber } from "@/components/ui/big-number";
 import { Chip } from "@/components/ui/chip";
+import { formatBps } from "./plan-alt";
 import styles from "./store.module.css";
 
 // Mismo espectro del hero: anticipo → cuota 1 → cuota 2 → cuota 3.
@@ -20,6 +27,16 @@ export interface ProductTerms {
   installments: Micro[];
   /** Primer motivo de bloqueo de `quote()` (o tope del escalón sin wallet). */
   blocked: QuoteBlockReason | null;
+  /**
+   * Segunda opción de la config (hoy: 6 cuotas con interés), cotizada con
+   * `quote(..., { installments })` o estimada en el escalón 0 sin wallet.
+   * null cuando la config no la ofrece o está deshabilitada.
+   */
+  alt: {
+    installments: Micro[];
+    interestTotalBps: Bps;
+    provisional: boolean;
+  } | null;
 }
 
 type Dict = (typeof tienda)["es"];
@@ -41,6 +58,14 @@ export function ProductCard({
   const { locale } = useLocale();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
   const bands = [terms.downPayment, ...terms.installments];
+  const altText = terms.alt
+    ? t.altOption(
+        terms.alt.installments.length,
+        fmt(terms.alt.installments[0]),
+        formatBps(terms.alt.interestTotalBps, locale),
+        terms.alt.provisional,
+      )
+    : null;
 
   return (
     <article
@@ -56,6 +81,7 @@ export function ProductCard({
           fmt(terms.downPayment),
           fmt(terms.installments[0]),
           terms.installments.length,
+          altText,
         )}${badge ? ` ${badge}` : ""}`}
       >
         <div className={styles.media}>
@@ -106,6 +132,8 @@ export function ProductCard({
               </dd>
             </div>
           </dl>
+
+          {altText ? <p className={styles.altLine}>{altText}</p> : null}
 
           <span className={styles.go}>
             {t.breakdown}
