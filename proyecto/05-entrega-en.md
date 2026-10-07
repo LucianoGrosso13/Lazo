@@ -64,7 +64,7 @@ Both are Computer Engineering students at Universidad del Norte Santo Tomás de 
 
 Individual contributions: [A CONFIRMAR].
 
-**Use of AI:** we built Lazo with AI coding agents (Claude Code as coordinator, plus Devin and GPT workers on isolated branches), with every change reviewed and merged by the team.
+**Use of AI:** we built Lazo with AI coding agents (Claude Code as coordinator, plus Devin and Gemini workers on isolated branches), with every change reviewed and merged by the team.
 
 ## Tech and architecture
 
