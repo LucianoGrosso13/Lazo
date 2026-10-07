@@ -131,7 +131,10 @@ export function AdminPanel() {
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <WalletButton />
-              <Link href="/app" className="text-sm text-cyan underline">
+              <Link
+                href="/app"
+                className="inline-flex min-h-10 items-center text-sm text-cyan underline"
+              >
                 {t.sinCuentaIr}
               </Link>
             </div>
@@ -354,11 +357,10 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             <span className="font-num normal-case">
               {shortAddr(s.authority.admin ?? actor)}
             </span>
-            <span className="normal-case text-ink-ghost">
-              ·{" "}
-              {s.authority.source === "config" ? t.autoridadConfig : t.autoridadFixture}
-            </span>
           </Chip>
+          <span className="ref-tag normal-case">
+            {s.authority.source === "config" ? t.autoridadConfig : t.autoridadFixture}
+          </span>
           {s.authority.keeper && (
             <Chip>
               {t.keeperLabel}:{" "}
@@ -433,7 +435,33 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
           {t.escalonesHint}
         </p>
-        <div className="mt-4 overflow-x-auto">
+        {/* En móvil cada escalón es una tarjeta; la tabla completa queda desde sm. */}
+        <ul className="mt-4 space-y-3 sm:hidden">
+          {cfg.guaranteedTiers.map((tier: TierParams, i: number) => (
+            <li
+              key={i}
+              className="rounded-xl border border-beam/10 bg-beam/[0.03] p-4"
+            >
+              <p className="font-medium text-ink">{put(t.escalonN, { n: String(i) })}</p>
+              <dl className="mt-2 space-y-1.5">
+                {(
+                  [
+                    [t.colAnticipo, fmtPct01(tier.downPaymentBps / 10_000, locale)],
+                    [t.colCobertura, fmtPct01(tier.guarantorCoverageBps / 10_000, locale)],
+                    [t.colTope, `${formatUsdc(tier.maxPurchase, locale)} devUSDC`],
+                    [t.colInteres, fmtPct01(tier.interestBps / 10_000, locale)],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-3 text-sm">
+                    <dt className="text-ink-3">{k}</dt>
+                    <dd className="font-num tabular-nums text-ink-2">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[34rem] text-sm">
             <thead>
               <tr className="border-b border-beam/10 text-left font-num text-measure uppercase tracking-[0.14em] text-ink-ghost">
@@ -718,7 +746,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
                 placeholder={t.comercioOwnerPlaceholder}
                 spellCheck={false}
                 autoComplete="off"
-                className="mt-1.5 w-full rounded-lg border border-beam/15 bg-abyss-2/60 px-3 py-2 font-num text-sm text-ink placeholder:text-ink-ghost focus-visible:outline-2 focus-visible:outline-cyan"
+                className="mt-1.5 min-h-10 w-full rounded-lg border border-beam/15 bg-abyss-2/60 px-3 py-2 font-num text-sm text-ink placeholder:text-ink-ghost focus-visible:outline-2 focus-visible:outline-cyan"
               />
             </label>
             <label className="block">
@@ -731,7 +759,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
                 data-testid="admin-comercio-name"
                 placeholder={t.comercioNombrePlaceholder}
                 autoComplete="off"
-                className="mt-1.5 w-full rounded-lg border border-beam/15 bg-abyss-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-ghost focus-visible:outline-2 focus-visible:outline-cyan"
+                className="mt-1.5 min-h-10 w-full rounded-lg border border-beam/15 bg-abyss-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-ghost focus-visible:outline-2 focus-visible:outline-cyan"
               />
             </label>
           </div>

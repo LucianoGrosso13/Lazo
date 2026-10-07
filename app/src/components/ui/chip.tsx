@@ -19,7 +19,8 @@ export function ChipButton({
   return (
     <button
       type="button"
-      className={`chip ${className}`}
+      // Área táctil ≥ 40×40 solo bajo `sm`: el look de escritorio no cambia.
+      className={`chip max-sm:min-h-10 max-sm:min-w-10 ${className}`}
       aria-pressed={on}
       data-on={on || undefined}
       {...props}
