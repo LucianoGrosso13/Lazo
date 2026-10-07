@@ -495,18 +495,20 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
             </tbody>
           </table>
         </div>
-        <div className="mt-4">
-          <p className="text-sm font-medium text-ink">{t.sinFiadorTitle}</p>
-          <p className="mt-0.5 text-xs text-ink-ghost">{t.sinFiadorHint}</p>
-          <ul className="mt-2 space-y-1">
-            {cfg.unguaranteedTiers.map((tier: TierParams, i: number) => (
-              <li key={i} className="font-num text-sm tabular-nums text-ink-2">
-                {put(t.escalonN, { n: String(i) })}: {fmtPct01(tier.downPaymentBps / 10_000, locale)}{" "}
-                {t.colAnticipo.toLowerCase()} · {formatUsdc(tier.maxPurchase, locale)} devUSDC
-              </li>
-            ))}
-          </ul>
-        </div>
+        {"unguaranteedTiers" in cfg && Array.isArray((cfg as { unguaranteedTiers?: TierParams[] }).unguaranteedTiers) ? (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-ink">{t.sinFiadorTitle}</p>
+            <p className="mt-0.5 text-xs text-ink-ghost">{t.sinFiadorHint}</p>
+            <ul className="mt-2 space-y-1">
+              {((cfg as { unguaranteedTiers?: TierParams[] }).unguaranteedTiers ?? []).map((tier: TierParams, i: number) => (
+                <li key={i} className="font-num text-sm tabular-nums text-ink-2">
+                  {put(t.escalonN, { n: String(i) })}: {fmtPct01(tier.downPaymentBps / 10_000, locale)}{" "}
+                  {t.colAnticipo.toLowerCase()} · {formatUsdc(tier.maxPurchase, locale)} devUSDC
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <dl className="mt-5 grid gap-x-8 gap-y-2 border-t border-beam/10 pt-4 text-sm sm:grid-cols-2">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-ink-3">{t.reglaGracia}</dt>

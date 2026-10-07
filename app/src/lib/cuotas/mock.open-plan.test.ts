@@ -200,7 +200,7 @@ describe("términos del plan y cobro del comercio", () => {
       settlementId: "immediate",
       settlementDays: 0,
       settlementFeeBps: 700,
-      provisional: true,
+      provisional: false,
     });
     // La comisión del comercio no cambia por el interés del comprador.
     expect(plan.merchantFee).toBe(toMicro(49));
@@ -231,6 +231,8 @@ describe("términos del plan y cobro del comercio", () => {
     expect(sale.pendingSettlement).toBe(toMicro(656.25));
     expect(sale.settled).toBe(false);
     expect(sale.received).toBe(toMicro(956.25));
+    expect(sale.payoutTranches).toHaveLength(1);
+    expect(sale.payoutTranches?.[0].released).toBe(false);
 
     // El pool todavía no adelanta nada (a diferencia del cobro inmediato).
     let pool = await c.getPool();
@@ -251,6 +253,7 @@ describe("términos del plan y cobro del comercio", () => {
     expect(m.pendingSettlement).toBe(0);
     expect(m.sales[0].settled).toBe(true);
     expect(m.sales[0].pendingSettlement).toBe(0);
+    expect(m.sales[0].payoutTranches?.[0].released).toBe(true);
 
     pool = await c.getPool();
     const advances = pool.events.filter((e) => e.kind === "Advance");
@@ -276,13 +279,13 @@ describe("términos del plan y cobro del comercio", () => {
       merchant: DEMO_MERCHANT,
       price: toMicro(1000),
     });
-    // 60 días → comisión 5,5%: pendiente 700 − 38,50 = 661,50
+    // 60 días → comisión 5,75%: pendiente 700 − 40,25 = 659,75
     expect(plan.terms.settlementId).toBe("deferred_60");
     expect(plan.terms.settlementDays).toBe(60);
-    expect(plan.merchantFee).toBe(toMicro(38.5));
+    expect(plan.merchantFee).toBe(toMicro(40.25));
     const m = await c.getMerchant(DEMO_MERCHANT);
     expect(m.settlementBalance).toBe(toMicro(300));
-    expect(m.pendingSettlement).toBe(toMicro(661.5));
+    expect(m.pendingSettlement).toBe(toMicro(659.75));
     expect(m.sales[0].settlementAt).toBe(plan.openedAt + 60 * 86_400);
   });
 

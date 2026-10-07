@@ -14,12 +14,15 @@ import {
 import { CuotasError } from "./types";
 import type {
   Activity,
+  CounterOrder,
+  CreateCounterOrderArgs,
   CuotasClient,
   DemoClock,
   Guarantee,
   Micro,
   Plan,
   PlanTerms,
+  Pool,
   ProtocolConfig,
   Quote,
   QuoteBlockReason,
@@ -47,6 +50,7 @@ import {
 /** Overrides para tests/demos puntuales (solo aplican si no hay estado guardado). */
 export interface MockOverrides {
   config?: Partial<ProtocolConfig>;
+  pool?: Partial<Pool>;
 }
 
 const clone = <T>(value: T): T => structuredClone(value);
@@ -83,11 +87,7 @@ function computeQuote(
   const rep = state.reputations[student];
   const guarantee = state.guarantees[student];
   const withGuarantee = guarantee?.active === true;
-  const tierParams = withGuarantee
-    ? cfg.guaranteedTiers[rep.tier]
-    : cfg.unguaranteedTiers[
-        Math.min(rep.tier, cfg.unguaranteedTiers.length - 1)
-      ];
+  const tierParams = cfg.guaranteedTiers[rep.tier];
 
   // Opción de plan pedida o por defecto (la primera habilitada; histórico:
   // `installmentsCount`). Inexistente o deshabilitada → `option_unavailable`,
@@ -112,7 +112,11 @@ function computeQuote(
     reasons.push("option_unavailable");
   }
 
-  const n = planOpt?.installments ?? installmentsReq;
+  if (planOpt && planOpt.minPrice > 0 && price < planOpt.minPrice) {
+    reasons.push("below_option_min");
+  }
+
+  const n = planOpt?.installments ?? (installmentsReq === 6 ? 6 : 3);
   // El cálculo puro vive en `terms.ts` y lo comparten las pantallas sin
   // wallet: opción faltante → 0 interés propio, plazo faltante → `feeBps`
   // histórico y 0 días (los números salen igual aunque la opción no sea
@@ -127,7 +131,10 @@ function computeQuote(
     settlement: {
       days: settleOpt?.days ?? 0,
       feeBps: settleOpt?.feeBps ?? cfg.feeBps,
+      tranches: settleOpt?.tranches ?? 0,
     },
+    openedAt: now(state),
+    secondsPerDay: cfg.secondsPerDay,
   });
   const {
     downPayment,
@@ -142,11 +149,12 @@ function computeQuote(
     merchantReceives,
     merchantAdvance,
     merchantPending,
+    payoutTranches,
   } = terms;
 
   if (cfg.state !== "Normal") reasons.push("protocol_halted");
   if (rep.blockedFromNewPlans) reasons.push("blocked_after_default");
-  if (!withGuarantee) reasons.push("no_guarantee");
+  if (!withGuarantee) reasons.push("guarantor_required");
   if (price > tierParams.maxPurchase) reasons.push("exceeds_tier_max");
   // Margen de crédito por escalón (solo mock, decisión del usuario): el
   // `maxPurchase` del escalón hace doble función — tope por compra y línea
@@ -166,6 +174,20 @@ function computeQuote(
       reasons.push("exceeds_guarantee_coverage");
   }
 
+  // Chequeo de liquidez libre del pool:
+  // pool.liquid ≥ desembolso de hoy + Σ tramos no liberados de todos los comercios
+  const existingPending = Object.values(state.merchants).reduce(
+    (sum, m) => sum + (m.pendingSettlement ?? 0),
+    0,
+  );
+  const requiredPoolLiquidity =
+    (settlementDays === 0 ? financed - merchantFee : 0) +
+    existingPending +
+    merchantPending;
+  if (state.pool.available < requiredPoolLiquidity) {
+    reasons.push("pool_liquidity");
+  }
+
   return {
     price,
     tier: rep.tier,
@@ -179,6 +201,7 @@ function computeQuote(
     merchantReceives,
     merchantAdvance,
     merchantPending,
+    payoutTranches,
     requiredCoverage,
     installmentsCount: n,
     interestTotalBps,
@@ -230,6 +253,8 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         provisional: false,
       };
     }
+    s.counterOrders ??= {};
+    s.orderSeq ??= 0;
     for (const m of Object.values(s.merchants)) {
       m.settlementId ??= "immediate";
       m.pendingSettlement ??= m.sales.reduce(
@@ -242,11 +267,15 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         sale.settlementAt ??= sale.at;
         sale.pendingSettlement ??= 0;
         sale.settled ??= true;
+        sale.payoutTranches ??= [];
       }
     }
     return s;
   };
   state = normalize(loadState() ?? seedState(seedConfig));
+  if (overrides.pool) {
+    state.pool = { ...state.pool, ...overrides.pool };
+  }
   /** Relee el estado persistido (otra instancia pudo haberlo cambiado). */
   const refresh = () => {
     const loaded = loadState();
@@ -449,33 +478,79 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       if (settleOrRefresh(plan)) changed = true;
     }
 
-    // Liquidación diferida: cada venta se cobra una sola vez, cuando el reloj
-    // llega a su fecha de cobro. El adelanto del pool al comercio (Advance)
-    // ocurre en esa fecha — al abrir solo entró el anticipo del estudiante.
-    // Ventas viejas sin `pendingSettlement` ya se cobraron: no se tocan.
+    // Liquidación diferida en tramos garantizados por Lazo:
+    // Cada tramo se libera en su fecha exacta (t >= tranche.releaseAt)
+    // de forma idempotente, pague o no el estudiante (incluso en mora).
     for (const merchant of Object.values(state.merchants)) {
       for (const sale of merchant.sales) {
-        const pending = sale.pendingSettlement ?? 0;
-        if (pending <= 0 || sale.settled === true) continue;
-        const dueAt = sale.settlementAt ?? sale.at;
-        if (t < dueAt) continue;
-        sale.pendingSettlement = 0;
-        sale.settled = true;
-        merchant.pendingSettlement = Math.max(
-          0,
-          (merchant.pendingSettlement ?? 0) - pending,
-        );
-        merchant.settlementBalance += pending;
-        state.pool.available -= pending;
-        state.pool.nav = state.pool.available + state.pool.outstandingCredit;
-        state.pool.events.push({
-          kind: "Advance",
-          amount: pending,
-          at: dueAt,
-          signature: fakeSignature(),
-          planId: sale.planId,
-        });
-        changed = true;
+        if (sale.settled === true) continue;
+        if (sale.payoutTranches && sale.payoutTranches.length > 0) {
+          for (const tranche of sale.payoutTranches) {
+            if (!tranche.released && t >= tranche.releaseAt) {
+              tranche.released = true;
+              sale.pendingSettlement = Math.max(
+                0,
+                (sale.pendingSettlement ?? 0) - tranche.amount,
+              );
+              merchant.pendingSettlement = Math.max(
+                0,
+                (merchant.pendingSettlement ?? 0) - tranche.amount,
+              );
+              merchant.settlementBalance += tranche.amount;
+              state.pool.available -= tranche.amount;
+              state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+              state.pool.events.push({
+                kind: "Advance",
+                amount: tranche.amount,
+                at: tranche.releaseAt,
+                signature: fakeSignature(),
+                planId: sale.planId,
+              });
+              activity({
+                kind: "PayoutReleased",
+                merchant: merchant.owner,
+                planId: sale.planId,
+                amount: tranche.amount,
+                at: tranche.releaseAt,
+              });
+              changed = true;
+            }
+          }
+          if (sale.payoutTranches.every((tr) => tr.released)) {
+            sale.settled = true;
+            sale.pendingSettlement = 0;
+          }
+        } else {
+          // Ventas históricas sin tramos
+          const pending = sale.pendingSettlement ?? 0;
+          if (pending <= 0) continue;
+          const dueAt = sale.settlementAt ?? sale.at;
+          if (t < dueAt) continue;
+          sale.pendingSettlement = 0;
+          sale.settled = true;
+          merchant.pendingSettlement = Math.max(
+            0,
+            (merchant.pendingSettlement ?? 0) - pending,
+          );
+          merchant.settlementBalance += pending;
+          state.pool.available -= pending;
+          state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+          state.pool.events.push({
+            kind: "Advance",
+            amount: pending,
+            at: dueAt,
+            signature: fakeSignature(),
+            planId: sale.planId,
+          });
+          activity({
+            kind: "PayoutReleased",
+            merchant: merchant.owner,
+            planId: sale.planId,
+            amount: pending,
+            at: dueAt,
+          });
+          changed = true;
+        }
       }
     }
     return changed;
@@ -573,6 +648,8 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
             (a) =>
               (filter?.student === undefined ||
                 a.student === filter.student) &&
+              (filter?.merchant === undefined ||
+                a.merchant === filter.merchant) &&
               (filter?.planId === undefined || a.planId === filter.planId),
           )
           .sort((a, b) => a.at - b.at),
@@ -589,6 +666,33 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     async openPlan(args): Promise<TxResult<Plan>> {
       refresh();
       sync();
+
+      let order: CounterOrder | undefined;
+      if (args.orderId) {
+        order = state.counterOrders?.[args.orderId];
+        if (!order) {
+          throw new CuotasError(
+            "order_unavailable",
+            `orden ${args.orderId} no encontrada`,
+          );
+        }
+        const t = now(state);
+        if (order.status === "open" && t > order.expiresAt) {
+          order.status = "expired";
+        }
+        if (order.status !== "open") {
+          throw new CuotasError(
+            "order_unavailable",
+            `orden ${args.orderId} no disponible (${order.status})`,
+          );
+        }
+        args = {
+          ...args,
+          price: order.amount,
+          merchant: order.merchant,
+        };
+      }
+
       const merchant = state.merchants[args.merchant];
       if (!merchant) {
         throw new CuotasError("not_found", `comercio ${args.merchant}`);
@@ -609,13 +713,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       const signature = fakeSignature();
       const day = state.config.secondsPerDay;
       const rep = state.reputations[args.student];
-      const guarantee = state.guarantees[args.student];
-      const tierParams =
-        guarantee?.active === true
-          ? state.config.guaranteedTiers[rep.tier]
-          : state.config.unguaranteedTiers[
-              Math.min(rep.tier, state.config.unguaranteedTiers.length - 1)
-            ];
+      const tierParams = state.config.guaranteedTiers[rep.tier];
       // Copia fija de los términos con los que se abrió el plan: si la config
       // o el predeterminado del comercio cambian después, el plan no se toca.
       const terms: PlanTerms = {
@@ -656,8 +754,8 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       state.plans.push(plan);
 
       // Cobro del comercio: el anticipo del estudiante entra al abrir siempre.
-      // Si la liquidación es diferida, `financiado − fee` queda pendiente
-      // hasta `openedAt + settlementDays` (lo liquida el keeper del reloj).
+      // Si la liquidación es diferida, `financiado − fee` queda pendiente en
+      // tramos mensuales iguales garantizados por Lazo.
       merchant.settlementBalance += quote.merchantAdvance;
       merchant.pendingSettlement =
         (merchant.pendingSettlement ?? 0) + quote.merchantPending;
@@ -676,11 +774,17 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         settlementAt: at + quote.settlementDays * day,
         pendingSettlement: quote.merchantPending,
         settled: quote.merchantPending === 0,
+        payoutTranches: clone(quote.payoutTranches),
       });
 
+      if (order) {
+        order.status = "paid";
+        order.planId = plan.id;
+      }
+
       // El pool adelanta `financiado − fee` al comercio: al abrir si la
-      // liquidación es inmediata; en la fecha de cobro si es diferida (lo
-      // liquida `applyKeeper` con el evento Advance en esa fecha).
+      // liquidación es inmediata; en la fecha de cobro de cada tramo si es diferida
+      // (lo liquida `applyKeeper` con el evento Advance en esa fecha).
       const advance =
         quote.merchantPending === 0 ? quote.financed - quote.merchantFee : 0;
       if (advance > 0) {
@@ -793,6 +897,62 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         commit();
       }
       return { value: clone(guarantee), signature: fakeSignature() };
+    },
+
+    async createCounterOrder(
+      merchant,
+      args: CreateCounterOrderArgs,
+    ): Promise<CounterOrder> {
+      refresh();
+      sync();
+      const m = state.merchants[merchant];
+      if (!m) throw new CuotasError("not_found", `comercio ${merchant}`);
+      const createdAt = now(state);
+      const expiresAt = createdAt + state.config.secondsPerDay;
+      state.orderSeq = (state.orderSeq ?? 0) + 1;
+      const order: CounterOrder = {
+        id: `ord_${state.orderSeq}`,
+        merchant,
+        amount: args.amount,
+        description: args.description,
+        createdAt,
+        expiresAt,
+        status: "open",
+      };
+      state.counterOrders[order.id] = order;
+      commit();
+      return clone(order);
+    },
+
+    async getCounterOrder(id): Promise<CounterOrder> {
+      refresh();
+      sync();
+      const order = state.counterOrders?.[id];
+      if (!order) throw new CuotasError("not_found", `orden ${id}`);
+      const t = now(state);
+      if (order.status === "open" && t > order.expiresAt) {
+        order.status = "expired";
+        commit();
+      }
+      return clone(order);
+    },
+
+    async listCounterOrders(merchant): Promise<CounterOrder[]> {
+      refresh();
+      sync();
+      const t = now(state);
+      const orders = Object.values(state.counterOrders ?? {}).filter(
+        (o) => o.merchant === merchant,
+      );
+      let changed = false;
+      for (const o of orders) {
+        if (o.status === "open" && t > o.expiresAt) {
+          o.status = "expired";
+          changed = true;
+        }
+      }
+      if (changed) commit();
+      return orders.map(clone).sort((a, b) => b.createdAt - a.createdAt);
     },
 
     async advanceDays(days): Promise<DemoClock> {

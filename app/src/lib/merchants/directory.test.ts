@@ -35,7 +35,6 @@ describe("directorio de comercios demo", () => {
     expect(new Set(ids).size).toBe(ids.length);
     const maxPurchase = Math.max(
       ...DEMO_CONFIG.guaranteedTiers.map((t) => t.maxPurchase),
-      ...DEMO_CONFIG.unguaranteedTiers.map((t) => t.maxPurchase),
     );
     for (const p of CATALOG) {
       expect(p.price).toBeGreaterThan(0);

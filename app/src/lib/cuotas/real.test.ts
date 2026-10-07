@@ -457,10 +457,6 @@ function quoteConfig(): ProtocolConfig {
       { downPaymentBps: 1000, guarantorCoverageBps: 8000, maxPurchase: toMicro(1250), interestBps: 0 },
       { downPaymentBps: 0, guarantorCoverageBps: 7000, maxPurchase: toMicro(1500), interestBps: 0 },
     ],
-    unguaranteedTiers: [
-      { downPaymentBps: 5000, guarantorCoverageBps: 0, maxPurchase: toMicro(150), interestBps: 0 },
-      { downPaymentBps: 3000, guarantorCoverageBps: 0, maxPurchase: toMicro(300), interestBps: 0 },
-    ],
     minFinancedToCount: toMicro(100),
     state: "Normal",
     usdcMint: MINT,
@@ -706,10 +702,6 @@ describe("computeRealQuote", () => {
       { downPaymentBps: 1000, guarantorCoverageBps: 8000, maxPurchase: toMicro(1250), interestBps: 0 },
       { downPaymentBps: 0, guarantorCoverageBps: 7000, maxPurchase: toMicro(1500), interestBps: 0 },
     ],
-    unguaranteedTiers: [
-      { downPaymentBps: 5000, guarantorCoverageBps: 0, maxPurchase: toMicro(150), interestBps: 0 },
-      { downPaymentBps: 3000, guarantorCoverageBps: 0, maxPurchase: toMicro(300), interestBps: 0 },
-    ],
     minFinancedToCount: toMicro(100),
     state: "Normal",
     usdcMint: MINT,
@@ -747,7 +739,7 @@ describe("computeRealQuote", () => {
 
   it("bloquea sin garantía, con plan activo, bloqueado o pausado", () => {
     expect(computeRealQuote(base, toMicro(1000), "s", rep(), null, false).reasons).toContain(
-      "no_guarantee",
+      "guarantor_required",
     );
     expect(computeRealQuote(base, toMicro(1000), "s", rep(), guarantee(), true).reasons).toContain(
       "has_active_plan",

@@ -216,9 +216,10 @@ function BlockedReasons({
   config: ProtocolConfig | undefined;
 }) {
   const t = useT(checkout);
-  const shown: QuoteBlockReason[] = reasons.includes("no_guarantee")
-    ? ["no_guarantee"]
-    : reasons;
+  const shown: QuoteBlockReason[] =
+    reasons.includes("no_guarantee") || reasons.includes("guarantor_required")
+      ? [reasons.includes("guarantor_required") ? "guarantor_required" : "no_guarantee"]
+      : reasons;
   return (
     <div className={styles.blocked} role="alert">
       <StateMark
@@ -325,6 +326,7 @@ function Reason({
       cta = b.has_active_plan.cta;
       break;
     case "no_guarantee":
+    case "guarantor_required":
       title = b.no_guarantee.t;
       desc = b.no_guarantee.d;
       cta = b.no_guarantee.cta;
@@ -343,11 +345,7 @@ function Reason({
     case "exceeds_credit_limit": {
       title = b.exceeds_credit_limit.t;
       // Mismo tierParams que computeQuote: maxPurchase del escalón = línea total.
-      const params = data.withGuarantee
-        ? config?.guaranteedTiers[data.tier]
-        : config?.unguaranteedTiers[
-            Math.min(data.tier, config.unguaranteedTiers.length - 1)
-          ];
+      const params = config?.guaranteedTiers[data.tier];
       if (params) {
         const used = data.activeExposure ?? 0;
         // Lo que sumaría la compra al margen: repayable = Σ cuotas (como openPlan).
@@ -373,6 +371,18 @@ function Reason({
       title = b.option_unavailable.t;
       desc = b.option_unavailable.d;
       cta = b.option_unavailable.cta;
+      break;
+    case "below_option_min":
+      title = "Monto inferior al mínimo";
+      desc = "Esta opción de plan requiere un monto mayor.";
+      break;
+    case "pool_liquidity":
+      title = "Sin liquidez disponible";
+      desc = "El fondo no cuenta con liquidez libre disponible en este momento.";
+      break;
+    default:
+      title = "No disponible";
+      desc = null;
       break;
   }
 
