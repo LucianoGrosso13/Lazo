@@ -119,7 +119,7 @@ export function ConfirmSuccess({
         <Link href="/panel" className={buttonClasses("primary")}>
           {t.ctaPanel}
         </Link>
-        <Link href="/tienda" className={buttonClasses("secondary")}>
+        <Link href={`/comercio/${plan.merchant}`} className={buttonClasses("secondary")}>
           {t.ctaStore}
         </Link>
       </div>

@@ -12,7 +12,7 @@ import { useT } from "@/i18n/locale";
  *
  *   <div className="page-shell py-12">
  *     <AudienceHero eyebrow={t.eyebrow} title={t.title} lede={t.lede}>
- *       <Link className={buttonClasses("primary")} href="/tienda">…</Link>
+ *       <Link className={buttonClasses("primary")} href="/comercio">…</Link>
  *     </AudienceHero>
  *     <AudienceSection title={t.secTitle}>
  *       <StepList steps={t.steps} />

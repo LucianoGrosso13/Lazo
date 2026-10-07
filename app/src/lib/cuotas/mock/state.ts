@@ -18,7 +18,7 @@ import type {
 } from "../types";
 
 // v3: el mock siembra todos los comercios del directorio demo
-// (`src/lib/merchants`), no solo Voltia; la clave vieja no resucita el
+// (`src/lib/merchants`), no solo Kroma; la clave vieja no resucita el
 // directorio anterior desde localStorage.
 export const STORAGE_KEY = "lazo.mock.v3";
 
@@ -134,7 +134,7 @@ export function seedState(config: ProtocolConfig): MockState {
     reputations: {},
     guarantees: {},
     plans: [],
-    // Todos los comercios del directorio (Voltia incluida): se puede
+    // Todos los comercios del directorio (Kroma incluida): se puede
     // comprar en cualquiera y la venta se atribuye al comercio correcto.
     merchants: Object.fromEntries(
       MERCHANTS.map(

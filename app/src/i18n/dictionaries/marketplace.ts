@@ -5,6 +5,7 @@ import { defineDict } from "../locale";
  * /comercio/[direccion] (perfil del directorio con productos y CTA al
  * checkout). Los términos
  * (cuotas, interés, plazo de cobro) salen de la config vía helpers.
+
  */
 export const marketplace = defineDict({
   es: {
@@ -45,6 +46,7 @@ export const marketplace = defineDict({
     productAria: (name: string, price: string) => `${name}, US$ ${price}`,
     foot: "Marketplace simulado en devnet.",
     loadingAria: "Cargando comercios",
+
   },
   en: {
     title: "Merchants that accept Lazo",
@@ -83,5 +85,6 @@ export const marketplace = defineDict({
     productAria: (name: string, price: string) => `${name}, US$ ${price}`,
     foot: "Simulated marketplace on devnet.",
     loadingAria: "Loading merchants",
+
   },
 });

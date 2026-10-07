@@ -5,18 +5,10 @@ export const cuentas = defineDict({
   es: {
     shell: {
       title: "Cuentas",
-      nav: {
-        student: "Estudiante",
-        merchant: "Comercio",
-        admin: "Admin",
-        pool: "Pool",
-        comercioPublico: "Comercio público",
-      },
       balance: "Saldo",
       balanceSimulated: "simulado",
       balanceUnavailable: "Saldo no disponible todavía",
       demoSelectorLabel: "Ver como (demo)",
-      demoClear: "Salir de la demo",
       demoHint: "Selector de ejemplo: solo recorre, no autoriza operaciones reales.",
       demoOptions: {
         "student-new": "Estudiante nuevo",
@@ -102,8 +94,8 @@ export const cuentas = defineDict({
       activeExposure: "Exposición activa",
       blocked: "Bloqueado para planes nuevos",
       plansTitle: "Mis planes",
-      plansEmpty: "Todavía no tenés planes: abrí uno desde la tienda.",
-      plansCta: "Ir a la tienda",
+      plansEmpty: "Todavía no tenés planes: abrí uno desde un comercio.",
+      plansCta: "Ver comercios",
       guaranteeTitle: "Mi fiador",
       guaranteeEmpty: "Todavía no tenés fianza: invitá a tu fiador para habilitar compras.",
       details: "Detalles",
@@ -123,18 +115,10 @@ export const cuentas = defineDict({
   en: {
     shell: {
       title: "Accounts",
-      nav: {
-        student: "Student",
-        merchant: "Merchant",
-        admin: "Admin",
-        pool: "Pool",
-        comercioPublico: "Public merchant",
-      },
       balance: "Balance",
       balanceSimulated: "simulated",
       balanceUnavailable: "Balance unavailable for now",
       demoSelectorLabel: "View as (demo)",
-      demoClear: "Exit demo",
       demoHint: "Example selector: browse only, it does not grant real permissions.",
       demoOptions: {
         "student-new": "New student",
@@ -220,8 +204,8 @@ export const cuentas = defineDict({
       activeExposure: "Active exposure",
       blocked: "Blocked from new plans",
       plansTitle: "My plans",
-      plansEmpty: "No plans yet: open one from the store.",
-      plansCta: "Go to the store",
+      plansEmpty: "No plans yet: open one from a merchant.",
+      plansCta: "Browse merchants",
       guaranteeTitle: "My guarantor",
       guaranteeEmpty: "No guarantee yet: invite your guarantor to enable purchases.",
       details: "Details",

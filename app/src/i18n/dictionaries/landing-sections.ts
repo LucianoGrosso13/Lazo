@@ -207,6 +207,7 @@ export const landingSections = defineDict({
         "Fiador obligatorio con cobertura del 100% de capital e interés",
         "Pool de liquidez con tramo senior y cuentas verificables",
         "Calendario de tramos del comercio (PayoutSchedule) y control de liquidez del pool",
+
       ],
       simTitle: "En el simulador",
       sim: [
@@ -219,8 +220,9 @@ export const landingSections = defineDict({
     },
     close: {
       title: "Probá Lazo con una compra de ejemplo",
-      cta: "Ir a la tienda",
+      cta: "Explorar los comercios",
       foot: "Solana devnet · Red de prueba: los fondos no tienen valor monetario.",
+
     },
     reference: "referencia",
   },
@@ -429,6 +431,7 @@ export const landingSections = defineDict({
         "Mandatory guarantor covering 100% of capital and interest",
         "Liquidity pool with senior tranche and verifiable accounts",
         "Merchant payout schedule (PayoutSchedule) and pool liquidity check",
+
       ],
       simTitle: "In the simulator",
       sim: [
@@ -441,8 +444,9 @@ export const landingSections = defineDict({
     },
     close: {
       title: "Try Lazo with a sample purchase",
-      cta: "Go to store",
+      cta: "Explore the merchants",
       foot: "Solana devnet · Test network: funds have no monetary value.",
+
     },
     reference: "reference",
   },

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount, useStudentAddress } from "@/components/cuenta/account-context";
+import { DemoPersonaList } from "@/components/cuenta/demo-personas";
 import { ModeBadge } from "@/components/cuenta/evidencia";
 import { BigNumber } from "@/components/ui/big-number";
 import { buttonClasses } from "@/components/ui/button";
@@ -209,9 +210,12 @@ export default function CuentaEntry() {
       </div>
 
       {mode === "mock" && (
-        <section>
+        <section className="max-w-2xl">
           <h2 className="text-lg font-semibold text-beam">{t.demoTitle}</h2>
           <p className="mt-1 max-w-prose text-sm text-ink-3">{t.demoBlurb}</p>
+          <div className="mt-5">
+            <DemoPersonaList />
+          </div>
         </section>
       )}
 

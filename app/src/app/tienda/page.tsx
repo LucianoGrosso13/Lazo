@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
-import { TiendaPage } from "@/components/store/tienda-page";
+import { permanentRedirect } from "next/navigation";
+import { DEMO_MERCHANT } from "@/lib/cuotas";
 
-export const metadata: Metadata = {
-  title: "Tienda demo · Lazo",
-  description:
-    "Catálogo simulado: cada precio se parte en anticipo y 3 cuotas sin interés o 6 con interés. Corre en Solana devnet.",
-};
-
+// La tienda ya no es una sección propia: cada comercio del marketplace tiene
+// la suya en /comercio/[direccion]. /tienda era la vidriera de Kroma (el
+// comercio del guion de la demo), así que redirige a su tienda.
 export default function Page() {
-  return <TiendaPage />;
+  permanentRedirect(`/comercio/${DEMO_MERCHANT}`);
 }

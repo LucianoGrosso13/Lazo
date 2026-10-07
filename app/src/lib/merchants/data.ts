@@ -51,24 +51,27 @@ export interface DemoMerchant {
   featured: boolean;
   /** Siempre true: todos son ficticios y la UI lo rotula. */
   demo: true;
+  /** Foto principal del comercio (su primer producto local). */
+  image: string;
   products: DirectoryProduct[];
 }
 
 // Direcciones derivadas de sha256("lazo-demo-merchant-<slug>") en base58:
-// determinísticas, válidas y sin palabras legibles. Voltia conserva
+// determinísticas, válidas y sin palabras legibles. Kroma conserva
 // DEMO_MERCHANT (`src/lib/cuotas/format.ts`), el guion de la demo no cambia.
 export const MERCHANTS: DemoMerchant[] = [
   {
     address: DEMO_MERCHANT,
-    name: "Voltia",
+    name: "Kroma",
     category: "electronics",
-    city: "San Miguel de Tucumán",
+    city: "Distrito Digital",
     description: {
-      es: "Electrónica y computación: equipos para estudiar y trabajar.",
-      en: "Electronics and computing: gear for studying and working.",
+      es: "Estaciones de trabajo, portátiles y formación técnica para creadores.",
+      en: "Workstations, laptops and technical training for creators.",
     },
     featured: true,
     demo: true,
+    image: "/products/pc.webp",
     products: [
       {
         id: "pc",
@@ -95,15 +98,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "AxPBA787ZnU8XVzySDAZPRd5uxRqnTrMHFodM1eGWpRv",
-    name: "CompuNorte",
+    name: "Lumina Display",
     category: "electronics",
-    city: "San Miguel de Tucumán",
+    city: "Hub Central",
     description: {
-      es: "Computadoras, monitores y tablets con garantía local.",
-      en: "Computers, monitors and tablets with local warranty.",
+      es: "Monitores de alta definición y tablets para estudio intensivo.",
+      en: "High-definition monitors and tablets for intensive study.",
     },
     featured: false,
     demo: true,
+    image: "/products/monitor-24.webp",
     products: [
       {
         id: "monitor-24",
@@ -123,15 +127,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "2dgH9sW7mCLwHK2N5WiGbMHQZm25c9Vc9RpTsaAAhcvA",
-    name: "Tecla & Click",
+    name: "Apex Periféricos",
     category: "peripherals",
-    city: "Yerba Buena",
+    city: "Online",
     description: {
-      es: "Periféricos para armar tu setup: teclados, mouse y audio.",
-      en: "Peripherals for your setup: keyboards, mice and audio.",
+      es: "Teclados mecánicos de precisión, ratones ligeros y audio de estudio.",
+      en: "Precision mechanical keyboards, lightweight mice and studio audio.",
     },
     featured: false,
     demo: true,
+    image: "/products/teclado-mecanico.webp",
     products: [
       {
         id: "teclado-mecanico",
@@ -158,15 +163,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "CzdcE7N7nor6KdEZf5VSsuL8ymBUBzPs8NXGq2hnX5hn",
-    name: "Audio Sur",
+    name: "Flux Audio",
     category: "peripherals",
-    city: "Online",
+    city: "Plataforma Demo",
     description: {
-      es: "Audio portátil y accesorios de carga para todos los equipos.",
-      en: "Portable audio and charging accessories for every device.",
+      es: "Sistemas de sonido inalámbricos y adaptadores de carga rápida 65W.",
+      en: "Wireless sound systems and 65W fast-charging adapters.",
     },
     featured: false,
     demo: true,
+    image: "/products/parlante-bt.webp",
     products: [
       {
         id: "parlante-bt",
@@ -186,15 +192,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "D5xVGAaUSZpgMX1kozAzxyr7SBmwdQMGEHtRnaaN8BR",
-    name: "Libros Sierra",
+    name: "Códice Estudio",
     category: "books",
-    city: "San Miguel de Tucumán",
+    city: "Campus Virtual",
     description: {
-      es: "Librería universitaria: apuntes, mochilas y material de cursada.",
-      en: "University bookstore: notes, backpacks and class materials.",
+      es: "Mochilas técnicas acolchadas y guías de estudio para la carrera.",
+      en: "Padded technical backpacks and degree study guides.",
     },
     featured: true,
     demo: true,
+    image: "/products/pack-apuntes.webp",
     products: [
       {
         id: "pack-apuntes",
@@ -214,15 +221,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "CD1WKjuTqbpEq1H6berakYr4vbv72FXYH1AWYjdqMCnr",
-    name: "La Papelera",
+    name: "Grafito Lab",
     category: "books",
-    city: "Yerba Buena",
+    city: "Distrito Central",
     description: {
-      es: "Insumos de estudio y oficina a precio de estudiante.",
-      en: "Study and office supplies at student-friendly prices.",
+      es: "Calculadoras científicas y sets de dibujo para ciencias e ingeniería.",
+      en: "Scientific calculators and drawing sets for science and engineering.",
     },
     featured: false,
     demo: true,
+    image: "/products/calculadora-cientifica.webp",
     products: [
       {
         id: "calculadora-cientifica",
@@ -242,15 +250,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "ffScbDLem4WnVw8FssngPhF61ASQV1g7pghGz1gGKKE",
-    name: "Ferretería La Tuerca",
+    name: "Torque Taller",
     category: "tools",
-    city: "San Miguel de Tucumán",
+    city: "Polo Técnico",
     description: {
-      es: "Herramientas y ferretería para taller y trabajo.",
-      en: "Tools and hardware for workshop and job sites.",
+      es: "Amoladoras angulares y cajas de herramientas completas para taller.",
+      en: "Angle grinders and complete toolboxes for workshop use.",
     },
     featured: false,
     demo: true,
+    image: "/products/amoladora-angular.webp",
     products: [
       {
         id: "amoladora-angular",
@@ -270,15 +279,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "3zA4rv4QkbP9SfqcKKf9pG3DXCcMEuuTK38pCNVd6odt",
-    name: "Herramientas del Valle",
+    name: "Forja Industrial",
     category: "tools",
-    city: "Yerba Buena",
+    city: "Centro Tecnológico",
     description: {
-      es: "Equipamiento profesional para oficios técnicos.",
-      en: "Professional equipment for technical trades.",
+      es: "Taladros percutores de alta potencia y soldadoras inverter portátiles.",
+      en: "High-power hammer drills and portable inverter welders.",
     },
     featured: false,
     demo: true,
+    image: "/products/taladro-percutor.webp",
     products: [
       {
         id: "taladro-percutor",
@@ -298,15 +308,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "ARCiBAiXu3ZJau3PF18kzUcNK6Nvy3kDd5zCmG2yB4S5",
-    name: "Academia Código Sur",
+    name: "Sintaxis Academy",
     category: "courses",
     city: "Online",
     description: {
-      es: "Cursos online de programación, diseño e idiomas.",
-      en: "Online courses in coding, design and languages.",
+      es: "Cursos intensivos de diseño UX, interfaces e inglés técnico.",
+      en: "Intensive courses in UX design, interfaces and technical English.",
     },
     featured: true,
     demo: true,
+    image: "/products/curso-ux.webp",
     products: [
       {
         id: "curso-ux",
@@ -326,15 +337,16 @@ export const MERCHANTS: DemoMerchant[] = [
   },
   {
     address: "FhmCapYjgkn6XtQz1YYZmZiCjH1Cj6NLrLz8NfyR54EM",
-    name: "TecnoLab",
+    name: "Silicio Service",
     category: "service",
-    city: "San Miguel de Tucumán",
+    city: "Distrito Tecnológico",
     description: {
-      es: "Servicio técnico de notebooks y PC con repuestos propios.",
-      en: "Notebook and PC repair shop with in-house parts.",
+      es: "Reparación de placas madre, cambio de componentes y optimización.",
+      en: "Motherboard repair, component replacement and performance tune-ups.",
     },
     featured: true,
     demo: true,
+    image: "/products/reparacion-notebook.webp",
     products: [
       {
         id: "reparacion-notebook",

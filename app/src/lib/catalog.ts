@@ -14,6 +14,6 @@ export const CATALOG: Product[] = MERCHANTS.flatMap((m) =>
 
 export const getProduct = (id: string) => CATALOG.find((p) => p.id === id) ?? null;
 
-/** Productos de un comercio del directorio (la tienda filtra por Voltia). */
+/** Productos de un comercio del directorio (su tienda los filtra por dirección). */
 export const productsByMerchant = (merchant: WalletAddress): Product[] =>
   CATALOG.filter((p) => p.merchant === merchant);

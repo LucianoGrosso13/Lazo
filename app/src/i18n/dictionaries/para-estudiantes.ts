@@ -11,8 +11,9 @@ export const paraEstudiantes = defineDict({
       eyebrow: "Estudiantes y familias",
       title: "Cuotas para estudiar, con el respaldo de tu familia",
       lede: "Lazo te deja comprar en cuotas en comercios adheridos y pagar con dólares digitales (USDC), aunque no tengas tarjeta de crédito. Un familiar actúa como fiador obligatorio: respalda lo que falta pagar de capital e interés, con un tope acordado, y solo paga si vos no pagás.",
-      ctaStore: "Ir a la tienda",
+
       ctaMerchants: "Ver comercios",
+      ctaCheckout: "Probar un checkout",
     },
     what: {
       title: "Qué es Lazo",
@@ -25,7 +26,8 @@ export const paraEstudiantes = defineDict({
       steps: [
         {
           t: "Elegí el comercio y el producto",
-          d: "Buscá por nombre o categoría en la tienda o en el marketplace. Los comercios del marketplace son de ejemplo.",
+          d: "Buscá por nombre o categoría en el directorio de comercios. Los comercios del marketplace son de ejemplo.",
+
         },
         {
           t: "Elegí una opción de cuotas",
@@ -188,8 +190,8 @@ export const paraEstudiantes = defineDict({
     },
     cta: {
       title: "Empezá por una compra de ejemplo",
-      store: "Ir a la tienda",
       merchants: "Ver comercios",
+      checkout: "Probar un checkout",
       account: "Mi cuenta",
     },
   },
@@ -198,8 +200,9 @@ export const paraEstudiantes = defineDict({
       eyebrow: "Students and families",
       title: "Installments for your studies, backed by your family",
       lede: "Lazo lets you buy in installments at participating merchants and pay with digital dollars (USDC), even without a credit card. A family member acts as mandatory guarantor: they cover the outstanding financed amount and interest up to an agreed cap, and only pay if you don't.",
-      ctaStore: "Go to the store",
+
       ctaMerchants: "Browse merchants",
+      ctaCheckout: "Try a checkout",
     },
     what: {
       title: "What Lazo is",
@@ -212,7 +215,8 @@ export const paraEstudiantes = defineDict({
       steps: [
         {
           t: "Pick the merchant and the product",
-          d: "Search by name or category in the store or the marketplace. The marketplace merchants are sample merchants.",
+          d: "Search by name or category in the merchant directory. The marketplace merchants are sample merchants.",
+
         },
         {
           t: "Choose an installment option",
@@ -375,8 +379,8 @@ export const paraEstudiantes = defineDict({
     },
     cta: {
       title: "Start with a sample purchase",
-      store: "Go to the store",
       merchants: "Browse merchants",
+      checkout: "Try a checkout",
       account: "My account",
     },
   },

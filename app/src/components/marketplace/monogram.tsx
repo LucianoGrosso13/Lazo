@@ -17,15 +17,17 @@ export function MerchantMonogram({
   name,
   category,
   large = false,
+  className,
 }: {
   name: string;
   category: CategoryId;
   large?: boolean;
+  className?: string;
 }) {
   return (
     <span
       aria-hidden
-      className={`${styles.monogram} ${large ? styles.monogramLg : ""}`}
+      className={`${styles.monogram} ${large ? styles.monogramLg : ""} ${className ?? ""}`}
       style={{ ["--mg" as string]: CATEGORY_MONOGRAM[category] }}
     >
       {name.trim().charAt(0).toUpperCase()}

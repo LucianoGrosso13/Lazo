@@ -138,8 +138,7 @@ What to open (all simulated, all labelled devnet/demo):
 | Route | What it shows |
 |---|---|
 | `/` | Landing: how Lazo works, the 3/6 options, merchant settlement and featured demo merchants |
-| `/comercio` → `/comercio/<address>` | Merchant marketplace: search, categories, 10 fictional demo merchants and their products |
-| `/tienda` → `/checkout/<product>` | Demo store and checkout with the 3 / 6 installment selector |
+| `/comercio` → `/comercio/<address>` → `/checkout/<product>` | Merchant marketplace: search, categories, 10 fictional demo merchants; each address opens its store (the glass window layout) and products go to checkout with the 3 / 6 installment selector |
 | `/para-estudiantes`, `/para-comercios`, `/para-inversores` | Pages for students and families, merchants, and pool investors |
 | `/app` | Account entry with a demo identity selector: `/app/estudiante`, `/app/comercio` (settlement terms, payout tranches and sales), `/app/comercio/mostrador` (QR/link orders), `/app/admin` |
 | `/pool` | Junior/senior pool panel |

@@ -3,7 +3,7 @@ import { tierLabel } from "./tiers";
 
 export const checkout = defineDict({
   es: {
-    back: "Tienda",
+    back: "Volver a la tienda",
     price: "Precio",
     breakdownTitle: "Tu desglose",
     tierChip: (n: number) => tierLabel(n),
@@ -69,7 +69,8 @@ export const checkout = defineDict({
         d: (max: string) => `En tu Tier el tope es US$ ${max}.`,
         next: (n: number, max: string) =>
           `Al llegar a Tier ${n + 1} el tope sube a US$ ${max}: se gana pagando planes a tiempo.`,
-        cta: { label: "Ver algo más barato", href: "/tienda" },
+        cta: { label: "Ver algo más barato", href: "/comercio" },
+
       },
       exceeds_credit_limit: {
         t: "No te alcanza el margen",
@@ -80,12 +81,12 @@ export const checkout = defineDict({
       exceeds_guarantor_max_purchase: {
         t: "Supera el tope de tu garante",
         d: (max: string) => `Tu garante te cubre compras hasta US$ ${max}.`,
-        cta: { label: "Ver algo más barato", href: "/tienda" },
+        cta: { label: "Ver algo más barato", href: "/comercio" },
       },
       exceeds_guarantee_coverage: {
         t: "Tu garante no llega a cubrirla",
         d: (max: string) => `La cobertura de tu garante llega a US$ ${max}.`,
-        cta: { label: "Ver algo más barato", href: "/tienda" },
+        cta: { label: "Ver algo más barato", href: "/comercio" },
       },
       option_unavailable: {
         t: "Esa opción no está disponible",
@@ -176,7 +177,7 @@ export const checkout = defineDict({
     },
   },
   en: {
-    back: "Store",
+    back: "Back to the store",
     price: "Price",
     breakdownTitle: "Your breakdown",
     tierChip: (n: number) => tierLabel(n),
@@ -242,7 +243,8 @@ export const checkout = defineDict({
         d: (max: string) => `Your Tier caps at US$ ${max}.`,
         next: (n: number, max: string) =>
           `At Tier ${n + 1} the cap rises to US$ ${max}: you get there by paying plans on time.`,
-        cta: { label: "See something cheaper", href: "/tienda" },
+        cta: { label: "See something cheaper", href: "/comercio" },
+
       },
       exceeds_credit_limit: {
         t: "Not enough credit margin",
@@ -253,12 +255,12 @@ export const checkout = defineDict({
       exceeds_guarantor_max_purchase: {
         t: "It's over your guarantor's cap",
         d: (max: string) => `Your guarantor covers purchases up to US$ ${max}.`,
-        cta: { label: "See something cheaper", href: "/tienda" },
+        cta: { label: "See something cheaper", href: "/comercio" },
       },
       exceeds_guarantee_coverage: {
         t: "Your guarantor can't cover it",
         d: (max: string) => `Your guarantor's coverage reaches US$ ${max}.`,
-        cta: { label: "See something cheaper", href: "/tienda" },
+        cta: { label: "See something cheaper", href: "/comercio" },
       },
       option_unavailable: {
         t: "That option isn't available",
