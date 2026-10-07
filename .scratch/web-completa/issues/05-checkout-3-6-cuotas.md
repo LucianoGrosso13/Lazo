@@ -10,7 +10,7 @@
 
 Notas:
 - Opciones desde `planOptionsOf(config)`; si la config no trae opciones (modo real), se ve solo 3 cuotas como hoy. Selector accesible (radiogroup), con el interés total visible en la opción de 6.
-- Usar `quote(price, student, { installments })`; no recalcular a mano. El comercio sale de `getProduct(...)`; reemplazar `DEMO_MERCHANT` fijo. Mostrar el plazo de cobro del comercio ("Voltia cobra hoy" / "a 30 días") como dato, sin dejar que el comprador lo cambie.
+- Usar `quote(price, student, { installments, settlement: merchant.settlementId ?? "immediate" })`; no recalcular a mano. Ojo: `quote` sin `settlement` cotiza inmediato, pero `openPlan` sin `settlement` usa el predeterminado del comercio — pasá el mismo plazo a los dos para que lo cotizado sea lo que se abre. `Quote` ya trae `installmentsCount`, `interestTotalBps`, `settlementDays`, `merchantAdvance`, `merchantPending` y `provisional`; `Plan.terms` guarda la copia. El comercio sale de `getProduct(...)`; reemplazar `DEMO_MERCHANT` fijo. Mostrar el plazo de cobro del comercio ("Voltia cobra hoy" / "a 30 días") como dato, sin dejar que el comprador lo cambie.
 - El prisma muestra tantas bandas como cuotas. Audit 390 px: las etiquetas de bandas del prisma ("DOWN PAYMENT US$300.00", "INSTALLMENT 1/2/3") quedan cortadas a la derecha (≈457–468 px): resolver en móvil.
 - Comparación con la competencia: sigue con `REFERENCE` y etiqueta "referencia", sin marcas.
 
