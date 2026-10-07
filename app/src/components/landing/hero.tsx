@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
-import { CATALOG, type Product } from "@/lib/catalog";
+import { DEMO_MERCHANT, formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
+import { productsByMerchant, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";
 import { useLocale, useT } from "@/i18n/locale";
 import type { StageBand } from "./prism-stage";
@@ -20,6 +20,8 @@ export const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
 const MIN_PRICE = 120;
 const MAX_PRICE = 1500;
 const TIERS: TierIndex[] = [0, 1, 2, 3];
+// El hero solo muestra los productos del guion de la demo (Voltia).
+const HERO_PRODUCTS = productsByMerchant(DEMO_MERCHANT);
 export const MotionLink = motion.create(Link);
 
 export function ChangingNumber({ value, className }: { value: string; className?: string }) {
@@ -122,7 +124,7 @@ export function LandingHero() {
             />
             <div className={styles.chipRow}>
               <div className={styles.segmented} role="group" aria-label={t.priceLabel}>
-                {CATALOG.map((p) => (
+                {HERO_PRODUCTS.map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -131,7 +133,8 @@ export function LandingHero() {
                     onClick={() => pickProduct(p)}
                   >
                     {productId === p.id ? <SelectionLight id="product" /> : null}
-                    {t.products[p.id]} <span className={styles.segmentNum}>{fmt(p.price, 0)}</span>
+                    {t.products[p.id as keyof typeof t.products] ?? p.name[locale]}{" "}
+                    <span className={styles.segmentNum}>{fmt(p.price, 0)}</span>
                   </button>
                 ))}
               </div>

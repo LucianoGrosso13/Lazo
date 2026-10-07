@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { toMicro, formatUsdc, type TierIndex } from "@/lib/cuotas";
-import { CATALOG } from "@/lib/catalog";
+import { toMicro, formatUsdc, DEMO_MERCHANT, type TierIndex } from "@/lib/cuotas";
+import { productsByMerchant } from "@/lib/catalog";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
@@ -243,7 +243,7 @@ export function DesignPage() {
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {CATALOG.map((p, i) => (
+            {productsByMerchant(DEMO_MERCHANT).map((p, i) => (
               <Chip key={p.id} on={i === 0}>
                 {p.name[locale]} · US${formatUsdc(p.price, locale, 0)}
               </Chip>
