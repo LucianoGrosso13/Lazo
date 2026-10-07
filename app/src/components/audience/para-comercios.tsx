@@ -101,7 +101,7 @@ function BandaCobro({
           <div className="h-full bg-violet/70" style={{ width: `${(fecha / total) * 100}%` }} />
         ) : null}
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-3">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="size-2 flex-none rounded-full bg-green" />
           <span className="font-num tabular-nums">{formatUsdc(hoy, locale)}</span>
@@ -324,7 +324,7 @@ export function ParaComercios() {
                           {t.netoLabel.toLowerCase()}
                         </span>
                       </p>
-                      <p className="text-xs leading-relaxed text-ink-3">
+                      <p className="text-sm leading-relaxed text-ink-3">
                         {t.comisionLabel.replace("{pct}", fmtBps(option.feeBps ?? 0, locale))}
                         {" · "}
                         <span className="font-num tabular-nums text-ink-2">
@@ -422,7 +422,7 @@ export function ParaComercios() {
               String(REFERENCE_FIGURES.gocuotasSettlementBusinessDays),
             )}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-ink-ghost">{t.comparacionNote}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-ghost">{t.comparacionNote}</p>
         </div>
       </AudienceSection>
 
