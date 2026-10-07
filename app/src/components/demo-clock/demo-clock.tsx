@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { getCuotas, type ProtocolConfig } from "@/lib/cuotas";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { useProtocolConfig } from "@/components/landing/use-config";
@@ -12,6 +12,8 @@ import { ChipButton } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
 import { ReferenceTag } from "@/components/ui/badges";
 import styles from "./demo-clock.module.css";
+
+const DEMO_CLOCK_EXPLAINED_KEY = "lazo:demo-clock:explained";
 
 type MoraStage = "grace" | "notice" | "penalty" | "charge";
 
@@ -38,20 +40,69 @@ function moraStage(daysLate: number, cfg: ProtocolConfig): MoraStage {
 
 const noopSubscribe = () => () => {};
 
+const subscribeStorage = (cb: () => void) => {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+};
+
+const getStoredExplained = () => {
+  try {
+    return localStorage.getItem(DEMO_CLOCK_EXPLAINED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+const getStoredExplainedServer = () => true;
+
+export interface DemoClockProps {
+  /** Marca opcional para forzar la visualización del hito de tramos del comercio. */
+  hasTranches?: boolean;
+}
+
+interface Milestone {
+  id: "day0" | "due" | "grace" | "notice" | "penalty" | "charge" | "tranche";
+  day: number;
+  label: string;
+  tooltip: string;
+  pos: string;
+  stamp?: string;
+  isActive: boolean;
+}
+
 /**
  * Control flotante del reloj de demo (solo modo mock). Colapsado es una píldora
  * con el día; abierto muestra la regla de la mora con sellos en los hitos de la
  * config y la luz del atraso actual, más los atajos de tiempo y el reinicio.
  */
-export function DemoClock() {
+export function DemoClock({ hasTranches }: DemoClockProps = {}) {
   const t = useT(demoClock);
   const cuotas = getCuotas();
   const config = useProtocolConfig();
   const wallet = useWalletAddress();
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const storedDismissed = useSyncExternalStore(
+    subscribeStorage,
+    getStoredExplained,
+    getStoredExplainedServer,
+  );
   const [open, setOpen] = useState(false);
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [localDismissed, setLocalDismissed] = useState(false);
+  const [hoveredMarkId, setHoveredMarkId] = useState<string | null>(null);
+
+  const explainedDismissed = storedDismissed || localDismissed;
+
+  const dismissExplanation = () => {
+    setLocalDismissed(true);
+    try {
+      localStorage.setItem(DEMO_CLOCK_EXPLAINED_KEY, "true");
+      window.dispatchEvent(new Event("storage"));
+    } catch {
+      // Ignorar fallas de localStorage
+    }
+  };
 
   // Escape cierra el panel desde cualquier foco (el botón puede quedar
   // disabled durante una llamada y perder el foco).
@@ -98,23 +149,163 @@ export function DemoClock() {
     },
   );
 
+  // Detección automática si existen tramos del comercio registrados
+  const { data: detectedTranches } = useCuotasQuery(
+    ["demo-clock-tranches", wallet ?? "-"],
+    async (c) => {
+      try {
+        const [acts, plans] = await Promise.all([
+          c.getActivity(),
+          wallet ? c.getPlans(wallet) : Promise.resolve([]),
+        ]);
+        const hasPayoutAct = acts.some(
+          (a) =>
+            (a.kind as string) === "PayoutReleased" ||
+            (a.kind as string) === "PayoutScheduled",
+        );
+        const hasPlanWithTranches = plans.some((p) => {
+          const terms = p.terms as unknown as Record<string, unknown> | undefined;
+          return (
+            Array.isArray(terms?.payoutTranches) &&
+            terms.payoutTranches.length > 0
+          );
+        });
+        return hasPayoutAct || hasPlanWithTranches;
+      } catch {
+        return false;
+      }
+    },
+  );
+
+  const showTranches = Boolean(hasTranches ?? detectedTranches);
+
   const days = clock?.daysAdvanced ?? 0;
   const stage = useMemo(
     () => (late && config ? moraStage(late.days, config) : null),
     [late, config],
   );
 
-  if (!mounted || cuotas.mode !== "mock" || !config) return null;
-
   const dayStr = fmtDays(days);
-  const pos = (d: number) => `${(d / config.guarantorChargeDay) * 100}%`;
-  const chargeDay = config.guarantorChargeDay;
-  const stamps = [...new Set([
-    1,
-    config.guarantorNoticeDay,
-    config.graceDays + 1,
-    chargeDay,
-  ])].sort((a, b) => a - b);
+  const chargeDay = config?.guarantorChargeDay ?? 15;
+  const penaltyPct = `${(config?.penaltyBps ?? 500) / 100}%`;
+  const trancheDay = config?.installmentIntervalDays ?? 30;
+  const maxDay = showTranches ? Math.max(chargeDay, trancheDay) : chargeDay;
+
+  const calcPos = useCallback(
+    (d: number) => `${Math.min(100, Math.max(0, (d / maxDay) * 100))}%`,
+    [maxDay],
+  );
+
+  const milestones: Milestone[] = useMemo(() => {
+    if (!config) return [];
+    const list: Milestone[] = [
+      {
+        id: "day0",
+        day: 0,
+        label: t.legend.day0,
+        tooltip: t.tooltips.day0,
+        pos: calcPos(0),
+        stamp: "0",
+        isActive: late?.days === 0,
+      },
+      {
+        id: "due",
+        day: 0,
+        label: t.legend.due,
+        tooltip: t.tooltips.due,
+        pos: calcPos(0),
+        isActive: late?.days === 0,
+      },
+      {
+        id: "grace",
+        day: 1,
+        label: t.legend.grace(config.graceDays),
+        tooltip: t.tooltips.grace(config.graceDays),
+        pos: calcPos(1),
+        stamp: "1",
+        isActive: stage === "grace",
+      },
+      {
+        id: "notice",
+        day: config.guarantorNoticeDay,
+        label: t.legend.notice(config.guarantorNoticeDay),
+        tooltip: t.tooltips.notice(config.guarantorNoticeDay),
+        pos: calcPos(config.guarantorNoticeDay),
+        stamp: String(config.guarantorNoticeDay),
+        isActive: stage === "notice",
+      },
+      {
+        id: "penalty",
+        day: config.graceDays + 1,
+        label: t.legend.penalty(penaltyPct),
+        tooltip: t.tooltips.penalty(config.graceDays + 1, penaltyPct),
+        pos: calcPos(config.graceDays + 1),
+        stamp: String(config.graceDays + 1),
+        isActive: stage === "penalty",
+      },
+      {
+        id: "charge",
+        day: chargeDay,
+        label: t.legend.charge(chargeDay),
+        tooltip: t.tooltips.charge(chargeDay),
+        pos: calcPos(chargeDay),
+        stamp: String(chargeDay),
+        isActive: stage === "charge",
+      },
+    ];
+
+    if (showTranches) {
+      list.push({
+        id: "tranche",
+        day: trancheDay,
+        label: t.legend.tranche,
+        tooltip: t.tooltips.tranche(trancheDay),
+        pos: calcPos(trancheDay),
+        stamp: String(trancheDay),
+        isActive: days >= trancheDay,
+      });
+    }
+
+    return list;
+  }, [config, calcPos, chargeDay, penaltyPct, trancheDay, showTranches, days, late, stage, t]);
+
+  const rulerTicks = useMemo(() => {
+    // Ticks únicos en la regla: 0, 1, aviso, punitorio, cobro (y tramo si activo)
+    const seen = new Set<number>();
+    const ticks: { id: string; day: number; pos: string; label: string; tooltip: string }[] = [];
+    for (const m of milestones) {
+      if (!seen.has(m.day)) {
+        seen.add(m.day);
+        ticks.push({
+          id: m.id,
+          day: m.day,
+          pos: m.pos,
+          label: m.label,
+          tooltip: m.tooltip,
+        });
+      }
+    }
+    return ticks.sort((a, b) => a.day - b.day);
+  }, [milestones]);
+
+  const rulerStamps = useMemo(() => {
+    // Sellos numéricos debajo de la regla
+    const seen = new Set<string>();
+    const stamps: { day: number; stamp: string; pos: string }[] = [];
+    for (const m of milestones) {
+      if (m.stamp && !seen.has(m.stamp)) {
+        seen.add(m.stamp);
+        stamps.push({
+          day: m.day,
+          stamp: m.stamp,
+          pos: m.pos,
+        });
+      }
+    }
+    return stamps.sort((a, b) => a.day - b.day);
+  }, [milestones]);
+
+  if (!mounted || cuotas.mode !== "mock" || !config) return null;
 
   const advance = async (n: number) => {
     setBusy(true);
@@ -138,6 +329,14 @@ export function DemoClock() {
     setOpen(false);
     setArmed(false);
   };
+
+  const hoveredMilestone = milestones.find((m) => m.id === hoveredMarkId);
+  const activeStageMilestone = milestones.find((m) => m.isActive);
+
+  const activeTooltipText =
+    hoveredMilestone?.tooltip ??
+    activeStageMilestone?.tooltip ??
+    t.tooltipHint;
 
   return (
     <div className={styles.wrap}>
@@ -171,6 +370,35 @@ export function DemoClock() {
               </svg>
             </button>
           </div>
+
+          {!explainedDismissed && (
+            <div
+              className={styles.introCard}
+              role="region"
+              aria-label={t.explanationTitle}
+            >
+              <p className={styles.introText}>{t.explanation}</p>
+              <button
+                type="button"
+                className={styles.introDismiss}
+                aria-label={t.explanationDismiss}
+                onClick={dismissExplanation}
+              >
+                <svg
+                  aria-hidden
+                  viewBox="0 0 14 14"
+                  width="12"
+                  height="12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                >
+                  <path d="M2 2l10 10M12 2L2 12" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           <p className={styles.dayRow} aria-live="polite">
             <span className={styles.dayNum}>
@@ -222,62 +450,131 @@ export function DemoClock() {
                   : t.noLate
               }
             >
-              {stamps.map((d) => (
-                <span
-                  key={d}
-                  aria-hidden
-                  className={styles.tick}
-                  data-hit={!!late && late.days >= d}
-                  style={{ left: pos(d) }}
-                />
-              ))}
+              <span
+                aria-hidden
+                className={styles.rulerGrace}
+                style={{ "--grace-pos": calcPos(config.graceDays) } as CSSProperties}
+              />
+              {rulerTicks.map((tk) => {
+                const isHovered = hoveredMarkId === tk.id;
+                return (
+                  <button
+                    key={tk.id}
+                    type="button"
+                    className={styles.tick}
+                    data-hit={!!late && late.days >= tk.day}
+                    data-hovered={isHovered}
+                    style={{ left: tk.pos }}
+                    title={tk.tooltip}
+                    aria-label={`${tk.label}: ${tk.tooltip}`}
+                    onMouseEnter={() => setHoveredMarkId(tk.id)}
+                    onMouseLeave={() => setHoveredMarkId(null)}
+                    onFocus={() => setHoveredMarkId(tk.id)}
+                    onBlur={() => setHoveredMarkId(null)}
+                    onClick={() =>
+                      setHoveredMarkId(hoveredMarkId === tk.id ? null : tk.id)
+                    }
+                  />
+                );
+              })}
               {stage && late && (
                 <>
                   <span
                     aria-hidden
                     className={styles.beamFill}
                     data-stage={stage}
-                    style={{ "--pos": pos(Math.min(late.days, chargeDay)) } as CSSProperties}
+                    style={
+                      {
+                        "--pos": calcPos(Math.min(late.days, maxDay)),
+                      } as CSSProperties
+                    }
                   />
                   <span
                     aria-hidden
                     className={styles.beamHead}
                     data-stage={stage}
-                    style={{ "--pos": pos(Math.min(late.days, chargeDay)) } as CSSProperties}
+                    style={
+                      {
+                        "--pos": calcPos(Math.min(late.days, maxDay)),
+                      } as CSSProperties
+                    }
                   />
                 </>
               )}
             </div>
+
             <div className={styles.stamps} aria-hidden>
-              {stamps.map((d) => (
-                <span
-                  key={d}
+              {rulerStamps.map((s) => (
+                <button
+                  key={s.day}
+                  type="button"
+                  tabIndex={-1}
                   className={styles.stamp}
-                  data-hit={!!late && late.days >= d}
-                  data-edge={d === chargeDay ? "end" : undefined}
-                  style={{ left: pos(d) }}
+                  data-hit={!!late && late.days >= s.day}
+                  data-edge={
+                    s.day === maxDay
+                      ? "end"
+                      : s.day === 0
+                        ? "start"
+                        : undefined
+                  }
+                  style={{ left: s.pos }}
+                  onClick={() => {
+                    const match = milestones.find((m) => m.day === s.day);
+                    if (match) {
+                      setHoveredMarkId(
+                        hoveredMarkId === match.id ? null : match.id,
+                      );
+                    }
+                  }}
                 >
-                  {d}
-                </span>
+                  {s.stamp}
+                </button>
               ))}
             </div>
-            <ol className={styles.legend}>
-              <li data-on={stage === "grace"}>
-                {t.stages.grace}
-                <span className={styles.num}>{t.stageDay.grace(config.graceDays)}</span>
-              </li>
-              <li data-on={stage === "notice"}>
-                {t.stages.notice}
-                <span className={styles.num}>{t.stageDay.notice(config.guarantorNoticeDay)}</span>
-              </li>
-              <li data-on={stage === "penalty"}>
-                {t.stages.penalty}
-                <span className={styles.num}>{t.stageDay.penalty(config.graceDays + 1)}</span>
-              </li>
-              <li data-on={stage === "charge"}>
-                {t.stages.charge}
-                <span className={styles.num}>{t.stageDay.charge(chargeDay)}</span>
-              </li>
+
+            <div
+              className={styles.tooltipRow}
+              role="status"
+              aria-live="polite"
+            >
+              <span className={styles.tooltipText}>{activeTooltipText}</span>
+            </div>
+
+            <ol className={styles.legend} aria-label={t.legendTitle}>
+              {milestones.map((m) => {
+                const isHovered = hoveredMarkId === m.id;
+                const isLit = m.isActive || isHovered;
+                return (
+                  <li
+                    key={m.id}
+                    className={styles.legendItem}
+                    data-on={isLit}
+                    data-hovered={isHovered}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${m.label}: ${m.tooltip}`}
+                    onMouseEnter={() => setHoveredMarkId(m.id)}
+                    onMouseLeave={() => setHoveredMarkId(null)}
+                    onFocus={() => setHoveredMarkId(m.id)}
+                    onBlur={() => setHoveredMarkId(null)}
+                    onClick={() =>
+                      setHoveredMarkId(hoveredMarkId === m.id ? null : m.id)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setHoveredMarkId(
+                          hoveredMarkId === m.id ? null : m.id,
+                        );
+                      }
+                    }}
+                  >
+                    <span aria-hidden className={styles.legendDot} />
+                    <span className={styles.legendLabel}>{m.label}</span>
+                  </li>
+                );
+              })}
             </ol>
           </div>
         </GlassPanel>
@@ -296,3 +593,4 @@ export function DemoClock() {
     </div>
   );
 }
+
