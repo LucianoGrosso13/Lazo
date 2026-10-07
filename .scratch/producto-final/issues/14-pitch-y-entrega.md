@@ -10,7 +10,7 @@
 
 **Blocked by:** — (usa los números del spec; si 13 cambia alguno, el coordinador lo sincroniza al mergear)
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `proyecto/05-pitch.md`, nuevo `proyecto/05-entrega-en.md` (textos en inglés listos para pegar en el formulario de Colosseum/Superteam).
 
@@ -20,5 +20,5 @@ Notas:
 - La sección "Nota técnica" refleja lo que queda en el mock (mostrador; tramos si 03 no entra) y lo que pasa a la cadena (6 cuotas, fiador obligatorio, cobertura con interés).
 - Seguí `proyecto/05-pitch.md` § "Fuentes de entrega" para los criterios de los jurados.
 
-- [ ] 05-pitch.md al día (historia, guiones, preguntas duras, nota técnica)
-- [ ] `05-entrega-en.md` en inglés: tagline, short/long description, how to test (2 minutes), team, tech
+- [x] 05-pitch.md al día (historia, guiones, preguntas duras, nota técnica)
+- [x] `05-entrega-en.md` en inglés: tagline, short/long description, how to test (2 minutes), team, tech
