@@ -171,7 +171,140 @@ describe("quote", () => {
     expect(q.downPayment).toBe(0);
     expect(q.financed).toBe(toMicro(1500));
     expect(q.installments).toEqual([toMicro(500), toMicro(500), toMicro(500)]);
-    expect(q.requiredCoverage).toBe(toMicro(1050));
+    expect(q.requiredCoverage).toBe(toMicro(1500));
+  });
+
+  it("los cuatro escalones con fiador piden cobertura del 100% del financiado", async () => {
+    // Escalón 0 (wallet nueva) y escalón 3 (sembrado) directos; 1 y 2 salen de
+    // saldar planes a tiempo (700 financiados ≥ mínimo, sin pasar la gracia).
+    const price = toMicro(500);
+    const expectFull = async (wallet: string, tier: number, downBps: number) => {
+      const q = await c.quote(price, wallet);
+      expect(q.tier).toBe(tier);
+      expect(q.eligible).toBe(true);
+      expect(q.downPayment).toBe((price * downBps) / 10_000);
+      expect(q.requiredCoverage).toBe(q.financed);
+    };
+    await expectFull(W, 0, 3000);
+    for (let t = 1; t <= 3; t++) {
+      const { value: p } = await c.openPlan({
+        student: W,
+        merchant: DEMO_MERCHANT,
+        price,
+      });
+      for (let i = 0; i < 3; i++) await c.payInstallment(W, p.id);
+      await expectFull(
+        W,
+        t,
+        [2000, 1000, 0][t - 1],
+      );
+    }
+    await expectFull(DEMO_STUDENT_TIER3, 3, 0);
+  });
+
+  it("cotiza 6 cuotas al 3% total sobre lo financiado", async () => {
+    const q = await c.quote(toMicro(1000), W, { installments: 6 });
+    expect(q.eligible).toBe(true);
+    expect(q.installmentsCount).toBe(6);
+    expect(q.interestTotalBps).toBe(300);
+    expect(q.interest).toBe(toMicro(21));
+    expect(q.total).toBe(toMicro(1021));
+    expect(q.provisional).toBe(true);
+    expect(q.installments).toHaveLength(6);
+    expect(q.installments.reduce((a, b) => a + b, 0)).toBe(toMicro(721));
+  });
+
+  it("cotiza con plazo de cobro del comercio (30 días, 6,25%)", async () => {
+    const q = await c.quote(toMicro(1000), W, { settlement: "deferred_30" });
+    expect(q.eligible).toBe(true);
+    expect(q.settlementId).toBe("deferred_30");
+    expect(q.settlementDays).toBe(30);
+    expect(q.merchantFee).toBe(toMicro(43.75));
+    expect(q.merchantReceives).toBe(toMicro(956.25));
+    expect(q.merchantAdvance).toBe(toMicro(300));
+    expect(q.merchantPending).toBe(toMicro(656.25));
+    expect(q.provisional).toBe(true);
+  });
+
+  it("por defecto cotiza 3 cuotas y cobro inmediato, sin provisional", async () => {
+    const q = await c.quote(toMicro(1000), W);
+    expect(q.installmentsCount).toBe(3);
+    expect(q.settlementId).toBe("immediate");
+    expect(q.settlementDays).toBe(0);
+    expect(q.provisional).toBe(false);
+    expect(q.merchantAdvance).toBe(toMicro(951));
+    expect(q.merchantPending).toBe(0);
+  });
+
+  it("1 cuota → option_unavailable", async () => {
+    const q = await c.quote(toMicro(1000), W, { installments: 1 });
+    expect(q.eligible).toBe(false);
+    expect(q.reasons).toContain("option_unavailable");
+  });
+
+  it("opción de cobro deshabilitada o con tarifa null → option_unavailable", async () => {
+    const disabled = createMockCuotas({
+      config: {
+        settlementOptions: [
+          { id: "immediate", days: 0, feeBps: 700, enabled: true, provisional: false },
+          { id: "deferred_30", days: 30, feeBps: 625, enabled: false, provisional: true },
+        ],
+      },
+    });
+    const q1 = await disabled.quote(toMicro(1000), W, { settlement: "deferred_30" });
+    expect(q1.eligible).toBe(false);
+    expect(q1.reasons).toContain("option_unavailable");
+
+    const nullFee = createMockCuotas({
+      config: {
+        settlementOptions: [
+          { id: "immediate", days: 0, feeBps: 700, enabled: true, provisional: false },
+          { id: "deferred_30", days: 30, feeBps: null, enabled: true, provisional: true },
+        ],
+      },
+    });
+    const q2 = await nullFee.quote(toMicro(1000), W, { settlement: "deferred_30" });
+    expect(q2.eligible).toBe(false);
+    expect(q2.reasons).toContain("option_unavailable");
+
+    await expect(
+      nullFee.openPlan({
+        student: W,
+        merchant: DEMO_MERCHANT,
+        price: toMicro(1000),
+        settlement: "deferred_30",
+      }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+  });
+
+  it("opción de plan deshabilitada → option_unavailable en quote y openPlan", async () => {
+    const disabled = createMockCuotas({
+      config: {
+        planOptions: [
+          { installments: 3, interestTotalBps: 0, enabled: true, provisional: false },
+          { installments: 6, interestTotalBps: 300, enabled: false, provisional: true },
+        ],
+      },
+    });
+    const q = await disabled.quote(toMicro(1000), W, { installments: 6 });
+    expect(q.eligible).toBe(false);
+    expect(q.reasons).toContain("option_unavailable");
+    await expect(
+      disabled.openPlan({
+        student: W,
+        merchant: DEMO_MERCHANT,
+        price: toMicro(1000),
+        installments: 6,
+      }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+    await expect(
+      c.openPlan({
+        student: W,
+        merchant: DEMO_MERCHANT,
+        price: toMicro(1000),
+        installments: 1,
+      }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
   });
 
   it("precio por encima del tope del escalón → exceeds_tier_max", async () => {

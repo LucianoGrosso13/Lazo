@@ -19,6 +19,34 @@ export interface TierParams {
   interestBps: Bps;
 }
 
+/** Cuotas que se pueden pedir al cotizar/abrir un plan. */
+export type InstallmentsOption = 1 | 3 | 6;
+
+/** Opción de plan configurable (spec § "Términos del plan"). */
+export interface PlanOption {
+  installments: InstallmentsOption;
+  /** Interés TOTAL del plan sobre el capital financiado (no anual). */
+  interestTotalBps: Bps;
+  enabled: boolean;
+  /** Términos provisionales: la UI los rotula. */
+  provisional: boolean;
+}
+
+/** Plazo de cobro del comercio. */
+export type SettlementId = "immediate" | "deferred_30" | "deferred_60" | "deferred_90";
+
+/** Opción de liquidación del comercio (spec § "Términos del plan"). */
+export interface SettlementOption {
+  id: SettlementId;
+  /** Días desde la compra hasta que el comercio cobra lo financiado. */
+  days: number;
+  /** Comisión sobre lo financiado; null = tarifa a confirmar → no elegible. */
+  feeBps: Bps | null;
+  enabled: boolean;
+  /** Términos provisionales: la UI los rotula. */
+  provisional: boolean;
+}
+
 export type ProtocolState = "Normal" | "Halted" | "WithdrawsOnly";
 
 /** Espejo de `ProtocolConfig`. Ningún número de negocio vive fuera de acá. */
@@ -40,6 +68,21 @@ export interface ProtocolConfig {
    * en modo real; el mock usa 30 fijo en la UI y lo omite.
    */
   installmentIntervalDays?: number;
+  /**
+   * Opciones de plan (3/6 cuotas). Solo mock: el cliente real no las trae
+   * porque el programa on-chain sigue con 3 cuotas fijas. Los helpers de
+   * `terms.ts` caen a `installmentsCount` cuando faltan.
+   */
+  planOptions?: PlanOption[];
+  /**
+   * Opciones de cobro del comercio. Solo mock: el real cobra siempre al
+   * instante. Los helpers de `terms.ts` caen a inmediato con `feeBps`.
+   */
+  settlementOptions?: SettlementOption[];
+  /** Originación D8 (bps de lo financiado, incluida en la comisión). */
+  originationBps?: Bps;
+  /** Administración anual D8 (bps sobre saldo; la paga el pool). */
+  adminFeeAnnualBps?: Bps;
   guaranteedTiers: [TierParams, TierParams, TierParams, TierParams];
   unguaranteedTiers: [TierParams, TierParams];
   minFinancedToCount: Micro;
@@ -83,7 +126,10 @@ export type QuoteBlockReason =
   | "no_guarantee"
   | "blocked_after_default"
   | "has_active_plan"
-  | "protocol_halted";
+  | "protocol_halted"
+  /** La opción de plan/cobro pedida no existe, está deshabilitada o no tiene
+   * tarifa (el real la emite para todo lo que el programa no soporta). */
+  | "option_unavailable";
 
 export interface Quote {
   price: Micro;
@@ -97,7 +143,21 @@ export interface Quote {
   total: Micro;
   merchantFee: Micro;
   merchantReceives: Micro;
+  /** Cobro del comercio el día de la compra (todo si la liquidación es inmediata). */
+  merchantAdvance: Micro;
+  /** Cobro diferido del comercio, a `settlementDays` días (0 si es inmediata). */
+  merchantPending: Micro;
   requiredCoverage: Micro;
+  /** Cantidad de cuotas de la opción cotizada. */
+  installmentsCount: number;
+  /** Interés total aplicado sobre lo financiado, en bps. */
+  interestTotalBps: Bps;
+  /** Liquidación del comercio cotizada. */
+  settlementId: SettlementId;
+  /** Días hasta el cobro diferido del comercio (0 = inmediato). */
+  settlementDays: number;
+  /** Alguna opción cotizada es provisional: la UI lo rotula. */
+  provisional: boolean;
   eligible: boolean;
   reasons: QuoteBlockReason[];
 }
@@ -122,6 +182,31 @@ export interface Installment {
 
 export type PlanStatus = "Active" | "Late" | "Settled" | "Recovered";
 
+/**
+ * Copia inmutable de los términos con los que se abrió el plan: si la config
+ * cambia después, el plan sigue mostrando lo que se firmó.
+ */
+export interface PlanTerms {
+  /** Versión del formato de términos (`PLAN_TERMS_VERSION` en terms.ts). */
+  termsVersion: number;
+  /** Cuotas de la opción elegida al abrir. */
+  installmentsCount: number;
+  /** Interés total sobre lo financiado, en bps. */
+  interestTotalBps: Bps;
+  /** Anticipo aplicado, en bps del precio. */
+  downPaymentBps: Bps;
+  /** Cobertura del fiador aplicada, en bps de lo financiado. */
+  coverageBps: Bps;
+  /** Liquidación del comercio elegida al abrir. */
+  settlementId: SettlementId;
+  /** Días hasta el cobro diferido (0 = inmediato). */
+  settlementDays: number;
+  /** Comisión aplicada sobre lo financiado, en bps. */
+  settlementFeeBps: Bps;
+  /** Alguna opción elegida era provisional: la UI lo rotula. */
+  provisional: boolean;
+}
+
 /** Espejo de `Plan`. */
 export interface Plan {
   id: string;
@@ -137,6 +222,8 @@ export interface Plan {
   status: PlanStatus;
   /** Si sigue contando para subir de escalón (≥ min financiado y sin pasar la gracia). */
   counts: boolean;
+  /** Términos con los que se abrió el plan (cuotas, interés, liquidación, cobertura). */
+  terms: PlanTerms;
   signature: string;
 }
 
@@ -149,6 +236,16 @@ export interface Sale {
   received: Micro;
   at: UnixSeconds;
   signature: string;
+  /** Liquidación elegida al abrir la venta ("immediate" si falta). */
+  settlementId?: SettlementId;
+  /** Días de espera hasta el cobro diferido (0 si falta). */
+  settlementDays?: number;
+  /** Fecha de cobro del monto diferido; ventas viejas sin campo = cobradas. */
+  settlementAt?: UnixSeconds;
+  /** Monto aún pendiente de cobro diferido (0 si falta o ya cobrada). */
+  pendingSettlement?: Micro;
+  /** true cuando el cobro diferido ya se acreditó (true si falta). */
+  settled?: boolean;
 }
 
 /** Espejo de `Merchant` + saldo de su ATA de cobro. */
@@ -159,6 +256,10 @@ export interface Merchant {
   settlementBalance: Micro;
   plansCount: number;
   sales: Sale[];
+  /** Liquidación predeterminada para compras nuevas ("immediate" si falta). */
+  settlementId?: SettlementId;
+  /** Suma pendiente de cobro diferido de las ventas abiertas (0 si falta). */
+  pendingSettlement?: Micro;
 }
 
 export type PoolEventKind = "Deposit" | "Advance" | "Repayment" | "Recovery" | "Loss";
@@ -220,6 +321,16 @@ export interface OpenPlanArgs {
   merchant: WalletAddress;
   price: Micro;
   productId?: string;
+  /** Cuotas pedidas (mock: 3 ó 6; el real solo soporta la del programa). */
+  installments?: InstallmentsOption;
+  /** Liquidación pedida; sin valor usa el predeterminado del comercio. */
+  settlement?: SettlementId;
+}
+
+/** Opciones pedidas al cotizar: plan de cuotas y plazo de cobro del comercio. */
+export interface QuoteOptions {
+  installments?: InstallmentsOption;
+  settlement?: SettlementId;
 }
 
 export interface RegisterGuaranteeArgs {
@@ -246,9 +357,20 @@ export interface CuotasClient {
   getClock(): Promise<DemoClock>;
   getReputation(student: WalletAddress): Promise<Reputation>;
   getGuarantee(student: WalletAddress): Promise<Guarantee | null>;
-  quote(price: Micro, student: WalletAddress): Promise<Quote>;
+  quote(
+    price: Micro,
+    student: WalletAddress,
+    options?: QuoteOptions,
+  ): Promise<Quote>;
   getPlans(student: WalletAddress): Promise<Plan[]>;
   getMerchant(owner: WalletAddress): Promise<Merchant>;
+  /** Fija la liquidación predeterminada del comercio para compras nuevas.
+   * Solo mock: el programa on-chain cobra siempre al instante, así que el
+   * cliente real la rechaza con `option_unavailable`. */
+  setMerchantSettlement(
+    owner: WalletAddress,
+    settlement: SettlementId,
+  ): Promise<Merchant>;
   getPool(): Promise<Pool>;
   getActivity(filter?: { student?: WalletAddress; planId?: string }): Promise<Activity[]>;
 

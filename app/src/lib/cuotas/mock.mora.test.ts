@@ -165,6 +165,38 @@ describe("mora completa", () => {
     });
   });
 
+  it("el cobro diferido del comercio se acredita en su fecha aunque el estudiante caiga en mora", async () => {
+    await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+      settlement: "deferred_30",
+    });
+    const m0 = await c.getMerchant(DEMO_MERCHANT);
+    expect(m0.settlementBalance).toBe(toMicro(300));
+    expect(m0.pendingSettlement).toBe(toMicro(656.25));
+
+    // Día 30: vence la cuota 1 (Due) y se acredita el cobro del comercio.
+    await c.advanceDays(30);
+    const m1 = await c.getMerchant(DEMO_MERCHANT);
+    expect(m1.settlementBalance).toBe(toMicro(956.25));
+    expect(m1.pendingSettlement).toBe(0);
+    expect(m1.sales[0].settled).toBe(true);
+    let p = (await c.getPlans(W))[0];
+    expect(p.installments[0].status).toBe("Due");
+
+    // La mora del estudiante no le saca plata al comercio: el riesgo lo
+    // absorbe el pool (lo cubre el fiador). Día 45 → cobro al fiador.
+    await c.advanceDays(15);
+    p = (await c.getPlans(W))[0];
+    expect(p.installments[0].status).toBe("ChargedToGuarantor");
+    const m2 = await c.getMerchant(DEMO_MERCHANT);
+    expect(m2.settlementBalance).toBe(toMicro(956.25));
+    const pool = await c.getPool();
+    expect(pool.events.filter((e) => e.kind === "Advance")).toHaveLength(1);
+    expect(pool.events.filter((e) => e.kind === "Recovery")).toHaveLength(1);
+  });
+
   it("pagar en gracia (día 4) no tiene punitorio y el plan sigue contando", async () => {
     const { value: opened } = await openPlan(1000);
     await c.advanceDays(34); // cuota 1 con 4 días de atraso (gracia)

@@ -90,6 +90,7 @@ import {
   type ProtocolConfig as GeneratedProtocolConfig,
 } from "../../generated";
 import type { AccountBaseHooks, AdminMerchantRef } from "./accounts-types";
+import { PLAN_TERMS_VERSION } from "./terms";
 import { CuotasError, type CuotasClient, type Micro, type WalletAddress } from "./types";
 import type {
   Activity,
@@ -100,11 +101,13 @@ import type {
   Merchant,
   Plan,
   PlanStatus,
+  PlanTerms,
   Pool,
   PoolEvent,
   ProtocolConfig,
   Quote,
   QuoteBlockReason,
+  QuoteOptions,
   Reputation,
   Sale,
   TierIndex,
@@ -952,18 +955,41 @@ export function mapPlan(
     displayInstallment(raw, index, config, now),
   );
   const status: PlanStatus = installments.some((i) => i.status === "Late") ? "Late" : "Active";
+  const price = safeMicro(data.price, "plan.price");
+  const downPayment = safeMicro(data.downPayment, "plan.down_payment");
+  const financed = safeMicro(data.financed, "plan.financed");
+  const merchantFee = safeMicro(data.merchantFee, "plan.merchant_fee");
+  const interest = safeMicro(data.interest, "plan.interest");
+  // Términos del programa (3 cuotas fijas, cobro inmediato): las tasas se
+  // derivan de los montos grabados en la cuenta, no de la config actual.
+  const tierIdx = (data.tier >= 0 && data.tier <= 3 ? data.tier : 0) as TierIndex;
+  const terms: PlanTerms = {
+    termsVersion: PLAN_TERMS_VERSION,
+    installmentsCount: INSTALLMENT_COUNT,
+    interestTotalBps: financed > 0 ? Math.round((interest * 10_000) / financed) : 0,
+    downPaymentBps: price > 0 ? Math.round((downPayment * 10_000) / price) : 0,
+    coverageBps: data.withGuarantee
+      ? (config.guaranteedTiers[tierIdx]?.guarantorCoverageBps ?? 0)
+      : 0,
+    settlementId: "immediate",
+    settlementDays: 0,
+    settlementFeeBps:
+      financed > 0 ? Math.round((merchantFee * 10_000) / financed) : config.feeBps,
+    provisional: false,
+  };
   return {
     id: String(pda),
     student: String(data.student),
     merchant: String(data.merchant),
-    price: safeMicro(data.price, "plan.price"),
-    downPayment: safeMicro(data.downPayment, "plan.down_payment"),
-    financed: safeMicro(data.financed, "plan.financed"),
-    merchantFee: safeMicro(data.merchantFee, "plan.merchant_fee"),
+    price,
+    downPayment,
+    financed,
+    merchantFee,
     installments,
     openedAt: data.openedAt < BigInt(0) ? 0 : Number(data.openedAt),
     status,
     counts: data.counts,
+    terms,
     signature,
   };
 }
@@ -979,6 +1005,7 @@ export function computeRealQuote(
   reputation: Reputation | null,
   guarantee: Guarantee | null,
   hasActivePlan: boolean,
+  options?: QuoteOptions,
 ): Quote {
   // Sin reputación onchain, la cotización supone escalón 0: es lo que el
   // estudiante obtendría tras `student_init_reputation`. No afirma estado.
@@ -1000,6 +1027,14 @@ export function computeRealQuote(
   const requiredCoverage = bpsOf(financed, tierParams.guarantorCoverageBps);
 
   const reasons: QuoteBlockReason[] = [];
+  // El programa on-chain solo soporta la opción por defecto (3 cuotas, cobro
+  // inmediato). Cualquier otra opción pedida cotiza no elegible.
+  if (
+    (options?.installments !== undefined && options.installments !== INSTALLMENT_COUNT) ||
+    (options?.settlement !== undefined && options.settlement !== "immediate")
+  ) {
+    reasons.push("option_unavailable");
+  }
   if (config.state !== "Normal") reasons.push("protocol_halted");
   if (reputation?.blockedFromNewPlans) reasons.push("blocked_after_default");
   if (hasActivePlan) reasons.push("has_active_plan");
@@ -1021,7 +1056,14 @@ export function computeRealQuote(
     total: price + interest,
     merchantFee,
     merchantReceives: price - merchantFee,
+    merchantAdvance: price - merchantFee,
+    merchantPending: 0,
     requiredCoverage,
+    installmentsCount: config.installmentsCount,
+    interestTotalBps: tierParams.interestBps,
+    settlementId: "immediate",
+    settlementDays: 0,
+    provisional: false,
     eligible: reasons.length === 0,
     reasons,
   };
@@ -1549,7 +1591,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       return mapGuarantee(student, data);
     },
 
-    async quote(price: Micro, student: WalletAddress): Promise<Quote> {
+    async quote(price: Micro, student: WalletAddress, options?: QuoteOptions): Promise<Quote> {
       const config = await readConfig(await readCtx(overrides));
       let reputation: Reputation | null = null;
       try {
@@ -1560,7 +1602,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       const guarantee = await this.getGuarantee(student);
       const plans = await this.getPlans(student);
       const hasActivePlan = plans.some((p) => p.status === "Active" || p.status === "Late");
-      return computeRealQuote(config, price, student, reputation, guarantee, hasActivePlan);
+      return computeRealQuote(config, price, student, reputation, guarantee, hasActivePlan, options);
     },
 
     async getPlans(student: WalletAddress): Promise<Plan[]> {
@@ -1591,6 +1633,15 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         // Sin historial legible: firma vacía, plan real igual válido.
       }
       return [mapPlan(pda, data, config, now, signature)];
+    },
+
+    async setMerchantSettlement(): Promise<Merchant> {
+      // El programa cobra siempre al instante: el comercio no puede elegir
+      // plazo en modo real.
+      throw new CuotasError(
+        "option_unavailable",
+        "el programa on-chain cobra siempre al instante",
+      );
     },
 
     async getMerchant(owner: WalletAddress): Promise<Merchant> {
@@ -1758,6 +1809,17 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     },
 
     async openPlan(args): Promise<TxResult<Plan>> {
+      // El programa solo abre planes de 3 cuotas con cobro inmediato: otra
+      // opción se rechaza sin pedir wallet ni simular.
+      if (
+        (args.installments !== undefined && args.installments !== INSTALLMENT_COUNT) ||
+        (args.settlement !== undefined && args.settlement !== "immediate")
+      ) {
+        throw new CuotasError(
+          "option_unavailable",
+          "el programa on-chain solo soporta 3 cuotas y cobro inmediato",
+        );
+      }
       const ctx = await writeCtx(overrides);
       const studentAddr = asAddress(args.student, "estudiante");
       if (String(ctx.signer.address) !== String(studentAddr)) {
