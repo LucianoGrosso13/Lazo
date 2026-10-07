@@ -21,13 +21,13 @@ Consultadas el 7/10/2026:
 
 **Problema:** hay personas que trabajan y cobran, pero no consiguen una tarjeta o un límite útil para comprar en cuotas; incluye trabajadores con ingresos informales o parcialmente registrados y estudiantes sin tarjeta propia.
 
-**Solución:** Lazo es un nuevo método de pago en cuotas sin tarjeta propia: un fiador con tarjeta respalda el plan, el comprador paga sus cuotas y el comercio puede cobrar la venta en el momento.
+**Solución:** buscamos que Lazo sea la capa de crédito con fiador que conecta a personas sin acceso a cuotas con las fintech que ya usan. El comprador paga sus cuotas, un fiador con tarjeta respalda el plan y el comercio puede cobrar la venta en el momento.
 
 **Por qué nosotros / hacia dónde:** Luciano e Ignacio construyen desde Tucumán una solución a un problema cercano; Solana permite registrar financiación y pagos con costos de red bajos, y las billeteras existentes son un canal propuesto para llegar a más gente.
 
 **Gancho ES:** «Trabajás, cobrás, pero cuando querés comprar en cuotas te piden una tarjeta que no tenés».
 
-**One-liner EN:** “Lazo is an installment payment method for people without access to credit, backed by a guarantor and built on Solana.”
+**One-liner EN:** “Lazo is a guarantor-backed credit layer designed to connect people without access to installments with the fintech wallets they already use.”
 
 ### Qué sostiene el relato
 
@@ -74,8 +74,8 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 |---|---|---|
 | 1 — Hook + Team | “You work. You earn. But you can't pay in installments.” | Luciano e Ignacio al inicio. Experiencia personal solo si la confirman; no usar “unbanked” para afirmar que no tienen cuenta |
 | 2 — Problem | “Having income doesn't always mean having access to credit.” | Trabajadores con ingresos informales/parciales y estudiantes. Pie de fuente: INDEC, 45% informal employment, 31 urban areas, Q2 2026, provisional; no llamarlo tamaño de mercado |
-| 3 — Solution | “Installments without your own credit card.” | Comprador paga, fiador respalda y solo paga ante impago; no ocultar ese requisito |
-| 4 — Demo | “Show. Scan. Choose installments. Confirm.” | Mostrador con alta vigente. Demo/simulator labels y devnet |
+| 3 — Solution | “A credit layer connecting people and fintech wallets.” | Integración propuesta, comprador paga y fiador respalda. Tres cuotas sin interés y seis con interés pequeño; sin porcentaje en la voz del pitch |
+| 4 — Demo | “Choose installments. Confirm. Track your payments.” | Mostrar el checkout disponible y su estado de simulación. El recorrido final con fintech/tarjeta queda pendiente; el QR propio sigue como demo existente, no alcance universal |
 | 5 — Merchant | “Customers pay over time. Merchants can get paid upfront.” | Ejemplo 1.000/300/700/49/951 rotulado provisional y en tokens de prueba; distinguir liquidación digital de pesos |
 | 6 — Why Solana | “Fast payments. Low network costs. Verifiable financing.” | Registro de planes/pagos; pool diseñado para obtener ingreso del crédito, sin APY prometido ni datos personales públicos |
 | 7 — Learning + Economics | “Validate each purchase before scaling.” | Test de mesa de 3 personas; nuevas entrevistas pendientes. Comisión + interés menos capital, pérdidas, operación y partner |
@@ -83,17 +83,25 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 
 ## Guion video pitch — 2:00
 
-Borrador de unas 255 palabras; duración estimada, **ensayo pendiente**. Gancho antes de la presentación, equipo en los primeros segundos y cierre en el producto/distribución. Tono conversado, sin abrir con biografías o jerga. El texto cuenta diseño y separa el estado de demo.
+Borrador revisado por pedido de Luciano: capa de crédito antes de las condiciones, tres cuotas sin interés y seis con un interés pequeño, mención breve del pool y beneficio simple para el comercio. Duración estimada, **ensayo pendiente**. “Un mínimo” se interpreta como un interés pequeño, no como una nueva tasa ni un cambio del mínimo de compra. Los números de la demo siguen en la sección de condiciones y en configuración.
 
 | Tiempo | Pantalla | Guion EN |
 |---|---|---|
 | 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “You work. You earn. But when you want to pay in installments, you need a credit card you don't have.” |
 | 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. For workers paid off the books, or with only part of their income officially recorded, getting bank credit can be difficult. Students without a credit history face a similar barrier.” |
-| 0:27–0:45 | Lazo, checkout; fiador visible | “That's why we're building Lazo: a new installment payment method for people without access to credit. Three installments without interest, or six with a three percent total charge on the financed amount. A guarantor with a credit card backs the plan and pays only if the buyer doesn't.” |
-| 0:45–0:57 | Mostrador y celular, rótulo “Simulator” | “Once you're set up, paying is simple: the merchant shows a QR, you scan it, choose your installments and confirm. Each plan paid on time can improve your limit and down payment.” |
-| 0:57–1:14 | Neto del comercio en simulador | “For merchants, customers pay over time while the store can receive the sale upfront, minus a clearly disclosed fee. They can offer installments to customers who don't have their own credit card.” |
-| 1:14–1:38 | Diseño del pool y registro; “Prototype” visible | “Solana gives us fast payments, low network costs and verifiable records of plans and repayments. The pool is designed to earn from financing purchases. Returns depend on repayment and costs. Our demo uses Solana devnet: a test network with tokens that have no value.” |
-| 1:38–2:00 | Producto; visual de integración futura sin logos de partners | “Our path to scale is to bring Lazo to the wallets people already use, through fintech partnerships. We're looking for merchants and a fintech to validate the experience and economics in a focused pilot. Lazo: installments without your own credit card.” |
+| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “We're building Lazo as the credit layer connecting these people with the fintech wallets they already use. A guarantor helps back purchases that would otherwise be out of reach.” |
+| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “Three installments without interest, or six with a small interest charge. Buyers pay their own installments. A guarantor with a credit card backs the plan and pays only if they don't.” |
+| 0:57–1:15 | Comercio y esquema simple del fondo | “Merchants can receive the sale upfront for a small fee, while customers pay over time. A shared credit pool advances the funds, and repayments replenish it.” |
+| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “We're designing a familiar payment experience: choose your installments, confirm the purchase, and track your payments.” |
+| 1:25–1:45 | Diseño del fondo y registro; “Prototype” | “Solana makes payments fast, keeps network costs low and gives us verifiable records of plans and repayments. Our demo uses Solana devnet: a test network with tokens that have no value.” |
+| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “Tucumán is our proposed first pilot. We're looking for a fintech partner to validate the integration, funding and economics, then expand through the wallets people already use.” |
+
+**Notas de esta revisión:**
+
+- La frase de capa de crédito aparece al presentar la solución. Es diseño/estrategia; la integración con una fintech o tarjeta aún no está demostrada.
+- La escena de mostrador/QR sale del pitch breve para no fijar el mecanismo de una integración pendiente. Se muestra el checkout disponible con su rótulo verdadero de simulación. El guion de demo conserva el QR propio existente.
+- “Small fee” expresa el posicionamiento comercial provisional. La tarifa completa sigue pendiente de validación; no es una comparación demostrada con terceros. El comercio paga comisión por el servicio; no se le atribuye un rendimiento. Se consultó a Luciano si “leve interés” quería decir esa comisión; si propone rendimiento al comercio, hay que definirlo como una modalidad nueva antes de afirmarlo.
+- La mención del pool explica de dónde sale el adelanto. El rendimiento del capital sigue como modelo a validar; no se promete tasa ni fondeo de un partner ya conseguido.
 
 ### Apertura personal alternativa — pendiente de confirmar
 
@@ -109,11 +117,11 @@ No afirmar “we're unbanked” sin confirmar que no tienen cuentas. No inventar
 
 El handoff registra esta frase aprobada: “Lazo doesn't compete as a wallet: it's the guarantor-backed credit layer a wallet plugs in to approve the users it rejects today.” Para el cierre hablado propongo la versión siguiente, que expresa la intención de atender a esa cohorte sin asegurar aprobación automática ni integración ya disponible.
 
-**Alternativa para sustituir la última fila del guion (a elegir con el equipo):**
+**Versión extensa del mensaje de distribución, conservada como referencia:**
 
 > “We're building Lazo as the guarantor-backed credit layer for wallets to serve people their existing credit products leave out. Tucumán is our proposed first pilot; wallet integrations are our path to scale. We're looking for a fintech to validate distribution, funding and the economics of that pilot.”
 
-La fila actual del guion queda conservada hasta elegir el cierre. Esta alternativa no promete funcionar en cualquier QR y permite avanzar en el relato mientras falta esa decisión. El alcance de compra sigue abierto: comercios adheridos, QR abierto o dos recorridos con costos distintos. No asumir que el comercio paga la comisión fuera de un acuerdo de adhesión; tres cuotas sin interés requieren una fuente de ingresos que cubra la financiación.
+La nueva revisión adelanta la capa de crédito a la solución y reserva el cierre para el pedido de integración/fondeo. Ninguna de las dos versiones promete funcionar en cualquier QR. El alcance de compra sigue abierto: comercios adheridos, QR abierto o dos recorridos con costos distintos. No asumir que el comercio paga la comisión fuera de un acuerdo de adhesión; tres cuotas sin interés requieren una fuente de ingresos que cubra la financiación.
 
 **Fondeo del partner:** el equipo propuso que la fintech aporte capital a los tramos senior y junior. El senior recibe pagos con prioridad; el junior absorbe primero las pérdidas. Es una hipótesis de acuerdo, no capital comprometido ni rendimiento demostrado. Si la fintech invierte en el junior, asume riesgo de crédito: no combinar esa propuesta con la promesa de que no usa su balance o no arriesga capital. En el pitch breve alcanza con pedir validación de fondeo; el reparto se explica en preguntas, cuando esté definido.
 
