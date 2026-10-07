@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { DEMO_CONFIG } from "./demo-config";
 import { toMicro } from "./format";
+import { createMockCuotas } from "./mock";
 import {
   d8Breakdown,
   defaultPlanOption,
+  immediateFeeBps,
   planOptionOf,
   planOptionsOf,
+  quoteTerms,
+  quoteTermsFor,
   settlementAvailable,
   settlementDateOf,
   settlementOptionOf,
@@ -124,6 +128,119 @@ describe("settlementDateOf", () => {
       settlementDateOf(openedAt, settlementOptionOf(DEMO_CONFIG, "deferred_30")!, spd),
     ).toBe(openedAt + 30 * spd);
     expect(settlementDateOf(openedAt, { days: 60 }, spd)).toBe(openedAt + 60 * spd);
+  });
+});
+
+describe("immediateFeeBps", () => {
+  it("devuelve la tarifa del cobro inmediato de la config o el `feeBps` histórico", () => {
+    expect(immediateFeeBps(DEMO_CONFIG)).toBe(700);
+    expect(immediateFeeBps(legacyConfig())).toBe(700);
+  });
+});
+
+describe("quoteTerms", () => {
+  const tier0 = DEMO_CONFIG.guaranteedTiers[0];
+
+  it("ejemplo canónico 1.000/300/700 a 3 cuotas con cobro inmediato", () => {
+    const t = quoteTerms({
+      price: toMicro(1000),
+      tier: tier0,
+      plan: { installments: 3, interestTotalBps: 0 },
+      settlement: { days: 0, feeBps: 700 },
+    });
+    expect(t.downPayment).toBe(toMicro(300));
+    expect(t.financed).toBe(toMicro(700));
+    expect(t.interest).toBe(0);
+    expect(t.repayable).toBe(toMicro(700));
+    expect(t.installments).toEqual([233_333_333, 233_333_333, 233_333_334]);
+    expect(t.total).toBe(toMicro(1000));
+    expect(t.merchantFee).toBe(toMicro(49));
+    expect(t.merchantReceives).toBe(toMicro(951));
+    expect(t.merchantAdvance).toBe(toMicro(951));
+    expect(t.merchantPending).toBe(0);
+    expect(t.requiredCoverage).toBe(toMicro(700));
+  });
+
+  it("cobro diferido: el comercio entra solo el anticipo y el resto queda pendiente", () => {
+    const t = quoteTerms({
+      price: toMicro(1000),
+      tier: tier0,
+      plan: { installments: 3, interestTotalBps: 0 },
+      settlement: { days: 30, feeBps: 625 },
+    });
+    expect(t.merchantFee).toBe(toMicro(43.75));
+    expect(t.merchantReceives).toBe(toMicro(956.25));
+    expect(t.merchantAdvance).toBe(toMicro(300));
+    expect(t.merchantPending).toBe(toMicro(656.25));
+    expect(t.settlementDays).toBe(30);
+  });
+});
+
+describe("quoteTermsFor", () => {
+  it("devuelve undefined cuando la opción no está disponible, como quote()", async () => {
+    const c = createMockCuotas();
+    expect(
+      quoteTermsFor(DEMO_CONFIG, toMicro(1000), { installments: 1 }),
+    ).toBeUndefined();
+    const q = await c.quote(toMicro(1000), "W-paridad", { installments: 1 });
+    expect(q.reasons).toContain("option_unavailable");
+  });
+
+  it("usa la primera opción habilitada y el cobro inmediato por defecto", () => {
+    const t = quoteTermsFor(DEMO_CONFIG, toMicro(1000));
+    expect(t).toBeDefined();
+    expect(t!.installments).toHaveLength(3);
+    expect(t!.settlementDays).toBe(0);
+    expect(t!.interest).toBe(0);
+  });
+
+  it("cotiza igual con la config histórica sin opciones (3 cuotas, inmediato)", () => {
+    const config = legacyConfig();
+    const t = quoteTermsFor(config, toMicro(1000));
+    expect(t).toBeDefined();
+    expect(t!.merchantFee).toBe(toMicro(49));
+    // Y las opciones nuevas no existen en el estado viejo.
+    expect(
+      quoteTermsFor(config, toMicro(1000), { installments: 6 }),
+    ).toBeUndefined();
+    expect(
+      quoteTermsFor(config, toMicro(1000), { settlement: "deferred_30" }),
+    ).toBeUndefined();
+  });
+
+  // La garantía del ticket: el helper puro y `quote()` del mock hacen la
+  // misma cuenta para un comprador nuevo con fiador en todas las
+  // combinaciones habilitadas (3 y 6 cuotas × los cuatro plazos de cobro).
+  describe("paridad con quote() del mock", () => {
+    const W = "WalletParidadTerminos1111111111111111111";
+    // Precio que no cierra redondo para ejercitar los redondeos en serio.
+    const price = toMicro(987.65);
+    const cases = ([3, 6] as const).flatMap((installments) =>
+      settlementOptionsOf(DEMO_CONFIG).map(
+        (o) => [installments, o.id] as const,
+      ),
+    );
+
+    it.each(cases)("%i cuotas × %s", async (installments, settlement) => {
+      const c = createMockCuotas();
+      const q = await c.quote(price, W, { installments, settlement });
+      expect(q.eligible).toBe(true);
+      const t = quoteTermsFor(DEMO_CONFIG, price, { installments, settlement });
+      expect(t).toMatchObject({
+        downPayment: q.downPayment,
+        financed: q.financed,
+        interest: q.interest,
+        installments: q.installments,
+        total: q.total,
+        merchantFee: q.merchantFee,
+        merchantReceives: q.merchantReceives,
+        merchantAdvance: q.merchantAdvance,
+        merchantPending: q.merchantPending,
+        settlementDays: q.settlementDays,
+        requiredCoverage: q.requiredCoverage,
+        interestTotalBps: q.interestTotalBps,
+      });
+    });
   });
 });
 

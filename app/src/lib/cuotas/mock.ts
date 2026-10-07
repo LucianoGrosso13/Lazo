@@ -7,6 +7,7 @@ import { DEMO_CONFIG } from "./demo-config";
 import {
   PLAN_TERMS_VERSION,
   planOptionsOf,
+  quoteTerms,
   settlementOptionOf,
   settlementOptionsOf,
 } from "./terms";
@@ -112,27 +113,36 @@ function computeQuote(
   }
 
   const n = planOpt?.installments ?? installmentsReq;
-  const downPayment = bpsOf(price, tierParams.downPaymentBps);
-  const financed = price - downPayment;
-  // El interés es el de la opción de plan (0 si falta) más el del escalón
-  // (0 en todos los escalones de la demo; las configs viejas lo llevaban ahí).
-  const interestTotalBps = (planOpt?.interestTotalBps ?? 0) + tierParams.interestBps;
-  const interest = bpsOf(financed, interestTotalBps);
-  const repayable = financed + interest;
-  // La última cuota absorbe el redondeo (700 → 233,333333 / 233,333333 / 233,333334).
-  const base = Math.floor(repayable / n);
-  const installments = Array.from({ length: n }, (_, i) =>
-    i === n - 1 ? repayable - base * (n - 1) : base,
-  );
-  const merchantFee = bpsOf(financed, settleOpt?.feeBps ?? cfg.feeBps);
-  const requiredCoverage = bpsOf(financed, tierParams.guarantorCoverageBps);
-  const settlementDays = settleOpt?.days ?? 0;
-  const merchantReceives = price - merchantFee;
-  // Cobro diferido: el anticipo entra al abrir y `financiado − fee` en la
-  // fecha de cobro; inmediato = todo al abrir, igual que siempre.
-  const merchantAdvance =
-    settlementDays === 0 ? merchantReceives : downPayment;
-  const merchantPending = merchantReceives - merchantAdvance;
+  // El cálculo puro vive en `terms.ts` y lo comparten las pantallas sin
+  // wallet: opción faltante → 0 interés propio, plazo faltante → `feeBps`
+  // histórico y 0 días (los números salen igual aunque la opción no sea
+  // elegible, como siempre).
+  const terms = quoteTerms({
+    price,
+    tier: tierParams,
+    plan: {
+      installments: n,
+      interestTotalBps: planOpt?.interestTotalBps ?? 0,
+    },
+    settlement: {
+      days: settleOpt?.days ?? 0,
+      feeBps: settleOpt?.feeBps ?? cfg.feeBps,
+    },
+  });
+  const {
+    downPayment,
+    financed,
+    interest,
+    repayable,
+    installments,
+    interestTotalBps,
+    merchantFee,
+    requiredCoverage,
+    settlementDays,
+    merchantReceives,
+    merchantAdvance,
+    merchantPending,
+  } = terms;
 
   if (cfg.state !== "Normal") reasons.push("protocol_halted");
   if (rep.blockedFromNewPlans) reasons.push("blocked_after_default");

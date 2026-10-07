@@ -149,6 +149,17 @@ Calendario (hora Argentina):
 - [ ] T3.5 Seguridad
 - [ ] TF.1-3 Entrega
 
+### Tanda "web completa" (2026-10-07) — cerrada
+
+Spec `.scratch/web-completa/spec.md`, 15 tickets en `.scratch/web-completa/issues/`, todos `done` y mergeados en `t-web-marketplace-responsive` (Run Orca `run_be4573516a2c`, workers Devin SWE-2 Max, coordinador Opus 5.5; el 15 lo cerró el coordinador).
+
+- Contenido: decisiones comerciales, GTM, minorista, D8 e ideas 10/11 llevadas a la web; páginas `/para-estudiantes`, `/para-comercios`, `/para-inversores`.
+- Demo mock: checkout 3/6 cuotas (6 con 3% total provisional), cuenta del comercio con plazo de cobro (7 / 6,25 / 5,5 / 5,25%) y ventas pendiente → cobrada con el reloj demo, marketplace `/comercio` con 10 comercios ficticios rotulados "demo" y destacados en el home, paneles de estudiante y fiador con cobertura 100% del capital pendiente.
+- Cálculo único: `app/src/lib/cuotas/terms.ts` (`quoteTerms` / `quoteTermsFor`) lo usan el mock y las páginas sin wallet; test de paridad 3/6 × 4 plazos.
+- Responsive: todas las rutas sin scroll horizontal a 390 px (e2e `responsive.spec.ts`).
+- Verificación: typecheck y lint sin errores, 258 tests Vitest y 42 e2e en verde (1 skip: modo real). Capturas 390/1440 de todas las rutas en `.scratch/web-completa/evidence/15-*`.
+- **Divergencia mock ↔ programa:** 6 cuotas, cobro diferido, cobertura 100% en todos los escalones y planes en paralelo existen solo en el mock. El programa sigue con 3 cuotas, cobro inmediato y el seed con cobertura 100/90/80/70. Detalle en `05-pitch.md` § Nota técnica. No se tocó el programa, no hubo deploy ni transacciones.
+
 ## Cambios comerciales — tareas chicas posteriores a esta documentación
 
 Orden: cerrar C1 → C2 → C3 → C4 → C5 → C6. C7/C8 pueden avanzar con entrevistas y pruebas devnet en paralelo, sin prometer funcionalidades pendientes. Una rama por tarea; toda regla sale de la configuración y se congela en el plan al aceptarlo.
