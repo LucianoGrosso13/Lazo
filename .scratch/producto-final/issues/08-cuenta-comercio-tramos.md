@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/components/cuenta/comercio.tsx`, `app/src/i18n/dictionaries/comercio-cuenta.ts`, `app/src/app/(cuenta)/app/comercio/page.tsx`. No crees la ruta `mostrador` (es del 09): solo el link.
 
@@ -14,8 +14,8 @@ Notas:
 - Saldo pendiente = tramos no liberados (`getMerchant`). Actividad `PayoutReleased` en el historial.
 - Fuera "provisional". Tiers con `tierLabel()`.
 
-- [ ] Selector de plazo con comisión, neto y calendario de tramos
-- [ ] Ventas con tramos liberados/pendientes; al adelantar el reloj, se liberan
-- [ ] Acceso a "Venta en mostrador"
-- [ ] 390/1440 sin scroll horizontal; capturas `evidence/08-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Selector de plazo con comisión, neto y calendario de tramos
+- [x] Ventas con tramos liberados/pendientes; al adelantar el reloj, se liberan
+- [x] Acceso a "Venta en mostrador"
+- [x] 390/1440 sin scroll horizontal; capturas `evidence/08-*`
+- [x] typecheck / lint / test / build en verde
