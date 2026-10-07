@@ -24,7 +24,7 @@ import {
 import type { Product } from "@/lib/catalog";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { checkout } from "@/i18n/dictionaries/checkout";
-import { useLocale, useT } from "@/i18n/locale";
+import { type Locale, useLocale, useT } from "@/i18n/locale";
 import { useWalletAddress } from "@/components/wallet-button";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { splitPurchase } from "@/components/landing/split";
@@ -71,18 +71,60 @@ interface WalletSlice {
   plans: Plan[];
 }
 
-export function CheckoutScreen({
-  product,
-  demoWallet,
-}: {
-  product: Product;
+export interface GenericCheckoutItem {
+  id?: string;
+  name: Record<Locale, string> | string;
+  price: Micro;
+  merchant: WalletAddress;
+  orderId?: string;
+  blurb?: Record<Locale, string> | string;
+}
+
+export interface CheckoutScreenProps {
+  product?: Product;
+  item?: GenericCheckoutItem;
   /** Solo modo mock: trata esa dirección como la wallet conectada (capturas y demo sin Phantom). */
   demoWallet?: string | null;
-}) {
+  backHref?: string;
+  backLabel?: string;
+}
+
+export function CheckoutScreen({
+  product,
+  item,
+  demoWallet,
+  backHref,
+  backLabel,
+}: CheckoutScreenProps) {
   const t = useT(checkout);
   const { locale } = useLocale();
   const config = useProtocolConfig();
   const client = useClient<AppClient>();
+
+  const currentItem = useMemo(() => {
+    if (product) {
+      return {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        merchant: product.merchant,
+        blurb: product.blurb,
+        orderId: undefined,
+      };
+    }
+    if (item) {
+      return {
+        id: item.id ?? item.orderId ?? "order",
+        name: item.name,
+        price: item.price,
+        merchant: item.merchant,
+        blurb: item.blurb ?? { es: "", en: "" },
+        orderId: item.orderId,
+      };
+    }
+    throw new Error("CheckoutScreen requires either product or item");
+  }, [product, item]);
+
   // La wallet solo existe en el navegador: hasta montar se muestra "pending"
   // para que el HTML del servidor y la hidratación coincidan.
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
@@ -111,11 +153,11 @@ export function CheckoutScreen({
   // y se pasa igual a `quote` y a `openPlan` para que lo cotizado sea lo
   // que se abre (sin plazo, `openPlan` usa el predeterminado del comercio).
   const { data: base } = useCuotasQuery<BaseSlice>(
-    ["checkout-base", product.merchant],
+    ["checkout-base", currentItem.merchant],
     async (c) => {
       const [clock, merchant] = await Promise.all([
         c.getClock(),
-        c.getMerchant(product.merchant),
+        c.getMerchant(currentItem.merchant),
       ]);
       return { clock, merchant };
     },
@@ -133,7 +175,7 @@ export function CheckoutScreen({
 
   const { data: mine } = useCuotasQuery<WalletSlice>(
     wallet && enabledOptions.length
-      ? ["checkout-wallet", wallet, product.id, settlement, optionsKey]
+      ? ["checkout-wallet", wallet, currentItem.id, settlement, optionsKey]
       : null,
     async (c) => {
       if (!wallet) throw new CuotasError("not_found", "sin wallet");
@@ -142,7 +184,7 @@ export function CheckoutScreen({
       const [quotes, guarantee, reputation, plans] = await Promise.all([
         Promise.all(
           enabledOptions.map((o) =>
-            c.quote(product.price, wallet, {
+            c.quote(currentItem.price, wallet, {
               installments: o.installments,
               settlement,
             }),
@@ -163,12 +205,12 @@ export function CheckoutScreen({
   // escalón 0 con garante, igual que el split que mostraba la landing.
   const { data: preview } = useCuotasQuery<Quote[]>(
     !wallet && mock && enabledOptions.length
-      ? ["checkout-preview", product.id, settlement, optionsKey]
+      ? ["checkout-preview", currentItem.id, settlement, optionsKey]
       : null,
     (c) =>
       Promise.all(
         enabledOptions.map((o) =>
-          c.quote(product.price, PREVIEW_STUDENT, {
+          c.quote(currentItem.price, PREVIEW_STUDENT, {
             installments: o.installments,
             settlement,
           }),
@@ -205,7 +247,7 @@ export function CheckoutScreen({
     // siempre (3 cuotas, cobro inmediato con `feeBps`). En mock se espera la
     // cotización de la vista previa: `splitPurchase` no sabe de opciones.
     if (!wallet && !mock && config) {
-      const s = splitPurchase(config, product.price, 0);
+      const s = splitPurchase(config, currentItem.price, 0);
       return {
         price: s.price,
         tier: s.tier,
@@ -226,7 +268,7 @@ export function CheckoutScreen({
       };
     }
     return null;
-  }, [quotes, installments, wallet, mock, config, product.price, mine?.reputation?.activeExposure]);
+  }, [quotes, installments, wallet, mock, config, currentItem.price, mine?.reputation?.activeExposure]);
 
   const bands: StageBand[] = useMemo(() => {
     if (!data) return [];
@@ -272,9 +314,10 @@ export function CheckoutScreen({
     try {
       const res = await getCuotas().openPlan({
         student: wallet,
-        merchant: product.merchant,
-        price: product.price,
-        productId: product.id,
+        merchant: currentItem.merchant,
+        price: currentItem.price,
+        productId: product?.id,
+        orderId: currentItem.orderId,
         // Mismo plazo que la cotización mostrada: lo cotizado es lo abierto.
         installments,
         settlement,
@@ -290,15 +333,17 @@ export function CheckoutScreen({
 
   const quoteSel = quotes?.find((x) => x.installmentsCount === installments);
   const cracked = walletStatus === "connected" && !!quoteSel && !quoteSel.eligible;
-  const mpTotal = Math.round(product.price * (1 + REFERENCE.mpInstallmentMarkup));
-  const lazoTotal = data?.total ?? product.price;
+  const mpTotal = Math.round(currentItem.price * (1 + REFERENCE.mpInstallmentMarkup));
+  const lazoTotal = data?.total ?? currentItem.price;
   const savings = Math.max(0, mpTotal - lazoTotal);
   const merchantName = base?.merchant.name ?? t.confirm.merchantFallback;
+  const displayName = typeof currentItem.name === "string" ? currentItem.name : currentItem.name[locale];
+  const displayBlurb = typeof currentItem.blurb === "string" ? currentItem.blurb : (currentItem.blurb?.[locale] ?? "");
 
   return (
     <div className={styles.page}>
       <div className={styles.wrap}>
-        <Link href="/tienda" className={styles.back}>
+        <Link href={backHref ?? "/tienda"} className={styles.back}>
           <svg
             aria-hidden
             viewBox="0 0 14 10"
@@ -311,17 +356,17 @@ export function CheckoutScreen({
           >
             <path d="M13 5H1.5M6 1 1.5 5 6 9" />
           </svg>
-          {t.back}
+          {backLabel ?? t.back}
         </Link>
 
         <header className={styles.head}>
           <div>
-            <h1 className={styles.headTitle}>{product.name[locale]}</h1>
-            <p className={styles.headBlurb}>{product.blurb[locale]}</p>
+            <h1 className={styles.headTitle}>{displayName}</h1>
+            {displayBlurb ? <p className={styles.headBlurb}>{displayBlurb}</p> : null}
           </div>
           <div className={styles.headPrice}>
             <span className={styles.headKey}>{t.price}</span>
-            <BigNumber amount={product.price} size="lg" decimals={0} />
+            <BigNumber amount={currentItem.price} size="lg" decimals={0} />
           </div>
         </header>
 
@@ -343,12 +388,12 @@ export function CheckoutScreen({
                       <div className={styles.stageWide}>
                         <PrismStage3D
                           inputLabel={t.price}
-                          inputValue={`US$ ${fmt(product.price, 0)}`}
+                          inputValue={`US$ ${fmt(currentItem.price, 0)}`}
                           bands={bands}
                           cracked={cracked}
                           labelsPlacement={narrow ? "below" : "overlay"}
                           ariaLabel={t.stageAria(
-                            fmt(product.price, 0),
+                            fmt(currentItem.price, 0),
                             fmt(data.downPayment),
                             fmt(data.installments[0] ?? 0),
                             data.installments.length,

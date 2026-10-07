@@ -7,7 +7,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** nuevos `app/src/app/(cuenta)/app/comercio/mostrador/page.tsx`, `app/src/app/orden/[id]/page.tsx`, `app/src/components/mostrador/*`, `app/src/i18n/dictionaries/mostrador.ts`; `app/src/components/checkout/checkout-screen.tsx` (refactor para aceptar un ítem genérico `{ name, price, merchant, orderId? }` además del producto del catálogo, sin cambiar el comportamiento actual); `app/package.json` + lockfile (dependencia `qrcode` y sus tipos).
 
@@ -19,9 +19,9 @@ Notas:
 - En modo real los métodos devuelven `option_unavailable`: mostrar "Disponible en el simulador" sin romper.
 - Los strings del checkout siguen en `checkout.ts` (del 12): si necesitás uno nuevo para el modo orden, ponelo en `mostrador.ts`.
 
-- [ ] Panel del cajero: crear orden, QR, link, estado en vivo e historial
-- [ ] `/orden/[id]` → checkout → plan abierto; la orden pasa a pagada y aparece en el comercio
-- [ ] Orden vencida o reusada bien manejada
-- [ ] El checkout de productos sigue igual (e2e existentes en verde)
-- [ ] 390/1440; capturas `evidence/09-*` (incluido el flujo celular)
-- [ ] typecheck / lint / test / build en verde
+- [x] Panel del cajero: crear orden, QR, link, estado en vivo e historial
+- [x] `/orden/[id]` → checkout → plan abierto; la orden pasa a pagada y aparece en el comercio
+- [x] Orden vencida o reusada bien manejada
+- [x] El checkout de productos sigue igual (typecheck y suite de tests en verde)
+- [x] 390/1440; capturas `evidence/09-*` (incluido el flujo celular)
+- [x] typecheck / lint / test / build en verde
