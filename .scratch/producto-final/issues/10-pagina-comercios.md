@@ -10,7 +10,7 @@ Sin "provisional", "roadmap" ni "Qué es demo y qué no" en esta página: remite
 
 **Blocked by:** 01
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/components/audience/para-comercios.tsx`, `app/src/i18n/dictionaries/para-comercios.ts`, `app/src/app/para-comercios/page.tsx` (metadata).
 
@@ -19,8 +19,8 @@ Notas:
 - FAQ existentes: actualizar las respuestas (el QR **ya** existe; cobro en tramos; pesos = integración futura con billeteras argentinas). No agregar preguntas nuevas.
 - El riesgo se cuenta en serio: el fiador puede rechazar el cargo, pero el tramo del comercio lo garantiza Lazo.
 
-- [ ] Tabla de plazos con tramos desde la config
-- [ ] Sección de mostrador como función disponible, con CTA
-- [ ] Cero "provisional", "roadmap" o "demo" sueltos (es y en)
-- [ ] 390/1440; capturas `evidence/10-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Tabla de plazos con tramos desde la config
+- [x] Sección de mostrador como función disponible, con CTA
+- [x] Cero "provisional", "roadmap" o "demo" sueltos (es y en)
+- [x] 390/1440; capturas `evidence/10-*`
+- [ ] typecheck / lint / test / build en verde (typecheck, lint y build pasan; Vitest ejecutó 272 tests pero terminó con un error de worker por incompatibilidad ESM de dependencias)
