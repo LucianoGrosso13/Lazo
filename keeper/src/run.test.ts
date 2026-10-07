@@ -78,6 +78,38 @@ describe("runOnce", () => {
     assert.deepEqual(report.proposed, []);
   });
 
+  it("propone release_payout solo para tramos vencidos y permanece en dry-run", async () => {
+    const e = env();
+    const deps = {
+      adapter: new MockAdapter({
+        config: CONFIG,
+        plans: [],
+        payoutSchedules: [{
+          address: "schedule-1", planId: "plan-1", merchant: "merchant-1",
+          tranches: [
+            { index: 0, amountMicro: 100, releaseAt: NOW - 1, released: false },
+            { index: 1, amountMicro: 100, releaseAt: NOW + 1, released: false },
+            { index: 2, amountMicro: 100, releaseAt: NOW - 10, released: true },
+          ],
+        }],
+        bindings: {},
+      }),
+      gateway: okGateway([]),
+      journal: new Journal(e.dataDir),
+      env: e,
+      now: NOW,
+    };
+    const { proposed, synced } = await runOnce(deps);
+    assert.equal(proposed.length, 1);
+    assert.equal(proposed[0].kind, "release_payout");
+    assert.equal(proposed[0].installment, 0);
+    assert.equal(synced.length, 1); // La tercera tranche ya fue liberada on-chain.
+    await assert.rejects(executeProposal(deps, { proposalId: proposed[0].id, approvedBy: "operator" }), (err: unknown) => {
+      assert.ok(err instanceof ExecuteError && err.code === "dry_run_only");
+      return true;
+    });
+  });
+
   it("proposes each action once across polls (no proposal spam)", async () => {
     const e = env();
     const deps = {

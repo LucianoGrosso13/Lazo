@@ -127,11 +127,20 @@ function configData(over: Record<string, unknown> = {}) {
       minFinancedToCount: BigInt(toMicro(100)),
       guaranteedTiers: [
         tier(3000, toMicro(1000), 10_000),
-        tier(2000, toMicro(1000), 9000),
-        tier(1000, toMicro(1250), 8000),
-        tier(0, toMicro(1500), 7000),
+        tier(2000, toMicro(1000), 10_000),
+        tier(1000, toMicro(1250), 10_000),
+        tier(0, toMicro(1500), 10_000),
       ],
-      unguaranteedTiers: [tier(5000, toMicro(150)), tier(3000, toMicro(300))],
+      planOptions: [
+        { installments: 3, interestTotalBps: 0, minPrice: BigInt(0), enabled: true },
+        { installments: 6, interestTotalBps: 300, minPrice: BigInt(toMicro(350)), enabled: true },
+      ],
+      settlementOptions: [
+        { days: 0, tranches: 0, feeBps: 700, enabled: true },
+        { days: 30, tranches: 1, feeBps: 625, enabled: true },
+        { days: 60, tranches: 2, feeBps: 575, enabled: true },
+        { days: 90, tranches: 3, feeBps: 525, enabled: true },
+      ],
       state: GeneratedProtocolState.Normal,
       bump: 1,
       ...over,
@@ -191,6 +200,12 @@ describe("lecturas con RPC mockeado", () => {
     expect(config.guarantorNoticeDay).toBe(3);
     expect(config.guaranteedTiers).toHaveLength(4);
     expect(config.guaranteedTiers[0].maxPurchase).toBe(toMicro(1000));
+    expect(config.planOptions?.map(({ installments, interestTotalBps, minPrice }) => [installments, interestTotalBps, minPrice])).toEqual([
+      [3, 0, 0], [6, 300, toMicro(350)],
+    ]);
+    expect(config.settlementOptions?.map(({ days, tranches, feeBps }) => [days, tranches, feeBps])).toEqual([
+      [0, 0, 700], [30, 1, 625], [60, 2, 575], [90, 3, 525],
+    ]);
     expect(config.admin).toBe(String(admin));
     expect(config.keeper).toBe(String(admin));
     expect(config.cluster).toBe("devnet");
@@ -270,6 +285,7 @@ describe("lecturas con RPC mockeado", () => {
         seniorCapital: BigInt(toMicro(4000)),
         outstandingCredit: BigInt(toMicro(700)),
         accruedFees: BigInt(toMicro(49)),
+        committedPayouts: BigInt(0),
         bump: 1,
       }),
     );
@@ -412,6 +428,13 @@ function installmentFixture(over: Record<string, unknown> = {}) {
 }
 
 function planData(over: Record<string, unknown> = {}) {
+  const { installments: providedInstallments, installmentCount, ...rest } = over;
+  const activeInstallments = (providedInstallments as ReturnType<typeof installmentFixture>[] | undefined) ?? [
+    installmentFixture(),
+    installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+    installmentFixture({ amount: BigInt(233_333_334), dueAt: BigInt(OPENED_AT + 90 * 86_400) }),
+  ];
+  const emptyInstallment = installmentFixture({ amount: BigInt(0), dueAt: BigInt(0), paid: true });
   return b64(
     getPlanEncoder().encode({
       student,
@@ -425,14 +448,11 @@ function planData(over: Record<string, unknown> = {}) {
       tier: 0,
       withGuarantee: true,
       counts: true,
-      installments: [
-        installmentFixture(),
-        installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
-        installmentFixture({ amount: BigInt(233_333_334), dueAt: BigInt(OPENED_AT + 90 * 86_400) }),
-      ],
+      installmentCount: (installmentCount as number | undefined) ?? activeInstallments.length,
+      installments: [...activeInstallments, ...Array.from({ length: 6 - activeInstallments.length }, () => emptyInstallment)],
       generation: BigInt(1),
       bump: 1,
-      ...over,
+      ...rest,
     }),
   );
 }
@@ -453,9 +473,19 @@ function quoteConfig(): ProtocolConfig {
     installmentIntervalDays: 30,
     guaranteedTiers: [
       { downPaymentBps: 3000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1000), interestBps: 0 },
-      { downPaymentBps: 2000, guarantorCoverageBps: 9000, maxPurchase: toMicro(1000), interestBps: 0 },
-      { downPaymentBps: 1000, guarantorCoverageBps: 8000, maxPurchase: toMicro(1250), interestBps: 0 },
-      { downPaymentBps: 0, guarantorCoverageBps: 7000, maxPurchase: toMicro(1500), interestBps: 0 },
+      { downPaymentBps: 2000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1000), interestBps: 0 },
+      { downPaymentBps: 1000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1250), interestBps: 0 },
+      { downPaymentBps: 0, guarantorCoverageBps: 10000, maxPurchase: toMicro(1500), interestBps: 0 },
+    ],
+    planOptions: [
+      { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true, provisional: false },
+      { installments: 6, interestTotalBps: 300, minPrice: toMicro(350), enabled: true, provisional: false },
+    ],
+    settlementOptions: [
+      { id: "immediate", days: 0, tranches: 0, feeBps: 700, enabled: true, provisional: false },
+      { id: "deferred_30", days: 30, tranches: 1, feeBps: 625, enabled: true, provisional: false },
+      { id: "deferred_60", days: 60, tranches: 2, feeBps: 575, enabled: true, provisional: false },
+      { id: "deferred_90", days: 90, tranches: 3, feeBps: 525, enabled: true, provisional: false },
     ],
     minFinancedToCount: toMicro(100),
     state: "Normal",
@@ -523,6 +553,30 @@ describe("mapPlan y días de atraso", () => {
     expect(plan.installments[0].status).toBe("Paid");
     expect(plan.installments[1].status).toBe("ChargedToGuarantor");
     expect(plan.installments[2].status).toBe("Late");
+  });
+
+  it("mapea 6 cuotas y el plazo diferido desde los términos on-chain del plan", () => {
+    const six = Array.from({ length: 6 }, (_, index) => installmentFixture({
+      amount: BigInt(116_666_666),
+      dueAt: BigInt(OPENED_AT + (index + 1) * 30 * 86_400),
+    }));
+    six[5] = installmentFixture({ amount: BigInt(116_666_670), dueAt: BigInt(OPENED_AT + 180 * 86_400) });
+    const data = decodedPlan(planData({
+      price: BigInt(toMicro(1000)),
+      downPayment: BigInt(toMicro(300)),
+      financed: BigInt(toMicro(700)),
+      interest: BigInt(toMicro(21)),
+      merchantFee: BigInt(36_750_000),
+      installmentCount: 6,
+      installments: six,
+    }));
+    const plan = mapPlan(address(PROGRAM), data, quoteConfig(), OPENED_AT, "firma-6x90");
+    expect(plan.installments).toHaveLength(6);
+    expect(plan.terms.installmentsCount).toBe(6);
+    expect(plan.terms.interestTotalBps).toBe(300);
+    expect(plan.terms.settlementId).toBe("deferred_90");
+    expect(plan.terms.settlementDays).toBe(90);
+    expect(plan.terms.settlementFeeBps).toBe(525);
   });
 });
 
@@ -613,6 +667,7 @@ describe("historial sin eventos atribuidos", () => {
         seniorCapital: BigInt(toMicro(4000)),
         outstandingCredit: BigInt(0),
         accruedFees: BigInt(0),
+        committedPayouts: BigInt(0),
         bump: 1,
       }),
     );
@@ -698,9 +753,19 @@ describe("computeRealQuote", () => {
     installmentsCount: 3,
     guaranteedTiers: [
       { downPaymentBps: 3000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1000), interestBps: 0 },
-      { downPaymentBps: 2000, guarantorCoverageBps: 9000, maxPurchase: toMicro(1000), interestBps: 0 },
-      { downPaymentBps: 1000, guarantorCoverageBps: 8000, maxPurchase: toMicro(1250), interestBps: 0 },
-      { downPaymentBps: 0, guarantorCoverageBps: 7000, maxPurchase: toMicro(1500), interestBps: 0 },
+      { downPaymentBps: 2000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1000), interestBps: 0 },
+      { downPaymentBps: 1000, guarantorCoverageBps: 10000, maxPurchase: toMicro(1250), interestBps: 0 },
+      { downPaymentBps: 0, guarantorCoverageBps: 10000, maxPurchase: toMicro(1500), interestBps: 0 },
+    ],
+    planOptions: [
+      { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true, provisional: false },
+      { installments: 6, interestTotalBps: 300, minPrice: toMicro(350), enabled: true, provisional: false },
+    ],
+    settlementOptions: [
+      { id: "immediate", days: 0, tranches: 0, feeBps: 700, enabled: true, provisional: false },
+      { id: "deferred_30", days: 30, tranches: 1, feeBps: 625, enabled: true, provisional: false },
+      { id: "deferred_60", days: 60, tranches: 2, feeBps: 575, enabled: true, provisional: false },
+      { id: "deferred_90", days: 90, tranches: 3, feeBps: 525, enabled: true, provisional: false },
     ],
     minFinancedToCount: toMicro(100),
     state: "Normal",
@@ -737,6 +802,31 @@ describe("computeRealQuote", () => {
     expect(q.merchantReceives).toBe(toMicro(951));
   });
 
+  it("6 cuotas aplica 3% total, fiador cubre capital + interés y 90 días crea tres tramos", () => {
+    const q = computeRealQuote(base, toMicro(1000), "s", rep(), guarantee(), false, {
+      installments: 6,
+      settlement: "deferred_90",
+    });
+    expect(q.eligible).toBe(true);
+    expect(q.installmentsCount).toBe(6);
+    expect(q.interest).toBe(toMicro(21));
+    expect(q.total).toBe(toMicro(1021));
+    expect(q.requiredCoverage).toBe(toMicro(721));
+    expect(q.settlementId).toBe("deferred_90");
+    expect(q.payoutTranches).toEqual([
+      { index: 0, amount: 221_083_333, releaseAt: 30 * 86_400, released: false },
+      { index: 1, amount: 221_083_333, releaseAt: 60 * 86_400, released: false },
+      { index: 2, amount: 221_083_334, releaseAt: 90 * 86_400, released: false },
+    ]);
+  });
+
+  it("6 cuotas requiere precio mínimo y fiador activo", () => {
+    const belowMin = computeRealQuote(base, toMicro(300), "s", rep(), guarantee(), false, { installments: 6 });
+    expect(belowMin.reasons).toContain("below_option_min");
+    const noGuarantor = computeRealQuote(base, toMicro(1000), "s", rep(), null, false, { installments: 6 });
+    expect(noGuarantor.reasons).toContain("guarantor_required");
+  });
+
   it("bloquea sin garantía, con plan activo, bloqueado o pausado", () => {
     expect(computeRealQuote(base, toMicro(1000), "s", rep(), null, false).reasons).toContain(
       "guarantor_required",
@@ -769,31 +859,14 @@ describe("computeRealQuote", () => {
     expect(q.merchantReceives).toBe(toMicro(951));
   });
 
-  it("opciones que el programa no soporta → option_unavailable", () => {
-    for (const options of [
-      { installments: 1 },
-      { installments: 6 },
-      { settlement: "deferred_30" },
-      { settlement: "deferred_60" },
-      { settlement: "deferred_90" },
-      { installments: 6, settlement: "deferred_30" },
-    ] as const) {
-      const q = computeRealQuote(
-        base,
-        toMicro(1000),
-        "s",
-        rep(),
-        guarantee(),
-        false,
-        options,
-      );
-      expect(q.eligible).toBe(false);
-      expect(q.reasons[0]).toBe("option_unavailable");
-    }
+  it("rechaza una cantidad de cuotas que no está configurada", () => {
+    const q = computeRealQuote(base, toMicro(1000), "s", rep(), guarantee(), false, { installments: 1 });
+    expect(q.eligible).toBe(false);
+    expect(q.reasons).toContain("option_unavailable");
   });
 });
 
-describe("opciones que el programa no soporta", () => {
+describe("límites del cliente real", () => {
   // RPC/firmanante que explotan si el código llega a tocarlos: la guardia de
   // opciones tiene que rechazar antes de leer la cadena o pedir la wallet.
   const deadTransport = (): RealTransport => ({
@@ -813,22 +886,13 @@ describe("opciones que el programa no soporta", () => {
     ).rejects.toMatchObject({ code: "option_unavailable" });
   });
 
-  it("openPlan con otra cantidad de cuotas o plazo → option_unavailable sin pedir wallet", async () => {
+  it("openPlan falla cerrado si no hay respuesta del RPC", async () => {
     const c = createRealCuotas({ env: ENV, transport: deadTransport() });
-    const args = {
+    await expect(c.openPlan({
       student: String(student),
       merchant: String(merchantOwner),
       price: toMicro(1000),
-    };
-    await expect(
-      c.openPlan({ ...args, installments: 6 }),
-    ).rejects.toMatchObject({ code: "option_unavailable" });
-    await expect(
-      c.openPlan({ ...args, installments: 1 }),
-    ).rejects.toMatchObject({ code: "option_unavailable" });
-    await expect(
-      c.openPlan({ ...args, settlement: "deferred_30" }),
-    ).rejects.toMatchObject({ code: "option_unavailable" });
+    })).rejects.toMatchObject({ code: "unavailable" });
   });
 });
 

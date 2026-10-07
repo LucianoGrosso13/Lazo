@@ -7,7 +7,7 @@
  */
 
 import { assertAccountExists, assertAccountsExist, combineCodec, decodeAccount, fetchEncodedAccount, fetchEncodedAccounts, fixDecoderSize, fixEncoderSize, getAddressDecoder, getAddressEncoder, getArrayDecoder, getArrayEncoder, getBytesDecoder, getBytesEncoder, getStructDecoder, getStructEncoder, getU16Decoder, getU16Encoder, getU32Decoder, getU32Encoder, getU64Decoder, getU64Encoder, getU8Decoder, getU8Encoder, transformEncoder, type Account, type Address, type EncodedAccount, type FetchAccountConfig, type FetchAccountsConfig, type FixedSizeCodec, type FixedSizeDecoder, type FixedSizeEncoder, type MaybeAccount, type MaybeEncodedAccount, type ReadonlyUint8Array } from '@solana/kit';
-import { getProtocolStateDecoder, getProtocolStateEncoder, getTierParamsDecoder, getTierParamsEncoder, type ProtocolState, type ProtocolStateArgs, type TierParams, type TierParamsArgs } from '../types';
+import { getPlanOptionDecoder, getPlanOptionEncoder, getProtocolStateDecoder, getProtocolStateEncoder, getSettlementOptionDecoder, getSettlementOptionEncoder, getTierParamsDecoder, getTierParamsEncoder, type PlanOption, type PlanOptionArgs, type ProtocolState, type ProtocolStateArgs, type SettlementOption, type SettlementOptionArgs, type TierParams, type TierParamsArgs } from '../types';
 
 export const PROTOCOL_CONFIG_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([207, 91, 250, 28, 152, 179, 215, 209]);
 
@@ -46,8 +46,8 @@ installmentIntervalDays: number;
 minFinancedToCount: bigint; 
 /** Ladder for students with a guarantor (tiers 0-3). */
 guaranteedTiers: Array<TierParams>; 
-/** Ladder for students without a guarantor (S0-S1). */
-unguaranteedTiers: Array<TierParams>; 
+/** Plan options offered (3 or 6 installments). */
+planOptions: Array<PlanOption>; settlementOptions: Array<SettlementOption>; 
 /** Lifecycle gate. */
 state: ProtocolState; 
 /** Canonical bump of this PDA. */
@@ -86,8 +86,8 @@ installmentIntervalDays: number;
 minFinancedToCount: number | bigint; 
 /** Ladder for students with a guarantor (tiers 0-3). */
 guaranteedTiers: Array<TierParamsArgs>; 
-/** Ladder for students without a guarantor (S0-S1). */
-unguaranteedTiers: Array<TierParamsArgs>; 
+/** Plan options offered (3 or 6 installments). */
+planOptions: Array<PlanOptionArgs>; settlementOptions: Array<SettlementOptionArgs>; 
 /** Lifecycle gate. */
 state: ProtocolStateArgs; 
 /** Canonical bump of this PDA. */
@@ -95,12 +95,12 @@ bump: number;  };
 
 /** Gets the encoder for {@link ProtocolConfigArgs} account data. */
 export function getProtocolConfigEncoder(): FixedSizeEncoder<ProtocolConfigArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['admin', getAddressEncoder()], ['keeper', getAddressEncoder()], ['usdcMint', getAddressEncoder()], ['treasury', getAddressEncoder()], ['feeBps', getU16Encoder()], ['penaltyBps', getU16Encoder()], ['graceDays', getU8Encoder()], ['guarantorChargeDay', getU8Encoder()], ['guarantorNoticeDay', getU8Encoder()], ['secondsPerDay', getU32Encoder()], ['installmentIntervalDays', getU16Encoder()], ['minFinancedToCount', getU64Encoder()], ['guaranteedTiers', getArrayEncoder(getTierParamsEncoder(), { size: 4 })], ['unguaranteedTiers', getArrayEncoder(getTierParamsEncoder(), { size: 2 })], ['state', getProtocolStateEncoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PROTOCOL_CONFIG_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['admin', getAddressEncoder()], ['keeper', getAddressEncoder()], ['usdcMint', getAddressEncoder()], ['treasury', getAddressEncoder()], ['feeBps', getU16Encoder()], ['penaltyBps', getU16Encoder()], ['graceDays', getU8Encoder()], ['guarantorChargeDay', getU8Encoder()], ['guarantorNoticeDay', getU8Encoder()], ['secondsPerDay', getU32Encoder()], ['installmentIntervalDays', getU16Encoder()], ['minFinancedToCount', getU64Encoder()], ['guaranteedTiers', getArrayEncoder(getTierParamsEncoder(), { size: 4 })], ['planOptions', getArrayEncoder(getPlanOptionEncoder(), { size: 2 })], ['settlementOptions', getArrayEncoder(getSettlementOptionEncoder(), { size: 4 })], ['state', getProtocolStateEncoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: PROTOCOL_CONFIG_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link ProtocolConfig} account data. */
 export function getProtocolConfigDecoder(): FixedSizeDecoder<ProtocolConfig> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['admin', getAddressDecoder()], ['keeper', getAddressDecoder()], ['usdcMint', getAddressDecoder()], ['treasury', getAddressDecoder()], ['feeBps', getU16Decoder()], ['penaltyBps', getU16Decoder()], ['graceDays', getU8Decoder()], ['guarantorChargeDay', getU8Decoder()], ['guarantorNoticeDay', getU8Decoder()], ['secondsPerDay', getU32Decoder()], ['installmentIntervalDays', getU16Decoder()], ['minFinancedToCount', getU64Decoder()], ['guaranteedTiers', getArrayDecoder(getTierParamsDecoder(), { size: 4 })], ['unguaranteedTiers', getArrayDecoder(getTierParamsDecoder(), { size: 2 })], ['state', getProtocolStateDecoder()], ['bump', getU8Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['admin', getAddressDecoder()], ['keeper', getAddressDecoder()], ['usdcMint', getAddressDecoder()], ['treasury', getAddressDecoder()], ['feeBps', getU16Decoder()], ['penaltyBps', getU16Decoder()], ['graceDays', getU8Decoder()], ['guarantorChargeDay', getU8Decoder()], ['guarantorNoticeDay', getU8Decoder()], ['secondsPerDay', getU32Decoder()], ['installmentIntervalDays', getU16Decoder()], ['minFinancedToCount', getU64Decoder()], ['guaranteedTiers', getArrayDecoder(getTierParamsDecoder(), { size: 4 })], ['planOptions', getArrayDecoder(getPlanOptionDecoder(), { size: 2 })], ['settlementOptions', getArrayDecoder(getSettlementOptionDecoder(), { size: 4 })], ['state', getProtocolStateDecoder()], ['bump', getU8Decoder()]]);
 }
 
 /** Gets the codec for {@link ProtocolConfig} account data. */
@@ -153,5 +153,5 @@ export async function fetchAllMaybeProtocolConfig(
 }
 
 export function getProtocolConfigSize(): number {
-  return 243;
+  return 263;
 }

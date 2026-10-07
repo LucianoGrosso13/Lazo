@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node src/run.ts once",
     "loop": "node src/run.ts loop",
-    "test": "node --test 'src/*.test.ts'",
-    "test:e2e": "tsx --test 'src/e2e/*.test.ts'",
+    "test": "tsx --test src/*.test.ts",
+    "test:e2e": "tsx --test src/e2e/*.test.ts",
     "test:all": "npm test && npm run test:e2e",
     "typecheck": "../app/node_modules/.bin/tsc -p tsconfig.json"
   },

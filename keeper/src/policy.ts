@@ -51,6 +51,32 @@ export interface PlanView {
   installments: InstallmentView[];
 }
 
+export interface PayoutTrancheView {
+  index: number;
+  amountMicro: number;
+  releaseAt: number;
+  released: boolean;
+}
+
+export interface PayoutScheduleView {
+  address: string;
+  planId: string;
+  merchant: string;
+  tranches: PayoutTrancheView[];
+}
+
+/** Candidatos permissionless a release_payout; no firma ni envía. */
+export function duePayouts(
+  schedules: PayoutScheduleView[],
+  now: number,
+): Array<PayoutScheduleView & { tranche: PayoutTrancheView }> {
+  return schedules.flatMap((schedule) =>
+    schedule.tranches
+      .filter((tranche) => !tranche.released && tranche.releaseAt <= now)
+      .map((tranche) => ({ ...schedule, tranche })),
+  );
+}
+
 export interface PolicyConfig {
   graceDays: number;
   /** Null until the chain config field lands (test owner); notify skipped. */

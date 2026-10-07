@@ -21,4 +21,5 @@ export * from './merchantRegister';
 export * from './openPlan';
 export * from './payInstallment';
 export * from './poolInit';
+export * from './releasePayout';
 export * from './studentInitReputation';

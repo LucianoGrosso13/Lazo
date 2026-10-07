@@ -37,11 +37,20 @@ const configFixture = () => ({
   minFinancedToCount: 100_000_000,
   guaranteedTiers: [
     tier(3000, 1_000_000_000, 10_000),
-    tier(2000, 1_000_000_000, 9000),
-    tier(1000, 1_250_000_000, 8000),
-    tier(0, 1_500_000_000, 7000),
+    tier(2000, 1_000_000_000, 10_000),
+    tier(1000, 1_250_000_000, 10_000),
+    tier(0, 1_500_000_000, 10_000),
   ],
-  unguaranteedTiers: [tier(5000, 150_000_000, 0), tier(3000, 300_000_000, 0)],
+  planOptions: [
+    { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true },
+    { installments: 6, interestTotalBps: 300, minPrice: 350_000_000, enabled: true },
+  ],
+  settlementOptions: [
+    { days: 0, tranches: 0, feeBps: 700, enabled: true },
+    { days: 30, tranches: 1, feeBps: 625, enabled: true },
+    { days: 60, tranches: 2, feeBps: 575, enabled: true },
+    { days: 90, tranches: 3, feeBps: 525, enabled: true },
+  ],
   state: ProtocolState.Normal,
   bump: 1,
 });

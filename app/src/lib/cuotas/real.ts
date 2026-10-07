@@ -47,6 +47,7 @@ import {
   findLpSeniorMintPda,
   findMerchantPda,
   findPlanPda,
+  findPayoutSchedulePda,
   findPoolPda,
   findReputationPda,
   findVaultPda,
@@ -91,6 +92,7 @@ import {
 } from "../../generated";
 import type { AccountBaseHooks, AdminMerchantRef } from "./accounts-types";
 import { PLAN_TERMS_VERSION } from "./terms";
+import { quoteTerms } from "./terms";
 import {
   CuotasError,
   type CounterOrder,
@@ -795,11 +797,9 @@ async function readProgramAccount<T>(
 // ---------------------------------------------------------------------------
 
 /**
- * Cantidad de cuotas por plan. Estructural del programa, no configurable:
- * `INSTALLMENT_COUNT` en `programa/programs/cuotas/src/constants.rs` y
- * `[Installment; 3]` en el IDL (ronda 4: "3 cuotas mensuales fijas").
+ * Slots máximos del programa. El número de cuotas activas se guarda en Plan.
  */
-const INSTALLMENT_COUNT = 3;
+const MAX_INSTALLMENTS = 6;
 
 const PROTOCOL_STATE_NAMES = ["Normal", "Halted", "WithdrawsOnly"] as const;
 
@@ -817,7 +817,31 @@ function mapConfig(d: GeneratedProtocolConfig): ProtocolConfig {
     interestBps: t.interestBps,
   }));
   if (tiers.length !== 4) {
-    throw new CuotasError("unavailable", "La config onchain no trae 4 escalones");
+    throw new CuotasError("unavailable", "La config onchain no trae 4 tiers garantizados");
+  }
+  const planOptions = d.planOptions.map((option) => {
+    if (option.installments !== 3 && option.installments !== 6) {
+      throw new CuotasError("unavailable", `Opción de cuotas inválida: ${option.installments}`);
+    }
+    return {
+      installments: option.installments,
+      interestTotalBps: option.interestTotalBps,
+      minPrice: safeMicro(option.minPrice, "plan_option.min_price"),
+      enabled: option.enabled,
+      provisional: false,
+    } as const;
+  });
+  const settlementIds = ["immediate", "deferred_30", "deferred_60", "deferred_90"] as const;
+  const settlementOptions = d.settlementOptions.map((option, index) => ({
+    id: settlementIds[index] ?? "immediate",
+    days: option.days,
+    tranches: option.tranches,
+    feeBps: option.feeBps,
+    enabled: option.enabled,
+    provisional: false,
+  }));
+  if (planOptions.length !== 2 || settlementOptions.length !== 4) {
+    throw new CuotasError("unavailable", "La config onchain trae opciones incompletas");
   }
   return {
     admin: String(d.admin),
@@ -828,9 +852,11 @@ function mapConfig(d: GeneratedProtocolConfig): ProtocolConfig {
     guarantorNoticeDay: d.guarantorNoticeDay,
     guarantorChargeDay: d.guarantorChargeDay,
     secondsPerDay: d.secondsPerDay,
-    installmentsCount: INSTALLMENT_COUNT,
+    installmentsCount: 3,
     installmentIntervalDays: d.installmentIntervalDays,
     guaranteedTiers: tiers as ProtocolConfig["guaranteedTiers"],
+    planOptions,
+    settlementOptions,
     minFinancedToCount: safeMicro(d.minFinancedToCount, "min_financed_to_count"),
     state: mapProtocolState(d.state),
     usdcMint: String(d.usdcMint),
@@ -896,8 +922,6 @@ function mapGuarantee(student: WalletAddress, data: {
   };
 }
 
-const bpsOf = (amount: Micro, bps: number): Micro => Math.floor((amount * bps) / 10_000);
-
 /**
  * Días de atraso espejando `Installment::days_late` del programa: diferencia
  * cruda si es ≤ 0, piso de la división si es positiva.
@@ -947,10 +971,11 @@ export function mapPlan(
   now: UnixSeconds,
   signature: string,
 ): Plan {
-  if (data.installments.length !== INSTALLMENT_COUNT) {
-    throw new CuotasError("unavailable", "El plan onchain no trae 3 cuotas");
+  const count = data.installmentCount;
+  if (count !== 3 && count !== 6 || data.installments.length !== MAX_INSTALLMENTS) {
+    throw new CuotasError("unavailable", "El plan onchain trae una cantidad de cuotas inválida");
   }
-  const installments = data.installments.map((raw, index) =>
+  const installments = data.installments.slice(0, count).map((raw, index) =>
     displayInstallment(raw, index, config, now),
   );
   const status: PlanStatus = installments.some((i) => i.status === "Late") ? "Late" : "Active";
@@ -959,21 +984,22 @@ export function mapPlan(
   const financed = safeMicro(data.financed, "plan.financed");
   const merchantFee = safeMicro(data.merchantFee, "plan.merchant_fee");
   const interest = safeMicro(data.interest, "plan.interest");
+  const settlementFeeBps = financed > 0 ? Math.round((merchantFee * 10_000) / financed) : config.feeBps;
+  const settlementOption = config.settlementOptions?.find((option) => option.feeBps === settlementFeeBps);
   // Términos del programa (3 cuotas fijas, cobro inmediato): las tasas se
   // derivan de los montos grabados en la cuenta, no de la config actual.
   const tierIdx = (data.tier >= 0 && data.tier <= 3 ? data.tier : 0) as TierIndex;
   const terms: PlanTerms = {
     termsVersion: PLAN_TERMS_VERSION,
-    installmentsCount: INSTALLMENT_COUNT,
+    installmentsCount: count,
     interestTotalBps: financed > 0 ? Math.round((interest * 10_000) / financed) : 0,
     downPaymentBps: price > 0 ? Math.round((downPayment * 10_000) / price) : 0,
     coverageBps: data.withGuarantee
       ? (config.guaranteedTiers[tierIdx]?.guarantorCoverageBps ?? 0)
       : 0,
-    settlementId: "immediate",
-    settlementDays: 0,
-    settlementFeeBps:
-      financed > 0 ? Math.round((merchantFee * 10_000) / financed) : config.feeBps,
+    settlementId: settlementOption?.id ?? "immediate",
+    settlementDays: settlementOption?.days ?? 0,
+    settlementFeeBps,
     provisional: false,
   };
   return {
@@ -1011,27 +1037,35 @@ export function computeRealQuote(
   const tier = reputation?.tier ?? 0;
   const withGuarantee = guarantee?.active === true;
   const tierParams = config.guaranteedTiers[tier];
-
-  const downPayment = bpsOf(price, tierParams.downPaymentBps);
-  const financed = price - downPayment;
-  const interest = bpsOf(financed, tierParams.interestBps);
-  const repayable = financed + interest;
-  const base = Math.floor(repayable / config.installmentsCount);
-  const installments = Array.from({ length: config.installmentsCount }, (_, i) =>
-    i === config.installmentsCount - 1 ? repayable - base * (config.installmentsCount - 1) : base,
-  );
-  const merchantFee = bpsOf(financed, config.feeBps);
-  const requiredCoverage = bpsOf(repayable, tierParams.guarantorCoverageBps);
+  const requestedPlan = options?.installments ?? 3;
+  const requestedSettlement = options?.settlement ?? "immediate";
+  const planOption = config.planOptions?.find((o) => o.installments === requestedPlan);
+  const settlementOption = config.settlementOptions?.find((o) => o.id === requestedSettlement);
+  const terms = planOption && settlementOption && settlementOption.feeBps !== null
+    ? quoteTerms({
+        price,
+        tier: tierParams,
+        plan: planOption,
+        settlement: {
+          days: settlementOption.days,
+          tranches: settlementOption.tranches,
+          feeBps: settlementOption.feeBps,
+        },
+        openedAt: 0,
+        secondsPerDay: config.secondsPerDay,
+      })
+    : quoteTerms({
+        price,
+        tier: tierParams,
+        plan: { installments: config.installmentsCount, interestTotalBps: 0 },
+        settlement: { days: 0, feeBps: config.feeBps },
+      });
 
   const reasons: QuoteBlockReason[] = [];
-  // El programa on-chain solo soporta la opción por defecto (3 cuotas, cobro
-  // inmediato). Cualquier otra opción pedida cotiza no elegible.
-  if (
-    (options?.installments !== undefined && options.installments !== INSTALLMENT_COUNT) ||
-    (options?.settlement !== undefined && options.settlement !== "immediate")
-  ) {
+  if (!planOption?.enabled || !settlementOption?.enabled || settlementOption.feeBps === null) {
     reasons.push("option_unavailable");
   }
+  if (planOption && price < planOption.minPrice) reasons.push("below_option_min");
   if (config.state !== "Normal") reasons.push("protocol_halted");
   if (reputation?.blockedFromNewPlans) reasons.push("blocked_after_default");
   if (hasActivePlan) reasons.push("has_active_plan");
@@ -1039,28 +1073,28 @@ export function computeRealQuote(
   if (price > tierParams.maxPurchase) reasons.push("exceeds_tier_max");
   if (withGuarantee && guarantee) {
     if (price > guarantee.maxPurchase) reasons.push("exceeds_guarantor_max_purchase");
-    if (requiredCoverage > guarantee.coverageMax) reasons.push("exceeds_guarantee_coverage");
+    if (terms.requiredCoverage > guarantee.coverageMax) reasons.push("exceeds_guarantee_coverage");
   }
 
   return {
     price,
     tier,
     withGuarantee,
-    downPayment,
-    financed,
-    installments,
-    interest,
-    total: price + interest,
-    merchantFee,
-    merchantReceives: price - merchantFee,
-    merchantAdvance: price - merchantFee,
-    merchantPending: 0,
-    payoutTranches: [],
-    requiredCoverage,
-    installmentsCount: config.installmentsCount,
-    interestTotalBps: tierParams.interestBps,
-    settlementId: "immediate",
-    settlementDays: 0,
+    downPayment: terms.downPayment,
+    financed: terms.financed,
+    installments: terms.installments,
+    interest: terms.interest,
+    total: terms.total,
+    merchantFee: terms.merchantFee,
+    merchantReceives: terms.merchantReceives,
+    merchantAdvance: terms.merchantAdvance,
+    merchantPending: terms.merchantPending,
+    payoutTranches: terms.payoutTranches,
+    requiredCoverage: terms.requiredCoverage,
+    installmentsCount: terms.installments.length,
+    interestTotalBps: terms.interestTotalBps,
+    settlementId: settlementOption?.id ?? "immediate",
+    settlementDays: terms.settlementDays,
     provisional: false,
     eligible: reasons.length === 0,
     reasons,
@@ -1807,17 +1841,6 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     },
 
     async openPlan(args): Promise<TxResult<Plan>> {
-      // El programa solo abre planes de 3 cuotas con cobro inmediato: otra
-      // opción se rechaza sin pedir wallet ni simular.
-      if (
-        (args.installments !== undefined && args.installments !== INSTALLMENT_COUNT) ||
-        (args.settlement !== undefined && args.settlement !== "immediate")
-      ) {
-        throw new CuotasError(
-          "option_unavailable",
-          "el programa on-chain solo soporta 3 cuotas y cobro inmediato",
-        );
-      }
       const ctx = await writeCtx(overrides);
       const studentAddr = asAddress(args.student, "estudiante");
       if (String(ctx.signer.address) !== String(studentAddr)) {
@@ -1845,6 +1868,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         reputation,
         guarantee,
         existing.some((p) => p.status === "Active" || p.status === "Late"),
+        { installments: args.installments ?? 3, settlement: args.settlement ?? "immediate" },
       );
       if (!quote.eligible) {
         throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
@@ -1894,6 +1918,15 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         { student: studentAddr },
         { programAddress: ctx.env.programId },
       );
+      const [payoutSchedulePda] = await findPayoutSchedulePda(
+        { plan: planPda },
+        { programAddress: ctx.env.programId },
+      );
+      const planOption = config.planOptions?.find((option) => option.installments === quote.installmentsCount);
+      const settlementIndex = config.settlementOptions?.findIndex((option) => option.id === quote.settlementId) ?? -1;
+      if (!planOption || settlementIndex < 0) {
+        throw new CuotasError("option_unavailable", "opción no configurada por el programa");
+      }
       const ix = getOpenPlanInstruction({
         student: ctx.signer,
         config: configPda,
@@ -1911,7 +1944,10 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         // `open_plan.rs` para la cuenta opcional).
         guarantee: guarantee ? guaranteePda : ctx.env.programId,
         plan: planPda,
+        payoutSchedule: payoutSchedulePda,
         price: args.price,
+        installments: planOption.installments,
+        settlement: settlementIndex,
       });
       // Primera compra sin Reputation on-chain: la misma transacción lleva
       // student_init_reputation ANTES de open_plan. Anchor deserializa cada
@@ -2341,6 +2377,3 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
 // - `guarantor_notice_day` se mapea directo de `ProtocolConfig` (día 3 por
 //   defecto en el seed, ronda 2 Q2). Nombre del comercio: etiqueta derivada
 //   (el programa no lo guarda).
-
-
-

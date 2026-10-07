@@ -38,6 +38,7 @@ export type JournalKind =
   | "LOSS_PROPOSED"
   | "NOTIFIED"
   | "GUARANTEE_REGISTERED"
+  | "PAYOUT_RELEASED"
   | "ERROR";
 
 export interface JournalRecord {
@@ -57,7 +58,7 @@ export interface JournalRecord {
 
 export interface Proposal {
   id: string;
-  kind: "mark_late" | "charge" | "notify" | "recover" | "loss";
+  kind: "mark_late" | "charge" | "notify" | "recover" | "loss" | "release_payout";
   key: string;
   planId: string;
   installment: number;
@@ -77,6 +78,7 @@ const TERMINAL: ReadonlySet<JournalKind> = new Set([
   "LOSS_PROPOSED",
   "NOTIFIED",
   "GUARANTEE_REGISTERED",
+  "PAYOUT_RELEASED",
 ]);
 
 export class Journal {
@@ -177,7 +179,9 @@ export class Journal {
       if (terminal.has(r.key)) continue;
       latest.set(r.key, {
         id: r.proposalId,
-        kind: r.detail.startsWith("mark_late")
+        kind: r.detail.startsWith("release_payout")
+          ? "release_payout"
+          : r.detail.startsWith("mark_late")
           ? "mark_late"
           : r.detail.startsWith("notify")
             ? "notify"

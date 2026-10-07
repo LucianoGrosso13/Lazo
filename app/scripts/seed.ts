@@ -72,8 +72,8 @@ import { CuotasError } from "../src/lib/cuotas/types";
 
 const USDC = 1_000_000;
 
-// Valores iniciales de `admin_init_config`: tabla de la ronda 4 + Q15-Q16 de
-// `proyecto/02-validacion.md` (interés 0%, comercio paga 7% sobre lo financiado).
+// Parámetros aprobados del producto final: 3/6 cuotas con fiador y cobro en
+// tramos. El script conserva dry-run por defecto y `--send` pide aprobación.
 export function defaultConfigParams(
   keeper: Address,
   treasury: Address,
@@ -98,8 +98,17 @@ export function defaultConfigParams(
     secondsPerDay,
     installmentIntervalDays: intervalDays,
     minFinancedToCount: 100 * USDC,
-    guaranteedTiers: [t(3000, 1000, 10_000), t(2000, 1000, 9000), t(1000, 1250, 8000), t(0, 1500, 7000)],
-    unguaranteedTiers: [t(5000, 150, 0), t(3000, 300, 0)],
+    guaranteedTiers: [t(3000, 1000, 10_000), t(2000, 1000, 10_000), t(1000, 1250, 10_000), t(0, 1500, 10_000)],
+    planOptions: [
+      { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true },
+      { installments: 6, interestTotalBps: 300, minPrice: 350 * USDC, enabled: true },
+    ],
+    settlementOptions: [
+      { days: 0, tranches: 0, feeBps: 700, enabled: true },
+      { days: 30, tranches: 1, feeBps: 625, enabled: true },
+      { days: 60, tranches: 2, feeBps: 575, enabled: true },
+      { days: 90, tranches: 3, feeBps: 525, enabled: true },
+    ],
   };
 }
 

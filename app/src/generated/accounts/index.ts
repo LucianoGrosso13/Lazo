@@ -8,6 +8,7 @@
 
 export * from './guarantee';
 export * from './merchant';
+export * from './payoutSchedule';
 export * from './plan';
 export * from './pool';
 export * from './protocolConfig';

@@ -5,9 +5,10 @@
 // Tests and future real implementations inject their own adapter.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { PlanView, PolicyConfig } from "./policy.ts";
+import type { PayoutScheduleView, PlanView, PolicyConfig } from "./policy.ts";
 
 export type { PlanView, PolicyConfig };
+export type { PayoutScheduleView };
 
 export interface SubscriberBinding {
   subscriberId: string;
@@ -36,6 +37,8 @@ export interface ChainAdapter {
   getConfig(): Promise<PolicyConfig>;
   /** Active/Late plans with their installments. */
   listPlans(): Promise<PlanView[]>;
+  /** Schedules with due, unreleased tranches; read-only dry-run discovery. */
+  listPayoutSchedules?(): Promise<PayoutScheduleView[]>;
   /** Guarantor subscriber binding for a student (off-chain store). */
   getBinding(student: string): Promise<SubscriberBinding | null>;
   /**
@@ -74,6 +77,9 @@ export class StubAdapter implements ChainAdapter {
   async listPlans(): Promise<PlanView[]> {
     throw new Error("pending_client: no chain reads without the generated client");
   }
+  async listPayoutSchedules(): Promise<PayoutScheduleView[]> {
+    return [];
+  }
   async getBinding(_student: string): Promise<SubscriberBinding | null> {
     return null;
   }
@@ -96,6 +102,7 @@ export class StubAdapter implements ChainAdapter {
 export interface MockAdapterScript {
   config: PolicyConfig;
   plans: PlanView[];
+  payoutSchedules?: PayoutScheduleView[];
   bindings: Record<string, SubscriberBinding>;
   coverageCaps?: Record<string, CoverageCap>;
   /** Keeper USDC source balance. Defaults to 0 (fail closed). */
@@ -125,6 +132,9 @@ export class MockAdapter implements ChainAdapter {
   }
   async listPlans(): Promise<PlanView[]> {
     return structuredClone(this.script.plans);
+  }
+  async listPayoutSchedules(): Promise<PayoutScheduleView[]> {
+    return structuredClone(this.script.payoutSchedules ?? []);
   }
   async getBinding(student: string): Promise<SubscriberBinding | null> {
     return this.script.bindings[student] ?? null;

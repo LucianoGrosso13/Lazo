@@ -12,18 +12,18 @@ export const POOL_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([241, 154, 
 
 export function getPoolDiscriminatorBytes(): ReadonlyUint8Array { return fixEncoderSize(getBytesEncoder(), 8).encode(POOL_DISCRIMINATOR); }
 
-export type Pool = { discriminator: ReadonlyUint8Array; juniorShares: bigint; seniorShares: bigint; juniorCapital: bigint; seniorCapital: bigint; outstandingCredit: bigint; accruedFees: bigint; bump: number;  };
+export type Pool = { discriminator: ReadonlyUint8Array; committedPayouts: bigint; juniorShares: bigint; seniorShares: bigint; juniorCapital: bigint; seniorCapital: bigint; outstandingCredit: bigint; accruedFees: bigint; bump: number;  };
 
-export type PoolArgs = { juniorShares: number | bigint; seniorShares: number | bigint; juniorCapital: number | bigint; seniorCapital: number | bigint; outstandingCredit: number | bigint; accruedFees: number | bigint; bump: number;  };
+export type PoolArgs = { committedPayouts: number | bigint; juniorShares: number | bigint; seniorShares: number | bigint; juniorCapital: number | bigint; seniorCapital: number | bigint; outstandingCredit: number | bigint; accruedFees: number | bigint; bump: number;  };
 
 /** Gets the encoder for {@link PoolArgs} account data. */
 export function getPoolEncoder(): FixedSizeEncoder<PoolArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['juniorShares', getU64Encoder()], ['seniorShares', getU64Encoder()], ['juniorCapital', getU64Encoder()], ['seniorCapital', getU64Encoder()], ['outstandingCredit', getU64Encoder()], ['accruedFees', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: POOL_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['committedPayouts', getU64Encoder()], ['juniorShares', getU64Encoder()], ['seniorShares', getU64Encoder()], ['juniorCapital', getU64Encoder()], ['seniorCapital', getU64Encoder()], ['outstandingCredit', getU64Encoder()], ['accruedFees', getU64Encoder()], ['bump', getU8Encoder()]]), (value) => ({ ...value, discriminator: POOL_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link Pool} account data. */
 export function getPoolDecoder(): FixedSizeDecoder<Pool> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['juniorShares', getU64Decoder()], ['seniorShares', getU64Decoder()], ['juniorCapital', getU64Decoder()], ['seniorCapital', getU64Decoder()], ['outstandingCredit', getU64Decoder()], ['accruedFees', getU64Decoder()], ['bump', getU8Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['committedPayouts', getU64Decoder()], ['juniorShares', getU64Decoder()], ['seniorShares', getU64Decoder()], ['juniorCapital', getU64Decoder()], ['seniorCapital', getU64Decoder()], ['outstandingCredit', getU64Decoder()], ['accruedFees', getU64Decoder()], ['bump', getU8Decoder()]]);
 }
 
 /** Gets the codec for {@link Pool} account data. */
@@ -76,5 +76,5 @@ export async function fetchAllMaybePool(
 }
 
 export function getPoolSize(): number {
-  return 57;
+  return 65;
 }

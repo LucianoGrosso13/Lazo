@@ -46,7 +46,7 @@ describe("seed parseArgs (puro, sin red)", () => {
 });
 
 describe("seed defaultConfigParams (reglas de negocio)", () => {
-  it("fija fee 7%, gracia 5, aviso día 3, cobro día 15 y 4+2 escalones", () => {
+  it("fija los parámetros 3/6 cuotas, cobertura total y cuatro plazos de cobro", () => {
     const p = defaultConfigParams(address(ADDR), address(ADDR), 86_400, 30);
     expect(p.feeBps).toBe(700);
     expect(p.penaltyBps).toBe(500);
@@ -54,8 +54,15 @@ describe("seed defaultConfigParams (reglas de negocio)", () => {
     expect(p.guarantorNoticeDay).toBe(3);
     expect(p.guarantorChargeDay).toBe(15);
     expect(p.guaranteedTiers).toHaveLength(4);
-    expect(p.unguaranteedTiers).toHaveLength(2);
+    expect(p.guaranteedTiers.map((tier) => tier.guarantorCoverageBps)).toEqual([10_000, 10_000, 10_000, 10_000]);
     expect(p.guaranteedTiers[0].downPaymentBps).toBe(3000);
+    expect(p.planOptions).toEqual([
+      { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true },
+      { installments: 6, interestTotalBps: 300, minPrice: 350_000_000, enabled: true },
+    ]);
+    expect(p.settlementOptions.map((option) => [option.days, option.tranches, option.feeBps])).toEqual([
+      [0, 0, 700], [30, 1, 625], [60, 2, 575], [90, 3, 525],
+    ]);
   });
 });
 

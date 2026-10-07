@@ -10,11 +10,9 @@ dir 0700 / files 0600); it is never committed or printed.
 ## What this does
 
 Devnet runs the old binary today (sha `8d05b07f`, 469,824 bytes — no credit
-lifecycle). The reviewed artifact (`target/deploy/cuotas.so`, sha
-`751cba9da6e1866d96ea486c9f75a7b30b4551074fb346910ce223e6f2a72374`,
-610,320 bytes, 137+36 tests green) adds `open_plan`, `pay_installment`,
-`crank_mark_late`, `keeper_register_recovery` and the `guarantor_notice_day`
-config field. `admin_init_config` **cannot run against the old binary**: the
+lifecycle). The locally rebuilt artifact (`target/deploy/cuotas.so`, sha
+`ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19`,
+668,592 bytes; compiled with Anchor CLI 1.2.0 / Solana 3.1.14 / `--arch v1`) adds 3/6-installment plans with mandatory guarantor coverage of principal + interest, configurable 3/6 plan options, four merchant settlement options, `PayoutSchedule` commitments, and permissionless `release_payout`, alongside `open_plan`, `pay_installment`, `crank_mark_late` and `keeper_register_recovery`. `admin_init_config` **cannot run against the old binary**: the
 `ConfigParams` layout changed, so init with the new client fails with
 `InvalidConfig 6010` (verified by dry-run simulation on 2026-10-06).
 Upgrade first, then init.
@@ -24,20 +22,20 @@ Upgrade first, then init.
 | item | value |
 |---|---|
 | Program | `E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ` (deployed bytecode sha `8d05b07f…`) |
-| ProgramData | `4d24CoS6PMzHVx38y9hvgMfZGpvpM68tcm4QbfM4DHum` (469,869 B; the CLI auto-extends it for the larger binary — extension rent ≈ +0.71 SOL, the account keeps its address) |
+| ProgramData | `4d24CoS6PMzHVx38y9hvgMfZGpvpM68tcm4QbfM4DHum` (469,869 B currently; after previous extension 610,365 B; the account keeps its address) |
 | Deployer / upgrade authority | `BY6ZB2WD76wLLTNoWg2sM14RbXsgivcwkgLK4dZWMehf` — balance **0.2204 SOL** |
 | Stranded buffer (from the interrupted first deploy) | `DUgcg4Y2FTujLeV1X4CQPVAogPyrgsHopZgnxP56ddNW` — **2.38758476 SOL**, 469,861 B. Too small for the new artifact; closing recovers the SOL. |
 | devUSDC mint | `8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y` (supply 0, mint authority = deployer) |
 
 ## Funding math (devnet lamports, observed ~5,081 lamports/byte rent-exempt)
 
-- New buffer: 37-byte header + 610,320 B program → ~610,357 B ≈ **3.10 SOL** upfront.
-- ProgramData auto-extend: +140,496 B (610,365 − 469,869) ≈ **+0.71 SOL** (permanent).
-- After the upgrade lands, the buffer is closed and its ~3.10 SOL returns to
-  the fee payer — net cost ≈ 0.72 SOL + fees, but ~**3.85 SOL must be
+- New buffer: 37-byte header + 668,592 B program → 668,629 B ≈ **3.40 SOL** upfront at the observed ~5,081 lamports/byte.
+- ProgramData is currently 610,365 B; auto-extend is about +58,264 B ≈ **+0.30 SOL** (permanent).
+- After the upgrade lands, the buffer is closed and its ~3.40 SOL returns to
+  the fee payer — net cost ≈ 0.30 SOL + fees, but ~**3.40 SOL must be
   available at buffer creation**.
 - Available: 0.22 (deployer) + 2.39 (closing the stranded buffer) = 2.61 →
-  **~1.25 SOL short** → faucet top-up of **2 SOL** (margin for retries).
+  **~0.79 SOL short** → faucet top-up of **2 SOL** (margin for retries).
 
 ## Step 0 — faucet top-up (2 SOL)
 
@@ -65,8 +63,8 @@ second buffer (devnet congestion caused 3 retries last time).
 
 ```sh
 sha256sum programa/target/deploy/cuotas.so
-# must print 751cba9da6e1866d96ea486c9f75a7b30b4551074fb346910ce223e6f2a72374
-# otherwise rebuild: cd programa && NO_DNA=1 anchor build --arch v1
+# must print ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
+# if rebuilding this checkout: cd programa && NO_DNA=1 anchor build --arch v1 --ignore-keys
 
 solana program deploy programa/target/deploy/cuotas.so \
   --program-id E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ \
@@ -77,7 +75,7 @@ solana program deploy programa/target/deploy/cuotas.so \
 
 If it is interrupted: rerun the exact same command — written chunks are
 skipped. The upgrade extends ProgramData in place (same address), copies the
-buffer bytes into it, then closes the buffer: its ~3.10 SOL return to the
+buffer bytes into it, then closes the buffer: its ~3.40 SOL return to the
 deployer.
 
 ## Step 4 — verify the deployed bytes
@@ -88,13 +86,29 @@ directly:
 ```sh
 solana program dump E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ /tmp/deployed-cuotas.so -u devnet
 sha256sum /tmp/deployed-cuotas.so
-# must equal 751cba9da6e1866d96ea486c9f75a7b30b4551074fb346910ce223e6f2a72374
+# must equal ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
 ```
 
 (`solana program show E6pB2UER… -u devnet` should report a refreshed deploy
-slot and a ProgramData length of 610,365 bytes; authority `BY6ZB2…Mehf`.)
+slot and a ProgramData length of 668,629 bytes; authority `BY6ZB2…Mehf`.)
 
 ## Step 5 — seed: init + funding proposals
+
+`admin_init_config` is initialized with the product-final values from
+`app/scripts/seed.ts`:
+
+| Parameter | Value |
+|---|---|
+| Base merchant fee | 7% (immediate option; each settlement option has its own configured fee) |
+| Grace / notice / guarantor charge | 5 / day 3 / day 15 |
+| Guarantor coverage | 100% of financed principal + interest at every tier |
+| Tier down payment / max purchase | 30% / 1,000; 20% / 1,000; 10% / 1,250; 0% / 1,500 USDC |
+| Plan options | 3 installments: 0 bps, no minimum; 6 installments: 300 bps total, minimum 350 USDC |
+| Settlement options | 0 days / 0 tranches / 700 bps; 30 / 1 / 625; 60 / 2 / 575; 90 / 3 / 525 |
+| Installment interval | 30 protocol days |
+
+The seed remains dry-run unless `--send` is supplied and every proposal is
+approved explicitly. Do not approve or run it as part of this runbook review.
 
 Dry-run first (no signature; simulates each tx against the live program):
 
@@ -129,8 +143,10 @@ Notes:
   re-running after a partial failure is safe.
 - Keeper/ treasury default to the fee payer; pass `--keeper`/`--treasury` for
   dedicated keys (recommended: a separate keeper keypair in `$CUOTAS_KEYS`,
-  funded with a little SOL — the keeper signs `crank_mark_late` and
-  `keeper_register_recovery`).
+  funded with a little SOL — existing approved effects include `crank_mark_late`
+  and `keeper_register_recovery`). The ticket 04 payout crank discovers overdue
+  `PayoutSchedule` tranches and records dry-run `release_payout` proposals; it
+  does not sign or send payout transactions.
 
 ## Step 6 — smoke test
 
