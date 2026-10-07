@@ -2,6 +2,10 @@
 
 Actualizado: 2026-10-07. Fuentes: pedido explícito de Luciano en esta sesión y antecedente D8 del plan recuperado de GitHub (ver 09). Este documento y el addendum vigente de `02-validacion.md` prevalecen sobre tablas históricas. Estado: **decisiones de producto documentadas; nuevas modalidades aún no implementadas ni validadas comercialmente**.
 
+## Addendum 2026-10-07 (tarde): valores provisionales para la demo
+
+Pedido de Luciano en sesión: **solo 3 o 6 cuotas** (se saca 1 cuota); **6 cuotas con interés total provisional del 3%** sobre lo financiado, elegido por análisis entre 2% y 3%; **el comercio paga menos si espera**: hoy 7%, 30 días 6,25%, 60 días 5,5%, 90 días 5,25% sobre lo financiado, misma escala para 3 y 6 cuotas. Análisis, supuestos y script en [`10-tasa-6-cuotas-y-cobro-diferido.md`](10-tasa-6-cuotas-y-cobro-diferido.md). Son valores de config para la demo mock en devnet, rotulados "provisional"; no son tarifas comerciales aprobadas ni están en el programa. Esto reemplaza, solo para la demo, las filas "1 cuota" y "a definir" de la tabla siguiente.
+
 ## Cuotas y cobro al comercio
 
 | Modalidad | Costo para el comprador | Costo para el comercio | Estado |
