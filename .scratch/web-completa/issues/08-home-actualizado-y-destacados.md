@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/app/page.tsx`, `app/src/components/landing/hero.tsx`, `sections.tsx`, `landing.module.css`, `atmosphere.tsx`, `motion-policy.tsx`, `gpu-fog.tsx`, `split.ts`, `use-config.ts`, `reference.ts`, diccionarios `landing-hero.ts`, `landing-sections.ts`, y la `metadata` de `app/src/app/layout.tsx` (solo `title`/`description`; el resto del layout es del 03). **No cambiar firmas** de `split.ts`, `use-config.ts`, `reference.ts` ni el export `SPECTRUM`/`MotionLink`/`ChangingNumber` de `hero.tsx` (los usan checkout y tienda). `prism-stage*` es del 05.
 
@@ -14,10 +14,10 @@ Notas:
 - La escalera tiene que decir que subir de escalón baja anticipo y sube tope, **no** baja la cobertura del fiador.
 - Tarjetas de comercio destacado con fallback de imagen si falta la foto. Etiqueta "demo".
 
-- [ ] Hero y metadata sin "sin interés" absoluto; 3/6 explicado con números de la config
-- [ ] Sección de audiencias, destacados, "Qué viene" y estado de la demo actualizados en ES y EN
-- [ ] Cobertura 100% visible en la escalera, sin prometer que baja
-- [ ] Checkout y tienda siguen compilando y viéndose igual (APIs compartidas intactas)
-- [ ] Sin scroll horizontal a 390 px; animaciones con versión reduced-motion
-- [ ] Capturas 390/1440 (home completo) en `.scratch/web-completa/evidence/08-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Hero y metadata sin "sin interés" absoluto; 3/6 explicado con números de la config
+- [x] Sección de audiencias, destacados, "Qué viene" y estado de la demo actualizados en ES y EN
+- [x] Cobertura 100% visible en la escalera, sin prometer que baja
+- [x] Checkout y tienda siguen compilando y viéndose igual (APIs compartidas intactas)
+- [x] Sin scroll horizontal a 390 px; animaciones con versión reduced-motion
+- [x] Capturas 390/1440 (home completo) en `.scratch/web-completa/evidence/08-*`
+- [x] typecheck / lint / test / build en verde

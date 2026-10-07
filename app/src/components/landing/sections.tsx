@@ -3,9 +3,26 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
-import { formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
+import {
+  DEMO_STUDENT_NEW,
+  formatUsdc,
+  planOptionsOf,
+  settlementOptionsOf,
+  toMicro,
+  type Micro,
+  type Quote,
+  type TierIndex,
+} from "@/lib/cuotas";
+import {
+  featuredMerchants,
+  getCategory,
+  type CategoryId,
+  type DemoMerchant,
+} from "@/lib/merchants";
+import { useCuotasQuery } from "@/lib/use-cuotas";
+import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
-import { useLocale, useT } from "@/i18n/locale";
+import { useLocale, useT, type Locale } from "@/i18n/locale";
 import { ChangingNumber, MotionLink, SPECTRUM } from "./hero";
 import { REFERENCE } from "./reference";
 import { merchantFeeOfPrice, splitPurchase } from "./split";
@@ -14,6 +31,16 @@ import styles from "./landing.module.css";
 
 const EXAMPLE_PRICE = toMicro(1000);
 const TIERS: TierIndex[] = [0, 1, 2, 3];
+
+/** Matiz por categoría del directorio (misma paleta del mundo Prisma). */
+const CATEGORY_HUE: Record<CategoryId, string> = {
+  electronics: "#9945FF",
+  peripherals: "#6C63FF",
+  books: "#00C2FF",
+  tools: "#19FB9B",
+  courses: "#FFB36B",
+  service: "#FF6B8B",
+};
 
 function TierIndicator() {
   const reduceMotion = useReducedMotion();
@@ -25,12 +52,138 @@ function TierIndicator() {
 export function LandingSections() {
   return (
     <div className={`${styles.landing}`}>
+      <Audiences />
+      <Installments />
       <Ladder />
       <Guarantor />
+      <Merchants />
       <Benefits />
+      <Roadmap />
       <Honest />
       <Close />
     </div>
+  );
+}
+
+function Audiences() {
+  const t = useT(landingSections).audiences;
+  const a = useT(audienceCommon);
+  const reduceMotion = useReducedMotion();
+  const cards = [
+    { href: "/para-estudiantes", name: a.pages.estudiantes.nav, ...t.cards.estudiantes, band: SPECTRUM[0] },
+    { href: "/para-comercios", name: a.pages.comercios.nav, ...t.cards.comercios, band: SPECTRUM[2] },
+    { href: "/para-inversores", name: a.pages.inversores.nav, ...t.cards.inversores, band: SPECTRUM[3] },
+  ];
+
+  return (
+    <section id="how" className={styles.section} aria-labelledby="audiences-title">
+      <div className={styles.sectionHead}>
+        <h2 id="audiences-title" className={styles.h2}>
+          {t.title}
+        </h2>
+        <p className={styles.sectionLede}>{t.lede}</p>
+      </div>
+      <div className={styles.audienceGrid}>
+        {cards.map((card) => (
+          <MotionLink
+            key={card.href}
+            href={card.href}
+            className={styles.audienceCard}
+            style={{ ["--band" as string]: card.band }}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
+            whileTap={reduceMotion ? undefined : { y: -1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <span className={styles.audienceBeam} aria-hidden />
+            <span className={styles.audienceName}>{card.name}</span>
+            <span className={styles.audienceBlurb}>{card.blurb}</span>
+            <span className={styles.audienceCta}>
+              {card.cta}
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden>
+                <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </MotionLink>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Installments() {
+  const t = useT(landingSections).installments;
+  const { locale } = useLocale();
+  const config = useProtocolConfig();
+  const options = config ? planOptionsOf(config).filter((o) => o.enabled) : [];
+  // Ejemplo con la cotización real: el estudiante nuevo de la demo (escalón 0).
+  const key = options.map((o) => o.installments).join("-");
+  const quotesQ = useCuotasQuery(
+    options.length > 0 ? ["landing-plan-example", key] : null,
+    async (c) => {
+      const quotes = await Promise.all(
+        options.map((o) =>
+          c.quote(EXAMPLE_PRICE, DEMO_STUDENT_NEW, { installments: o.installments }),
+        ),
+      );
+      return Object.fromEntries(options.map((o, i) => [o.installments, quotes[i]]));
+    },
+  );
+  if (!config || options.length === 0) return null;
+  const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
+  const nf = (v: number, d = 2) =>
+    new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: d }).format(v);
+  const quotes = (quotesQ.data ?? {}) as Record<number, Quote>;
+
+  return (
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="installments-title">
+      <div className={styles.sectionHead}>
+        <h2 id="installments-title" className={styles.h2}>
+          {t.title}
+        </h2>
+        <p className={styles.sectionLede}>{t.lede}</p>
+      </div>
+      <div className={styles.planGrid} role="list">
+        {options.map((o, i) => {
+          const q = quotes[o.installments];
+          return (
+            <div key={o.installments} role="listitem" className={styles.planCard} style={{ ["--band" as string]: SPECTRUM[(i + 1) % SPECTRUM.length] }}>
+              <div className={styles.planHead}>
+                <span className={styles.planCount}>
+                  {o.installments}
+                  <span className={styles.planUnit}>{t.unit(o.installments)}</span>
+                </span>
+                {o.provisional ? <span className={styles.tagBand}>{t.provisional}</span> : null}
+              </div>
+              <p className={styles.planInterest}>
+                {o.interestTotalBps === 0
+                  ? t.interestFree
+                  : t.interestTotal(nf(o.interestTotalBps / 100))}
+              </p>
+              <p className={styles.planExample}>{t.example(fmt(EXAMPLE_PRICE, 0))}</p>
+              <dl className={styles.planRows}>
+                <div className={styles.planRow}>
+                  <dt>{t.down}</dt>
+                  <dd>{q ? `US$ ${fmt(q.downPayment, 0)}` : "···"}</dd>
+                </div>
+                <div className={styles.planRow}>
+                  <dt>{t.installments}</dt>
+                  <dd>{q ? t.each(q.installmentsCount, fmt(q.installments[0])) : "···"}</dd>
+                </div>
+                <div className={styles.planRow}>
+                  <dt>{t.interest}</dt>
+                  <dd>{q ? `US$ ${fmt(q.interest)}` : "···"}</dd>
+                </div>
+                <div className={styles.planRow} data-total>
+                  <dt>{t.total}</dt>
+                  <dd>{q ? `US$ ${fmt(q.total, 0)}` : "···"}</dd>
+                </div>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+      <p className={styles.planFoot}>{t.footnote}</p>
+    </section>
   );
 }
 
@@ -44,7 +197,7 @@ function Ladder() {
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section id="how" className={styles.section} aria-labelledby="ladder-title">
+    <section className={styles.section} aria-labelledby="ladder-title">
       <div className={styles.sectionHead}>
         <h2 id="ladder-title" className={styles.h2}>
           {t.title}
@@ -87,6 +240,7 @@ function Ladder() {
       <p className={styles.ladderExample} aria-live="polite">
         <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
       </p>
+      <p className={styles.coverageNote}>{t.coverageNote}</p>
     </section>
   );
 }
@@ -164,6 +318,90 @@ function Guarantor() {
   );
 }
 
+function Merchants() {
+  const t = useT(landingSections).merchants;
+  const { locale } = useLocale();
+  const featured = featuredMerchants();
+
+  return (
+    <section className={styles.section} aria-labelledby="merchants-title">
+      <div className={styles.sectionHead}>
+        <h2 id="merchants-title" className={styles.h2}>
+          {t.title} <span className={styles.tag}>{t.demoTag}</span>
+        </h2>
+        <p className={styles.sectionLede}>{t.lede}</p>
+      </div>
+      <div className={styles.merchantGrid} role="list">
+        {featured.map((m) => (
+          <MerchantCard key={m.address} merchant={m} locale={locale} productsLabel={t.products(m.products.length)} demoTag={t.demoTag} />
+        ))}
+      </div>
+      <div className={styles.merchantFoot}>
+        <MotionLink href="/comercio" className={styles.seeAll}>
+          {t.seeAll}
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden>
+            <path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </MotionLink>
+        <p className={styles.merchantNote}>{t.footnote}</p>
+      </div>
+    </section>
+  );
+}
+
+function MerchantCard({
+  merchant: m,
+  locale,
+  productsLabel,
+  demoTag,
+}: {
+  merchant: DemoMerchant;
+  locale: Locale;
+  productsLabel: string;
+  demoTag: string;
+}) {
+  const reduceMotion = useReducedMotion();
+  const [imgFailed, setImgFailed] = useState(false);
+  const category = getCategory(m.category);
+  const photo = m.products[0]?.image;
+
+  return (
+    <MotionLink
+      href={`/comercio/${m.address}`}
+      role="listitem"
+      className={styles.merchantCard}
+      style={{ ["--band" as string]: CATEGORY_HUE[m.category] }}
+      whileHover={reduceMotion ? undefined : { y: -4 }}
+      whileTap={reduceMotion ? undefined : { y: -1 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <span className={styles.merchantMedia} aria-hidden>
+        <span className={styles.merchantMonogram}>{m.name.slice(0, 1)}</span>
+        {photo && !imgFailed ? (
+          <Image
+            src={photo}
+            alt=""
+            fill
+            sizes="(min-width: 1100px) 22rem, (min-width: 640px) 44vw, 88vw"
+            className={styles.merchantPhoto}
+            onError={() => setImgFailed(true)}
+          />
+        ) : null}
+      </span>
+      <span className={styles.merchantBody}>
+        <span className={styles.merchantName}>{m.name}</span>
+        <span className={styles.merchantMeta}>
+          {category?.label[locale]} · {m.city}
+        </span>
+        <span className={styles.merchantTags}>
+          <span className={styles.tag}>{demoTag}</span>
+          <span className={styles.merchantCount}>{productsLabel}</span>
+        </span>
+      </span>
+    </MotionLink>
+  );
+}
+
 function Benefits() {
   const s = useT(landingSections);
   const t = s.benefits;
@@ -172,7 +410,16 @@ function Benefits() {
   if (!config) return null;
   const nf = (v: number, d = 1) =>
     new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: d }).format(v);
-  const feePct = merchantFeeOfPrice(config, 0);
+  // La comisión del comercio hoy depende del plazo de cobro que elige: el
+  // rango sale de las opciones habilitadas con tarifa de la config.
+  const feePctOfPrice = (bps: number) =>
+    (bps * (10_000 - config.guaranteedTiers[0].downPaymentBps)) / 10_000 / 100;
+  const fees = settlementOptionsOf(config)
+    .filter((o) => o.enabled && o.feeBps !== null)
+    .map((o) => feePctOfPrice(o.feeBps ?? 0));
+  const feeMax = fees.length > 0 ? Math.max(...fees) : merchantFeeOfPrice(config, 0);
+  const feeMin = fees.length > 0 ? Math.min(...fees) : feeMax;
+  const feeValue = feeMin === feeMax ? `${nf(feeMax)}%` : `${nf(feeMin)}–${nf(feeMax)}%`;
   const R = REFERENCE;
 
   const rows = [
@@ -187,9 +434,9 @@ function Benefits() {
     },
     {
       who: t.rows.merchant.who,
-      value: `${nf(feePct)}%`,
+      value: feeValue,
       label: t.rows.merchant.label,
-      ours: feePct,
+      ours: feeMax,
       theirs: R.merchantFeePct.mercadoPago,
       max: R.merchantFeePct.mercadoPago,
       vs: t.rows.merchant.vs(nf(R.merchantFeePct.cuotaMipyme, 2), nf(R.merchantFeePct.mercadoPago, 2)),
@@ -206,7 +453,7 @@ function Benefits() {
   ];
 
   return (
-    <section className={styles.section} aria-labelledby="benefits-title">
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="benefits-title">
       <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>
         {t.title}
       </h2>
@@ -226,6 +473,30 @@ function Benefits() {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function Roadmap() {
+  const t = useT(landingSections).roadmap;
+
+  return (
+    <section className={styles.section} aria-labelledby="roadmap-title">
+      <div className={styles.sectionHead}>
+        <h2 id="roadmap-title" className={styles.h2}>
+          {t.title}
+        </h2>
+        <p className={styles.sectionLede}>{t.lede}</p>
+      </div>
+      <ol className={styles.roadmapRail}>
+        {t.items.map((item, i) => (
+          <li key={item.t} className={styles.roadmapStop} style={{ ["--band" as string]: SPECTRUM[i % SPECTRUM.length] }}>
+            <span className={styles.roadmapTag}>{t.tag}</span>
+            <span className={styles.roadmapT}>{item.t}</span>
+            <span className={styles.roadmapD}>{item.d}</span>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
