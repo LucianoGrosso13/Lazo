@@ -19,11 +19,20 @@ import { useLocale, useT } from "@/i18n/locale";
 import { productsByMerchant } from "@/lib/catalog";
 import { getDirectoryMerchant } from "@/lib/merchants";
 import {
+  CuotasError,
   DEMO_MERCHANT,
+  DEMO_STUDENT_NEW,
   formatUsdc,
   getCuotas,
+  settlementAvailable,
+  settlementOptionsOf,
   type Merchant,
   type ProtocolConfig,
+  type Quote,
+  type SettlementId,
+  type SettlementOption,
+  type UnixSeconds,
+  type WalletAddress,
 } from "@/lib/cuotas";
 import { REFERENCE_FIGURES } from "@/lib/cuotas/reference-figures";
 import { useCuotasQuery } from "@/lib/use-cuotas";
@@ -41,41 +50,87 @@ import {
 const fmtPct = (p01: number, locale: "es" | "en") =>
   `${fmtPct01(p01, locale)} · ${locale === "es" ? "del precio" : "of price"}`;
 
-/** El precio se refracta: lo que cobra el comercio (espectro) + la comisión. */
+/** Fecha sin hora: para vencimientos y fechas de cobro a días. */
+const fmtDia = (at: UnixSeconds, locale: "es" | "en") =>
+  new Intl.DateTimeFormat(locale === "es" ? "es-AR" : "en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(at * 1000);
+
+/**
+ * Dirección base58 en grupos de 4 caracteres: en 390 px cortar al medio deja
+ * caracteres huérfanos en la última línea; los grupos quiebran entre bloques.
+ */
+function DireccionLarga({ address }: { address: string }) {
+  const chunks = address.match(/.{1,4}/g) ?? [address];
+  return (
+    <p className="mt-1.5 font-num text-xs leading-relaxed text-ink-ghost" title={address}>
+      <span className="sr-only">{address}</span>
+      <span aria-hidden className="flex flex-wrap gap-x-2.5 gap-y-0.5">
+        {chunks.map((chunk, i) => (
+          <span key={i}>{chunk}</span>
+        ))}
+      </span>
+    </p>
+  );
+}
+
+/** El precio se refracta: lo cobrado (espectro) + lo pendiente + la comisión. */
 function SplitBanda({
   recibido,
+  pendiente,
   comision,
   locale,
   labelCobras,
+  labelPendiente,
   labelComision,
 }: {
   recibido: number;
+  pendiente: number;
   comision: number;
   locale: "es" | "en";
   labelCobras: string;
+  labelPendiente: string;
   labelComision: string;
 }) {
-  const total = recibido + comision;
+  const total = recibido + pendiente + comision;
   if (total <= 0) return null;
-  const wComision = Math.max((comision / total) * 100, 1.5);
+  const w = (v: number) => Math.max((v / total) * 100, 1.5);
+  const aria = [
+    `${labelCobras} ${formatUsdc(recibido, locale)}`,
+    pendiente > 0 ? `${labelPendiente} ${formatUsdc(pendiente, locale)}` : null,
+    `${labelComision} ${formatUsdc(comision, locale)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <div>
       <div
         className="flex h-3.5 w-full overflow-hidden rounded-full bg-beam/5"
         role="img"
-        aria-label={`${labelCobras} ${formatUsdc(recibido, locale)} · ${labelComision} ${formatUsdc(comision, locale)}`}
+        aria-label={aria}
       >
         <div
           className="h-full bg-gradient-to-r from-cyan to-green"
           style={{ width: `${(recibido / total) * 100}%` }}
         />
-        <div className="h-full bg-violet/80" style={{ width: `${wComision}%` }} />
+        {pendiente > 0 && (
+          <div className="h-full bg-backlight/60" style={{ width: `${w(pendiente)}%` }} />
+        )}
+        <div className="h-full bg-violet/80" style={{ width: `${w(comision)}%` }} />
       </div>
       <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-ink-3">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="size-2 rounded-full bg-green" />
           {labelCobras} · <span className="font-num tabular-nums">{formatUsdc(recibido, locale)}</span>
         </span>
+        {pendiente > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden className="size-2 rounded-full bg-backlight" />
+            {labelPendiente} · <span className="font-num tabular-nums">{formatUsdc(pendiente, locale)}</span>
+          </span>
+        )}
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="size-2 rounded-full bg-violet" />
           {labelComision} · <span className="font-num tabular-nums">{formatUsdc(comision, locale)}</span>
@@ -151,20 +206,22 @@ function CajaCheckout({ owner }: { owner: string }) {
           return (
             <li
               key={p.id}
-              className="flex flex-wrap items-center gap-2 rounded-xl border border-beam/10 bg-beam/[0.03] px-3 py-2"
+              className="flex flex-col gap-2.5 rounded-xl border border-beam/10 bg-beam/[0.03] px-3.5 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:px-3 sm:py-2"
             >
               <span className="text-sm text-ink">{p.name[locale]}</span>
-              <code className="min-w-0 flex-1 truncate font-num text-xs text-ink-ghost">{path}</code>
-              <button
-                type="button"
-                onClick={() => void copiar(path)}
-                className={buttonClasses("secondary", "sm")}
-              >
-                {copiado === path ? t.checkoutCopiado : t.checkoutCopiar}
-              </button>
-              <Link href={path} className={buttonClasses("ghost", "sm")}>
-                {t.checkoutAbrir}
-              </Link>
+              <code className="min-w-0 truncate font-num text-xs text-ink-ghost sm:flex-1">{path}</code>
+              <span className="flex gap-2 max-sm:w-full">
+                <button
+                  type="button"
+                  onClick={() => void copiar(path)}
+                  className={`${buttonClasses("secondary", "sm")} max-sm:flex-1`}
+                >
+                  {copiado === path ? t.checkoutCopiado : t.checkoutCopiar}
+                </button>
+                <Link href={path} className={`${buttonClasses("ghost", "sm")} max-sm:flex-1`}>
+                  {t.checkoutAbrir}
+                </Link>
+              </span>
             </li>
           );
         })}
@@ -178,7 +235,9 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
   const t = useT(comercioCuenta);
   const { locale } = useLocale();
   const ventas = merchant.sales;
-  const cobrado = ventas.reduce((acc, s) => acc + s.received, 0);
+  const pendienteTotal = merchant.pendingSettlement ?? 0;
+  const pendienteVentas = ventas.reduce((acc, s) => acc + (s.pendingSettlement ?? 0), 0);
+  const cobrado = ventas.reduce((acc, s) => acc + s.received - (s.pendingSettlement ?? 0), 0);
   const comisiones = ventas.reduce((acc, s) => acc + s.fee, 0);
 
   return (
@@ -195,13 +254,23 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
           <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
             {t.saldoHint} {t.sinCargoDeMora}
           </p>
+          <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-beam/8 pt-4">
+            <span className="text-sm text-ink-2">{t.pendienteLabel}</span>
+            <span className="font-num tabular-nums text-beam">
+              US$ {formatUsdc(pendienteTotal, locale)}
+            </span>
+            <span className="font-num text-xs text-ink-ghost">devUSDC</span>
+            <span className="text-xs leading-relaxed text-ink-ghost">{t.pendienteHint}</span>
+          </div>
           {ventas.length > 0 && (
             <div className="mt-6">
               <SplitBanda
                 recibido={cobrado}
+                pendiente={pendienteVentas}
                 comision={comisiones}
                 locale={locale}
                 labelCobras={t.splitCobras}
+                labelPendiente={t.splitPendiente}
                 labelComision={t.splitComision}
               />
             </div>
@@ -220,32 +289,241 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
           <p className="mt-4 text-sm leading-relaxed text-ink-2">{t.ventasVacia}</p>
         ) : (
           <ul className="mt-3 divide-y divide-beam/8">
-            {ventas.map((s) => (
-              <li key={s.planId} className="py-3 first:pt-2 last:pb-1">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm text-ink-3">{fmtFecha(s.at, locale)}</span>
-                  <span className="font-num text-xs tabular-nums text-ink-ghost" title={s.planId}>
-                    {t.colPrecio} {formatUsdc(s.price, locale)}
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-                  <span className="font-num text-lg tabular-nums text-beam">
-                    {formatUsdc(s.received, locale)}
-                    <span className="ml-1.5 text-xs font-normal text-ink-ghost">{t.colCobrado}</span>
-                  </span>
-                  <span className="flex flex-wrap items-center gap-2 text-xs text-ink-3">
-                    <span className="font-num tabular-nums">
-                      {t.colComision} {formatUsdc(s.fee, locale)}
+            {ventas.map((s) => {
+              const pendienteVenta = s.pendingSettlement ?? 0;
+              const settled = s.settled ?? true;
+              const days = s.settlementDays ?? 0;
+              const plazo =
+                days === 0 ? t.plazoHoy : t.plazoDias.replace("{dias}", String(days));
+              const cobroAt = s.settlementAt ?? s.at;
+              return (
+                <li key={s.planId} className="py-3 first:pt-2 last:pb-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm text-ink-3">{fmtFecha(s.at, locale)}</span>
+                    <span className="font-num text-xs tabular-nums text-ink-ghost" title={s.planId}>
+                      {t.colPrecio} {formatUsdc(s.price, locale)}
                     </span>
-                    <EvidenceMark evidence={{ kind: "signature", signature: s.signature }} />
-                  </span>
-                </div>
-              </li>
-            ))}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+                    <span className="font-num text-lg tabular-nums text-beam">
+                      {formatUsdc(s.received - pendienteVenta, locale)}
+                      <span className="ml-1.5 text-xs font-normal text-ink-ghost">
+                        {t.colCobrado}
+                      </span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-2 text-xs text-ink-3">
+                      <Chip>{plazo}</Chip>
+                      <Chip on={settled}>
+                        {settled ? t.estadoCobrada : t.estadoPendiente}
+                      </Chip>
+                      <span className="font-num tabular-nums">
+                        {t.colComision} {formatUsdc(s.fee, locale)}
+                      </span>
+                      <EvidenceMark evidence={{ kind: "signature", signature: s.signature }} />
+                    </span>
+                  </div>
+                  {days > 0 && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-ink-ghost">
+                      {settled
+                        ? t.ventaCobradaDetalle.replace("{fecha}", fmtDia(cobroAt, locale))
+                        : t.ventaPendienteDetalle
+                            .replace("{monto}", `US$ ${formatUsdc(pendienteVenta, locale)}`)
+                            .replace("{fecha}", fmtDia(cobroAt, locale))}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </GlassPanel>
     </div>
+  );
+}
+
+interface PlazosData {
+  options: SettlementOption[];
+  /** Cotización de la venta de ejemplo por plazo (null si esa lectura falló). */
+  quotes: (Quote | null)[];
+  now: UnixSeconds;
+  secondsPerDay: number;
+}
+
+/**
+ * Plazos de cobro del comercio: comisión sobre lo financiado, neto de la
+ * venta de ejemplo (`quote()` por plazo) y fecha de cobro según el reloj de
+ * demo. En la cuenta el comercio elige el predeterminado vía
+ * `setMerchantSettlement`; en la vista pública es de solo lectura.
+ */
+function PlazosCobro({
+  owner,
+  merchant,
+  editable,
+}: {
+  owner: WalletAddress;
+  merchant: Merchant;
+  editable: boolean;
+}) {
+  const t = useT(comercioCuenta);
+  const { locale } = useLocale();
+  const res = useCuotasQuery(["plazos-cobro"], async (c): Promise<PlazosData> => {
+    const [config, clock] = await Promise.all([c.getConfig(), c.getClock()]);
+    const options = settlementOptionsOf(config);
+    // Venta de ejemplo del spec: el tope del escalón inicial (precio 1.000,
+    // anticipo 300, financiado 700 en la demo). El monto sale de la config.
+    const price = config.guaranteedTiers[0].maxPurchase;
+    const quotes = await Promise.all(
+      options.map((o) =>
+        c.quote(price, DEMO_STUDENT_NEW, { settlement: o.id }).catch(() => null),
+      ),
+    );
+    return { options, quotes, now: clock.now, secondsPerDay: clock.secondsPerDay };
+  });
+  const [saving, setSaving] = useState<SettlementId | null>(null);
+  const [aviso, setAviso] = useState<"proximamente" | "error" | null>(null);
+  const actual = merchant.settlementId ?? "immediate";
+  const data = res.data;
+  const ejemplo = data?.quotes.find((q) => q !== null) ?? null;
+
+  const elegir = async (id: SettlementId) => {
+    if (!editable || saving !== null || id === actual) return;
+    setAviso(null);
+    setSaving(id);
+    try {
+      await getCuotas().setMerchantSettlement(owner, id);
+    } catch (e) {
+      // En modo real el programa cobra siempre al instante: la opción se
+      // declara "disponible próximamente" en vez de romper la pantalla.
+      setAviso(
+        e instanceof CuotasError && e.code === "option_unavailable"
+          ? "proximamente"
+          : "error",
+      );
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <GlassPanel data-testid="comercio-plazos" className="px-5 py-5">
+      <h2 className="text-base font-semibold text-beam">{t.plazosTitle}</h2>
+      <p className="mt-1 text-sm leading-relaxed text-ink-2">{t.plazosBody}</p>
+      {editable && <p className="mt-1.5 text-xs text-ink-ghost">{t.plazosElegir}</p>}
+      {aviso && (
+        <p
+          role="status"
+          className={`mt-2 text-sm ${aviso === "error" ? "text-crack" : "text-ink-2"}`}
+        >
+          {aviso === "proximamente" ? t.plazoProximamente : t.plazosError}
+        </p>
+      )}
+      {!data ? (
+        <div className="mt-4 animate-pulse space-y-2" aria-busy="true" role="status">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-12 rounded-xl bg-beam/5" />
+          ))}
+        </div>
+      ) : (
+        <>
+          <ul
+            role={editable ? "radiogroup" : "list"}
+            aria-label={t.plazosTitle}
+            className="mt-4 space-y-2"
+          >
+            {data.options.map((opt, i) => {
+              const q = data.quotes[i];
+              const available = settlementAvailable(opt);
+              const selected = actual === opt.id;
+              const plazo =
+                opt.days === 0
+                  ? t.plazoHoy
+                  : t.plazoDias.replace("{dias}", String(opt.days));
+              const fecha =
+                opt.days === 0
+                  ? t.plazoInstante
+                  : fmtDia(data.now + opt.days * data.secondsPerDay, locale);
+              const rowCls = `flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border px-4 py-3 transition-colors ${
+                selected
+                  ? "border-cyan/45 bg-cyan/[0.07]"
+                  : "border-beam/10 bg-beam/[0.03]"
+              } ${
+                editable && available && !selected && saving === null
+                  ? "hover:border-cyan/40 hover:bg-cyan/[0.04]"
+                  : ""
+              } ${!available || saving !== null ? "opacity-60" : ""}`;
+              const contenido = (
+                <>
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                    {editable && (
+                      <span
+                        aria-hidden
+                        className={`size-3.5 shrink-0 rounded-full border ${
+                          selected
+                            ? "border-cyan bg-cyan/40 shadow-[0_0_8px_rgb(0_194_255/0.45)]"
+                            : "border-beam/25"
+                        }`}
+                      />
+                    )}
+                    <span className="text-sm font-medium text-ink">{plazo}</span>
+                    {opt.provisional && (
+                      <span className="ref-tag">{t.plazoProvisional}</span>
+                    )}
+                    {selected && <Chip on>{t.plazoPredeterminado}</Chip>}
+                    {!available && <span className="ref-tag">{t.plazoAConfirmar}</span>}
+                  </span>
+                  <span className="min-w-0 text-xs text-ink-3">
+                    {opt.feeBps !== null
+                      ? `${fmtPct01(opt.feeBps / 10_000, locale)} ${t.plazoSobreFinanciado}`
+                      : t.plazoAConfirmar}
+                  </span>
+                  <span className="ml-auto flex flex-wrap items-baseline justify-end gap-x-2 text-right">
+                    <span className="font-num text-sm tabular-nums text-beam">
+                      {opt.feeBps !== null && q
+                        ? `US$ ${formatUsdc(q.merchantReceives, locale)}`
+                        : "—"}
+                    </span>
+                    <span className="text-xs text-ink-ghost">
+                      {t.plazoColFecha} {fecha}
+                    </span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={opt.id}>
+                  {editable ? (
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={!available || saving !== null}
+                      onClick={() => void elegir(opt.id)}
+                      className={`${rowCls} text-left`}
+                    >
+                      {contenido}
+                    </button>
+                  ) : (
+                    <div className={rowCls}>{contenido}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {ejemplo && (
+            <p className="mt-3 text-xs leading-relaxed text-ink-ghost">
+              {t.plazosEjemplo
+                .replace("{precio}", `US$ ${formatUsdc(ejemplo.price, locale)}`)
+                .replace("{anticipo}", `US$ ${formatUsdc(ejemplo.downPayment, locale)}`)
+                .replace("{financiado}", `US$ ${formatUsdc(ejemplo.financed, locale)}`)}
+            </p>
+          )}
+          {saving !== null && (
+            <p role="status" className="mt-2 text-xs text-ink-2">
+              {t.plazosGuardando}
+            </p>
+          )}
+        </>
+      )}
+    </GlassPanel>
   );
 }
 
@@ -278,7 +556,7 @@ function Alternativas({ config, merchant }: { config?: ProtocolConfig; merchant?
           locale={locale}
         />
         <BarraReferencia
-          nombre={t.refCuotaSimple}
+          nombre={t.refPyme}
           detalle={
             <>
               {fmtPct(REFERENCE_FIGURES.cuotaMipymeMerchantPct / 100, locale)}{" "}
@@ -340,9 +618,7 @@ export function ComercioView({
           </Chip>
           <ModeBadge />
         </div>
-        <p className="mt-1.5 break-all font-num text-xs text-ink-ghost" title={address}>
-          {address}
-        </p>
+        <DireccionLarga address={address} />
         {variante === "cuenta" && (
           <Link
             href={`/comercio/${address}`}
@@ -365,7 +641,12 @@ export function ComercioView({
           reintentar: t.reintentar,
         }}
       >
-        {(m) => <DatosComercio merchant={m} />}
+        {(m) => (
+          <div className="space-y-6">
+            <DatosComercio merchant={m} />
+            <PlazosCobro owner={address} merchant={m} editable={variante === "cuenta"} />
+          </div>
+        )}
       </Consulta>
 
       <Alternativas config={config.data} merchant={merchant.data} />
