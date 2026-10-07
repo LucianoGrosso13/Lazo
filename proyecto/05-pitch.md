@@ -25,7 +25,7 @@ Consultadas el 7/10/2026:
 
 **Por qué nosotros / hacia dónde:** Luciano e Ignacio construyen desde Tucumán una solución a un problema cercano; Solana permite registrar financiación y pagos con costos de red bajos, y las billeteras existentes son un canal propuesto para llegar a más gente.
 
-**Gancho ES:** «Trabajás, cobrás, pero cuando querés comprar en cuotas te piden una tarjeta que no tenés».
+**Gancho ES:** «En Argentina, podés ganarte la vida y aun así tener dificultades para comprar en cuotas».
 
 **One-liner EN:** “Lazo is a guarantor-backed credit layer designed to connect people without access to installments with the fintech wallets they already use.”
 
@@ -72,7 +72,7 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 
 | Slide | Headline EN | Qué mostrar / límite |
 |---|---|---|
-| 1 — Hook + Team | “You work. You earn. But you can't pay in installments.” | Luciano e Ignacio al inicio. Experiencia personal solo si la confirman; no usar “unbanked” para afirmar que no tienen cuenta |
+| 1 — Hook + Team | “In Argentina, you can earn a living and still struggle to buy in installments.” | Luciano e Ignacio al inicio. Experiencia personal solo si la confirman; no usar “unbanked” para afirmar que no tienen cuenta |
 | 2 — Problem | “Having income doesn't always mean having access to credit.” | Trabajadores con ingresos informales/parciales y estudiantes. Pie de fuente: INDEC, 45% informal employment, 31 urban areas, Q2 2026, provisional; no llamarlo tamaño de mercado |
 | 3 — Solution | “A credit layer connecting people and fintech wallets.” | Integración propuesta, comprador paga y fiador respalda. Tres cuotas sin interés y seis con interés pequeño; sin porcentaje en la voz del pitch |
 | 4 — Demo | “Choose installments. Confirm. Track your payments.” | Mostrar el checkout disponible y su estado de simulación. El recorrido final con fintech/tarjeta queda pendiente; el QR propio sigue como demo existente, no alcance universal |
@@ -87,7 +87,7 @@ Borrador revisado por pedido de Luciano: capa de crédito antes de las condicion
 
 | Tiempo | Pantalla | Guion EN |
 |---|---|---|
-| 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “You work. You earn. But when you want to pay in installments, you need a credit card you don't have.” |
+| 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “In Argentina, you can earn a living and still struggle to buy in installments.” |
 | 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. For workers paid off the books, or with only part of their income officially recorded, getting bank credit can be difficult. Students without a credit history face a similar barrier.” |
 | 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “We're building Lazo as the credit layer connecting these people with the fintech wallets they already use.” |
 | 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “Three installments without interest, or six with a small interest charge. A trusted person backs your plan and only pays if you don't.” |
