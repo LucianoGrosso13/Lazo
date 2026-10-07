@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/store/*`, `app/src/app/tienda/page.tsx` (incluida su `metadata`: hoy dice "3 cuotas sin interés"), `app/src/i18n/dictionaries/tienda.ts`. Solo lectura: `landing/split.ts`.
 
@@ -13,9 +13,9 @@ Notas:
 - Cada tarjeta: desglose de 3 cuotas como hoy + una línea "o 6 cuotas de X (interés total N%, provisional)" con `quote(..., { installments: 6 })` si la opción existe en la config.
 - Audit 390 px: el chip del reloj tapa la esquina (lo arregla el 04, no lo toques); revisá densidad, CTA "Install Phantom" y tarjetas.
 
-- [ ] Tienda muestra solo Voltia; precios y desglose de 3 cuotas iguales a hoy
-- [ ] Línea de 6 cuotas con interés y "provisional" desde `quote()`; oculta si la config no trae la opción
-- [ ] Link a `/comercio` ("Ver más comercios")
-- [ ] Sin scroll horizontal a 390 px; tap targets ≥ 40×40
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/12-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Tienda muestra solo Voltia; precios y desglose de 3 cuotas iguales a hoy
+- [x] Línea de 6 cuotas con interés y "provisional" desde `quote()`; oculta si la config no trae la opción
+- [x] Link a `/comercio` ("Ver más comercios")
+- [x] Sin scroll horizontal a 390 px; tap targets ≥ 40×40
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/12-*`
+- [x] typecheck / lint / test / build en verde
