@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
-import { CATALOG } from "@/lib/catalog";
+import { productsByMerchant } from "@/lib/catalog";
 import {
   CuotasError,
   DEMO_MERCHANT,
@@ -37,6 +37,10 @@ import styles from "./store.module.css";
 
 const noopSubscribe = () => () => {};
 const useMounted = () => useSyncExternalStore(noopSubscribe, () => true, () => false);
+
+// La tienda muestra solo los productos de Voltia (comercio del guion de
+// la demo). El resto del catálogo se descubre en el marketplace /comercio.
+const TIENDA_PRODUCTS = productsByMerchant(DEMO_MERCHANT);
 
 interface WalletView {
   guarantee: Guarantee | null;
@@ -134,12 +138,12 @@ export function TiendaPage() {
           if (e instanceof CuotasError && e.code === "not_found") return null;
           throw e;
         }),
-        ...CATALOG.map((p) => c.quote(p.price, who)),
+        ...TIENDA_PRODUCTS.map((p) => c.quote(p.price, who)),
       ]);
       return {
         guarantee,
         reputation,
-        quotes: Object.fromEntries(CATALOG.map((p, i) => [p.id, quotes[i]])),
+        quotes: Object.fromEntries(TIENDA_PRODUCTS.map((p, i) => [p.id, quotes[i]])),
       };
     },
   );
@@ -178,7 +182,7 @@ export function TiendaPage() {
     };
   };
 
-  const [featured, ...rest] = CATALOG;
+  const [featured, ...rest] = TIENDA_PRODUCTS;
   const featuredQuote = walletQ.data?.quotes[featured.id];
   const tier = featuredQuote?.tier;
   const reputation = walletQ.data?.reputation ?? null;

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** nuevo `app/src/lib/merchants/` (datos + funciones + tests), `app/src/lib/catalog.ts`, `app/src/lib/cuotas/mock/state.ts`, `app/src/lib/cuotas/mock.persistence.test.ts`, `app/src/lib/cuotas/format.ts` (solo si agregás constantes de direcciones). Ediciones mínimas de tipos en consumidores de `CATALOG`/`Product` solo si hacen falta para compilar (listarlas en el `worker_done`).
 
@@ -16,9 +16,9 @@ Notas:
 - Búsqueda: sin distinguir mayúsculas ni tildes; sobre nombre, descripción, categoría (ambos idiomas) y nombres de productos; filtro por categoría combinable; orden: destacados primero, después alfabético.
 - `state.ts`: sembrar todos los comercios (nombre, activo, saldo 0, sin ventas salvo lo que ya sembraba Voltia) y subir `STORAGE_KEY` a `lazo.mock.v3`.
 
-- [ ] ~10 comercios en 6 categorías, todos con `demo: true`, direcciones únicas y válidas
-- [ ] ids de producto únicos; todos los precios ≤ tope máximo de la config; Voltia conserva `pc`/`notebook`/`curso`
-- [ ] Tests: búsqueda con y sin tildes/mayúsculas, por producto, por categoría, combinada, sin resultados, destacados, orden estable
-- [ ] `getProduct` resuelve cualquier producto y expone su comercio; `getMerchant` del mock funciona para todos los comercios
-- [ ] Storage v3 con test de persistencia actualizado
-- [ ] typecheck / lint / test / build en verde
+- [x] ~10 comercios en 6 categorías, todos con `demo: true`, direcciones únicas y válidas
+- [x] ids de producto únicos; todos los precios ≤ tope máximo de la config; Voltia conserva `pc`/`notebook`/`curso`
+- [x] Tests: búsqueda con y sin tildes/mayúsculas, por producto, por categoría, combinada, sin resultados, destacados, orden estable
+- [x] `getProduct` resuelve cualquier producto y expone su comercio; `getMerchant` del mock funciona para todos los comercios
+- [x] Storage v3 con test de persistencia actualizado
+- [x] typecheck / lint / test / build en verde

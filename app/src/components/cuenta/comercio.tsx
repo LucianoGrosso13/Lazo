@@ -16,7 +16,8 @@ import { GlassPanel, GlassSlab } from "@/components/ui/glass";
 import { comercioCuenta } from "@/i18n/dictionaries/comercio-cuenta";
 import { cuentas } from "@/i18n/dictionaries/cuentas";
 import { useLocale, useT } from "@/i18n/locale";
-import { CATALOG } from "@/lib/catalog";
+import { productsByMerchant } from "@/lib/catalog";
+import { getDirectoryMerchant } from "@/lib/merchants";
 import {
   DEMO_MERCHANT,
   formatUsdc,
@@ -121,8 +122,8 @@ function BarraReferencia({
   );
 }
 
-/** Enlaces de checkout por producto del catálogo, copiables. Roadmap declarado. */
-function CajaCheckout() {
+/** Enlaces de checkout por producto del comercio, copiables. Roadmap declarado. */
+function CajaCheckout({ owner }: { owner: string }) {
   const t = useT(comercioCuenta);
   const { locale } = useLocale();
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -137,12 +138,15 @@ function CajaCheckout() {
     }
   };
 
+  const products = productsByMerchant(owner);
+  if (products.length === 0) return null;
+
   return (
     <GlassPanel data-testid="comercio-checkout-link" className="px-5 py-5">
       <h2 className="text-base font-semibold text-beam">{t.checkoutTitle}</h2>
       <p className="mt-1 text-sm leading-relaxed text-ink-2">{t.checkoutBody}</p>
       <ul className="mt-4 space-y-2">
-        {CATALOG.map((p) => {
+        {products.map((p) => {
           const path = `/checkout/${p.id}`;
           return (
             <li
@@ -320,7 +324,8 @@ export function ComercioView({
   const t = useT(comercioCuenta);
   const merchant = useCuotasQuery(["merchant", address], (c) => c.getMerchant(address));
   const config = useCuotasQuery(["config"], (c) => c.getConfig());
-  const esDemo = address === DEMO_MERCHANT;
+  // Todos los comercios del directorio son demo; el rotulado lo declara.
+  const esDemo = getDirectoryMerchant(address) !== null;
   const nombre = merchant.data?.name;
 
   return (
@@ -364,7 +369,7 @@ export function ComercioView({
       </Consulta>
 
       <Alternativas config={config.data} merchant={merchant.data} />
-      <CajaCheckout />
+      <CajaCheckout owner={address} />
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
 import {
   CuotasError,
-  DEMO_MERCHANT,
   formatUsdc,
   getCuotas,
   type DemoClock,
@@ -75,10 +74,16 @@ export function CheckoutScreen({
   const walletStatus: WalletStatus =
     !connected && wallet ? "connected" : mounted ? status : "pending";
 
-  const { data: base } = useCuotasQuery<BaseSlice>(["checkout-base"], async (c) => {
-    const [clock, merchant] = await Promise.all([c.getClock(), c.getMerchant(DEMO_MERCHANT)]);
-    return { clock, merchant };
-  });
+  const { data: base } = useCuotasQuery<BaseSlice>(
+    ["checkout-base", product.merchant],
+    async (c) => {
+      const [clock, merchant] = await Promise.all([
+        c.getClock(),
+        c.getMerchant(product.merchant),
+      ]);
+      return { clock, merchant };
+    },
+  );
 
   const { data: mine } = useCuotasQuery<WalletSlice>(
     wallet ? ["checkout-wallet", wallet, product.id] : null,
@@ -173,7 +178,7 @@ export function CheckoutScreen({
     try {
       const res = await getCuotas().openPlan({
         student: wallet,
-        merchant: DEMO_MERCHANT,
+        merchant: product.merchant,
         price: product.price,
         productId: product.id,
       });
