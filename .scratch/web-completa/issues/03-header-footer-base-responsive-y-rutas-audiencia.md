@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/app-header.tsx`, `app/src/app/layout.tsx`, `app/src/app/globals.css`, `app/src/i18n/dictionaries/common.ts`, la sección `chrome` de `app/src/i18n/dictionaries/design.ts`, nuevo `app/src/components/site-footer.tsx`, nuevo `app/src/components/audience/` (primitivas + tres archivos de contenido placeholder `para-estudiantes.tsx`, `para-comercios.tsx`, `para-inversores.tsx`), nuevas rutas `app/src/app/para-estudiantes/page.tsx`, `para-comercios/page.tsx`, `para-inversores/page.tsx` (con `metadata`), nuevo diccionario `app/src/i18n/dictionaries/audience-common.ts`.
 
@@ -16,10 +16,10 @@ Notas:
 - Footer: links a home, tienda, comercios, las tres páginas, pool, cuenta; leyenda "Demo simulada · Solana devnet".
 - Base responsive en `globals.css`: padding lateral consistente, `overflow-wrap` en direcciones largas, utilidades que sirvan a todos; nada de `overflow-x: hidden` global.
 
-- [ ] Nav de escritorio con dropdown accesible (teclado, Escape, click afuera) y estado activo
-- [ ] Menú móvil con todos los destinos agrupados; botón ≥ 40×40; se cierra al navegar
-- [ ] Footer global visible en todas las rutas, apilado en móvil
-- [ ] Tres rutas nuevas con metadata, usando las primitivas; primitivas documentadas con un comentario de uso breve
-- [ ] A 390 px: header sin solapamientos en `/`, `/tienda`, `/app/estudiante`, `/para-comercios` (el reloj de demo lo arregla el 04; coordiná solo si tu header le cambia la altura)
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/03-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Nav de escritorio con dropdown accesible (teclado, Escape, click afuera) y estado activo
+- [x] Menú móvil con todos los destinos agrupados; botón ≥ 40×40; se cierra al navegar
+- [x] Footer global visible en todas las rutas, apilado en móvil
+- [x] Tres rutas nuevas con metadata, usando las primitivas; primitivas documentadas con un comentario de uso breve
+- [x] A 390 px: header sin solapamientos en `/`, `/tienda`, `/app/estudiante`, `/para-comercios` (el reloj de demo lo arregla el 04; coordiná solo si tu header le cambia la altura)
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/03-*`
+- [x] typecheck / lint / test / build en verde
