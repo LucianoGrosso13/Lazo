@@ -15,6 +15,6 @@
 10. **Responsive:** a 390×844 sin scroll horizontal (`document.documentElement.scrollWidth <= clientWidth`), tap targets ≥ 40×40 px, texto de cuerpo ≥ 14 px. Arreglá la causa (grids, anchos fijos, `min-width`, tablas); no tapes con `overflow-x: hidden` global. Tablas anchas → tarjetas apiladas o scroll contenido en su propio contenedor.
 11. `prefers-reduced-motion`: toda animación nueva tiene versión quieta.
 12. Antes de terminar, desde `app/`: `npm run typecheck`, `npm run lint`, `npm test` y `npm run build` en verde. Si tu ticket es de UI, levantá `npm run dev -- --port <31NN>` (NN = número de ticket) y revisá tus pantallas a 390 y 1440 px con Playwright; guardá capturas en `.scratch/producto-final/evidence/<NN>-*.png` y mirá cada una. Cerrá tu dev server al terminar.
-13. Commits chicos en tu rama, en español, terminando con la línea `Co-Authored-By: Devin SWE-2 <noreply@cognition.ai>`. No hagas push ni merge: integra el coordinador.
+13. Commits chicos en tu rama, en español, terminando con la línea `Co-Authored-By: Gemini 3.8 Flash <noreply@google.com>`. No hagas push ni merge: integra el coordinador.
 14. Tildá los criterios de tu ticket en su archivo y cambiá `Status` a `done` (en tu rama).
 15. Al terminar, mandá `worker_done` por Orca con resumen, rama, hash del último commit, archivos tocados fuera de tu propiedad (si hubo) y rutas de las capturas.
