@@ -116,7 +116,7 @@ export const paraComercios = defineDict({
       },
       {
         q: "¿Qué pasa con una devolución?",
-        a: "Si la cancelación ocurre antes de la liberación de los tramos diferidos, se cancela la orden y se restituyen los fondos correspondientes. Si los tramos ya fueron liberados, el neto se compensa mediante el mecanismo acordado con el comercio, protegiendo siempre al fiador de cargos indebidos.",
+        a: "Todavía es una política en definición, y la cerramos con los primeros comercios. La propuesta: si los tramos todavía no se liberaron, se cancela la orden; si ya se liberaron, el neto se recupera con un mecanismo acordado. Nunca se le devuelve todo al cliente mientras al fiador le queda un cargo.",
       },
       {
         q: "¿Cómo empiezo a vender con Lazo?",
@@ -243,7 +243,7 @@ export const paraComercios = defineDict({
       },
       {
         q: "What about refunds?",
-        a: "If a cancellation occurs before deferred tranches are released, the order is cancelled and funds are returned. If tranches were already disbursed, the net amount is compensated through an agreed refund mechanism, always protecting the guarantor from improper charges.",
+        a: "This policy is still being defined, and we will settle it with the first merchants. The proposal: if the tranches have not been released yet, the order is cancelled; if they have, the net amount is recovered through an agreed mechanism. The customer never gets a full refund while the guarantor is left with a charge.",
       },
       {
         q: "How do I start selling with Lazo?",
