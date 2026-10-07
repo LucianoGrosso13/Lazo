@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
@@ -8,6 +9,7 @@ import { productsByMerchant } from "@/lib/catalog";
 import {
   CuotasError,
   DEMO_MERCHANT,
+  defaultPlanOption,
   formatUsdc,
   getCuotas,
   type Guarantee,
@@ -33,6 +35,7 @@ import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { ProductCard, type ProductTerms } from "./product-card";
+import { altPlanOption, formatBps, installmentsForOption } from "./plan-alt";
 import styles from "./store.module.css";
 
 const noopSubscribe = () => () => {};
@@ -46,6 +49,8 @@ interface WalletView {
   guarantee: Guarantee | null;
   reputation: Reputation | null;
   quotes: Record<string, Quote>;
+  /** Cotización de la opción alternativa por producto (null si no se pidió). */
+  quotesAlt: Record<string, Quote | null>;
 }
 
 type Dict = (typeof tienda)["es"];
@@ -98,8 +103,7 @@ function badgeText(
     case "protocol_halted":
       return t.reasons.protocol_halted;
     case "option_unavailable":
-      // La tienda no cotiza opciones todavía; el copy llega con su ticket.
-      return null;
+      return t.reasons.option_unavailable;
   }
 }
 
@@ -127,26 +131,42 @@ export function TiendaPage() {
   // En mock arranca con la config de demo para el primer render (como use-config).
   const config = configQ.data ?? (getCuotas().mode === "mock" ? DEMO_CONFIG : undefined);
 
+  // La alternativa habilitada que no es la opción por defecto (hoy: 6 cuotas
+  // con interés). Si la config no la trae, la vidriera no la menciona.
+  const altOpt = config ? altPlanOption(config) : undefined;
+
   const merchantQ = useCuotasQuery(["merchant"], (c) => c.getMerchant(DEMO_MERCHANT));
 
   const walletQ = useCuotasQuery(
-    mounted && student ? ["tienda", student] : null,
+    mounted && student ? ["tienda", student, altOpt?.installments ?? 0] : null,
     async (c): Promise<WalletView> => {
       // La key solo se activa con un estudiante efectivo: student no es null acá.
       const who = student ?? "";
-      const [guarantee, reputation, ...quotes] = await Promise.all([
+      const alt = altPlanOption(config ?? (await c.getConfig()));
+      const [guarantee, reputation, quotes, quotesAlt] = await Promise.all([
         c.getGuarantee(who),
         // Estudiante sin Reputation on-chain todavía: primera compra, margen intacto.
         c.getReputation(who).catch((e) => {
           if (e instanceof CuotasError && e.code === "not_found") return null;
           throw e;
         }),
-        ...TIENDA_PRODUCTS.map((p) => c.quote(p.price, who)),
+        Promise.all(TIENDA_PRODUCTS.map((p) => c.quote(p.price, who))),
+        // La alternativa se cotiza con quote() igual que en el checkout.
+        alt
+          ? Promise.all(
+              TIENDA_PRODUCTS.map((p) =>
+                c.quote(p.price, who, { installments: alt.installments }),
+              ),
+            )
+          : Promise.resolve(TIENDA_PRODUCTS.map((): Quote | null => null)),
       ]);
       return {
         guarantee,
         reputation,
         quotes: Object.fromEntries(TIENDA_PRODUCTS.map((p, i) => [p.id, quotes[i]])),
+        quotesAlt: Object.fromEntries(
+          TIENDA_PRODUCTS.map((p, i) => [p.id, quotesAlt[i] ?? null]),
+        ),
       };
     },
   );
@@ -172,15 +192,42 @@ export function TiendaPage() {
       const q = walletQ.data.quotes[id];
       if (!q) return null;
       const exposure = walletQ.data.reputation?.activeExposure ?? 0;
+      const qa = walletQ.data.quotesAlt[id];
       return {
-        terms: { tier: q.tier, downPayment: q.downPayment, installments: q.installments, blocked: q.reasons[0] ?? null },
+        terms: {
+          tier: q.tier,
+          downPayment: q.downPayment,
+          installments: q.installments,
+          blocked: q.reasons[0] ?? null,
+          alt:
+            altOpt && qa && !qa.reasons.includes("option_unavailable")
+              ? {
+                  installments: qa.installments,
+                  interestTotalBps: qa.interestTotalBps,
+                  provisional: qa.provisional,
+                }
+              : null,
+        },
         badge: badgeText(q, true, walletQ.data.guarantee, exposure, config, t, fmt),
       };
     }
     // Sin wallet: cotiza el escalón 0 (la misma cuenta que `quote()`).
     const s = splitPurchase(config, price, 0);
     return {
-      terms: { tier: 0, downPayment: s.downPayment, installments: s.installments, blocked: s.withinTier ? null : "exceeds_tier_max" },
+      terms: {
+        tier: 0,
+        downPayment: s.downPayment,
+        installments: s.installments,
+        blocked: s.withinTier ? null : "exceeds_tier_max",
+        alt: altOpt
+          ? {
+              installments: installmentsForOption(config, price, 0, altOpt),
+              interestTotalBps:
+                altOpt.interestTotalBps + config.guaranteedTiers[0].interestBps,
+              provisional: altOpt.provisional,
+            }
+          : null,
+      },
       badge: badgeText(null, s.withinTier, null, 0, config, t, fmt),
     };
   };
@@ -202,6 +249,18 @@ export function TiendaPage() {
     margin = { used: reputation.activeExposure, limit: params.maxPurchase };
   }
 
+  // La lede nombra la segunda opción con sus números solo si la config la trae.
+  const defOpt = config ? defaultPlanOption(config) : undefined;
+  const lede =
+    altOpt && defOpt
+      ? t.ledeAlt(
+          defOpt.installments,
+          altOpt.installments,
+          formatBps(altOpt.interestTotalBps, locale),
+          altOpt.provisional,
+        )
+      : t.lede;
+
   return (
     <div className={styles.page}>
       <p className={styles.banner} role="note">
@@ -215,7 +274,7 @@ export function TiendaPage() {
       <header className={styles.head}>
         <div className={styles.headText}>
           <h1 className={styles.title}>{t.title}</h1>
-          <p className={styles.lede}>{t.lede}</p>
+          <p className={styles.lede}>{lede}</p>
         </div>
         {mounted && student && (tier !== undefined || margin) ? (
           <div className={styles.headMeta}>
@@ -245,7 +304,13 @@ export function TiendaPage() {
       {mounted && !warming && !student ? (
         <GlassPanel className={`glass-deep ${styles.guest}`}>
           <p className={styles.guestText}>
-            <b>{t.guestTier}</b>
+            <b>
+              {t.guestTier(
+                config
+                  ? formatBps(config.guaranteedTiers[0].downPaymentBps, locale)
+                  : "…",
+              )}
+            </b>
             <span>{t.guestHint}</span>
           </p>
           <span className={styles.guestCta}>
@@ -283,6 +348,26 @@ export function TiendaPage() {
           </div>
         </div>
       )}
+
+      <p className={styles.moreShops}>
+        <span>{t.moreMerchantsLead}</span>
+        <Link href="/comercio" className={styles.moreLink}>
+          {t.moreMerchants}
+          <svg
+            aria-hidden
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 10h11M11 5l5 5-5 5" />
+          </svg>
+        </Link>
+      </p>
 
       <p className={styles.foot}>{t.footer}</p>
     </div>

@@ -434,6 +434,15 @@
   margin: 0;
 }
 
+/* La segunda opción de la config (hoy: 6 cuotas con interés) bajo el
+   desglose principal: una línea quieta, sin robarle la refracción. */
+.altLine {
+  margin-top: 0.1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
 .go {
   display: inline-flex;
   align-items: center;
@@ -627,6 +636,50 @@
   line-height: 1.5;
 }
 
+/* ---------- Link al marketplace ---------- */
+
+.moreShops {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+  margin-top: clamp(1.4rem, 2.6vw, 2.2rem);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.moreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem; /* tap target ≥ 40px también en escritorio */
+  padding: 0.15rem 0.45rem;
+  margin: -0.15rem -0.45rem;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 0.4s var(--ease);
+}
+
+.moreLink svg {
+  transition: transform 0.4s var(--ease);
+}
+
+.moreLink:hover {
+  color: #fff;
+}
+
+.moreLink:hover svg {
+  transform: translateX(4px);
+}
+
+.moreLink:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
 /* ---------- Pie ---------- */
 
 .foot {
@@ -647,6 +700,8 @@
 
   .go,
   .go svg,
+  .moreLink,
+  .moreLink svg,
   .bandsOut,
   .media img,
   .media::before,
@@ -663,6 +718,10 @@
 
   .card:hover .media img,
   .cardLink:focus-visible .media img {
+    transform: none;
+  }
+
+  .moreLink:hover svg {
     transform: none;
   }
 
