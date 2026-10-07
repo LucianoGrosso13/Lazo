@@ -80,13 +80,8 @@ pub fn handle_release_payout(ctx: Context<ReleasePayout>, index: u8) -> Result<(
         index,
         amount
     });
-    if ctx.accounts.schedule.tranches[..ctx.accounts.schedule.tranche_count as usize]
-        .iter()
-        .all(|tranche| tranche.released)
-    {
-        ctx.accounts
-            .schedule
-            .close(ctx.accounts.caller.to_account_info())?;
-    }
+    // The schedule stays open after the last tranche: it is the merchant's
+    // public receipt, and closing it here would hand the student's rent to
+    // whoever called the last release.
     Ok(())
 }
