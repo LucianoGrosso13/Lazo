@@ -2,16 +2,15 @@ import { expect, test } from "@playwright/test";
 
 for (const locale of ["en", "es"] as const) {
   test(`rapid slider updates one exact visible amount (${locale})`, async ({ page }) => {
+    await page.addInitScript((value) => localStorage.setItem("lazo.locale", value), locale);
     await page.goto("/", { waitUntil: "networkidle" });
-    await page.evaluate((value) => localStorage.setItem("lazo.locale", value), locale);
-    await page.reload();
     const slider = page.locator("#lazo-price");
     await page.getByRole("button", { name: /PC\s+1,000|PC\s+1\.000/i }).click();
     await expect(slider).toHaveValue("1000");
     await expect(slider).toBeVisible();
     const values = Array.from({ length: 40 }, (_, i) => 120 + ((i * 17) % 139) * 10);
     for (const value of values) {
-      const { text, visibleSpans } = await page.evaluate(async (next) => {
+      const { text, visibleSpans, totalSpans } = await page.evaluate(async (next) => {
         const input = document.querySelector<HTMLInputElement>("#lazo-price")!;
         const output = document.querySelector<HTMLOutputElement>("output[for='lazo-price']")!;
         Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, String(next));
@@ -23,12 +22,16 @@ for (const locale of ["en", "es"] as const) {
           const rect = span.getBoundingClientRect();
           return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0.05 && rect.width > 0 && rect.height > 0;
         });
-        return { text: spans.map((span) => span.innerText).join(""), visibleSpans: spans.length };
+        return {
+          text: spans.map((span) => span.innerText).join(""),
+          visibleSpans: spans.length,
+          totalSpans: output.querySelectorAll("span").length,
+        };
       }, value);
       expect(visibleSpans).toBe(1);
+      expect(totalSpans).toBe(1);
       expect(Number(text.replace(/[^0-9]/g, ""))).toBe(value);
-      await expect(page.locator("output[for='lazo-price'] span")).toHaveCount(1);
-      await expect(page.locator("output[for='lazo-price'] span")).toHaveText(new Intl.NumberFormat(locale === "en" ? "en-US" : "es-AR", { maximumFractionDigits: 0 }).format(value));
+      expect(text).toBe(new Intl.NumberFormat(locale === "en" ? "en-US" : "es-AR", { maximumFractionDigits: 0 }).format(value));
     }
   });
 }
