@@ -67,3 +67,36 @@ Del §10 del plan: **1 = seis cuotas; 2 = elegir cuándo cobrar; 10 = capital oc
 5. Elegibilidad/presupuesto de beneficios y reserva/tope de tesorería; compatibilidad devnet antes de integrar protocolos.
 
 Ninguna de estas cifras nuevas se hardcodea: el contrato de configuración debe extender `ProtocolConfig`, guardando una copia de términos en cada plan. Cambiar la config no modifica deudas ya aceptadas. Solo devnet y sandbox; cualquier transacción firmada o enviada requiere aprobación explícita.
+
+## Addendum 2026-10-07 (cierre): política comercial y de riesgo adoptada
+
+Sesión de definiciones de producto (Luciano Grosso, 2026-10-07). Establece la política definitiva para el producto final (mock y programa onchain):
+
+1. **Cuotas y tasas decididas:**
+   - **3 cuotas:** 0% de interés para el comprador, sin precio mínimo.
+   - **6 cuotas:** **3% de interés total sobre lo financiado** (elegido tras análisis contra 2,5% en doc 10, que baja el equilibrio de cliente nuevo a US$ 217). **Precio mínimo de compra: US$ 350** como colchón prudencial.
+   - La opción de 1 cuota queda definitivamente fuera de la oferta.
+
+2. **Cobro del comercio en tramos mensuales garantizados:**
+   - El anticipo se transfiere inmediatamente al comercio en el momento de la compra.
+   - Lo financiado neto (`A − F`) se paga según la opción elegida por el comercio:
+     - **Hoy (inmediato):** **7,00%** de comisión sobre lo financiado (100% al abrir).
+     - **30 días:** **6,25%** de comisión (1 tramo el día 30).
+     - **60 días:** **5,75%** de comisión (2 tramos mensuales: 50% día 30 y 50% día 60). *Nota:* se fijó 5,75% (en vez del 5,50% bullet inicial) porque con tramos mensuales la comisión neutra sin subsidio es 5,65%.
+     - **90 días:** **5,25%** de comisión (3 tramos mensuales: ⅓ día 30, ⅓ día 60 y ⅓ día 90; el último absorbe el redondeo).
+   - **Compromiso en la cadena + control de liquidez:** los tramos se registran en una cuenta PDA pública (`PayoutSchedule`) y Lazo los garantiza en cada fecha independientemente del pago del estudiante. No se usa bóveda escrow (inmovilizaría capital anulando el ahorro); en su lugar, `open_plan` exige que la liquidez líquida del pool cubra el desembolso de hoy más la suma de todos los tramos futuros comprometidos.
+   - Todas las tarifas cubren la originación de Lazo del 4% sobre lo financiado (D8).
+
+3. **Fiador obligatorio y cobertura:**
+   - **Sin fiador no hay plan:** se elimina cualquier tramo o escalón sin fiador. Toda compra requiere un fiador activo con tarjeta de crédito tokenizada.
+   - **Cobertura 100% de capital + interés:** el fiador respalda el saldo total adeudado del plan (capital financiado pendiente más el interés contractual de 6 cuotas). Los punitorios por mora quedan fuera de la fianza y se reclaman únicamente al estudiante.
+
+4. **Descuento al fiador descartado:**
+   - La idea 11 ("descuento comercial para el fiador al día") queda **descartada** del alcance y del roadmap por complejidad operativa y falta de justificación económica.
+
+5. **Venta en mostrador en el MVP:**
+   - Se incorpora al MVP el flujo de venta en mostrador por link y código QR propio (el cajero carga importe y descripción, genera el link/QR y el estudiante escanea y confirma con su identidad y fianza vigentes).
+
+6. **Tiers estandarizados:**
+   - Se fija la denominación "Tier 1 · Starter", "Tier 2 · Steady", "Tier 3 · Trusted" y "Tier 4 · Full" en todas las interfaces, con reglas transparentes de avance por planes saldados en fecha y retroceso ante cargos al fiador.
+

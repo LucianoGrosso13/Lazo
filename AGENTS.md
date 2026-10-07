@@ -20,7 +20,7 @@ Sos un compañero de equipo en una hackathon. Respondé en español rioplatense,
 ## Proyecto del equipo
 
 <!-- PROYECTO:START -->
-**Qué es:** cuotas en USDC para estudiantes sin tarjeta: 3 sin interés y 6 con interés total provisional del 3%. Fiador con tarjeta de crédito, cobertura 100% en todos los escalones y cobro solo ante impago. El comercio elige cuándo cobrar: hoy 7%, 30 días 6,25%, 60 días 5,5%, 90 días 5,25% sobre lo financiado (provisionales, ver `proyecto/10-tasa-6-cuotas-y-cobro-diferido.md`). Estas opciones viven solo en el mock; el programa sigue con 3 cuotas y cobro inmediato.
+**Qué es:** cuotas en USDC para estudiantes sin tarjeta: 3 sin interés y 6 con interés total del 3% (desde US$ 350). Fiador obligatorio con tarjeta de crédito, cobertura 100% de capital e interés y cobro solo ante impago (sin fiador no hay plan). El comercio elige cuándo cobrar: hoy 7% (inmediato), 30 días 6,25% (1 tramo a 30 días), 60 días 5,75% (2 tramos mensuales) y 90 días 5,25% (3 tramos mensuales) sobre lo financiado, garantizados por Lazo en cada fecha (ver `proyecto/10-tasa-6-cuotas-y-cobro-diferido.md`). 6 cuotas y fiador obligatorio entran al programa onchain y al mock; cobro en tramos vive en el mock con compromiso registrado.
 
 **Stack:** programa Anchor 1.2 en `programa/` (tests LiteSVM/Surfpool); front Next.js App Router + TS + Tailwind en `app/` con `@solana/kit` + `@solana/kit-plugin-wallet` + `@solana/react`; cliente generado con Codama en `app/src/generated/`; keeper en `keeper/`; Didit (KYC) y Mobbex (sandbox) desde route handlers. Todo en **devnet**, con el mint propio devUSDC.
 
