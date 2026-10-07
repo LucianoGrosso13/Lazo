@@ -4,7 +4,7 @@ import { ParaInversores } from "@/components/audience/para-inversores";
 export const metadata: Metadata = {
   title: "Inversores · Lazo",
   description:
-    "Cómo funciona Lazo para inversores: de dónde sale el rendimiento del pool, el reparto de cada compra, tramos junior/senior y riesgos explícitos, sin rendimiento prometido. Demo simulada en Solana devnet.",
+    "Cómo funciona Lazo para inversores: rendimiento objetivo del tramo senior, supuestos del modelo, desglose D8, tramos de cobro comprometidos y regla de liquidez del pool. Demo simulada en Solana devnet.",
 };
 
 // Página por audiencia: el contenido vive en components/audience/ y los

@@ -3,8 +3,8 @@ import { defineDict } from "../locale";
 /**
  * Contenido de /para-inversores (ticket 11). Todo número de negocio llega al
  * componente desde `getConfig()`/helpers de `@/lib/cuotas` y se interpola acá;
- * las cifras de escenarios son hipótesis del modelo interno documentadas en
- * `proyecto/08-minorista-y-economia.md`, no métricas medidas.
+ * los supuestos y el rendimiento objetivo se presentan como hipótesis del
+ * modelo, no como métricas medidas.
  */
 export const paraInversores = defineDict({
   es: {
@@ -16,7 +16,7 @@ export const paraInversores = defineDict({
     pool: {
       title: "De dónde sale el rendimiento",
       intro:
-        "El pool junta capital en devUSDC, el token de prueba de la demo (corre en devnet, la red de prueba de Solana: la plata es de mentira). En cada venta adelanta al comercio la parte financiada menos su comisión, y la plata vuelve cuando el comprador paga las cuotas. El rendimiento bruto nace de esa comisión y del interés de los planes de 6 cuotas; después se descuentan administración, pérdidas y el costo del capital.",
+        "El pool junta capital en devUSDC, el token de prueba de la demo (corre en devnet, la red de prueba de Solana: la plata es de mentira). En cada venta adelanta al comercio la parte financiada menos su comisión, y la plata vuelve cuando el comprador paga las cuotas. El rendimiento bruto nace de esa comisión y del interés de los planes con interés; después se descuentan administración, pérdidas y el costo del capital.",
       junior: "Tramo junior",
       juniorHint:
         "Absorbe la primera pérdida de cada crédito: más riesgo, más retorno esperado.",
@@ -41,8 +41,8 @@ export const paraInversores = defineDict({
     },
     compra: {
       title: "Una compra, paso a paso",
-      intro: (precio: string, anticipoPct: string, cuotas: number) =>
-        `Así se reparte una compra de ${precio} de un estudiante en escalón 0 con fiador (${anticipoPct} de anticipo, ${cuotas} cuotas, cobro inmediato del comercio):`,
+      intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
+        `Así se reparte una compra de ${precio} de un estudiante en ${tier} con fiador (${anticipoPct} de anticipo, ${cuotas} cuotas, cobro inmediato del comercio):`,
       steps: {
         compra: {
           title: (precio: string, anticipo: string) =>
@@ -58,12 +58,12 @@ export const paraInversores = defineDict({
         cuotas: {
           title: (cuotas: number, cuota: string, principal: string) =>
             `El comprador devuelve ${cuotas} cuotas de ${cuota}: entran ${principal} al pool`,
-          body: "El principal repone el capital que salió. Las cuotas vencen cada 30 días.",
+          body: "El principal repone el capital que salió. Cada cuota vence según el calendario del plan.",
         },
         reparto: {
           title: (diferencia: string) => `La diferencia bruta queda en ${diferencia}`,
           body: (admin: string, resto: string) =>
-            `Descontada la administración ilustrativa (~${admin}), el resto (~${resto}) todavía tiene que cubrir fondeo, pérdidas y demás costos antes de ser rendimiento.`,
+            `Descontada la administración calculada con la config (~${admin}), el resto (~${resto}) todavía tiene que cubrir fondeo, pérdidas y demás costos antes de ser rendimiento.`,
         },
       },
       desgloseTitle: "Desglose D8: adónde va cada devUSDC",
@@ -79,18 +79,18 @@ export const paraInversores = defineDict({
         principal: "Principal que devuelve el comprador",
         diferencia: "Diferencia bruta del pool",
         admin: (pct: string) =>
-          `Administración ilustrativa (${pct} anual sobre el saldo, la paga el pool)`,
+          `Administración (${pct} anual sobre el saldo, según la config del protocolo)`,
         resto: "Resto del pool",
       },
-      nota: "Reparto contable ilustrativo del modelo (D8). No es ganancia neta ni prueba de rentabilidad: al resto del pool hay que descontarle el costo del capital, las pérdidas por mora no recuperada y los demás costos.",
+      nota: "Reparto contable D8 calculado con la config del protocolo. No es ganancia neta ni prueba de rentabilidad: al resto del pool hay que descontarle el costo del capital, las pérdidas por mora no recuperada y los demás costos.",
     },
     seis: {
-      title: "Seis cuotas y cobro diferido",
+      title: "Planes y tramos de cobro",
       intro:
         "Dos opciones de la demo cambian cuánto capital queda comprometido y por cuánto tiempo.",
-      planesTitle: "Seis cuotas: más plazo, con interés",
+      planesTitle: (count: number) => `Opción de ${count} cuotas: más plazo, con interés`,
       planesBody: (interestPct: string, interest: string, total: string) =>
-        `Con 6 cuotas el comprador paga un interés total del ${interestPct} sobre lo financiado — ${interest} en el ejemplo, ${total} en total — y el plan dura el doble: el capital del pool queda comprometido unos 6 meses en vez de unos 3. El interés entra una sola vez en los cobros; su reparto entre pool y Lazo está por definir.`,
+        `El comprador paga un interés total del ${interestPct} sobre lo financiado — ${interest} en el ejemplo, ${total} en total. El plazo extendido mantiene el capital del pool comprometido por más tiempo. El interés entra una vez en los cobros; este desglose no muestra su asignación entre el pool y Lazo.`,
       cobroTitle: "Cobro diferido: menos días de capital afuera",
       cobroBody:
         "El comercio elige cuándo cobra la parte financiada. Si acepta esperar paga menos comisión, porque el adelanto del pool sale en la fecha de cobro y el capital queda comprometido menos tiempo. Lazo garantiza la fecha elegida aunque el comprador se atrase: es una obligación con reserva, no una eliminación del riesgo.",
@@ -99,6 +99,10 @@ export const paraInversores = defineDict({
       comisionCol: "comisión",
       netoCol: "neto del comercio",
       nota: "Estas opciones viven solo en el mock de la demo: el programa en la cadena sigue con 3 cuotas y cobro inmediato.",
+      compromiso: "En el mock, al abrir cada plan se registra el calendario de cobro del comercio. El dinero sigue en el pool y cada tramo se libera en su fecha, incluso si el estudiante se atrasa. No se firma ni se envía ninguna transacción.",
+      calendario: (days: number) => `Calendario de ${days} días`,
+      tramo: (index: number, total: number) => `Tramo ${index} de ${total}`,
+      dia: (day: number) => `día ${day}`,
     },
     riesgos: {
       title: "Riesgos, dicho claro",
@@ -111,32 +115,24 @@ export const paraInversores = defineDict({
       },
       cobertura: {
         title: "Cobertura no es recupero garantizado",
-        body: "El fiador cubre el 100% del capital pendiente en todos los escalones, pero el cobro a su tarjeta puede fallar: rechazo del emisor o contracargo. Lo que no se recupera es una pérdida del pool y la absorbe primero el tramo junior.",
+        body: "El fiador cubre el capital pendiente en todos los tiers, pero el cobro a su tarjeta puede fallar: rechazo del emisor o contracargo. Lo que no se recupera es una pérdida del pool y la absorbe primero el tramo junior.",
       },
       liquidez: {
         title: "Liquidez y plazo",
-        body: "Con planes de 6 cuotas el capital queda comprometido el doble de tiempo que con 3. La liquidez del pool depende de que las cuotas vuelvan: una salida grande de capital puede no poder pagarse al instante.",
+        body: "Los planes de plazo extendido mantienen el capital comprometido durante más tiempo. Antes de abrir un plan, el pool exige liquidez libre para cubrir el adelanto de hoy y los tramos ya comprometidos; si no alcanza, no abre planes nuevos. La liquidez también depende de que las cuotas vuelvan.",
       },
-      escenariosTitle: "Sensibilidad del modelo",
-      escenariosIntro:
-        "Contribución por compra de 1.000 en 3 cuotas con cobro inmediato, según el modelo interno del equipo. Las variables son probabilidad de default, recupero efectivo y costo anual del capital — hipótesis no medidas, no resultados:",
-      escenarios: [
-        { id: "favorable", name: "Favorable", d: 2, r: 95, h: 8, c: 21.31 },
-        { id: "base", name: "Base", d: 8, r: 80, h: 12, c: 8.44 },
-        { id: "adverso", name: "Adverso", d: 20, r: 50, h: 20, c: -42.51 },
-      ] as { id: string; name: string; d: number; r: number; h: number; c: number }[],
-      escenarioParams: (d: number, r: number, h: number) =>
-        `default ${d}% · recupero ${r}% · capital ${h}%`,
-      escenariosNote:
-        "En el escenario adverso cada compra da negativo: ni la cobertura del 100% ni un ticket grande aseguran resultado positivo.",
-      hipotesisTag: "hipótesis del modelo, sin medir",
+      supuestosTitle: "Supuestos del modelo",
+      supuestosIntro: "Son hipótesis de trabajo, no métricas medidas ni resultados observados.",
+      anticipo: "Anticipo",
+      default: "Probabilidad de incumplimiento",
+      recupero: "Recupero efectivo",
+      costoCapital: "Costo anual del capital",
     },
     rendimiento: {
-      title: "Rendimiento: ilustrativo, no validado",
+      title: "Rendimiento objetivo del tramo senior",
       intro:
         "Ninguna cifra de esta página es una promesa ni un rendimiento anual garantizado. Lo que comparte el equipo es un objetivo de modelo junto a referencias publicadas por otros protocolos DeFi:",
-      lazo: "Objetivo del tramo senior según el modelo del equipo",
-      ilustrativoTag: "ilustrativo, no validado",
+      lazo: "Objetivo de modelo, no es una promesa",
       referenciaTag: "referencia",
       nota: "El rendimiento real depende de la mora, el recupero y el costo del capital. Las cifras de terceros son referencias sin verificar en la fuente oficial.",
     },
@@ -155,14 +151,14 @@ export const paraInversores = defineDict({
       items: [
         {
           q: "¿De dónde sale el rendimiento del pool?",
-          a: "De la comisión que paga el comercio sobre lo financiado y del interés de los planes de 6 cuotas. A eso se le descuenta la administración, las pérdidas por mora no recuperada y el costo del capital: el desglose de arriba muestra la diferencia bruta, no una ganancia.",
+          a: "De la comisión que paga el comercio sobre lo financiado y del interés de los planes con interés. A eso se le descuenta la administración, las pérdidas por mora no recuperada y el costo del capital: el desglose de arriba muestra la diferencia bruta, no una ganancia.",
         },
         {
           q: "¿Qué diferencia hay entre los tramos junior y senior?",
           a: "El junior absorbe la primera pérdida de cada crédito: asume más riesgo y espera más retorno. El senior se repone primero cuando vuelve la plata: menos riesgo y menor retorno esperado.",
         },
         {
-          q: "Si el fiador cubre el 100%, ¿el pool no puede perder?",
+          q: "Si el fiador respalda el saldo, ¿el pool no puede perder?",
           a: "Sí puede. La cobertura es una obligación contractual del fiador, pero el cobro a su tarjeta puede ser rechazado o revertido por contracargo. Lo que no se recupera se registra como pérdida del pool.",
         },
         {
@@ -193,7 +189,7 @@ export const paraInversores = defineDict({
     pool: {
       title: "Where the yield comes from",
       intro:
-        "The pool pools capital in devUSDC, the demo's test token (it runs on devnet, Solana's test network: the money is fake). On every sale it advances the merchant the financed share minus its fee, and the money comes back as the buyer pays installments. Gross yield comes from that fee and from the interest on 6-installment plans; administration, losses and the cost of capital are then deducted.",
+        "The pool pools capital in devUSDC, the demo's test token (it runs on devnet, Solana's test network: the money is fake). On every sale it advances the merchant the financed share minus its fee, and the money comes back as the buyer pays installments. Gross yield comes from that fee and from interest-bearing plans; administration, losses and the cost of capital are then deducted.",
       junior: "Junior tranche",
       juniorHint:
         "Takes the first loss on every loan: more risk, higher expected return.",
@@ -218,8 +214,8 @@ export const paraInversores = defineDict({
     },
     compra: {
       title: "One purchase, step by step",
-      intro: (precio: string, anticipoPct: string, cuotas: number) =>
-        `This is how a ${precio} purchase by a tier-0 student with a guarantor is split (${anticipoPct} down payment, ${cuotas} installments, immediate merchant settlement):`,
+      intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
+        `This is how a ${precio} purchase by a ${tier} student with a guarantor is split (${anticipoPct} down payment, ${cuotas} installments, immediate merchant settlement):`,
       steps: {
         compra: {
           title: (precio: string, anticipo: string) =>
@@ -235,12 +231,12 @@ export const paraInversores = defineDict({
         cuotas: {
           title: (cuotas: number, cuota: string, principal: string) =>
             `The buyer repays ${cuotas} installments of ${cuota}: ${principal} flows back into the pool`,
-          body: "Principal replenishes the capital that went out. Installments fall due every 30 days.",
+          body: "Principal replenishes the capital that went out. Each installment is due according to the plan schedule.",
         },
         reparto: {
           title: (diferencia: string) => `Gross spread lands at ${diferencia}`,
           body: (admin: string, resto: string) =>
-            `After the illustrative administration fee (~${admin}), the remainder (~${resto}) still has to cover funding, losses and other costs before it is yield.`,
+            `After administration calculated from protocol config (~${admin}), the remainder (~${resto}) still has to cover funding, losses and other costs before it is yield.`,
         },
       },
       desgloseTitle: "D8 breakdown: where each devUSDC goes",
@@ -256,18 +252,18 @@ export const paraInversores = defineDict({
         principal: "Principal repaid by the buyer",
         diferencia: "Pool gross spread",
         admin: (pct: string) =>
-          `Illustrative administration (${pct} per year on balance, paid by the pool)`,
+          `Administration (${pct} per year on balance, per protocol config)`,
         resto: "Pool remainder",
       },
-      nota: "Illustrative accounting split from the model (D8). It is not net profit nor proof of returns: the pool remainder still has to cover the cost of capital, losses from unrecovered delinquency and other costs.",
+      nota: "D8 accounting split calculated from protocol config. It is not net profit nor proof of returns: the pool remainder still has to cover the cost of capital, losses from unrecovered delinquency and other costs.",
     },
     seis: {
-      title: "Six installments and deferred settlement",
+      title: "Plans and payout tranches",
       intro:
         "Two demo options change how much capital stays committed, and for how long.",
-      planesTitle: "Six installments: longer, with interest",
+      planesTitle: (count: number) => `${count}-installment option: longer, with interest`,
       planesBody: (interestPct: string, interest: string, total: string) =>
-        `With 6 installments the buyer pays a total interest of ${interestPct} on the financed amount — ${interest} in the example, ${total} in total — and the plan lasts twice as long: pool capital stays committed for about 6 months instead of about 3. The interest enters the repayment flows once; its split between pool and Lazo is still to be defined.`,
+        `The buyer pays total interest of ${interestPct} on the financed amount — ${interest} in the example, ${total} in total. The longer term keeps pool capital committed for longer. Interest enters repayment flows once; this breakdown does not show how it is allocated between the pool and Lazo.`,
       cobroTitle: "Deferred settlement: fewer days of capital out",
       cobroBody:
         "The merchant chooses when to collect the financed share. If it accepts waiting it pays a lower fee, because the pool advance goes out on the settlement date and capital stays committed for less time. Lazo guarantees the chosen date even if the buyer falls behind: it is an obligation backed by reserves, not a removal of risk.",
@@ -276,6 +272,10 @@ export const paraInversores = defineDict({
       comisionCol: "fee",
       netoCol: "merchant net",
       nota: "These options only exist in the demo mock: the on-chain program still runs 3 installments and immediate settlement.",
+      compromiso: "In the mock, the merchant collection calendar is recorded when a plan opens. Funds stay in the pool and each tranche is released on its due date, even if the student is late. No transaction is signed or sent.",
+      calendario: (days: number) => `${days}-day schedule`,
+      tramo: (index: number, total: number) => `Tranche ${index} of ${total}`,
+      dia: (day: number) => `day ${day}`,
     },
     riesgos: {
       title: "Risks, stated plainly",
@@ -288,32 +288,24 @@ export const paraInversores = defineDict({
       },
       cobertura: {
         title: "Coverage is not guaranteed recovery",
-        body: "The guarantor covers 100% of the outstanding capital at every tier, but the charge to their card can fail: issuer decline or chargeback. Whatever is not recovered is a pool loss, absorbed first by the junior tranche.",
+        body: "The guarantor covers the outstanding capital at every tier, but the charge to their card can fail: issuer decline or chargeback. Whatever is not recovered is a pool loss, absorbed first by the junior tranche.",
       },
       liquidez: {
         title: "Liquidity and tenor",
-        body: "With 6-installment plans capital stays committed twice as long as with 3. Pool liquidity depends on installments coming back: a large capital outflow may not be payable instantly.",
+        body: "Longer-term plans keep capital committed for longer. Before opening a plan, the pool requires free liquidity to cover today's advance and already committed tranches; if it is insufficient, no new plans open. Liquidity also depends on installments coming back.",
       },
-      escenariosTitle: "Model sensitivity",
-      escenariosIntro:
-        "Contribution per 1,000 purchase in 3 installments with immediate settlement, per the team's internal model. The variables are default probability, effective recovery and annual cost of capital — unmeasured hypotheses, not results:",
-      escenarios: [
-        { id: "favorable", name: "Favorable", d: 2, r: 95, h: 8, c: 21.31 },
-        { id: "base", name: "Base", d: 8, r: 80, h: 12, c: 8.44 },
-        { id: "adverse", name: "Adverse", d: 20, r: 50, h: 20, c: -42.51 },
-      ] as { id: string; name: string; d: number; r: number; h: number; c: number }[],
-      escenarioParams: (d: number, r: number, h: number) =>
-        `default ${d}% · recovery ${r}% · capital ${h}%`,
-      escenariosNote:
-        "In the adverse scenario each purchase is negative: neither 100% coverage nor a large ticket guarantees a positive outcome.",
-      hipotesisTag: "model hypothesis, unmeasured",
+      supuestosTitle: "Model assumptions",
+      supuestosIntro: "These are working assumptions, not measured metrics or observed results.",
+      anticipo: "Down payment",
+      default: "Default probability",
+      recupero: "Effective recovery",
+      costoCapital: "Annual cost of capital",
     },
     rendimiento: {
-      title: "Yield: illustrative, not validated",
+      title: "Senior tranche target yield",
       intro:
         "No figure on this page is a promise or a guaranteed annual yield. What the team shares is a model target next to references published by other DeFi protocols:",
-      lazo: "Senior tranche target per the team's model",
-      ilustrativoTag: "illustrative, not validated",
+      lazo: "Model target, not a promise",
       referenciaTag: "reference",
       nota: "Real yield depends on delinquency, recovery and the cost of capital. Third-party figures are references unverified at the source.",
     },
@@ -332,14 +324,14 @@ export const paraInversores = defineDict({
       items: [
         {
           q: "Where does the pool's yield come from?",
-          a: "From the fee the merchant pays on the financed amount and from the interest on 6-installment plans. Administration, unrecovered delinquency losses and the cost of capital are deducted from that: the breakdown above shows the gross spread, not a profit.",
+          a: "From the fee the merchant pays on the financed amount and from interest-bearing plans. Administration, unrecovered delinquency losses and the cost of capital are deducted from that: the breakdown above shows the gross spread, not a profit.",
         },
         {
           q: "What's the difference between the junior and senior tranches?",
           a: "The junior takes the first loss on every loan: it takes on more risk and expects a higher return. The senior is repaid first as money comes back: less risk and a lower expected return.",
         },
         {
-          q: "If the guarantor covers 100%, can the pool still lose?",
+          q: "If the guarantor backs the balance, can the pool still lose?",
           a: "Yes. Coverage is a contractual obligation of the guarantor, but the charge to their card can be declined or reversed by a chargeback. Whatever is not recovered is recorded as a pool loss.",
         },
         {
