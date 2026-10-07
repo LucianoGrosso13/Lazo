@@ -125,6 +125,8 @@ Calendario (hora Argentina):
 >
 > **Plan de negocio (6/10):** `proyecto/07-plan-de-negocio/plan-de-negocio.md` — esquema "el comercio elige" (H1/H2), escalera v2, flujos por actor, proyección 36 meses y ronda, ideas nuevas. `modelo-v2.py` corrige el v1 (desembolso del pool y servicing). Versión de 5 minutos con gráficos: `pitch-negocio.md`. Integración y flujo de la plata: `integracion-y-flujo-del-dinero.md`. **D8 decidida (Lazo cobra 4% + 2%/año); pendientes D1-D7 y D9-D11 (§14) antes de tocar código, landing o pitch.**
 >
+> **Masividad y alianza (7/10):** `proyecto/11-masividad-billetera-vs-alianza.md` + `handoff-masividad-alianza.md` — no billetera propia; Lazo como capa de crédito con fiador para billeteras cripto (Lemon/belo/Ripio), fintech aliada en el pool. Pendiente: decidir QR abierto vs comercios adheridos antes de tocar el pitch.
+>
 > Pulido demo (margen, fotos, prisma 3D, Voltia): ver `.scratch/demo-polish/spec.md` — tanda cerrada (8/8 tickets done), ejecución `proyecto/handoff-pulido-demo.md`. Ojo: la divergencia mock↔programa del margen está anotada en `proyecto/05-pitch.md` § "Nota técnica".
 
 - [x] T0.1 Next.js + wallet
