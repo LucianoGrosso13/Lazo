@@ -18,14 +18,14 @@ export const paraEstudiantes = defineDict({
       title: "Qué es Lazo",
       body: "Comprás hoy y pagás en cuotas mensuales en dólares digitales. El anticipo y el tope de compra dependen de tu tier; un familiar como fiador obligatorio respalda lo que falta pagar del plan y su tarjeta solo se cobra si una cuota queda impaga.",
       devnet:
-        "Todo corre en devnet, la red de prueba de Solana, con devUSDC: un token propio de prueba que no vale nada. Ningún cobro de esta demo es real.",
+        "Todo corre en devnet, la red de prueba de Solana, con devUSDC: un token propio de prueba que no vale nada. Ningún cobro es real.",
     },
     how: {
       title: "Cómo comprar",
       steps: [
         {
           t: "Elegí el comercio y el producto",
-          d: "Buscá por nombre o categoría en la tienda o en el marketplace. Los comercios de esta demo son ficticios y de ejemplo.",
+          d: "Buscá por nombre o categoría en la tienda o en el marketplace. Los comercios del marketplace son de ejemplo.",
         },
         {
           t: "Elegí una opción de cuotas",
@@ -170,7 +170,7 @@ export const paraEstudiantes = defineDict({
         },
         {
           q: "¿Puedo tener más de un plan a la vez?",
-          a: "En la demo, sí: mientras lo que debés entre en el margen de tu tier, y cada compra se aprueba por separado. En el programa en cadena la regla vigente es un plan por estudiante.",
+          a: "En el simulador, sí: mientras lo que debés entre en el margen de tu Tier, y cada compra se aprueba por separado. En el programa en cadena la regla vigente es un plan por estudiante.",
         },
         {
           q: "¿Qué pasa con mis datos?",
@@ -205,14 +205,14 @@ export const paraEstudiantes = defineDict({
       title: "What Lazo is",
       body: "You buy today and pay in monthly installments in digital dollars. Your down payment and purchase cap depend on your tier; a family member acts as mandatory guarantor for the outstanding plan balance, and their card is only charged if an installment goes unpaid.",
       devnet:
-        "Everything runs on devnet, Solana's test network, with devUSDC: an in-house test token worth nothing. No charge in this demo is real.",
+        "Everything runs on devnet, Solana's test network, with devUSDC: an in-house test token worth nothing. No charge is real.",
     },
     how: {
       title: "How to buy",
       steps: [
         {
           t: "Pick the merchant and the product",
-          d: "Search by name or category in the store or the marketplace. The merchants in this demo are sample merchants.",
+          d: "Search by name or category in the store or the marketplace. The marketplace merchants are sample merchants.",
         },
         {
           t: "Choose an installment option",
@@ -357,7 +357,7 @@ export const paraEstudiantes = defineDict({
         },
         {
           q: "Can I have more than one plan at once?",
-          a: "In the demo, yes: as long as what you owe fits within your tier's margin, and every purchase is approved separately. On the onchain program the current rule is one plan per student.",
+          a: "In the simulator, yes: as long as what you owe fits within your Tier's margin, and every purchase is approved separately. On the onchain program the current rule is one plan per student.",
         },
         {
           q: "What happens to my data?",
