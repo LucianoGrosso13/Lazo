@@ -56,16 +56,10 @@ const MotionLink = motion.create(Link);
  */
 const DEMO_DESTINATIONS = [
   {
-    key: "tienda",
-    href: "/tienda",
-    band: "#9945FF",
-    match: (p: string) => p.startsWith("/tienda") || p.startsWith("/checkout"),
-  },
-  {
     key: "comercios",
     href: "/comercio",
     band: "#00C2FF",
-    match: (p: string) => p.startsWith("/comercio"),
+    match: (p: string) => p.startsWith("/comercio") || p.startsWith("/checkout"),
   },
   {
     key: "cuenta",
@@ -102,11 +96,6 @@ const HOW_DESTINATIONS = [
     band: "#c4a3ff",
     match: (p: string) => p.startsWith("/para-inversores"),
   },
-] as const;
-
-const MORE_DESTINATIONS = [
-  { key: "how", href: "/#how", band: "#f4f1ff", match: () => false },
-  { key: "design", href: "/design", band: "#c4a3ff", match: (p: string) => p === "/design" },
 ] as const;
 
 type NavItem = {
@@ -274,7 +263,6 @@ export function AppHeader() {
   const reduceMotion = useReducedMotion();
 
   const demoLabels: Record<string, string> = {
-    tienda: t.nav.tienda,
     comercios: t.nav.comercios,
     cuenta: t.nav.cuenta,
     pool: t.nav.pool,
@@ -284,13 +272,8 @@ export function AppHeader() {
     comercios: a.pages.comercios.nav,
     inversores: a.pages.inversores.nav,
   };
-  const moreLabels: Record<string, string> = {
-    how: d.chrome.howItWorks,
-    design: d.chrome.designLink,
-  };
   const demoNav: NavItem[] = DEMO_DESTINATIONS.map((i) => ({ ...i, label: demoLabels[i.key] }));
   const howNav: NavItem[] = HOW_DESTINATIONS.map((i) => ({ ...i, label: howLabels[i.key] }));
-  const moreNav: NavItem[] = MORE_DESTINATIONS.map((i) => ({ ...i, label: moreLabels[i.key] }));
 
   // La hoja se cierra al navegar (cualquier cambio de ruta) y con Escape.
   const [lastPath, setLastPath] = useState(pathname);
@@ -310,7 +293,6 @@ export function AppHeader() {
   const sheetGroups = [
     { key: "demo", label: d.chrome.groupDemo, items: demoNav },
     { key: "how", label: d.chrome.groupHow, items: howNav },
-    { key: "more", label: d.chrome.groupMore, items: moreNav },
   ];
   let sheetIndex = 0;
 
@@ -345,11 +327,6 @@ export function AppHeader() {
             {demoNav.slice(2).map((item) => (
               <NavLink key={item.key} item={item} pathname={pathname} />
             ))}
-            <NavMenu
-              label={d.chrome.more}
-              items={moreNav}
-              pathname={pathname}
-            />
           </nav>
 
           <div className="ml-auto flex items-center gap-3">

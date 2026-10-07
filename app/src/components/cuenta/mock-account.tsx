@@ -308,7 +308,7 @@ export function MockAccount() {
         {plansQ.data && plans.length === 0 && (
           <GlassPanel className="p-6">
             <p className="text-sm text-ink-2">{t.plansEmpty}</p>
-            <Link href="/tienda" className={`${buttonClasses("secondary", "sm")} mt-4 inline-flex`}>
+            <Link href="/comercio" className={`${buttonClasses("secondary", "sm")} mt-4 inline-flex`}>
               {t.plansCta}
             </Link>
           </GlassPanel>
@@ -446,9 +446,6 @@ export function MockAccount() {
 
       <section aria-label={t.linksTitle}>
         <div className="flex flex-wrap gap-3">
-          <Link href="/tienda" className={buttonClasses("secondary", "sm")}>
-            {t.links.store}
-          </Link>
           <Link href="/app" className={buttonClasses("secondary", "sm")}>
             {t.links.entry}
           </Link>

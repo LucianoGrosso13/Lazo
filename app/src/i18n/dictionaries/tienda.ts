@@ -1,9 +1,8 @@
 import { defineDict } from "../locale";
 
-/** Diccionario de /tienda: la vidriera de la tienda demo. */
+/** Diccionario de la vidriera de cada comercio demo (/comercio/[direccion]). */
 export const tienda = defineDict({
   es: {
-    title: "La vidriera",
     lede: "Cada precio entra al vidrio entero y sale partido: un anticipo y tres cuotas, sin interés. Elegí lo tuyo.",
     // Cuando la config ofrece una segunda opción (hoy: 6 cuotas con interés
     // provisional) la lede la nombra con sus números, no con texto fijo.
@@ -21,7 +20,7 @@ export const tienda = defineDict({
       `O ${n} cuotas de US$ ${each} (interés total ${pct}${provisional ? ", provisional" : ""})`,
     buy: "Comprar en cuotas",
     breakdown: "Ver el desglose",
-    moreMerchantsLead: "Esta vidriera muestra solo Voltia.",
+    moreMerchantsLead: (name: string) => `Esta vidriera muestra solo ${name}.`,
     moreMerchants: "Ver más comercios",
     yourTier: (n: number) => `Cotizando tu escalón ${n}`,
     marginLine: (available: string, limit: string) =>
@@ -44,12 +43,13 @@ export const tienda = defineDict({
     errorTitle: "No se pudo leer la tienda",
     errorBody: "Falló la lectura del estado del protocolo. Probá de nuevo.",
     retry: "Reintentar",
+    emptyProductsTitle: "Este comercio no tiene productos publicados",
+    emptyProductsBody: "Volvé al directorio para explorar otros comercios de ejemplo.",
     cardAria: (name: string, price: string, down: string, inst: string, n: number, alt: string | null) =>
       `${name}, US$ ${price}. Anticipo US$ ${down} y ${n} cuotas de US$ ${inst}, sin interés.${alt ? ` ${alt}` : ""}`,
     footer: "Los montos salen de la configuración del protocolo y de tu escalón. Nada es real: corre en devnet.",
   },
   en: {
-    title: "The shop window",
     lede: "Every price enters the glass whole and leaves split: a down payment and three installments, interest-free. Pick yours.",
     ledeAlt: (base: number, n: number, pct: string, provisional: boolean) =>
       `Every price enters the glass whole and leaves split: a down payment and ${base} interest-free installments, or ${n} with a ${pct} total interest on the financed amount${provisional ? " (provisional)" : ""}. Pick yours.`,
@@ -64,7 +64,7 @@ export const tienda = defineDict({
       `Or ${n} installments of US$ ${each} (${pct} total interest${provisional ? ", provisional" : ""})`,
     buy: "Buy in installments",
     breakdown: "See the breakdown",
-    moreMerchantsLead: "This shop window only shows Voltia.",
+    moreMerchantsLead: (name: string) => `This shop window only shows ${name}.`,
     moreMerchants: "See more merchants",
     yourTier: (n: number) => `Quoting your tier ${n}`,
     marginLine: (available: string, limit: string) =>
@@ -87,6 +87,8 @@ export const tienda = defineDict({
     errorTitle: "Couldn't read the store",
     errorBody: "Reading the protocol state failed. Try again.",
     retry: "Retry",
+    emptyProductsTitle: "This merchant has no published products",
+    emptyProductsBody: "Return to the directory to browse other example merchants.",
     cardAria: (name: string, price: string, down: string, inst: string, n: number, alt: string | null) =>
       `${name}, US$ ${price}. US$ ${down} down payment and ${n} installments of US$ ${inst}, interest-free.${alt ? ` ${alt}` : ""}`,
     footer: "Amounts come from the protocol config and your tier. Nothing is real: it runs on devnet.",

@@ -4,16 +4,15 @@
 // cuenta). Resumen de un vistazo → planes → detalles del fiador.
 // Falla cerrado si el rol resuelto no es student.
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { buttonClasses } from "@/components/ui/button";
 import { GlassPanel } from "@/components/ui/glass";
 import { WalletButton } from "@/components/wallet-button";
 import { cuentas } from "@/i18n/dictionaries/cuentas";
 import { useLocale, useT } from "@/i18n/locale";
 import { formatUsdc, type Micro } from "@/lib/cuotas";
-import { DEMO_ACCOUNT_IDS, DEMO_ROUTES, type DemoAccountId } from "@/lib/roles";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { useAccount } from "./account-context";
+import { DemoPersonaList } from "./demo-personas";
 import { ModeBadge } from "./evidencia";
 import { InviteGuarantor } from "./invitar-fiador";
 import { DetalleCuenta, PlanCard, ResumenCuenta } from "./mock-account";
@@ -104,7 +103,7 @@ export function EstudianteCuenta() {
             <GlassPanel className="p-6">
               <p className="text-sm text-ink-2">{t.plansEmpty}</p>
               <Link
-                href="/tienda"
+                href="/comercio"
                 className={`${buttonClasses("secondary", "sm")} mt-4 inline-flex`}
               >
                 {t.plansCta}
@@ -158,15 +157,6 @@ export function EstudianteCuenta() {
 
 function PickerEntrada() {
   const t = useT(cuentas).student;
-  const shell = useT(cuentas).shell;
-  const router = useRouter();
-  const { demoId, selectDemo } = useAccount();
-
-  const elegir = (id: DemoAccountId) => {
-    const next = demoId === id ? null : id;
-    selectDemo(next);
-    if (next) router.push(DEMO_ROUTES[next]);
-  };
 
   return (
     <div className="max-w-2xl" data-testid="estudiante-entrada">
@@ -175,34 +165,8 @@ function PickerEntrada() {
       </h1>
       <p className="mt-3 max-w-prose text-ink-2">{t.pickBlurb}</p>
 
-      <div className="mt-8" role="list" aria-label={t.pickDemo}>
-        {DEMO_ACCOUNT_IDS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="listitem"
-            data-testid={`estudiante-pick-${id}`}
-            onClick={() => elegir(id)}
-            className="flex w-full items-baseline justify-between gap-4 border-t border-hairline py-4 text-left last:border-b"
-          >
-            <span>
-              <span className="block font-medium text-ink">{shell.demoOptions[id]}</span>
-              <span className="mt-0.5 block text-sm text-ink-2">{t.personas[id]}</span>
-            </span>
-            <span aria-hidden className="shrink-0 text-ink-ghost">
-              <svg viewBox="0 0 20 20" width="18" height="18">
-                <path
-                  d="M7 4l6 6-6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </button>
-        ))}
+      <div className="mt-8">
+        <DemoPersonaList testIdPrefix="estudiante-pick" />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-4">

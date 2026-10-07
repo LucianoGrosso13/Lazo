@@ -20,7 +20,7 @@ export const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
 const MIN_PRICE = 120;
 const MAX_PRICE = 1500;
 const TIERS: TierIndex[] = [0, 1, 2, 3];
-// El hero solo muestra los productos del guion de la demo (Voltia).
+// El hero solo muestra los productos del guion de la demo (Kroma).
 const HERO_PRODUCTS = productsByMerchant(DEMO_MERCHANT);
 export const MotionLink = motion.create(Link);
 
@@ -75,7 +75,7 @@ export function LandingHero() {
 
   const lazoTotal = toMicro(price);
   const mpTotal = Math.round(lazoTotal * (1 + REFERENCE.mpInstallmentMarkup));
-  const checkoutHref = productId ? `/checkout/${productId}` : "/tienda";
+  const checkoutHref = productId ? `/checkout/${productId}` : "/comercio";
 
   const pickProduct = (p: Product) => {
     setProductId(p.id);

@@ -31,9 +31,9 @@ describe("estado sembrado", () => {
     expect(clock.now).toBeGreaterThan(0);
   });
 
-  it("siembra Voltia activa y sin ventas", async () => {
+  it("siembra Kroma activa y sin ventas", async () => {
     const m = await c.getMerchant(DEMO_MERCHANT);
-    expect(m.name).toBe("Voltia");
+    expect(m.name).toBe("Kroma");
     expect(m.active).toBe(true);
     expect(m.settlementBalance).toBe(0);
     expect(m.plansCount).toBe(0);

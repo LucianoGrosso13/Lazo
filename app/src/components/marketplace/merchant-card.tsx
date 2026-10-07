@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { marketplace } from "@/i18n/dictionaries/marketplace";
 import { useLocale, useT } from "@/i18n/locale";
@@ -6,9 +7,9 @@ import { MerchantMonogram } from "./monogram";
 import styles from "./marketplace.module.css";
 
 /**
- * Tarjeta de comercio del marketplace: monograma con el gradiente de su
- * categoría, nombre, rubro y ciudad, etiqueta "demo" y cantidad de
- * productos. Toda la tarjeta es el enlace al perfil.
+ * Tarjeta de comercio del marketplace: foto de su producto insignia con
+ * micro-monograma de categoría, nombre, rubro y ciudad, etiqueta "demo" y
+ * cantidad de productos. Toda la tarjeta es el enlace al perfil.
  */
 export function MerchantCard({ merchant: m }: { merchant: DemoMerchant }) {
   const t = useT(marketplace);
@@ -23,7 +24,21 @@ export function MerchantCard({ merchant: m }: { merchant: DemoMerchant }) {
       data-featured={m.featured || undefined}
       aria-label={t.cardAria(m.name, category?.label[locale] ?? "", m.city, products)}
     >
-      <MerchantMonogram name={m.name} category={m.category} />
+      <span className={styles.cardVisual}>
+        <Image
+          src={m.image}
+          alt=""
+          width={56}
+          height={56}
+          className={styles.cardPhoto}
+          priority={m.featured}
+        />
+        <MerchantMonogram
+          name={m.name}
+          category={m.category}
+          className={styles.cardMonogramBadge}
+        />
+      </span>
       <span className={styles.cardBody}>
         <span className={styles.cardHead}>
           <span className={styles.cardName}>{m.name}</span>

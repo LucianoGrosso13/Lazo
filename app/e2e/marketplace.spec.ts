@@ -19,9 +19,9 @@ test("marketplace: buscar, filtrar, perfil, checkout de otro comercio y venta en
   // Buscar por nombre de producto: solo queda el comercio que lo vende.
   await page.getByTestId("marketplace-q").fill("teclado");
   await expect(
-    page.getByRole("link", { name: /Tecla & Click/ }),
+    page.getByRole("link", { name: /Apex Periféricos/ }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: /Voltia/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Kroma/ })).toHaveCount(0);
 
   // Filtrar por categoría con la búsqueda limpia: solo periféricos.
   await page.getByTestId("marketplace-q").fill("");
@@ -32,23 +32,23 @@ test("marketplace: buscar, filtrar, perfil, checkout de otro comercio y venta en
   // quede escrita antes de navegar.
   await expect(page).toHaveURL(/cat=peripherals/);
   await expect(
-    page.getByRole("link", { name: /Tecla & Click/ }),
+    page.getByRole("link", { name: /Apex Periféricos/ }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: /Audio Sur/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Voltia/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Flux Audio/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Kroma/ })).toHaveCount(0);
 
   // El perfil declara demo, planes aceptados y productos con CTA al checkout.
-  await page.getByRole("link", { name: /Tecla & Click/ }).click();
+  await page.getByRole("link", { name: /Apex Periféricos/ }).click();
   await expect(page).toHaveURL(`/comercio/${TECLA_CLICK}`);
   await expect(page.getByTestId("merchant-profile")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Tecla & Click" }),
+    page.getByRole("heading", { name: "Apex Periféricos" }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: /Teclado mecánico|Mechanical keyboard/ }),
   ).toHaveAttribute("href", "/checkout/teclado-mecanico");
 
-  // Checkout de un producto de OTRO comercio (Voltia, dueña de la tienda
+  // Checkout de un producto de OTRO comercio (Kroma, dueña de la tienda
   // demo): `?demo=` actúa como la wallet conectada, solo en mock.
   await page.goto(`/checkout/notebook?demo=${DEMO_STUDENT_NEW}`);
   await page
@@ -69,7 +69,7 @@ test("marketplace: buscar, filtrar, perfil, checkout de otro comercio y venta en
   ).toBeVisible();
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 
-  // La venta queda registrada en la cuenta del comercio dueño (Voltia):
+  // La venta queda registrada en la cuenta del comercio dueño (Kroma):
   // con su plazo "hoy" ya figura cobrada, con el precio del producto.
   await page.evaluate(() =>
     window.localStorage.setItem("lazo.cuenta.demo.v1", "merchant"),

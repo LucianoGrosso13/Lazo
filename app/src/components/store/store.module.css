@@ -1,6 +1,6 @@
-/* /tienda — la vidriera de la tienda demo, dentro del mundo Prisma.
-   La luz se mueve, el vidrio no: cada producto lleva su propia
-   refracción (precio → anticipo + 3 cuotas). */
+/* /comercio/[direccion] — la vidriera de cada comercio del directorio demo,
+   dentro del mundo Prisma. La luz se mueve, el vidrio no: cada producto
+   lleva su propia refracción (precio → anticipo + cuotas). */
 
 .page {
   --ink: #f4f1ff;
@@ -18,6 +18,30 @@
   margin: 0 auto;
   padding: clamp(0.75rem, 2vw, 1.5rem) var(--pad) clamp(1.75rem, 3.5vw, 2.75rem);
   color: var(--ink);
+}
+
+/* ---------- Volver al marketplace ---------- */
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  min-height: 2.5rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color 0.35s var(--ease);
+}
+
+.back:hover {
+  color: var(--ink);
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 
 /* ---------- Franja "tienda demo" ---------- */
@@ -72,8 +96,61 @@
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 0.75rem 2.5rem;
+  gap: 1.25rem 2.5rem;
   margin-top: clamp(0.9rem, 2vw, 1.5rem);
+}
+
+.headBrand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.25rem 1.75rem;
+  max-width: 52rem;
+}
+
+.brandVisual {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  flex: none;
+  border-radius: 18px;
+}
+
+@media (min-width: 640px) {
+  .brandVisual {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+}
+
+.brandPhoto {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+  background: rgb(244 241 255 / 0.05);
+  border: 1px solid rgb(244 241 255 / 0.16);
+  box-shadow:
+    0 8px 24px -6px rgb(0 0 0 / 0.75),
+    inset 0 1px 0 rgb(255 255 255 / 0.2);
+}
+
+.brandMonogram {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  background: var(--mg, linear-gradient(135deg, var(--violet), var(--cyan)));
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow:
+    0 2px 8px rgb(0 0 0 / 0.8),
+    0 0 0 2px rgb(10 8 18);
 }
 
 .headText {
@@ -95,6 +172,23 @@
   font-size: clamp(1rem, 1.25vw, 1.14rem);
   line-height: 1.55;
   color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* Identidad del comercio: rubro, ciudad y su plazo de cobro elegido. */
+.merchantChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.merchantDesc {
+  margin-top: 0.7rem;
+  max-width: 38rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-3);
   text-wrap: pretty;
 }
 
@@ -167,8 +261,10 @@
     align-items: stretch;
   }
 
+  /* Cada comercio trae 2 o 3 productos: filas implícitas reparten la
+     altura del destacado entre las laterales que haya. */
   .side {
-    grid-template-rows: 1fr 1fr;
+    grid-auto-rows: 1fr;
     align-content: stretch;
   }
 }
@@ -636,6 +732,28 @@
   line-height: 1.5;
 }
 
+/* ---------- Estado vacío (sin productos) ---------- */
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.9rem;
+  margin-top: 2rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.emptyTitle {
+  font-size: 1.35rem;
+  font-weight: 650;
+  color: var(--beam);
+}
+
+.emptyBody {
+  color: var(--ink-2);
+  max-width: 34rem;
+  line-height: 1.5;
+}
+
 /* ---------- Link al marketplace ---------- */
 
 .moreShops {
@@ -714,6 +832,10 @@
   .bandsOut,
   .marginFill {
     animation: none;
+  }
+
+  .back {
+    transition: none;
   }
 
   .card:hover .media img,

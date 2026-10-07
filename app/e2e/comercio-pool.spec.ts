@@ -39,8 +39,8 @@ test("/comercio es el marketplace público: buscador, categorías y comercios de
   await expect(
     page.getByRole("group", { name: /categoría|category/i }),
   ).toBeVisible();
-  // El comercio sembrado se llama "Voltia" y declara datos de prueba.
-  await expect(page.getByRole("link", { name: /Voltia/ })).toBeVisible();
+  // El comercio sembrado se llama "Kroma" y declara datos de prueba.
+  await expect(page.getByRole("link", { name: /Kroma/ })).toBeVisible();
   await expect(page.getByText(/demo/i).first()).toBeVisible();
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 });
@@ -59,23 +59,59 @@ test("/comercio: una dirección base58 en el buscador ofrece abrir la vista púb
   await expect(page).toHaveURL(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("merchant-profile")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: /voltia/i }),
+    page.getByRole("heading", { name: /kroma/i }),
   ).toBeVisible();
 });
 
-test("/comercio/[direccion] de un comercio del directorio muestra su perfil con productos", async ({
+test("/comercio/[direccion] de un comercio del directorio muestra su tienda con productos", async ({
   page,
 }) => {
   await page.goto(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("merchant-profile")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: /voltia/i }),
+    page.getByRole("heading", { name: /kroma/i }),
   ).toBeVisible();
   // Los productos llevan al checkout; el comercio se declara demo.
   await expect(
-    page.getByRole("link", { name: /comprar en cuotas|buy in installments/i }).first(),
-  ).toBeVisible();
+    page.getByRole("link", { name: /pc de escritorio|desktop pc/i }),
+  ).toHaveAttribute("href", "/checkout/pc");
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
+});
+
+test("clic en Comercios abre el directorio y elegir un comercio muestra solo sus productos en el layout de tienda", async ({
+  page,
+}) => {
+  await page.goto("/");
+  // El header no tiene Tienda como sección primaria; tiene Comercios
+  await expect(page.locator("header").getByRole("link", { name: /tienda|store/i })).toHaveCount(0);
+  await page.locator("header").getByRole("link", { name: /comercios|merchants/i }).first().click();
+  await expect(page).toHaveURL("/comercio");
+  await expect(page.getByTestId("marketplace")).toBeVisible();
+
+  // Elegir un comercio distinto a Kroma (Lumina Display)
+  await page.getByRole("link", { name: /lumina display/i }).click();
+  await expect(page).toHaveURL(/\/comercio\/AxPBA787ZnU8XVzySDAZPRd5uxRqnTrMHFodM1eGWpRv/);
+  await expect(page.getByTestId("merchant-profile")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /lumina display/i })).toBeVisible();
+
+  // Muestra solo sus productos (monitor, tablet) y NO los de Kroma (pc)
+  await expect(page.getByRole("link", { name: /monitor/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /tablet/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /pc de escritorio|desktop pc/i })).toHaveCount(0);
+
+  // El back link lleva de vuelta al directorio
+  await page.getByRole("link", { name: /todos los comercios|all merchants/i }).first().click();
+  await expect(page).toHaveURL("/comercio");
+  await expect(page.getByTestId("marketplace")).toBeVisible();
+});
+
+test("/tienda redirige a la tienda del comercio demo (/comercio/[DEMO_MERCHANT])", async ({
+  page,
+}) => {
+  await page.goto("/tienda");
+  await expect(page).toHaveURL(`/comercio/${DEMO_MERCHANT}`);
+  await expect(page.getByTestId("merchant-profile")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /kroma/i })).toBeVisible();
 });
 
 test("/comercio/[direccion] rechaza direcciones inválidas sin pedir wallet", async ({ page }) => {
@@ -121,6 +157,6 @@ test("/app/comercio → clic en vista pública llega al perfil del directorio", 
     .click();
   await expect(page).toHaveURL(`/comercio/${DEMO_MERCHANT}`);
   await expect(page.getByTestId("merchant-profile")).toBeVisible();
-  await expect(page.getByRole("heading", { name: /voltia/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /kroma/i })).toBeVisible();
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 });

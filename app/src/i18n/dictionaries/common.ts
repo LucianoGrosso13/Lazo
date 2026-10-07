@@ -6,7 +6,6 @@ export const common = defineDict({
     skipToContent: "Saltar al contenido",
     nav: {
       inicio: "Inicio",
-      tienda: "Tienda",
       comercios: "Comercios",
       cuenta: "Cuenta",
       pool: "Pool",
@@ -33,7 +32,6 @@ export const common = defineDict({
     skipToContent: "Skip to content",
     nav: {
       inicio: "Home",
-      tienda: "Store",
       comercios: "Merchants",
       cuenta: "Account",
       pool: "Pool",

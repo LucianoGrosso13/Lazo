@@ -298,7 +298,7 @@ export function CheckoutScreen({
   return (
     <div className={styles.page}>
       <div className={styles.wrap}>
-        <Link href="/tienda" className={styles.back}>
+        <Link href={`/comercio/${product.merchant}`} className={styles.back}>
           <svg
             aria-hidden
             viewBox="0 0 14 10"

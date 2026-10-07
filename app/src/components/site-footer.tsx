@@ -16,7 +16,6 @@ export function SiteFooter() {
 
   const explore = [
     { href: "/", label: t.nav.inicio },
-    { href: "/tienda", label: t.nav.tienda },
     { href: "/comercio", label: t.nav.comercios },
     { href: "/pool", label: t.nav.pool },
     { href: "/app", label: t.nav.cuenta },

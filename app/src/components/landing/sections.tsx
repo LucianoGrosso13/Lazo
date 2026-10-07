@@ -572,7 +572,7 @@ function Close() {
     <footer className={styles.close}>
       <BrandMark animated={!reduceMotion} />
       <h2 className={styles.closeTitle}>{t.title}</h2>
-      <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
+      <MotionLink href="/comercio" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
       </MotionLink>
       <p className={styles.closeFoot}>{t.foot}</p>

@@ -7,7 +7,6 @@ import { DEMO_MERCHANT } from "../src/lib/cuotas/format";
 
 const ROUTES = [
   "/",
-  "/tienda",
   "/checkout/pc",
   "/comercio",
   `/comercio/${DEMO_MERCHANT}`,
