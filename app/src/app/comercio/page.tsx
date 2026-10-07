@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
-import { ComercioEntrada } from "@/components/cuenta/comercio";
+import { Suspense } from "react";
+import { MarketplacePage } from "@/components/marketplace/marketplace-page";
 
 export const metadata: Metadata = {
-  title: "Comercio · Lazo",
+  title: "Comercios · Lazo",
   description:
-    "Panel público del comercio en Lazo: cobros al instante, ventas en cuotas y comisión frente a alternativas. Devnet.",
+    "Marketplace de comercios demo que aceptan Lazo: buscá por nombre, producto o categoría y comprá en cuotas en devnet.",
 };
 
-// Entrada pública del comercio: buscador por dirección + el comercio de
-// ejemplo (solo modo mock). Nunca exige wallet.
+// /comercio es el marketplace del directorio demo (simulado). La cuenta
+// propia del comercio sigue en /app/comercio. Suspense: la página cliente
+// lee ?q=&cat= con useSearchParams.
 export default function ComercioPage() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <ComercioEntrada />
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <Suspense>
+        <MarketplacePage />
+      </Suspense>
     </div>
   );
 }

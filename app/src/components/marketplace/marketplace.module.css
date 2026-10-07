@@ -1,0 +1,644 @@
+/* /comercio — marketplace de comercios demo, dentro del mundo Prisma.
+   Operate: escaneo primero; el mundo vive en el vidrio, el monograma con
+   gradiente de su categoría y la mini-refracción del precio. */
+
+.page {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding-block: clamp(1.75rem, 4vw, 3rem);
+  color: var(--color-ink);
+}
+
+/* ---------- Encabezado ---------- */
+
+.title {
+  max-width: 46rem;
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variation-settings: "wdth" 90, "opsz" 88;
+  text-wrap: balance;
+  color: var(--color-beam);
+}
+
+.lede {
+  margin-top: 0.75rem;
+  max-width: 38rem;
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  line-height: 1.55;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+/* ---------- Aviso "comercios de ejemplo" ---------- */
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Buscador ---------- */
+
+.search {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.searchLabel {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.95rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-ink-3);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.7rem 2.9rem 0.7rem 2.7rem;
+  border-radius: 14px;
+  border: 1px solid rgb(244 241 255 / 0.15);
+  background: rgb(244 241 255 / 0.04);
+  font-size: 0.95rem;
+  color: var(--color-ink);
+  transition:
+    border-color 0.4s var(--ease-beam),
+    box-shadow 0.4s var(--ease-beam);
+}
+
+.searchInput::placeholder {
+  color: var(--color-ink-ghost);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgb(0 194 255 / 0.6);
+  box-shadow: 0 0 0 3px rgb(0 194 255 / 0.14);
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchClear {
+  position: absolute;
+  right: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  color: var(--color-ink-3);
+  transition:
+    color 0.3s var(--ease-beam),
+    background-color 0.3s var(--ease-beam);
+}
+
+.searchClear:hover {
+  color: var(--color-beam);
+  background: rgb(244 241 255 / 0.07);
+}
+
+/* ---------- Riel de categorías ---------- */
+
+.rail {
+  display: flex;
+  gap: 0.45rem;
+  margin-inline: -1rem;
+  padding: 0.15rem 1rem 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  /* El borde derecho se desvanece: hay más cinta debajo del vidrio. */
+  mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+}
+
+.rail > * {
+  flex: none;
+}
+
+@media (min-width: 640px) {
+  .rail {
+    margin-inline: -1.5rem;
+    padding-inline: 1.5rem;
+    flex-wrap: wrap;
+    overflow: visible;
+    mask-image: none;
+  }
+}
+
+/* ---------- Resultados ---------- */
+
+.count {
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+.count b {
+  color: var(--color-ink-2);
+  font-weight: 500;
+}
+
+.grid {
+  display: grid;
+  gap: clamp(0.7rem, 1.3vw, 1.1rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+
+/* ---------- Tarjeta de comercio ---------- */
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 1rem;
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+  animation: cardIn 0.6s var(--ease-beam) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+/* La tarjeta es vidrio: no se mueve, se enciende el canto espectral. */
+.card::after {
+  transition:
+    opacity 0.5s var(--ease-beam),
+    filter 0.5s var(--ease-beam);
+}
+
+.card:hover::after,
+.card:focus-visible::after {
+  opacity: 1;
+  filter: saturate(1.45);
+}
+
+/* Monograma: la inicial del comercio tallada en el gradiente de su categoría. */
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  border-radius: 13px;
+  background: var(--mg, linear-gradient(135deg, var(--color-violet), var(--color-cyan)));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 -1px 0 rgb(0 0 0 / 0.4),
+    0 8px 22px -10px rgb(0 0 0 / 0.85);
+  color: #fff;
+  font-weight: 650;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+}
+
+.monogramLg {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 18px;
+  font-size: 1.7rem;
+}
+
+/* ---------- Cuerpo de la tarjeta ---------- */
+
+.cardBody {
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cardName {
+  min-width: 0;
+  font-size: 1.06rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-beam);
+  overflow-wrap: anywhere;
+}
+
+.demoTag {
+  font-family: var(--font-num);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-cyan);
+  border: 1px dashed rgb(0 194 255 / 0.55);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+}
+
+.cardMeta {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-ink-2);
+}
+
+.cardMeta .sep {
+  color: var(--color-ink-ghost);
+  margin-inline: 0.35rem;
+}
+
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  font-family: var(--font-num);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Destacado: el monograma se enciende y la tarjeta lo declara. */
+.card[data-featured="true"] .monogram {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.4),
+    inset 0 -1px 0 rgb(0 0 0 / 0.4),
+    0 8px 26px -10px rgb(0 0 0 / 0.85),
+    0 0 18px rgb(0 194 255 / 0.28);
+}
+
+.featuredMark {
+  color: var(--color-cyan);
+}
+
+/* ---------- Fila "es una dirección" ---------- */
+
+.addrRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  padding: 0.85rem 1.05rem;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-ink-2);
+  background:
+    linear-gradient(165deg, rgb(244 241 255 / 0.06), rgb(244 241 255 / 0.02) 45%, rgb(0 194 255 / 0.05)),
+    rgb(10 8 18 / 0.55);
+  border: 1px solid rgb(0 194 255 / 0.22);
+}
+
+.addrRow a {
+  margin-left: auto;
+}
+
+/* ---------- Estado vacío ---------- */
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+  padding: clamp(1.4rem, 3vw, 2.1rem);
+}
+
+.emptyTitle {
+  font-size: 1.25rem;
+  font-weight: 650;
+  color: var(--color-beam);
+}
+
+.emptyBody {
+  max-width: 30rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* ---------- Pie ---------- */
+
+.foot {
+  font-family: var(--font-num);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(232 226 255 / 0.4);
+}
+
+/* ==========================================================================
+   Perfil del comercio (/comercio/[direccion] dentro del directorio)
+   ========================================================================== */
+
+.profile {
+  display: grid;
+  gap: clamp(1.1rem, 2vw, 1.75rem);
+  padding-block: clamp(1.75rem, 4vw, 3rem);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  text-decoration: none;
+  transition: color 0.35s var(--ease-beam);
+}
+
+.back:hover {
+  color: var(--color-beam);
+}
+
+.profileHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+}
+
+.profileText {
+  min-width: 0;
+}
+
+.profileName {
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variation-settings: "wdth" 90, "opsz" 88;
+  color: var(--color-beam);
+  overflow-wrap: anywhere;
+}
+
+.profileChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.profileDesc {
+  margin-top: 0.85rem;
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+.profileAddr {
+  margin-top: 0.6rem;
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  color: var(--color-ink-ghost);
+  overflow-wrap: anywhere;
+}
+
+/* Opciones aceptadas: chips con los planes habilitados de la config. */
+.accepted {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.6rem;
+  padding: 0.8rem 1.05rem;
+}
+
+.acceptedKey {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+/* ---------- Grilla de productos ---------- */
+
+.productsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+}
+
+.productsTitle {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-beam);
+}
+
+.productsCount {
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+.products {
+  display: grid;
+  gap: clamp(0.7rem, 1.3vw, 1.1rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+}
+
+.prod {
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  animation: cardIn 0.6s var(--ease-beam) both;
+}
+
+.prodMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 -18px 30px -22px rgb(0 0 0 / 0.85);
+}
+
+.prodMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--ease-beam);
+}
+
+.prod:hover .prodMedia img,
+.prod:focus-within .prodMedia img {
+  transform: scale(1.045);
+}
+
+/* La foto falta → el tile queda con el gradiente de la categoría + inicial. */
+.prodFallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 0.16), transparent 55%),
+    var(--mg, linear-gradient(135deg, var(--color-violet), var(--color-cyan)));
+  color: rgb(255 255 255 / 0.85);
+  font-weight: 700;
+  font-size: 2.4rem;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 0.4);
+}
+
+.prodBody {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem 1.05rem;
+  align-content: start;
+}
+
+.prodName {
+  font-size: 1.06rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-beam);
+}
+
+.prodBlurb {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-ink-2);
+}
+
+/* Mini-refracción: el precio entra y sale partido en anticipo + cuotas. */
+.refract {
+  display: flex;
+  align-items: center;
+  margin-top: 0.35rem;
+  height: 10px;
+}
+
+.refractIn {
+  flex: none;
+  width: 1.1rem;
+  height: 4px;
+  border-radius: 99px;
+  background: #fff;
+  box-shadow: 0 0 10px rgb(244 241 255 / 0.7);
+}
+
+.prismNotch {
+  flex: none;
+  width: 0;
+  height: 0;
+  margin-inline: 0.15rem;
+  border-block: 5px solid transparent;
+  border-left: 7px solid rgb(244 241 255 / 0.85);
+}
+
+.bandsOut {
+  display: flex;
+  flex: 1;
+  height: 9px;
+  border-radius: 99px;
+  overflow: hidden;
+  box-shadow:
+    0 0 14px rgb(108 99 255 / 0.35),
+    inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+
+.band {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.planLines {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.planLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+}
+
+.planLine .per {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+}
+
+.buy {
+  margin-top: 0.55rem;
+  justify-self: start;
+}
+
+.tierNote {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Movimiento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .prod {
+    animation: none;
+  }
+
+  .card::after,
+  .prodMedia img,
+  .searchInput,
+  .searchClear,
+  .back {
+    transition: none;
+  }
+
+  .prod:hover .prodMedia img,
+  .prod:focus-within .prodMedia img {
+    transform: none;
+  }
+}
