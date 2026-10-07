@@ -23,7 +23,7 @@ export const landingSections = defineDict({
     },
     installments: {
       title: "Elegí en cuántas cuotas",
-      lede: "Dos planes: 3 cuotas sin interés o 6 con 3% de interés total. El interés se calcula sobre lo financiado, no sobre el precio.",
+      lede: "Dos planes: 3 cuotas sin interés o 6 con interés. El interés total se calcula sobre lo financiado, no sobre el precio, y lo ves antes de confirmar.",
       unit: (n: number) => (n === 1 ? "cuota" : "cuotas"),
       interestFree: "Sin interés",
       interestTotal: (pct: string) => `${pct}% de interés total`,
@@ -126,13 +126,11 @@ export const landingSections = defineDict({
       reference: "referencia",
       lazo3: {
         who: "Lazo · 3 cuotas sin interés",
-        total: "US$ 1.000",
         interest: (pct: string, amount: string) => `${pct}% de interés total (US$ ${amount})`,
         terms: (down: string, n: number, amount: string) => `Anticipo de US$ ${down} + ${n} cuotas fijas de US$ ${amount}`,
       },
       lazo6: {
         who: "Lazo · 6 cuotas con interés",
-        total: "US$ 1.021",
         interest: (pct: string, amount: string) => `${pct}% total sobre financiado (US$ ${amount})`,
         terms: (down: string, n: number, amount: string) => `Anticipo de US$ ${down} + ${n} cuotas fijas de US$ ${amount}`,
       },
@@ -247,7 +245,7 @@ export const landingSections = defineDict({
     },
     installments: {
       title: "Choose how many installments",
-      lede: "Two clear plans: 3 interest-free installments or 6 with 3% total interest. Interest is computed on the financed balance, not on the total price.",
+      lede: "Two clear plans: 3 interest-free installments or 6 with interest. Total interest is computed on the financed balance, not on the total price, and you see it before you confirm.",
       unit: (n: number) => (n === 1 ? "installment" : "installments"),
       interestFree: "Interest-free",
       interestTotal: (pct: string) => `${pct}% total interest`,
@@ -350,13 +348,11 @@ export const landingSections = defineDict({
       reference: "reference",
       lazo3: {
         who: "Lazo · 3 interest-free installments",
-        total: "US$ 1,000",
         interest: (pct: string, amount: string) => `${pct}% total interest (US$ ${amount})`,
         terms: (down: string, n: number, amount: string) => `US$ ${down} down payment + ${n} fixed monthly installments of US$ ${amount}`,
       },
       lazo6: {
         who: "Lazo · 6 installments with interest",
-        total: "US$ 1,021",
         interest: (pct: string, amount: string) => `${pct}% total on financed balance (US$ ${amount})`,
         terms: (down: string, n: number, amount: string) => `US$ ${down} down payment + ${n} fixed monthly installments of US$ ${amount}`,
       },
