@@ -28,6 +28,13 @@ export const fmtPct01 = (v: number, locale: "es" | "en") =>
     maximumFractionDigits: 1,
   }).format(v);
 
+/** Fracción 0–1 como porcentaje sin decimal forzado: 1 → "100%", 0,03 → "3%". */
+export const fmtPct = (v: number, locale: "es" | "en") =>
+  new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(v);
+
 interface EstadoTextos {
   pendienteTitle: string;
   pendienteBody: string;

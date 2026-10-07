@@ -17,6 +17,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
 import { defineDict, useLocale, useT } from "@/i18n/locale";
 import { formatUsdc, getAccountCuotas, type Micro } from "@/lib/cuotas";
+import { fmtPct } from "../consulta";
 import { descargarMandato, hashMandato, textoMandato } from "./documento";
 
 const tReal = defineDict({
@@ -28,6 +29,8 @@ const tReal = defineDict({
     altaTitle: "Alta de garante",
     altaSubtitle: "Verificás tu identidad y tu tarjeta en páginas externas (Didit y Mobbex, sandbox). Acá nunca escribís documentos ni números de tarjeta.",
     requiredCoverage: "Cobertura exigida por compra",
+    coveragePctLabel: "Cobertura sobre el capital pendiente",
+    coverageScope: "La fianza cubre el capital pendiente de cada compra respaldada; no cubre intereses del plan ni punitorios por mora (alcance pendiente de definición).",
     acceptedCap: "Máximo de la fianza (calculado por el protocolo)",
     capTier: "Escalón del estudiante",
     capPolicy: "Fórmula aplicada",
@@ -90,6 +93,8 @@ const tReal = defineDict({
     altaTitle: "Guarantor signup",
     altaSubtitle: "You verify your identity and card on external pages (Didit and Mobbex, sandbox). You never type documents or card numbers here.",
     requiredCoverage: "Coverage required per purchase",
+    coveragePctLabel: "Coverage of outstanding principal",
+    coverageScope: "The guarantee covers the outstanding principal of each backed purchase; it does not cover plan interest or late fees (scope pending definition).",
     acceptedCap: "Guarantee maximum (computed by the protocol)",
     capTier: "Student tier",
     capPolicy: "Formula applied",
@@ -326,6 +331,7 @@ function RealPanel({ token, invite }: { token: string; invite: InviteStatus }) {
             <p className="mt-0.5 break-all font-mono text-xs text-ink">{live.mandateHash}</p>
           </div>
         </dl>
+        <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-2">{l.coverageScope}</p>
         <p className="mt-4 font-mono text-xs text-ink-2" title={invite.student}>
           {short(invite.student)}
         </p>
@@ -432,17 +438,24 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
     ([, tk, m]) => apiGet<Cotizar>(`/api/fiador/fianza/cotizar?token=${encodeURIComponent(tk)}&maxPurchase=${m}`),
   );
   const coverageMax = cotizarQ.data?.coverageMax ?? null;
+  // Cobertura sobre el capital pendiente (bps), derivada de la cotización
+  // del servidor (requiredCoverage / financed). `null` si no se puede saber.
+  const coverageBps =
+    cotizarQ.data && cotizarQ.data.financed > 0
+      ? Math.round((cotizarQ.data.requiredCoverage / cotizarQ.data.financed) * 10_000)
+      : null;
 
   const docQ = useSWR(
     nombre.trim() && topeElegido != null && coverageMax != null
-      ? ["fiador-doc-real", student, nombre.trim(), topeElegido, coverageMax, locale]
+      ? ["fiador-doc-real", student, nombre.trim(), topeElegido, coverageMax, coverageBps ?? -1, locale]
       : null,
-    async ([, s, name, maxPurchase, coverageMax, lang]) => {
+    async ([, s, name, maxPurchase, coverageMax, covBps, lang]) => {
       const texto = textoMandato({
         student: s,
         guarantorName: name,
         maxPurchase,
         coverageMax,
+        coverageBps: covBps < 0 ? null : covBps,
         issuedAt: Math.floor(Date.now() / 1000),
         locale: lang === "en" ? "en" : "es",
       });
@@ -684,7 +697,7 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
                 {topes.map((m) => (
                   <label
                     key={String(m)}
-                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam"
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-hairline px-3 py-1.5 text-sm has-checked:border-beam has-checked:bg-beam/10 has-checked:text-beam max-sm:min-h-10"
                   >
                     <input
                       type="radio"
@@ -703,11 +716,18 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
               <div className="p-4">
                 <p className="text-xs uppercase tracking-wide text-ink-2">{t.alta.coberturaTitle}</p>
                 {cotizarQ.data ? (
+                  <>
                   <ul className="mt-2 space-y-2 text-sm text-ink-2">
                     <li className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="max-w-prose">{l.requiredCoverage}</span>
                       <strong className="text-ink">{fmt(cotizarQ.data.requiredCoverage)}</strong>
                     </li>
+                    {coverageBps != null && (
+                      <li className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="max-w-prose">{l.coveragePctLabel}</span>
+                        <strong className="text-ink">{fmtPct(coverageBps / 10_000, locale)}</strong>
+                      </li>
+                    )}
                     <li className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="max-w-prose">{l.acceptedCap}</span>
                       <strong className="text-beam">{fmt(cotizarQ.data.coverageMax)}</strong>
@@ -721,6 +741,8 @@ function RealAlta({ token, student, expiresAt }: { token: string; student: strin
                       <span className="font-mono text-xs text-ink">{cotizarQ.data.policy}</span>
                     </li>
                   </ul>
+                  <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">{l.coverageScope}</p>
+                  </>
                 ) : cotizarQ.error ? (
                   <div role="status" className="mt-2">
                     <p className="text-sm font-medium text-ink">

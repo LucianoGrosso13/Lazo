@@ -2,7 +2,7 @@
 // Corre entero en el navegador con Web Crypto: sin paquetes ni backend.
 // El documento se declara de demostración: no es firma digital certificada
 // ni tiene validez legal productiva (ver spec §decisiones).
-import { formatUsdc, type Micro, type WalletAddress } from "@/lib/cuotas";
+import { formatUsdc, type Bps, type Micro, type WalletAddress } from "@/lib/cuotas";
 
 export interface MandatoDemo {
   student: WalletAddress;
@@ -15,6 +15,12 @@ export interface MandatoDemo {
    * número provisional.
    */
   coverageMax: Micro | null;
+  /**
+   * Cobertura de la fianza sobre el capital pendiente de cada compra (bps),
+   * según la configuración del protocolo. `null` si aún no se conoce: el
+   * documento lo declara pendiente, no inventa un porcentaje.
+   */
+  coverageBps?: Bps | null;
   /** Segundos unix de la emisión. */
   issuedAt: number;
   locale: "es" | "en";
@@ -27,6 +33,12 @@ export function textoMandato(m: MandatoDemo): string {
     dateStyle: "long",
     timeStyle: "short",
   }).format(m.issuedAt * 1000);
+  const pct =
+    m.coverageBps != null
+      ? new Intl.NumberFormat(m.locale === "es" ? "es-AR" : "en-US", {
+          maximumFractionDigits: 2,
+        }).format(m.coverageBps / 100)
+      : null;
 
   if (m.locale === "en") {
     return [
@@ -40,11 +52,14 @@ export function textoMandato(m: MandatoDemo): string {
       "",
       "TERMS",
       `1. The guarantor backs purchases of up to ${usd(m.maxPurchase)} each.`,
+      pct != null
+        ? `2. The guarantee covers ${pct}% of the outstanding principal of each backed purchase.`
+        : "2. The guarantee's coverage of the outstanding principal is PENDING DEFINITION.",
+      "   Plan interest (when the plan has any) and late fees are outside that coverage: their treatment is PENDING DEFINITION.",
       m.coverageMax != null
-        ? `2. The maximum the guarantor can be charged in total per purchase is ${usd(m.coverageMax)}.`
-        : "2. The guarantor's total maximum is PENDING DEFINITION (the maximum formula is not defined yet).",
-      "3. The guarantor is only charged if the student misses an installment after the notice and grace period configured in the protocol.",
-      "4. Interest is zero. A missed installment accrues the configured late fee.",
+        ? `3. The maximum the guarantor can be charged in total per purchase is ${usd(m.coverageMax)}.`
+        : "3. The guarantor's total maximum is PENDING DEFINITION (the maximum formula is not defined yet).",
+      "4. The guarantor is only charged if the student misses an installment after the notice and grace period configured in the protocol.",
       "",
       "DISCLAIMER",
       "Demonstration document for the Lazo devnet demo. It is not a certified",
@@ -62,11 +77,14 @@ export function textoMandato(m: MandatoDemo): string {
     "",
     "CONDICIONES",
     `1. El garante respalda compras de hasta ${usd(m.maxPurchase)} cada una.`,
+    pct != null
+      ? `2. La fianza cubre el ${pct}% del capital pendiente de cada compra respaldada.`
+      : "2. La cobertura de la fianza sobre el capital pendiente está PENDIENTE DE DEFINICIÓN.",
+    "   El interés del plan (cuando el plan lo tiene) y los punitorios por mora quedan fuera de esa cobertura: su tratamiento está PENDIENTE DE DEFINICIÓN.",
     m.coverageMax != null
-      ? `2. Lo máximo que el garante puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
-      : "2. Lo máximo que el garante puede llegar a pagar está PENDIENTE DE DEFINICIÓN (la fórmula del máximo aún no está definida).",
-    "3. El garante solo paga si el estudiante no paga una cuota después del aviso y la gracia configurados en el protocolo.",
-    "4. El interés es cero. Una cuota vencida suma el punitorio configurado.",
+      ? `3. Lo máximo que el garante puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
+      : "3. Lo máximo que el garante puede llegar a pagar está PENDIENTE DE DEFINICIÓN (la fórmula del máximo aún no está definida).",
+    "4. El garante solo paga si el estudiante no paga una cuota después del aviso y la gracia configurados en el protocolo.",
     "",
     "ALCANCE",
     "Documento de demostración de la demo devnet de Lazo. No es una firma",

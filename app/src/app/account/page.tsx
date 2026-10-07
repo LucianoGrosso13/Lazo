@@ -8,5 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <MockAccount />;
+  // Mismo ancho y padding lateral que el shell de cuentas: a 390 px el
+  // tablero no toca los bordes.
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <MockAccount />
+    </div>
+  );
 }

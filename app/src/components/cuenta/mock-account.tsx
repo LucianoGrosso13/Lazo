@@ -22,8 +22,12 @@ import {
   type Installment,
   type Micro,
   type Plan,
+  type PlanTerms,
+  type WalletAddress,
 } from "@/lib/cuotas";
+import { getDirectoryMerchant } from "@/lib/merchants";
 import { useCuotasQuery } from "@/lib/use-cuotas";
+import { fmtPct } from "./consulta";
 
 const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
@@ -175,18 +179,78 @@ function Cuota({ installment, index }: { installment: Installment; index: number
   );
 }
 
+/**
+ * Comercio del plan: nombre del directorio demo (etiquetado "demo") o del
+ * estado del cliente; sin datos, la dirección corta. Nunca inventa un nombre.
+ */
+function PlanMerchant({ address }: { address: WalletAddress }) {
+  const t = useT(account);
+  const demo = getDirectoryMerchant(address);
+  const nameQ = useCuotasQuery(demo ? null : ["plan-merchant", address], async (c) => {
+    try {
+      return (await c.getMerchant(address)).name;
+    } catch {
+      return null;
+    }
+  });
+  const name = demo?.name ?? nameQ.data ?? null;
+  return (
+    <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-ink-2">
+      <span>
+        {t.planMerchant}: <span className="font-medium text-ink">{name ?? short(address)}</span>
+      </span>
+      {demo && <Chip>{t.demoTag}</Chip>}
+      {name && (
+        <span className="font-mono text-xs text-ink-ghost" title={address}>
+          {short(address)}
+        </span>
+      )}
+    </p>
+  );
+}
+
 export function PlanCard({ plan }: { plan: Plan }) {
   const t = useT(account);
+  const { locale } = useLocale();
+  // Planes anteriores a `plan.terms`: se leen como su lista efectiva de
+  // cuotas sin interés propio (el mock ya los normaliza igual al cargar).
+  const terms: PlanTerms | undefined = plan.terms;
+  const installmentsCount = terms?.installmentsCount ?? plan.installments.length;
+  const interestTotal = Math.max(
+    0,
+    plan.installments.reduce((a, i) => a + i.amount, 0) - plan.financed,
+  );
+  const interestBps =
+    terms?.interestTotalBps ??
+    (plan.financed > 0 ? Math.round((interestTotal * 10_000) / plan.financed) : 0);
+  const provisional = terms?.provisional ?? false;
   return (
     <GlassPanel className="p-6" data-testid="account-plan">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-medium text-ink">{plan.id}</p>
         <Chip on={plan.status === "Active"}>{t.planStatus[plan.status]}</Chip>
       </div>
-      <dl className="mt-4 grid grid-cols-3 gap-4">
+      <PlanMerchant address={plan.merchant} />
+      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
+        <span>{t.planTerms(installmentsCount)}</span>
+        <span aria-hidden>·</span>
+        <span>
+          {interestTotal > 0
+            ? t.planInterestMeta(fmtPct(interestBps / 10_000, locale))
+            : t.planInterestFree}
+        </span>
+        {provisional && <Chip>{t.planProvisional}</Chip>}
+      </p>
+      <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Monto label={t.price} value={plan.price} />
         <Monto label={t.downPayment} value={plan.downPayment} />
         <Monto label={t.financed} value={plan.financed} tone="beam" />
+        <div>
+          <p className="text-xs text-ink-2">{t.planInterest}</p>
+          <p className="mt-0.5 font-medium text-ink">
+            {interestTotal > 0 ? `US$${formatUsdc(interestTotal, locale)}` : t.planInterestFree}
+          </p>
+        </div>
       </dl>
       <ol className="mt-4 space-y-2">
         {plan.installments.map((i) => (

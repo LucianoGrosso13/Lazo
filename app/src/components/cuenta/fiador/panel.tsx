@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
 import { useLocale, useT } from "@/i18n/locale";
+import { fmtPct } from "../consulta";
 import {
   formatUsdc,
   type Activity,
@@ -95,6 +96,23 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
 
   const chargeDay = configQ.data?.guarantorChargeDay;
 
+  // Alcance de la fianza sobre el capital pendiente: mismo porcentaje en
+  // todos los escalones si la config no los distingue; si no, el del escalón
+  // cotizado. `null` mientras falten datos (no se inventa un número).
+  const tierCoverage = configQ.data
+    ? [...new Set(configQ.data.guaranteedTiers.map((x) => x.guarantorCoverageBps))]
+    : [];
+  const quoteCoverageBps =
+    quoteQ.data?.withGuarantee && configQ.data
+      ? (configQ.data.guaranteedTiers[quoteQ.data.tier]?.guarantorCoverageBps ?? null)
+      : null;
+  const coverageLine =
+    tierCoverage.length === 1
+      ? t.panel.coverageAllTiers.replace("{pct}", fmtPct(tierCoverage[0] / 10_000, locale))
+      : quoteCoverageBps != null
+        ? t.panel.coverageThisTier.replace("{pct}", fmtPct(quoteCoverageBps / 10_000, locale))
+        : null;
+
   return (
     <div data-testid="fiador-panel" className="space-y-4">
       <GlassPanel className="p-6">
@@ -149,7 +167,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
 
       {/* Estado del estudiante + deuda */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <GlassPanel className="p-6" aria-label={t.panel.studentTitle}>
+        <GlassPanel className="min-w-0 p-6" aria-label={t.panel.studentTitle}>
           <p className="text-xs uppercase tracking-wide text-ink-2">{t.panel.studentTitle}</p>
           <p className="mt-3 font-mono text-sm text-ink" title={student}>
             {short(student)}
@@ -161,7 +179,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
               </Chip>
             )}
             {reputationQ.data?.blockedFromNewPlans && (
-              <Chip>{t.panel.studentBlocked}</Chip>
+              <Chip className="whitespace-normal">{t.panel.studentBlocked}</Chip>
             )}
           </div>
           {chargeDay != null && hayPendiente && (
@@ -171,7 +189,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
           )}
         </GlassPanel>
 
-        <GlassPanel className="p-6" aria-label={t.panel.debtTitle}>
+        <GlassPanel className="min-w-0 p-6" aria-label={t.panel.debtTitle}>
           <p className="text-xs uppercase tracking-wide text-ink-2">{t.panel.debtTitle}</p>
           <p className="mt-1 text-xs text-ink-2">{t.panel.debtBody}</p>
           <div className="mt-4 grid grid-cols-2 gap-4">
@@ -192,6 +210,10 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
             <Monto label={t.panel.coverageRequired} value={quoteQ.data?.requiredCoverage ?? null} />
             <Monto label={t.panel.coverageMax} value={guarantee.coverageMax} tone="beam" />
           </dl>
+          <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-2">
+            {coverageLine ? `${coverageLine} ` : ""}
+            {t.panel.coverageScope}
+          </p>
         </GlassPanel>
       )}
 
