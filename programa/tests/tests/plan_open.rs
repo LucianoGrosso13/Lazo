@@ -301,7 +301,7 @@ fn open_rejects_inactive_merchant_and_second_plan() {
 
 #[test]
 fn open_rejects_when_vault_lacks_advance_and_rolls_back() {
-    // vault holds 500 < advance 651: InsufficientLiquidity, and NOTHING moves.
+    // vault holds 500 < merchant payout 651: PoolLiquidity, and NOTHING moves.
     let (mut env, w) = credit_env_guaranteed(500 * USDC, 1_000 * USDC, 1_000 * USDC, 700 * USDC);
     let p = env.protocol();
     let pool0 = env.account_data(&p.pool);
@@ -309,7 +309,7 @@ fn open_rejects_when_vault_lacks_advance_and_rolls_back() {
     let merch0 = env.account_data(&pda::merchant(&w.merchant_wallet).0);
 
     let out = open(&mut env, &w, PC_PRICE);
-    expect_cuotas_err(&out, CuotasError::InsufficientLiquidity, "vault short");
+    expect_cuotas_err(&out, CuotasError::PoolLiquidity, "vault short");
 
     assert_eq!(env.account_data(&p.pool), pool0, "pool untouched");
     assert_eq!(env.account_data(&pda::reputation(&w.student).0), rep0, "reputation untouched");
@@ -448,11 +448,12 @@ fn open_plan_is_gated_to_normal_state() {
 
 #[test]
 fn open_plan_charges_no_fee_when_config_says_zero() {
-    // Nothing business-related is hardcoded: with fee_bps updated to 0 the
+    // Nothing business-related is hardcoded: with the immediate settlement fee
+    // updated to 0 the
     // merchant receives down + financed in full and no gain is booked.
     let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 1_000 * USDC, 1_000 * USDC, 800 * USDC);
     let mut params = spec::spec_params(&env.actors.keeper.pubkey(), &env.actors.payer.pubkey());
-    params.fee_bps = 0;
+    params.settlement_options[0].fee_bps = 0;
     let i = ix::admin_update_config(&env.actors.admin.pubkey(), &params);
     env.send(&[i], &env.actors.admin.insecure_clone(), &[]).expect_ok("zero fee");
 

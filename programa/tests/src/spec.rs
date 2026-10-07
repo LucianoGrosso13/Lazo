@@ -2,7 +2,7 @@
 //! tier table + 02-validacion.md pricing decisions). Tests assert THESE
 //! values — if the implementation diverges, the suite fails, which is the point.
 
-use cuotas::{ConfigParams, PlanOption, TierParams};
+use cuotas::{ConfigParams, PlanOption, SettlementOption, TierParams};
 
 use crate::env::{pk, USDC};
 use solana_address::Address;
@@ -74,6 +74,12 @@ pub fn spec_params(keeper: &Address, treasury: &Address) -> ConfigParams {
         min_financed_to_count: MIN_FINANCED_TO_COUNT,
         guaranteed_tiers: GUARANTEED_TIERS.map(tier),
         plan_options: PLAN_OPTIONS,
+        settlement_options: [
+            SettlementOption { days: 0, tranches: 0, fee_bps: 700, enabled: true },
+            SettlementOption { days: 30, tranches: 1, fee_bps: 625, enabled: true },
+            SettlementOption { days: 60, tranches: 2, fee_bps: 575, enabled: true },
+            SettlementOption { days: 90, tranches: 3, fee_bps: 525, enabled: true },
+        ],
     }
 }
 

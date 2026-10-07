@@ -10,6 +10,7 @@ pub mod merchant_register;
 pub mod open_plan;
 pub mod pay_installment;
 pub mod pool_init;
+pub mod release_payout;
 pub mod student_init_reputation;
 
 pub use admin_apply_loss::*;
@@ -24,4 +25,5 @@ pub use merchant_register::*;
 pub use open_plan::*;
 pub use pay_installment::*;
 pub use pool_init::*;
+pub use release_payout::*;
 pub use student_init_reputation::*;

@@ -104,7 +104,13 @@ pub fn handle_lp_withdraw(ctx: Context<LpWithdraw>, tranche: Tranche, shares: u6
     // Zero-amount withdrawals are allowed so holders can retire worthless or
     // dust shares — that is how a wiped tranche gets back to a clean slate.
     let available = ctx.accounts.vault.amount;
-    require!(amount <= available, CuotasError::InsufficientLiquidity);
+    require!(
+        available
+            .checked_sub(amount)
+            .ok_or(CuotasError::InsufficientLiquidity)?
+            >= pool.committed_payouts,
+        CuotasError::InsufficientLiquidity
+    );
 
     burn(
         CpiContext::new(

@@ -112,6 +112,15 @@ pub struct PlanOpened {
 }
 
 #[event]
+pub struct PayoutReleased {
+    pub schedule: Pubkey,
+    pub plan: Pubkey,
+    pub merchant: Pubkey,
+    pub index: u8,
+    pub amount: u64,
+}
+
+#[event]
 pub struct InstallmentPaid {
     pub plan: Pubkey,
     pub student: Pubkey,

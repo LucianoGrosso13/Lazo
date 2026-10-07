@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready · **Prioridad: la primera en cortarse si no llega el tiempo**
+**Status:** done · **Prioridad: la primera en cortarse si no llega el tiempo**
 
 **Archivos propios:** los mismos que 02 (`programa/**`), sobre la rama ya integrada de 02.
 
@@ -15,8 +15,8 @@ Notas:
 - El pago al comercio **no depende** de que el estudiante pague (Lazo garantiza).
 - Los retiros de LPs (`lp_withdraw`) no pueden dejar `vault < committed_payouts`.
 
-- [ ] `PayoutSchedule` creado con los montos y fechas del spec (30/60/90 → 1/2/3 tramos, 6,25/5,75/5,25%)
-- [ ] `release_payout` antes de tiempo falla; en fecha transfiere; dos veces falla
-- [ ] Tramo liberado con el estudiante en mora
-- [ ] `PoolLiquidity` en `open_plan` y tope en `lp_withdraw`
-- [ ] Suite completa en verde
+- [x] `PayoutSchedule` creado con los montos y fechas del spec (30/60/90 → 1/2/3 tramos, 6,25/5,75/5,25%)
+- [x] `release_payout` antes de tiempo falla; en fecha transfiere; dos veces falla
+- [x] Tramo liberado con el estudiante en mora
+- [x] `PoolLiquidity` en `open_plan` y tope en `lp_withdraw`
+- [x] Suite completa en verde

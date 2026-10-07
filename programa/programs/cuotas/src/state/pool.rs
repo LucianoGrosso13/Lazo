@@ -23,16 +23,19 @@ impl Tranche {
 /// Two-tranche liquidity pool, PDA ["pool", usdc_mint].
 ///
 /// Recognized accounting invariant (without unsolicited token donations):
-///   vault.amount + outstanding_credit == junior_capital + senior_capital
+///   vault.amount + outstanding_credit - committed_payouts
+///       == junior_capital + senior_capital
 ///
 /// - `*_capital` is the NAV attributed to each tranche's shares.
 /// - `outstanding_credit` is capital advanced to plans that has not been repaid.
+/// - `committed_payouts` is merchant cash reserved from available liquidity.
 /// - `accrued_fees` is cumulative recognized gain already included in LP NAV,
 ///   not a treasury liability or a liquidity reserve.
 /// - Unsolicited token donations remain unallocated surplus, outside LP NAV.
 #[account]
 #[derive(InitSpace)]
 pub struct Pool {
+    pub committed_payouts: u64,
     pub junior_shares: u64,
     pub senior_shares: u64,
     pub junior_capital: u64,
@@ -317,6 +320,7 @@ mod tests {
 
     fn empty_pool() -> Pool {
         Pool {
+            committed_payouts: 0,
             junior_shares: 0,
             senior_shares: 0,
             junior_capital: 0,

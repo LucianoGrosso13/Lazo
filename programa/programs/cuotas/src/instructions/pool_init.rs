@@ -75,6 +75,7 @@ pub struct PoolInit<'info> {
 pub fn handle_pool_init(ctx: Context<PoolInit>) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     pool.junior_shares = 0;
+    pool.committed_payouts = 0;
     pool.senior_shares = 0;
     pool.junior_capital = 0;
     pool.senior_capital = 0;

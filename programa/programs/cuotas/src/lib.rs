@@ -115,8 +115,18 @@ pub mod cuotas {
 
     /// Student opens a plan (3 or 6 installments): down payment to the merchant,
     /// pool advance minus the merchant fee, Plan PDA created. Normal state only.
-    pub fn open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) -> Result<()> {
-        instructions::open_plan::handle_open_plan(ctx, price, installments)
+    pub fn open_plan(
+        ctx: Context<OpenPlan>,
+        price: u64,
+        installments: u8,
+        settlement: u8,
+    ) -> Result<()> {
+        instructions::open_plan::handle_open_plan(ctx, price, installments, settlement)
+    }
+
+    /// Release one merchant payout tranche after its configured release time.
+    pub fn release_payout(ctx: Context<ReleasePayout>, index: u8) -> Result<()> {
+        instructions::release_payout::handle_release_payout(ctx, index)
     }
 
     /// Student pays the first unresolved installment (principal + penalty).

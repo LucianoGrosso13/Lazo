@@ -98,4 +98,12 @@ pub enum CuotasError {
     BelowOptionMin,
     #[msg("The requested installment option is not available or enabled")]
     OptionUnavailable,
+    #[msg("Pool liquidity is already committed to merchant payouts")]
+    PoolLiquidity,
+    #[msg("Payout release date has not arrived")]
+    PayoutTooEarly,
+    #[msg("Payout tranche was already released")]
+    PayoutAlreadyReleased,
+    #[msg("Invalid payout tranche index")]
+    InvalidPayoutIndex,
 }
