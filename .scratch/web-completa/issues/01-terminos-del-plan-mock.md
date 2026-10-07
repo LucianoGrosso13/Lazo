@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/lib/cuotas/types.ts`, `demo-config.ts`, `mock.ts`, `real.ts`, `accounts.ts`, `accounts-types.ts`, nuevo `terms.ts` + `terms.test.ts`, `mock.test.ts`, `mock.open-plan.test.ts`, `mock.pay.test.ts`, `mock.mora.test.ts`, `real.test.ts`, `accounts.test.ts`, `app/src/lib/cuotas.ts` (solo exports). **No tocar** `mock/state.ts` ni `mock.persistence.test.ts` (son del ticket 02): los campos nuevos de `Merchant` y `Sale` son opcionales y se tratan como 0 / `"immediate"` / cobrado cuando faltan, así el estado sembrado sigue sirviendo.
 
@@ -15,14 +15,14 @@ Notas:
 - Cliente real: opciones por defecto = comportamiento actual; otras → cotización no elegible / error `option_unavailable`; `setMerchantSettlement` → `option_unavailable`. `getConfig` real no trae los campos nuevos.
 - `terms.ts`: `planOptionsOf(config)`, `settlementOptionsOf(config)` con fallback (3 cuotas + inmediato con `feeBps`), `d8Breakdown(config, quote)` y lo que haga falta para la UI (p. ej. fecha de cobro dada una apertura).
 
-- [ ] Tipos y config mock como en la spec; cambios de interfaz explicados en el commit
-- [ ] Caso por defecto idéntico al actual (1.000 escalón 0 → 951; 233,333333 / 233,333333 / 233,333334) — tests existentes en verde
-- [ ] 6 cuotas al 3%: interés 21, total 1.021, seis cuotas que suman 721 exacto; pagar las 6 lleva el plan a `Settled`
-- [ ] 1 cuota, opción deshabilitada o tarifa null → `option_unavailable` en quote y en openPlan
-- [ ] Cobro a 30 días: comercio +300 al abrir, +656,25 al adelantar 30 días, una sola vez aunque se adelante de nuevo; pendiente visible en `getMerchant`
-- [ ] Predeterminado del comercio aplicado cuando `openPlan` no recibe plazo; el plazo de la venta no cambia si después cambia el predeterminado
-- [ ] Copia de términos en el plan inmune a cambios posteriores de config
-- [ ] Cobertura 100% en los cuatro escalones con fiador (cotización y tests)
-- [ ] `d8Breakdown` reproduce la tabla de `proyecto/09-…`: 49 / 28 / 651 / 679 / 700 / 21 / 2,333333 / 18,666667
-- [ ] Cliente real: tests de opciones no por defecto
-- [ ] typecheck / lint / test / build en verde
+- [x] Tipos y config mock como en la spec; cambios de interfaz explicados en el commit
+- [x] Caso por defecto idéntico al actual (1.000 escalón 0 → 951; 233,333333 / 233,333333 / 233,333334) — tests existentes en verde
+- [x] 6 cuotas al 3%: interés 21, total 1.021, seis cuotas que suman 721 exacto; pagar las 6 lleva el plan a `Settled`
+- [x] 1 cuota, opción deshabilitada o tarifa null → `option_unavailable` en quote y en openPlan
+- [x] Cobro a 30 días: comercio +300 al abrir, +656,25 al adelantar 30 días, una sola vez aunque se adelante de nuevo; pendiente visible en `getMerchant`
+- [x] Predeterminado del comercio aplicado cuando `openPlan` no recibe plazo; el plazo de la venta no cambia si después cambia el predeterminado
+- [x] Copia de términos en el plan inmune a cambios posteriores de config
+- [x] Cobertura 100% en los cuatro escalones con fiador (cotización y tests)
+- [x] `d8Breakdown` reproduce la tabla de `proyecto/09-…`: 49 / 28 / 651 / 679 / 700 / 21 / 2,333333 / 18,666667
+- [x] Cliente real: tests de opciones no por defecto
+- [x] typecheck / lint / test / build en verde

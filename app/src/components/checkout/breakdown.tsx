@@ -309,6 +309,10 @@ function Reason({
       desc = guarantee ? b.exceeds_guarantee_coverage.d(fmt(guarantee.coverageMax)) : null;
       cta = b.exceeds_guarantee_coverage.cta;
       break;
+    case "option_unavailable":
+      // Hoy el checkout solo cotiza términos por defecto: el motivo queda
+      // cubierto por el tipo; el copy dedicado llega con el ticket de UI.
+      return null;
   }
 
   return (

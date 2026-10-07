@@ -71,6 +71,30 @@ describe("payInstallment", () => {
     expect((await c.getReputation(W)).plansCompleted).toBe(1);
   });
 
+  it("plan de 6 cuotas: las seis cuotas liquidan el plan y dejan la exposición en 0", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+      installments: 6,
+    });
+    // La exposición incluye el interés de la opción (721 = 700 + 21).
+    expect((await c.getReputation(W)).activeExposure).toBe(toMicro(721));
+
+    for (let i = 0; i < 6; i++) {
+      const { value: p } = await c.payInstallment(W, plan.id);
+      expect(p.installments[i].status).toBe("Paid");
+      expect(p.status).toBe(i < 5 ? "Active" : "Settled");
+    }
+    const settled = (await c.getPlans(W))[0];
+    expect(settled.installments.every((i) => i.status === "Paid")).toBe(true);
+    expect(settled.installments.reduce((a, i) => a + i.amount, 0)).toBe(
+      toMicro(721),
+    );
+    expect((await c.getReputation(W)).activeExposure).toBe(0);
+    expect((await c.getPool()).outstandingCredit).toBe(0);
+  });
+
   it("un plan con financiado menor al mínimo se salda pero no sube de escalón", async () => {
     const { value: plan } = await openPlan(120); // financiado 84 < 100
     expect(plan.counts).toBe(false);

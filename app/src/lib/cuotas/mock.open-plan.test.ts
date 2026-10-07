@@ -168,3 +168,150 @@ describe("openPlan", () => {
     expect(over.reasons).not.toContain("has_active_plan");
   });
 });
+
+describe("términos del plan y cobro del comercio", () => {
+  it("plan de 6 cuotas: interés 21, seis cuotas que suman 721 y términos guardados", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+      installments: 6,
+    });
+
+    expect(plan.installments).toHaveLength(6);
+    // 721 repartido en 6: la última cuota absorbe el redondeo.
+    expect(plan.installments.map((i) => i.amount)).toEqual([
+      120_166_666, 120_166_666, 120_166_666, 120_166_666, 120_166_666, 120_166_670,
+    ]);
+    expect(plan.installments.reduce((a, i) => a + i.amount, 0)).toBe(toMicro(721));
+    // Vencimientos mensuales: 30, 60, …, 180 días del reloj de demo.
+    const day = 86_400;
+    for (const [idx, inst] of plan.installments.entries()) {
+      expect(inst.dueAt).toBe(plan.openedAt + (idx + 1) * 30 * day);
+    }
+
+    // Copia inmutable de términos con los que se abrió.
+    expect(plan.terms).toEqual({
+      termsVersion: 1,
+      installmentsCount: 6,
+      interestTotalBps: 300,
+      downPaymentBps: 3000,
+      coverageBps: 10_000,
+      settlementId: "immediate",
+      settlementDays: 0,
+      settlementFeeBps: 700,
+      provisional: true,
+    });
+    // La comisión del comercio no cambia por el interés del comprador.
+    expect(plan.merchantFee).toBe(toMicro(49));
+    expect((await c.getReputation(W)).activeExposure).toBe(toMicro(721));
+  });
+
+  it("cobro a 30 días: +300 al abrir y +656,25 en la fecha de cobro, una sola vez", async () => {
+    const day = 86_400;
+    const pool0 = await c.getPool();
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+      settlement: "deferred_30",
+    });
+    expect(plan.terms.settlementId).toBe("deferred_30");
+    expect(plan.terms.settlementDays).toBe(30);
+    expect(plan.terms.settlementFeeBps).toBe(625);
+
+    // Al abrir: solo entra el anticipo (300); lo financiado queda pendiente.
+    let m = await c.getMerchant(DEMO_MERCHANT);
+    expect(m.settlementBalance).toBe(toMicro(300));
+    expect(m.pendingSettlement).toBe(toMicro(656.25));
+    const sale = m.sales[0];
+    expect(sale.settlementId).toBe("deferred_30");
+    expect(sale.settlementDays).toBe(30);
+    expect(sale.settlementAt).toBe(plan.openedAt + 30 * day);
+    expect(sale.pendingSettlement).toBe(toMicro(656.25));
+    expect(sale.settled).toBe(false);
+    expect(sale.received).toBe(toMicro(956.25));
+
+    // El pool todavía no adelanta nada (a diferencia del cobro inmediato).
+    let pool = await c.getPool();
+    expect(pool.available).toBe(pool0.available);
+    expect(pool.outstandingCredit).toBe(toMicro(700));
+    expect(pool.accruedFees).toBe(toMicro(43.75));
+    expect(pool.events.filter((e) => e.kind === "Advance")).toHaveLength(0);
+
+    // Antes de la fecha no liquida; al llegar, una sola vez.
+    await c.advanceDays(29);
+    m = await c.getMerchant(DEMO_MERCHANT);
+    expect(m.settlementBalance).toBe(toMicro(300));
+    expect(m.pendingSettlement).toBe(toMicro(656.25));
+
+    await c.advanceDays(1); // día 30: fecha de cobro
+    m = await c.getMerchant(DEMO_MERCHANT);
+    expect(m.settlementBalance).toBe(toMicro(956.25));
+    expect(m.pendingSettlement).toBe(0);
+    expect(m.sales[0].settled).toBe(true);
+    expect(m.sales[0].pendingSettlement).toBe(0);
+
+    pool = await c.getPool();
+    const advances = pool.events.filter((e) => e.kind === "Advance");
+    expect(advances).toHaveLength(1);
+    expect(advances[0].amount).toBe(toMicro(656.25));
+    expect(advances[0].at).toBe(plan.openedAt + 30 * day);
+    expect(pool.available).toBe(pool0.available - toMicro(656.25));
+
+    // Adelantar de nuevo no paga dos veces.
+    await c.advanceDays(60);
+    m = await c.getMerchant(DEMO_MERCHANT);
+    expect(m.settlementBalance).toBe(toMicro(956.25));
+    pool = await c.getPool();
+    expect(pool.events.filter((e) => e.kind === "Advance")).toHaveLength(1);
+  });
+
+  it("openPlan sin plazo usa el predeterminado del comercio", async () => {
+    await c.setMerchantSettlement(DEMO_MERCHANT, "deferred_60");
+    expect((await c.getMerchant(DEMO_MERCHANT)).settlementId).toBe("deferred_60");
+
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    // 60 días → comisión 5,5%: pendiente 700 − 38,50 = 661,50
+    expect(plan.terms.settlementId).toBe("deferred_60");
+    expect(plan.terms.settlementDays).toBe(60);
+    expect(plan.merchantFee).toBe(toMicro(38.5));
+    const m = await c.getMerchant(DEMO_MERCHANT);
+    expect(m.settlementBalance).toBe(toMicro(300));
+    expect(m.pendingSettlement).toBe(toMicro(661.5));
+    expect(m.sales[0].settlementAt).toBe(plan.openedAt + 60 * 86_400);
+  });
+
+  it("el plazo de la venta y los términos del plan no cambian si el predeterminado cambia después", async () => {
+    await c.setMerchantSettlement(DEMO_MERCHANT, "deferred_30");
+    const { value: first } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(400),
+    });
+    expect(first.terms.settlementId).toBe("deferred_30");
+
+    // El comercio cambia su predeterminado: la venta ya abierta no se toca.
+    await c.setMerchantSettlement(DEMO_MERCHANT, "immediate");
+    const { value: second } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(200),
+    });
+    expect(second.terms.settlementId).toBe("immediate");
+
+    const savedFirst = (await c.getPlans(W)).find((p) => p.id === first.id)!;
+    expect(savedFirst.terms.settlementId).toBe("deferred_30");
+    expect(savedFirst.terms.settlementDays).toBe(30);
+    const sale = (await c.getMerchant(DEMO_MERCHANT)).sales.find(
+      (s) => s.planId === first.id,
+    )!;
+    expect(sale.settlementId).toBe("deferred_30");
+    expect(sale.pendingSettlement).toBeGreaterThan(0);
+    expect(sale.settled).toBe(false);
+  });
+});

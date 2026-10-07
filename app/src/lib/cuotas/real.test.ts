@@ -490,6 +490,28 @@ describe("mapPlan y días de atraso", () => {
     expect(late.status).toBe("Late");
   });
 
+  it("mapea los términos del programa (3 cuotas, cobro inmediato) desde los montos grabados", () => {
+    const config = quoteConfig();
+    const plan = mapPlan(
+      address(PROGRAM),
+      decodedPlan(planData()),
+      config,
+      OPENED_AT,
+      "firma-apertura",
+    );
+    expect(plan.terms).toEqual({
+      termsVersion: 1,
+      installmentsCount: 3,
+      interestTotalBps: 0,
+      downPaymentBps: 3000,
+      coverageBps: 10_000, // escalón 0 con fiador del fixture
+      settlementId: "immediate",
+      settlementDays: 0,
+      settlementFeeBps: 700, // derivado de merchant_fee 49 sobre financiado 700
+      provisional: false,
+    });
+  });
+
   it("paid/charged son terminales sin importar el reloj", () => {
     const config = quoteConfig();
     const data = decodedPlan(
@@ -741,6 +763,80 @@ describe("computeRealQuote", () => {
     expect(
       computeRealQuote(base, toMicro(2000), "s", rep(), guarantee(), false).reasons,
     ).toContain("exceeds_tier_max");
+  });
+
+  it("opciones por defecto explícitas cotizan igual que sin opciones", () => {
+    const q = computeRealQuote(base, toMicro(1000), "s", rep(), guarantee(), false, {
+      installments: 3,
+      settlement: "immediate",
+    });
+    expect(q.eligible).toBe(true);
+    expect(q.installmentsCount).toBe(3);
+    expect(q.settlementId).toBe("immediate");
+    expect(q.installments).toEqual([233_333_333, 233_333_333, 233_333_334]);
+    expect(q.merchantReceives).toBe(toMicro(951));
+  });
+
+  it("opciones que el programa no soporta → option_unavailable", () => {
+    for (const options of [
+      { installments: 1 },
+      { installments: 6 },
+      { settlement: "deferred_30" },
+      { settlement: "deferred_60" },
+      { settlement: "deferred_90" },
+      { installments: 6, settlement: "deferred_30" },
+    ] as const) {
+      const q = computeRealQuote(
+        base,
+        toMicro(1000),
+        "s",
+        rep(),
+        guarantee(),
+        false,
+        options,
+      );
+      expect(q.eligible).toBe(false);
+      expect(q.reasons[0]).toBe("option_unavailable");
+    }
+  });
+});
+
+describe("opciones que el programa no soporta", () => {
+  // RPC/firmanante que explotan si el código llega a tocarlos: la guardia de
+  // opciones tiene que rechazar antes de leer la cadena o pedir la wallet.
+  const deadTransport = (): RealTransport => ({
+    rpc: mockRpc({}),
+    getSigner: async () => {
+      throw new Error("no debe pedir firma");
+    },
+  });
+
+  it("setMerchantSettlement → option_unavailable sin tocar RPC ni firmar", async () => {
+    const c = createRealCuotas({ env: ENV, transport: deadTransport() });
+    await expect(
+      c.setMerchantSettlement(String(merchantOwner), "deferred_30"),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+    await expect(
+      c.setMerchantSettlement(String(merchantOwner), "immediate"),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+  });
+
+  it("openPlan con otra cantidad de cuotas o plazo → option_unavailable sin pedir wallet", async () => {
+    const c = createRealCuotas({ env: ENV, transport: deadTransport() });
+    const args = {
+      student: String(student),
+      merchant: String(merchantOwner),
+      price: toMicro(1000),
+    };
+    await expect(
+      c.openPlan({ ...args, installments: 6 }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+    await expect(
+      c.openPlan({ ...args, installments: 1 }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
+    await expect(
+      c.openPlan({ ...args, settlement: "deferred_30" }),
+    ).rejects.toMatchObject({ code: "option_unavailable" });
   });
 });
 

@@ -4,6 +4,12 @@
 // `.scratch/lazo-front/spec.md`. Ningún número de negocio va hardcodeado:
 // todo sale de `state.config` (sembrado desde `demo-config.ts`).
 import { DEMO_CONFIG } from "./demo-config";
+import {
+  PLAN_TERMS_VERSION,
+  planOptionsOf,
+  settlementOptionOf,
+  settlementOptionsOf,
+} from "./terms";
 import { CuotasError } from "./types";
 import type {
   Activity,
@@ -12,10 +18,13 @@ import type {
   Guarantee,
   Micro,
   Plan,
+  PlanTerms,
   ProtocolConfig,
   Quote,
   QuoteBlockReason,
+  QuoteOptions,
   Reputation,
+  SettlementId,
   TxResult,
   UnixSeconds,
   WalletAddress,
@@ -55,13 +64,19 @@ function toPublicInstallment(i: MockInstallment) {
 }
 
 function toPublicPlan(p: MockPlan): Plan {
-  return { ...p, installments: p.installments.map(toPublicInstallment) };
+  return {
+    ...p,
+    installments: p.installments.map(toPublicInstallment),
+    // Los términos son inmutables: el plan devuelto no comparte referencia.
+    terms: clone(p.terms),
+  };
 }
 
 function computeQuote(
   state: MockState,
   price: Micro,
   student: WalletAddress,
+  options?: QuoteOptions,
 ): Quote {
   const cfg = state.config;
   const rep = state.reputations[student];
@@ -73,21 +88,52 @@ function computeQuote(
         Math.min(rep.tier, cfg.unguaranteedTiers.length - 1)
       ];
 
-  const downPayment = bpsOf(price, tierParams.downPaymentBps);
-  const financed = price - downPayment;
-  const interest = bpsOf(financed, tierParams.interestBps);
-  const repayable = financed + interest;
-  // La última cuota absorbe el redondeo (700 → 233,333333 / 233,333333 / 233,333334).
-  const base = Math.floor(repayable / cfg.installmentsCount);
-  const installments = Array.from({ length: cfg.installmentsCount }, (_, i) =>
-    i === cfg.installmentsCount - 1
-      ? repayable - base * (cfg.installmentsCount - 1)
-      : base,
+  // Opción de plan pedida o por defecto (la primera habilitada; histórico:
+  // `installmentsCount`). Inexistente o deshabilitada → `option_unavailable`,
+  // igual que una liquidación deshabilitada o con tarifa sin definir (null).
+  const planOpts = planOptionsOf(cfg);
+  const installmentsReq =
+    options?.installments ??
+    planOpts.find((o) => o.enabled)?.installments ??
+    cfg.installmentsCount;
+  const planOpt = planOpts.find((o) => o.installments === installmentsReq);
+  const settlementReq: SettlementId = options?.settlement ?? "immediate";
+  const settleOpt = settlementOptionsOf(cfg).find(
+    (o) => o.id === settlementReq,
   );
-  const merchantFee = bpsOf(financed, cfg.feeBps);
-  const requiredCoverage = bpsOf(financed, tierParams.guarantorCoverageBps);
 
   const reasons: QuoteBlockReason[] = [];
+  if (
+    !planOpt?.enabled ||
+    !settleOpt?.enabled ||
+    settleOpt.feeBps === null
+  ) {
+    reasons.push("option_unavailable");
+  }
+
+  const n = planOpt?.installments ?? installmentsReq;
+  const downPayment = bpsOf(price, tierParams.downPaymentBps);
+  const financed = price - downPayment;
+  // El interés es el de la opción de plan (0 si falta) más el del escalón
+  // (0 en todos los escalones de la demo; las configs viejas lo llevaban ahí).
+  const interestTotalBps = (planOpt?.interestTotalBps ?? 0) + tierParams.interestBps;
+  const interest = bpsOf(financed, interestTotalBps);
+  const repayable = financed + interest;
+  // La última cuota absorbe el redondeo (700 → 233,333333 / 233,333333 / 233,333334).
+  const base = Math.floor(repayable / n);
+  const installments = Array.from({ length: n }, (_, i) =>
+    i === n - 1 ? repayable - base * (n - 1) : base,
+  );
+  const merchantFee = bpsOf(financed, settleOpt?.feeBps ?? cfg.feeBps);
+  const requiredCoverage = bpsOf(financed, tierParams.guarantorCoverageBps);
+  const settlementDays = settleOpt?.days ?? 0;
+  const merchantReceives = price - merchantFee;
+  // Cobro diferido: el anticipo entra al abrir y `financiado − fee` en la
+  // fecha de cobro; inmediato = todo al abrir, igual que siempre.
+  const merchantAdvance =
+    settlementDays === 0 ? merchantReceives : downPayment;
+  const merchantPending = merchantReceives - merchantAdvance;
+
   if (cfg.state !== "Normal") reasons.push("protocol_halted");
   if (rep.blockedFromNewPlans) reasons.push("blocked_after_default");
   if (!withGuarantee) reasons.push("no_guarantee");
@@ -120,8 +166,15 @@ function computeQuote(
     interest,
     total: price + interest,
     merchantFee,
-    merchantReceives: price - merchantFee,
+    merchantReceives,
+    merchantAdvance,
+    merchantPending,
     requiredCoverage,
+    installmentsCount: n,
+    interestTotalBps,
+    settlementId: settlementReq,
+    settlementDays,
+    provisional: (planOpt?.provisional ?? false) || (settleOpt?.provisional ?? false),
     eligible: reasons.length === 0,
     reasons,
   };
@@ -129,8 +182,8 @@ function computeQuote(
 
 export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
   const seedConfig = { ...DEMO_CONFIG, ...overrides.config };
-  let state = loadState() ?? seedState(seedConfig);
   const listeners = new Set<() => void>();
+  let state: MockState;
 
   const persist = () => persistState(state);
   const notify = () => listeners.forEach((l) => l());
@@ -138,9 +191,56 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     persist();
     notify();
   };
+  /**
+   * Acomoda estado persistido de versiones viejas: planes sin `terms` (se
+   * reconstruyen de sus montos y la config) y ventas/comercios sin los campos
+   * de liquidación (faltantes = inmediato, ya cobrado, pendiente 0).
+   */
+  const normalize = (s: MockState): MockState => {
+    for (const p of s.plans) {
+      if (p.terms) continue;
+      const rep = s.reputations[p.student];
+      const tier = s.config.guaranteedTiers[rep?.tier ?? 0];
+      const repaid = p.installments.reduce((a, i) => a + i.amount, 0);
+      const interest = Math.max(0, repaid - p.financed);
+      p.terms = {
+        termsVersion: PLAN_TERMS_VERSION,
+        installmentsCount: p.installments.length,
+        interestTotalBps:
+          p.financed > 0 ? Math.round((interest * 10_000) / p.financed) : 0,
+        downPaymentBps:
+          p.price > 0 ? Math.round((p.downPayment * 10_000) / p.price) : 0,
+        coverageBps: tier.guarantorCoverageBps,
+        settlementId: "immediate",
+        settlementDays: 0,
+        settlementFeeBps:
+          p.financed > 0
+            ? Math.round((p.merchantFee * 10_000) / p.financed)
+            : s.config.feeBps,
+        provisional: false,
+      };
+    }
+    for (const m of Object.values(s.merchants)) {
+      m.settlementId ??= "immediate";
+      m.pendingSettlement ??= m.sales.reduce(
+        (a, sale) => a + (sale.pendingSettlement ?? 0),
+        0,
+      );
+      for (const sale of m.sales) {
+        sale.settlementId ??= "immediate";
+        sale.settlementDays ??= 0;
+        sale.settlementAt ??= sale.at;
+        sale.pendingSettlement ??= 0;
+        sale.settled ??= true;
+      }
+    }
+    return s;
+  };
+  state = normalize(loadState() ?? seedState(seedConfig));
   /** Relee el estado persistido (otra instancia pudo haberlo cambiado). */
   const refresh = () => {
-    state = loadState() ?? state;
+    const loaded = loadState();
+    if (loaded) state = normalize(loaded);
   };
 
   const activity = (
@@ -338,6 +438,36 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       }
       if (settleOrRefresh(plan)) changed = true;
     }
+
+    // Liquidación diferida: cada venta se cobra una sola vez, cuando el reloj
+    // llega a su fecha de cobro. El adelanto del pool al comercio (Advance)
+    // ocurre en esa fecha — al abrir solo entró el anticipo del estudiante.
+    // Ventas viejas sin `pendingSettlement` ya se cobraron: no se tocan.
+    for (const merchant of Object.values(state.merchants)) {
+      for (const sale of merchant.sales) {
+        const pending = sale.pendingSettlement ?? 0;
+        if (pending <= 0 || sale.settled === true) continue;
+        const dueAt = sale.settlementAt ?? sale.at;
+        if (t < dueAt) continue;
+        sale.pendingSettlement = 0;
+        sale.settled = true;
+        merchant.pendingSettlement = Math.max(
+          0,
+          (merchant.pendingSettlement ?? 0) - pending,
+        );
+        merchant.settlementBalance += pending;
+        state.pool.available -= pending;
+        state.pool.nav = state.pool.available + state.pool.outstandingCredit;
+        state.pool.events.push({
+          kind: "Advance",
+          amount: pending,
+          at: dueAt,
+          signature: fakeSignature(),
+          planId: sale.planId,
+        });
+        changed = true;
+      }
+    }
     return changed;
   };
 
@@ -378,11 +508,11 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       return g ? clone(g) : null;
     },
 
-    async quote(price, student) {
+    async quote(price, student, options) {
       refresh();
       sync();
       if (ensureStudent(state, student)) commit();
-      return computeQuote(state, price, student);
+      return computeQuote(state, price, student, options);
     },
 
     async getPlans(student) {
@@ -398,6 +528,23 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       sync();
       const m = state.merchants[owner];
       if (!m) throw new CuotasError("not_found", `comercio ${owner}`);
+      return clone(m);
+    },
+
+    async setMerchantSettlement(owner, settlement) {
+      refresh();
+      sync();
+      const m = state.merchants[owner];
+      if (!m) throw new CuotasError("not_found", `comercio ${owner}`);
+      const opt = settlementOptionOf(state.config, settlement);
+      if (!opt || !opt.enabled || opt.feeBps === null) {
+        throw new CuotasError(
+          "option_unavailable",
+          `liquidación ${settlement} no disponible`,
+        );
+      }
+      m.settlementId = settlement;
+      commit();
       return clone(m);
     },
 
@@ -437,7 +584,13 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         throw new CuotasError("not_found", `comercio ${args.merchant}`);
       }
       if (ensureStudent(state, args.student)) commit();
-      const quote = computeQuote(state, args.price, args.student);
+      // Sin plazo pedido en la orden, se usa el predeterminado del comercio.
+      const settlementReq =
+        args.settlement ?? merchant.settlementId ?? "immediate";
+      const quote = computeQuote(state, args.price, args.student, {
+        installments: args.installments,
+        settlement: settlementReq,
+      });
       if (!quote.eligible) {
         throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
       }
@@ -445,6 +598,29 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       const at = now(state);
       const signature = fakeSignature();
       const day = state.config.secondsPerDay;
+      const rep = state.reputations[args.student];
+      const guarantee = state.guarantees[args.student];
+      const tierParams =
+        guarantee?.active === true
+          ? state.config.guaranteedTiers[rep.tier]
+          : state.config.unguaranteedTiers[
+              Math.min(rep.tier, state.config.unguaranteedTiers.length - 1)
+            ];
+      // Copia fija de los términos con los que se abrió el plan: si la config
+      // o el predeterminado del comercio cambian después, el plan no se toca.
+      const terms: PlanTerms = {
+        termsVersion: PLAN_TERMS_VERSION,
+        installmentsCount: quote.installmentsCount,
+        interestTotalBps: quote.interestTotalBps,
+        downPaymentBps: tierParams.downPaymentBps,
+        coverageBps: tierParams.guarantorCoverageBps,
+        settlementId: quote.settlementId,
+        settlementDays: quote.settlementDays,
+        settlementFeeBps:
+          settlementOptionOf(state.config, settlementReq)?.feeBps ??
+          state.config.feeBps,
+        provisional: quote.provisional,
+      };
       const plan: MockPlan = {
         id: `plan-${++state.planSeq}`,
         student: args.student,
@@ -464,13 +640,17 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         openedAt: at,
         status: "Active",
         counts: quote.financed >= state.config.minFinancedToCount,
+        terms,
         signature,
       };
       state.plans.push(plan);
 
-      // El comercio cobra al instante: anticipo del estudiante + adelanto
-      // del pool, menos la comisión sobre lo financiado.
-      merchant.settlementBalance += quote.merchantReceives;
+      // Cobro del comercio: el anticipo del estudiante entra al abrir siempre.
+      // Si la liquidación es diferida, `financiado − fee` queda pendiente
+      // hasta `openedAt + settlementDays` (lo liquida el keeper del reloj).
+      merchant.settlementBalance += quote.merchantAdvance;
+      merchant.pendingSettlement =
+        (merchant.pendingSettlement ?? 0) + quote.merchantPending;
       merchant.plansCount += 1;
       merchant.sales.push({
         planId: plan.id,
@@ -481,24 +661,38 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         received: quote.merchantReceives,
         at,
         signature,
+        settlementId: quote.settlementId,
+        settlementDays: quote.settlementDays,
+        settlementAt: at + quote.settlementDays * day,
+        pendingSettlement: quote.merchantPending,
+        settled: quote.merchantPending === 0,
       });
 
-      const advance = quote.financed - quote.merchantFee;
-      state.pool.events.push({
-        kind: "Advance",
-        amount: advance,
-        at,
-        signature,
-        planId: plan.id,
-      });
-      state.pool.outstandingCredit += quote.financed;
+      // El pool adelanta `financiado − fee` al comercio: al abrir si la
+      // liquidación es inmediata; en la fecha de cobro si es diferida (lo
+      // liquida `applyKeeper` con el evento Advance en esa fecha).
+      const advance =
+        quote.merchantPending === 0 ? quote.financed - quote.merchantFee : 0;
+      if (advance > 0) {
+        state.pool.events.push({
+          kind: "Advance",
+          amount: advance,
+          at,
+          signature,
+          planId: plan.id,
+        });
+        state.pool.available -= advance;
+      }
+      // Crédito pendiente del pool = lo que el comprador debe repagar
+      // (financiado + interés de la opción). Cada cuota pagada lo baja por
+      // `inst.amount`, así saldar deja el contador en 0 exacto.
+      state.pool.outstandingCredit += quote.financed + quote.interest;
       state.pool.accruedFees += quote.merchantFee;
-      state.pool.available -= advance;
       state.pool.nav = state.pool.available + state.pool.outstandingCredit;
 
       // activeExposure = repayable del plan (financed + interest), igual que
-      // `active_exposure` on-chain. En la práctica interest = 0 en todos los
-      // escalones, así que equivale a la suma de amounts de sus cuotas.
+      // `active_exposure` on-chain. Con interés 0 equivale a la suma de los
+      // amounts de sus cuotas; con 6 cuotas incluye el interés de la opción.
       state.reputations[args.student].activeExposure +=
         quote.financed + quote.interest;
       activity({
@@ -544,7 +738,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
 
       // Pagar libera margen: inst.amount ya es la parte de repayable de la
       // cuota (las cuotas se cortan sobre financed + interest, no sobre
-      // financed). Con interest = 0, exposure = Σ amounts de cuotas impagas.
+      // financed). exposure = Σ amounts de cuotas impagas.
       const rep = state.reputations[student];
       rep.activeExposure = Math.max(0, rep.activeExposure - inst.amount);
       activity({ kind: "InstallmentPaid", student, planId, amount: paid });

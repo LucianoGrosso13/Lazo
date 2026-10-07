@@ -97,6 +97,9 @@ function badgeText(
       return t.reasons.has_active_plan;
     case "protocol_halted":
       return t.reasons.protocol_halted;
+    case "option_unavailable":
+      // La tienda no cotiza opciones todavía; el copy llega con su ticket.
+      return null;
   }
 }
 
