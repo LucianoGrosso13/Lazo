@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
@@ -8,10 +9,10 @@ import type { AppClient } from "@/app/providers";
 import { productsByMerchant } from "@/lib/catalog";
 import {
   CuotasError,
-  DEMO_MERCHANT,
   defaultPlanOption,
   formatUsdc,
   getCuotas,
+  settlementOptionOf,
   type Guarantee,
   type Micro,
   type ProtocolConfig,
@@ -27,23 +28,27 @@ import {
 import { splitPurchase } from "@/components/landing/split";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { tienda } from "@/i18n/dictionaries/tienda";
+import { marketplace } from "@/i18n/dictionaries/marketplace";
 import { useLocale, useT } from "@/i18n/locale";
 import { useWalletAddress, WalletButton } from "@/components/wallet-button";
 import { GlassPanel } from "@/components/ui/glass";
 import { ReferenceTag } from "@/components/ui/badges";
 import { Chip } from "@/components/ui/chip";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
+import { getCategory, type DemoMerchant } from "@/lib/merchants";
 import { ProductCard, type ProductTerms } from "./product-card";
 import { altPlanOption, formatBps, installmentsForOption } from "./plan-alt";
+import { CATEGORY_MONOGRAM } from "@/components/marketplace/monogram";
 import styles from "./store.module.css";
 
 const noopSubscribe = () => () => {};
 const useMounted = () => useSyncExternalStore(noopSubscribe, () => true, () => false);
 
-// La tienda muestra solo los productos de Voltia (comercio del guion de
-// la demo). El resto del catálogo se descubre en el marketplace /comercio.
-const TIENDA_PRODUCTS = productsByMerchant(DEMO_MERCHANT);
+// La tienda de cada comercio del directorio: se entra desde /comercio y
+// muestra solo los productos de ese comercio con la cotización real de la
+// wallet (o la del escalón 0 si no hay wallet). Direcciones fuera del
+// directorio las atiende `ComercioPublico` (la página decide, acá no).
 
 interface WalletView {
   guarantee: Guarantee | null;
@@ -107,14 +112,17 @@ function badgeText(
   }
 }
 
-export function TiendaPage() {
+export function MerchantStore({ merchant: m }: { merchant: DemoMerchant }) {
   const t = useT(tienda);
+  const tm = useT(marketplace);
   const { locale } = useLocale();
   const client = useClient<AppClient>();
   const status = useWalletStatus(client);
   const address = useWalletAddress();
   const mounted = useMounted();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
+  const products = productsByMerchant(m.address);
+  const category = getCategory(m.category);
 
   // En mock, la identidad de ejemplo elegida en /app actúa como la wallet del
   // recorrido (mismo criterio que useStudentAddress: la selección manda).
@@ -135,10 +143,18 @@ export function TiendaPage() {
   // con interés). Si la config no la trae, la vidriera no la menciona.
   const altOpt = config ? altPlanOption(config) : undefined;
 
-  const merchantQ = useCuotasQuery(["merchant"], (c) => c.getMerchant(DEMO_MERCHANT));
+  // La cuenta Merchant del modo activo: nombre en cadena y plazo de cobro
+  // elegido. Fuera del mock puede no existir todavía: queda sin datos y la
+  // página usa el nombre del directorio.
+  const merchantQ = useCuotasQuery(["merchant", m.address], (c) =>
+    c.getMerchant(m.address).catch((e) => {
+      if (e instanceof CuotasError && e.code === "not_found") return null;
+      throw e;
+    }),
+  );
 
   const walletQ = useCuotasQuery(
-    mounted && student ? ["tienda", student, altOpt?.installments ?? 0] : null,
+    mounted && student ? ["store", m.address, student, altOpt?.installments ?? 0] : null,
     async (c): Promise<WalletView> => {
       // La key solo se activa con un estudiante efectivo: student no es null acá.
       const who = student ?? "";
@@ -150,22 +166,22 @@ export function TiendaPage() {
           if (e instanceof CuotasError && e.code === "not_found") return null;
           throw e;
         }),
-        Promise.all(TIENDA_PRODUCTS.map((p) => c.quote(p.price, who))),
+        Promise.all(products.map((p) => c.quote(p.price, who))),
         // La alternativa se cotiza con quote() igual que en el checkout.
         alt
           ? Promise.all(
-              TIENDA_PRODUCTS.map((p) =>
+              products.map((p) =>
                 c.quote(p.price, who, { installments: alt.installments }),
               ),
             )
-          : Promise.resolve(TIENDA_PRODUCTS.map((): Quote | null => null)),
+          : Promise.resolve(products.map((): Quote | null => null)),
       ]);
       return {
         guarantee,
         reputation,
-        quotes: Object.fromEntries(TIENDA_PRODUCTS.map((p, i) => [p.id, quotes[i]])),
+        quotes: Object.fromEntries(products.map((p, i) => [p.id, quotes[i]])),
         quotesAlt: Object.fromEntries(
-          TIENDA_PRODUCTS.map((p, i) => [p.id, quotesAlt[i] ?? null]),
+          products.map((p, i) => [p.id, quotesAlt[i] ?? null]),
         ),
       };
     },
@@ -232,8 +248,8 @@ export function TiendaPage() {
     };
   };
 
-  const [featured, ...rest] = TIENDA_PRODUCTS;
-  const featuredQuote = walletQ.data?.quotes[featured.id];
+  const [featured, ...rest] = products;
+  const featuredQuote = featured ? walletQ.data?.quotes[featured.id] : undefined;
   const tier = featuredQuote?.tier;
   const reputation = walletQ.data?.reputation ?? null;
 
@@ -261,20 +277,64 @@ export function TiendaPage() {
         )
       : t.lede;
 
+  // Plazo de cobro elegido por el comercio (el mock siembra "immediate"); sin
+  // cuenta en el modo activo el chip simplemente no sale.
+  const settlement =
+    config && merchantQ.data
+      ? settlementOptionOf(config, merchantQ.data.settlementId ?? "immediate")
+      : undefined;
+
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="merchant-profile">
+      <Link href="/comercio" className={styles.back}>
+        <span aria-hidden>←</span> {tm.backToMarketplace}
+      </Link>
+
       <p className={styles.banner} role="note">
         {t.demoBanner}
         <span className={styles.merchant}>
-          {t.merchantLabel} <b>{merchantQ.data?.name ?? "…"}</b>
+          {t.merchantLabel} <b>{merchantQ.data?.name ?? m.name}</b>
           <ReferenceTag>{t.simulated}</ReferenceTag>
         </span>
       </p>
 
       <header className={styles.head}>
-        <div className={styles.headText}>
-          <h1 className={styles.title}>{t.title}</h1>
-          <p className={styles.lede}>{lede}</p>
+        <div className={styles.headBrand}>
+          <div className={styles.brandVisual}>
+            <Image
+              src={m.image}
+              alt=""
+              width={88}
+              height={88}
+              priority
+              className={styles.brandPhoto}
+            />
+            <span
+              aria-hidden
+              className={styles.brandMonogram}
+              style={{ ["--mg" as string]: category ? CATEGORY_MONOGRAM[category.id] : undefined }}
+            >
+              {m.name.trim().charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className={styles.headText}>
+            <h1 className={styles.title}>{m.name}</h1>
+            <div className={styles.merchantChips}>
+              {category ? <Chip>{category.label[locale]}</Chip> : null}
+              <Chip>{m.city}</Chip>
+              {settlement ? (
+                <Chip>
+                  {settlement.days === 0
+                    ? tm.settlementNow
+                    : tm.settlementIn(settlement.days)}
+                </Chip>
+              ) : null}
+              <Chip on>{tm.demoTag}</Chip>
+              {m.featured ? <Chip>{tm.featuredTag}</Chip> : null}
+            </div>
+            <p className={styles.merchantDesc}>{m.description[locale]}</p>
+            <p className={styles.lede}>{lede}</p>
+          </div>
         </div>
         {mounted && student && (tier !== undefined || margin) ? (
           <div className={styles.headMeta}>
@@ -330,14 +390,25 @@ export function TiendaPage() {
         </GlassPanel>
       ) : loading ? (
         <Skeleton t={t} />
+      ) : products.length === 0 ? (
+        <GlassPanel className={styles.empty} data-testid="merchant-empty-products">
+          <StateMark state="dim" />
+          <h2 className={styles.emptyTitle}>{t.emptyProductsTitle}</h2>
+          <p className={styles.emptyBody}>{t.emptyProductsBody}</p>
+          <Link href="/comercio" className={`${buttonClasses("secondary", "sm")} mt-3`}>
+            <span aria-hidden>←</span> {tm.backToMarketplace}
+          </Link>
+        </GlassPanel>
       ) : (
         <div className={styles.grid}>
-          {(() => {
-            const f = termsFor(featured.id, featured.price);
-            return f ? (
-              <ProductCard product={featured} terms={f.terms} badge={f.badge} featured t={t} />
-            ) : null;
-          })()}
+          {featured
+            ? (() => {
+                const f = termsFor(featured.id, featured.price);
+                return f ? (
+                  <ProductCard product={featured} terms={f.terms} badge={f.badge} featured t={t} />
+                ) : null;
+              })()
+            : null}
           <div className={styles.side}>
             {rest.map((p) => {
               const v = termsFor(p.id, p.price);
@@ -350,7 +421,7 @@ export function TiendaPage() {
       )}
 
       <p className={styles.moreShops}>
-        <span>{t.moreMerchantsLead}</span>
+        <span>{t.moreMerchantsLead(m.name)}</span>
         <Link href="/comercio" className={styles.moreLink}>
           {t.moreMerchants}
           <svg

@@ -26,8 +26,8 @@ export const account = defineDict({
     blocked: "Bloqueado para planes nuevos",
     plansTitle: "Planes",
     plansEmpty:
-      "Todavía no hay planes para esta identidad: abrí uno desde la tienda para verlo acá.",
-    plansCta: "Ir a la tienda",
+      "Todavía no hay planes para esta identidad: abrí uno desde un comercio para verlo acá.",
+    plansCta: "Ver comercios",
     planStatus: {
       Active: "Activo",
       Late: "En mora",
@@ -82,7 +82,7 @@ export const account = defineDict({
     activityEmpty: "Sin actividad para esta identidad todavía.",
     linksTitle: "Seguir la demo",
     linksBlurb: "El flujo de prueba completo vive en estas secciones.",
-    links: { store: "Tienda", entry: "Entrada de cuentas", pool: "Pool", merchant: "Comercio" },
+    links: { entry: "Entrada de cuentas", pool: "Pool", merchant: "Comercio" },
   },
   en: {
     title: "My account (demo)",
@@ -105,8 +105,8 @@ export const account = defineDict({
     activeExposure: "Active exposure",
     blocked: "Blocked from new plans",
     plansTitle: "Plans",
-    plansEmpty: "No plans for this identity yet: open one from the store to see it here.",
-    plansCta: "Go to the store",
+    plansEmpty: "No plans for this identity yet: open one from a merchant to see it here.",
+    plansCta: "Browse merchants",
     planStatus: {
       Active: "Active",
       Late: "Late",
@@ -161,6 +161,6 @@ export const account = defineDict({
     activityEmpty: "No activity for this identity yet.",
     linksTitle: "Keep exploring the demo",
     linksBlurb: "The full test flow lives in these sections.",
-    links: { store: "Store", entry: "Account entry", pool: "Pool", merchant: "Merchant" },
+    links: { entry: "Account entry", pool: "Pool", merchant: "Merchant" },
   },
 });

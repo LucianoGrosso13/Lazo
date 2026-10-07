@@ -1,10 +1,10 @@
 import { defineDict } from "../locale";
 
 /**
- * Marketplace de comercios demo: /comercio (buscador + chips + grilla) y
- * /comercio/[direccion] (perfil del directorio con productos y CTA al
- * checkout). Los comercios son ficticios y se declaran "demo"; los términos
- * (cuotas, interés, plazo de cobro) salen de la config vía helpers.
+ * Marketplace de comercios demo: /comercio (buscador + chips + grilla). El
+ * perfil /comercio/[direccion] es la tienda del comercio (diccionario
+ * `tienda` + estas etiquetas de identidad). Los comercios son ficticios y
+ * se declaran "demo"; los términos salen de la config vía helpers.
  */
 export const marketplace = defineDict({
   es: {
@@ -32,20 +32,9 @@ export const marketplace = defineDict({
     cardAria: (name: string, category: string, city: string, products: string) =>
       `${name}, ${category}, ${city}. ${products}. Comercio demo.`,
     backToMarketplace: "Todos los comercios",
-    acceptedPlans: "Acepta",
-    planChip: (n: number) => `${n} cuotas`,
-    planOptionLine: (n: number, amount: string) => `${n} cuotas de US$ ${amount}`,
-    zeroInterest: "sin interés",
-    provisionalTag: "provisional",
     settlementNow: "Cobra al instante",
     settlementIn: (days: number) => `Cobra a ${days} días de la compra`,
-    productsTitle: "Productos",
-    tierNote:
-      "Precios partidos con la cotización de una cuenta nueva con fiador; con tu historial el anticipo puede bajar.",
-    buy: "Comprar en cuotas",
-    productAria: (name: string, price: string) => `${name}, US$ ${price}`,
     foot: "Marketplace simulado en devnet: comercios, productos y precios son de ejemplo.",
-    loadingAria: "Cargando comercios",
   },
   en: {
     title: "Merchants that accept Lazo",
@@ -70,19 +59,8 @@ export const marketplace = defineDict({
     cardAria: (name: string, category: string, city: string, products: string) =>
       `${name}, ${category}, ${city}. ${products}. Demo merchant.`,
     backToMarketplace: "All merchants",
-    acceptedPlans: "Accepts",
-    planChip: (n: number) => `${n} installments`,
-    planOptionLine: (n: number, amount: string) => `${n} installments of US$ ${amount}`,
-    zeroInterest: "interest-free",
-    provisionalTag: "provisional",
     settlementNow: "Settles instantly",
     settlementIn: (days: number) => `Settles ${days} days after purchase`,
-    productsTitle: "Products",
-    tierNote:
-      "Prices split with the quote a new backed account gets; your track record can lower the down payment.",
-    buy: "Buy in installments",
-    productAria: (name: string, price: string) => `${name}, US$ ${price}`,
     foot: "Simulated marketplace on devnet: merchants, products and prices are examples.",
-    loadingAria: "Loading merchants",
   },
 });

@@ -46,11 +46,11 @@ export function ParaEstudiantes() {
         title={t.hero.title}
         lede={t.hero.lede}
       >
-        <Link className={buttonClasses("primary")} href="/tienda">
-          {t.hero.ctaStore}
-        </Link>
-        <Link className={buttonClasses("secondary")} href="/comercio">
+        <Link className={buttonClasses("primary")} href="/comercio">
           {t.hero.ctaMerchants}
+        </Link>
+        <Link className={buttonClasses("secondary")} href="/checkout/pc">
+          {t.hero.ctaCheckout}
         </Link>
       </AudienceHero>
       <What />
@@ -311,11 +311,11 @@ function Ctas() {
       <div className="glass flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
         <p className="text-lg font-medium text-beam">{t.title}</p>
         <div className="flex flex-wrap gap-3">
-          <Link className={buttonClasses("primary")} href="/tienda">
-            {t.store}
-          </Link>
-          <Link className={buttonClasses("secondary")} href="/comercio">
+          <Link className={buttonClasses("primary")} href="/comercio">
             {t.merchants}
+          </Link>
+          <Link className={buttonClasses("secondary")} href="/checkout/pc">
+            {t.checkout}
           </Link>
           <Link className={buttonClasses("secondary")} href="/app">
             {t.account}

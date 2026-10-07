@@ -45,11 +45,11 @@ describe("directorio de comercios demo", () => {
     }
   });
 
-  it("Voltia conserva pc/notebook/curso con los mismos precios", () => {
-    const voltia = getDirectoryMerchant(DEMO_MERCHANT);
-    expect(voltia?.name).toBe("Voltia");
-    expect(voltia?.category).toBe("electronics");
-    expect(voltia?.products.map((p) => p.id)).toEqual(["pc", "notebook", "curso"]);
+  it("Kroma conserva pc/notebook/curso con los mismos precios", () => {
+    const kroma = getDirectoryMerchant(DEMO_MERCHANT);
+    expect(kroma?.name).toBe("Kroma");
+    expect(kroma?.category).toBe("electronics");
+    expect(kroma?.products.map((p) => p.id)).toEqual(["pc", "notebook", "curso"]);
     expect(getProduct("pc")).toMatchObject({ price: 1_000_000_000, merchant: DEMO_MERCHANT });
     expect(getProduct("notebook")).toMatchObject({ price: 650_000_000 });
     expect(getProduct("curso")).toMatchObject({ price: 120_000_000 });
@@ -91,7 +91,7 @@ describe("directorio de comercios demo", () => {
     const merchant = await c.getMerchant(otro.address);
     expect(merchant.sales).toHaveLength(1);
     expect(merchant.sales[0].planId).toBe(res.value.id);
-    // Voltia no se entera de la venta.
+    // Kroma no se entera de la venta.
     expect((await c.getMerchant(DEMO_MERCHANT)).sales).toEqual([]);
   });
 });
@@ -103,10 +103,10 @@ describe("búsqueda del directorio", () => {
   });
 
   it("encuentra por nombre sin importar tildes ni mayúsculas", () => {
-    const res = searchMerchants({ q: "FERRETERÍA" });
-    expect(res.map((m) => m.name)).toContain("Ferretería La Tuerca");
-    expect(searchMerchants({ q: "ferreteria" }).map((m) => m.name)).toContain(
-      "Ferretería La Tuerca",
+    const res = searchMerchants({ q: "CÓDICE" });
+    expect(res.map((m) => m.name)).toContain("Códice Estudio");
+    expect(searchMerchants({ q: "codice" }).map((m) => m.name)).toContain(
+      "Códice Estudio",
     );
   });
 
@@ -121,16 +121,16 @@ describe("búsqueda del directorio", () => {
 
   it("busca dentro de los nombres de productos", () => {
     const res = searchMerchants({ q: "taladro" });
-    expect(res.map((m) => m.name)).toEqual(["Herramientas del Valle"]);
+    expect(res.map((m) => m.name)).toEqual(["Forja Industrial"]);
   });
 
   it("combina texto y categoría", () => {
     const res = searchMerchants({ q: "curso", categoryId: "courses" });
-    expect(res.map((m) => m.name)).toEqual(["Academia Código Sur"]);
-    // "curso" también existe en Voltia (producto), pero no es de la categoría.
+    expect(res.map((m) => m.name)).toEqual(["Sintaxis Academy"]);
+    // "curso" también existe en Kroma (producto), pero no es de la categoría.
     const todos = searchMerchants({ q: "curso" });
-    expect(todos.map((m) => m.name)).toContain("Voltia");
-    expect(todos.map((m) => m.name)).toContain("Academia Código Sur");
+    expect(todos.map((m) => m.name)).toContain("Kroma");
+    expect(todos.map((m) => m.name)).toContain("Sintaxis Academy");
   });
 
   it("devuelve vacío sin resultados", () => {
@@ -166,7 +166,7 @@ describe("búsqueda del directorio", () => {
     const featured = featuredMerchants();
     expect(featured.length).toBeGreaterThanOrEqual(3);
     expect(featured.every((m) => m.featured)).toBe(true);
-    expect(featured.map((m) => m.name)).toContain("Voltia");
+    expect(featured.map((m) => m.name)).toContain("Kroma");
   });
 
   it("getCategory devuelve etiquetas en ambos idiomas", () => {

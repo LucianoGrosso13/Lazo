@@ -11,8 +11,8 @@ export const paraEstudiantes = defineDict({
       eyebrow: "Estudiantes y familias",
       title: "Cuotas para estudiar, con el respaldo de tu familia",
       lede: "Lazo te deja comprar en cuotas en comercios adheridos y pagar con dólares digitales (USDC), aunque no tengas tarjeta de crédito. Un familiar queda como fiador: respalda tu plan con un tope acordado y solo paga si vos no pagás.",
-      ctaStore: "Ir a la tienda",
       ctaMerchants: "Ver comercios",
+      ctaCheckout: "Probar un checkout",
     },
     what: {
       title: "Qué es Lazo",
@@ -25,7 +25,7 @@ export const paraEstudiantes = defineDict({
       steps: [
         {
           t: "Elegí el comercio y el producto",
-          d: "Buscá por nombre o categoría en la tienda o en el directorio. Los comercios de esta demo son ficticios y llevan etiqueta demo.",
+          d: "Buscá por nombre o categoría en el directorio de comercios. Los comercios de esta demo son ficticios y llevan etiqueta demo.",
         },
         {
           t: "Elegí 3 o 6 cuotas",
@@ -166,8 +166,8 @@ export const paraEstudiantes = defineDict({
     },
     cta: {
       title: "Empezá por una compra de ejemplo",
-      store: "Ir a la tienda",
       merchants: "Ver comercios",
+      checkout: "Probar un checkout",
       account: "Mi cuenta",
     },
   },
@@ -176,8 +176,8 @@ export const paraEstudiantes = defineDict({
       eyebrow: "Students and families",
       title: "Installments for your studies, backed by your family",
       lede: "Lazo lets you buy in installments at participating merchants and pay with digital dollars (USDC), even without a credit card. A family member acts as guarantor: they back your plan with an agreed cap and only pay if you don't.",
-      ctaStore: "Go to the store",
       ctaMerchants: "Browse merchants",
+      ctaCheckout: "Try a checkout",
     },
     what: {
       title: "What Lazo is",
@@ -190,7 +190,7 @@ export const paraEstudiantes = defineDict({
       steps: [
         {
           t: "Pick the merchant and the product",
-          d: "Search by name or category in the store or the directory. The merchants in this demo are fictional and carry a demo label.",
+          d: "Search by name or category in the merchant directory. The merchants in this demo are fictional and carry a demo label.",
         },
         {
           t: "Choose 3 or 6 installments",
@@ -331,8 +331,8 @@ export const paraEstudiantes = defineDict({
     },
     cta: {
       title: "Start with a sample purchase",
-      store: "Go to the store",
       merchants: "Browse merchants",
+      checkout: "Try a checkout",
       account: "My account",
     },
   },

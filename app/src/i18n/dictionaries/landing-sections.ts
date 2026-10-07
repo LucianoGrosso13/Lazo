@@ -125,7 +125,7 @@ export const landingSections = defineDict({
       title: "Estado de la demo",
       realTitle: "Disponible acá",
       real: [
-        "Recorrido completo: tienda, checkout, plan y paneles",
+        "Recorrido completo: comercios, checkout, plan y paneles",
         "3 o 6 cuotas y plazo de cobro del comercio, calculados desde la config",
         "Marketplace de comercios de ejemplo y páginas por audiencia",
         "Escalones, línea de mora y vista del pool",
@@ -140,7 +140,7 @@ export const landingSections = defineDict({
     },
     close: {
       title: "Probalo con una compra de ejemplo",
-      cta: "Ir a la tienda",
+      cta: "Explorar los comercios",
       foot: "Demo simulada · no procesa pagos ni envía transacciones. La versión de prueba opera únicamente en Solana devnet.",
     },
     reference: "referencia",
@@ -269,7 +269,7 @@ export const landingSections = defineDict({
       title: "Demo status",
       realTitle: "Live in this demo",
       real: [
-        "Full flow: store, checkout, plan and panels",
+        "Full flow: merchants, checkout, plan and panels",
         "3 or 6 installments and the merchant's settlement term, computed from the config",
         "Example-store marketplace and per-audience pages",
         "Tier ladder, late-payment timeline and pool view",
@@ -284,7 +284,7 @@ export const landingSections = defineDict({
     },
     close: {
       title: "Try it with a sample purchase",
-      cta: "Go to the store",
+      cta: "Explore the merchants",
       foot: "Simulated demo · no payments or transactions. The test version runs only on Solana devnet.",
     },
     reference: "reference",
