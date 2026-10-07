@@ -126,7 +126,7 @@ Para incentivar la conducta de pago sin incurrir en riesgos desproporcionados, s
 | **Tier 3** | Trusted | 2 | 10% | 100% | US$ 1.250 |
 | **Tier 4** | Full | 3+ | 0% | 100% | US$ 1.500 |
 
-- **Fiador obligatorio siempre:** La cobertura del fiador se mantiene fija en el **100% del saldo financiado + interés** en todos los escalones. El premio para el estudiante es abonar menos anticipo y acceder a mayor límite; el fiador se beneficia de una probabilidad decreciente de atraso conforme el estudiante consolida su historial.
+- **Fiador obligatorio siempre:** La cobertura del fiador se mantiene fija en el **100% del saldo financiado + interés** en todos los Tiers. El premio para el estudiante es abonar menos anticipo y acceder a mayor límite; el fiador se beneficia de una probabilidad decreciente de atraso conforme el estudiante consolida su historial.
 - **Regla de descenso:** Si un plan incurre en mora y se ejecuta el cobro sobre el fiador, el estudiante desciende automáticamente un Tier.
 
 ---
