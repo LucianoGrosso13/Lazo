@@ -5,9 +5,9 @@
 export const REFERENCE_FIGURES = {
   /** Etiqueta obligatoria al mostrar estas cifras en pantalla. */
   note: "referencia, sin verificar en la fuente oficial",
-  /** Lo que pagaría en total una PC de US$1.000 en 3 cuotas sin tarjeta de la competencia (ARS). */
+  /** Ejemplo calculado en research/a (caso de prensa nov-2025, CFTEA 367%), no es cifra oficial; la UI compara con el rango de CFTEA. Lo que pagaría en total una PC de US$1.000 en 3 cuotas sin tarjeta de la competencia (ARS). */
   mercadoPagoPc1000TotalArs: 1290,
-  /** Recargo equivalente de ese total sobre el precio de lista (+29%). */
+  /** Ejemplo calculado en research/a (caso de prensa nov-2025, CFTEA 367%), no es cifra oficial; la UI compara con el rango de CFTEA. Recargo equivalente de ese total sobre el precio de lista (+29%). */
   mercadoPagoPc1000SurchargePct: 29,
   /** CFTEA publicado por la competencia para cuotas sin tarjeta (ago-2026: TNA 48-249%, CFTEA 76,36-1.375,94%). */
   mercadoPagoCfteaPct: { min: 76, max: 1376 },
@@ -22,4 +22,11 @@ export const REFERENCE_FIGURES = {
   jupiterYieldPct: 5,
   /** Objetivo de rendimiento del tramo senior de Lazo. */
   lazoSeniorTargetYieldPct: 8,
+  /** Hipótesis del modelo económico de Lazo (supuestos de trabajo, no métricas medidas). */
+  modelAssumptions: {
+    downPaymentPct: 30,
+    defaultRatePct: 8,
+    recoveryRatePct: 80,
+    costOfCapitalAnnualPct: 12,
+  },
 } as const;

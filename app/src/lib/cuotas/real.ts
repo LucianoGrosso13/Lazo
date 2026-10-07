@@ -91,7 +91,13 @@ import {
 } from "../../generated";
 import type { AccountBaseHooks, AdminMerchantRef } from "./accounts-types";
 import { PLAN_TERMS_VERSION } from "./terms";
-import { CuotasError, type CuotasClient, type Micro, type WalletAddress } from "./types";
+import {
+  CuotasError,
+  type CounterOrder,
+  type CuotasClient,
+  type Micro,
+  type WalletAddress,
+} from "./types";
 import type {
   Activity,
   DemoClock,
@@ -810,14 +816,8 @@ function mapConfig(d: GeneratedProtocolConfig): ProtocolConfig {
     maxPurchase: safeMicro(t.maxPurchase, "max_purchase"),
     interestBps: t.interestBps,
   }));
-  const bare = d.unguaranteedTiers.map((t) => ({
-    downPaymentBps: t.downPaymentBps,
-    guarantorCoverageBps: t.guarantorCoverageBps,
-    maxPurchase: safeMicro(t.maxPurchase, "max_purchase"),
-    interestBps: t.interestBps,
-  }));
-  if (tiers.length !== 4 || bare.length !== 2) {
-    throw new CuotasError("unavailable", "La config onchain no trae 4+2 escalones");
+  if (tiers.length !== 4) {
+    throw new CuotasError("unavailable", "La config onchain no trae 4 escalones");
   }
   return {
     admin: String(d.admin),
@@ -831,7 +831,6 @@ function mapConfig(d: GeneratedProtocolConfig): ProtocolConfig {
     installmentsCount: INSTALLMENT_COUNT,
     installmentIntervalDays: d.installmentIntervalDays,
     guaranteedTiers: tiers as ProtocolConfig["guaranteedTiers"],
-    unguaranteedTiers: bare as ProtocolConfig["unguaranteedTiers"],
     minFinancedToCount: safeMicro(d.minFinancedToCount, "min_financed_to_count"),
     state: mapProtocolState(d.state),
     usdcMint: String(d.usdcMint),
@@ -1011,9 +1010,7 @@ export function computeRealQuote(
   // estudiante obtendría tras `student_init_reputation`. No afirma estado.
   const tier = reputation?.tier ?? 0;
   const withGuarantee = guarantee?.active === true;
-  const tierParams = withGuarantee
-    ? config.guaranteedTiers[tier]
-    : config.unguaranteedTiers[Math.min(tier, config.unguaranteedTiers.length - 1)];
+  const tierParams = config.guaranteedTiers[tier];
 
   const downPayment = bpsOf(price, tierParams.downPaymentBps);
   const financed = price - downPayment;
@@ -1024,7 +1021,7 @@ export function computeRealQuote(
     i === config.installmentsCount - 1 ? repayable - base * (config.installmentsCount - 1) : base,
   );
   const merchantFee = bpsOf(financed, config.feeBps);
-  const requiredCoverage = bpsOf(financed, tierParams.guarantorCoverageBps);
+  const requiredCoverage = bpsOf(repayable, tierParams.guarantorCoverageBps);
 
   const reasons: QuoteBlockReason[] = [];
   // El programa on-chain solo soporta la opción por defecto (3 cuotas, cobro
@@ -1038,7 +1035,7 @@ export function computeRealQuote(
   if (config.state !== "Normal") reasons.push("protocol_halted");
   if (reputation?.blockedFromNewPlans) reasons.push("blocked_after_default");
   if (hasActivePlan) reasons.push("has_active_plan");
-  if (!withGuarantee) reasons.push("no_guarantee");
+  if (!withGuarantee) reasons.push("guarantor_required");
   if (price > tierParams.maxPurchase) reasons.push("exceeds_tier_max");
   if (withGuarantee && guarantee) {
     if (price > guarantee.maxPurchase) reasons.push("exceeds_guarantor_max_purchase");
@@ -1058,6 +1055,7 @@ export function computeRealQuote(
     merchantReceives: price - merchantFee,
     merchantAdvance: price - merchantFee,
     merchantPending: 0,
+    payoutTranches: [],
     requiredCoverage,
     installmentsCount: config.installmentsCount,
     interestTotalBps: tierParams.interestBps,
@@ -2185,6 +2183,18 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       }
       notify();
       return { value: mapGuarantee(student, updated), signature };
+    },
+
+    async createCounterOrder(): Promise<CounterOrder> {
+      throw new CuotasError("option_unavailable", "Mostrador solo disponible en modo mock");
+    },
+
+    async getCounterOrder(): Promise<CounterOrder> {
+      throw new CuotasError("option_unavailable", "Mostrador solo disponible en modo mock");
+    },
+
+    async listCounterOrders(): Promise<CounterOrder[]> {
+      throw new CuotasError("option_unavailable", "Mostrador solo disponible en modo mock");
     },
 
     async advanceDays(_days: number): Promise<DemoClock> {

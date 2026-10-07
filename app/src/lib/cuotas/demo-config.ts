@@ -19,16 +19,16 @@ export const DEMO_CONFIG: ProtocolConfig = {
   // total sobre lo financiado. La opción de 1 cuota se retiró: no existe y
   // pedirla devuelve `option_unavailable`.
   planOptions: [
-    { installments: 3, interestTotalBps: 0, enabled: true, provisional: false },
-    { installments: 6, interestTotalBps: 300, enabled: true, provisional: true },
+    { installments: 3, interestTotalBps: 0, minPrice: 0, enabled: true, provisional: false },
+    { installments: 6, interestTotalBps: 300, minPrice: usdc(350), enabled: true, provisional: false },
   ],
-  // Plazos de cobro del comercio (10): la comisión sobre lo financiado baja
-  // cuando el comercio acepta esperar. Todas provisionales menos la inmediata.
+  // Plazos de cobro del comercio (spec § "Términos del plan"): cobro en
+  // tramos mensuales iguales (30→1, 60→2, 90→3) garantizados por Lazo.
   settlementOptions: [
-    { id: "immediate", days: 0, feeBps: 700, enabled: true, provisional: false },
-    { id: "deferred_30", days: 30, feeBps: 625, enabled: true, provisional: true },
-    { id: "deferred_60", days: 60, feeBps: 550, enabled: true, provisional: true },
-    { id: "deferred_90", days: 90, feeBps: 525, enabled: true, provisional: true },
+    { id: "immediate", days: 0, tranches: 0, feeBps: 700, enabled: true, provisional: false },
+    { id: "deferred_30", days: 30, tranches: 1, feeBps: 625, enabled: true, provisional: false },
+    { id: "deferred_60", days: 60, tranches: 2, feeBps: 575, enabled: true, provisional: false },
+    { id: "deferred_90", days: 90, tranches: 3, feeBps: 525, enabled: true, provisional: false },
   ],
   // Reparto D8 (09): originación incluida en la comisión; administración
   // anual sobre saldo a cargo del pool.
@@ -40,10 +40,6 @@ export const DEMO_CONFIG: ProtocolConfig = {
     { downPaymentBps: 2000, guarantorCoverageBps: 10000, maxPurchase: usdc(1000), interestBps: 0 },
     { downPaymentBps: 1000, guarantorCoverageBps: 10000, maxPurchase: usdc(1250), interestBps: 0 },
     { downPaymentBps: 0, guarantorCoverageBps: 10000, maxPurchase: usdc(1500), interestBps: 0 },
-  ],
-  unguaranteedTiers: [
-    { downPaymentBps: 5000, guarantorCoverageBps: 0, maxPurchase: usdc(150), interestBps: 0 },
-    { downPaymentBps: 3000, guarantorCoverageBps: 0, maxPurchase: usdc(300), interestBps: 0 },
   ],
   minFinancedToCount: usdc(100),
   state: "Normal",

@@ -241,7 +241,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
       <li className="flex flex-wrap items-baseline justify-between gap-2 rounded-2xl border border-hairline px-4 py-3">
         <div className="flex items-center gap-2">
           <Chip on={activity.kind === "GuarantorCharged" || activity.kind === "MarkedLate"}>
-            {t.panel.kinds[activity.kind]}
+            {(t.panel.kinds as Partial<Record<Activity["kind"], string>>)[activity.kind] ?? activity.kind}
           </Chip>
           {activity.amount != null && (
             <span className="text-sm font-medium text-ink">

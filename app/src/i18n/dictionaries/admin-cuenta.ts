@@ -135,6 +135,7 @@ export const adminCuenta = defineDict({
       TierDown: "Baja de escalón",
       GuaranteeRegistered: "Fianza registrada",
       GuaranteeRevoked: "Fianza revocada",
+      PayoutReleased: "Liquidación liberada",
     },
 
     comerciosTitle: "Comercios",
@@ -309,6 +310,7 @@ export const adminCuenta = defineDict({
       TierDown: "Tier down",
       GuaranteeRegistered: "Guarantee registered",
       GuaranteeRevoked: "Guarantee revoked",
+      PayoutReleased: "Payout released",
     },
 
     comerciosTitle: "Merchants",

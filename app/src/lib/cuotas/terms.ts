@@ -7,6 +7,7 @@ import type {
   Bps,
   InstallmentsOption,
   Micro,
+  PayoutTranche,
   PlanOption,
   ProtocolConfig,
   Quote,
@@ -32,9 +33,9 @@ export function planOptionsOf(config: ProtocolConfig): PlanOption[] {
   if (config.planOptions) return config.planOptions;
   return [
     {
-      // La config vieja declara su propia cantidad; el casteo es solo forma.
-      installments: config.installmentsCount as InstallmentsOption,
+      installments: (config.installmentsCount === 6 ? 6 : 3) as 3 | 6,
       interestTotalBps: 0,
+      minPrice: 0,
       enabled: true,
       provisional: false,
     },
@@ -51,6 +52,7 @@ export function settlementOptionsOf(config: ProtocolConfig): SettlementOption[] 
     {
       id: "immediate",
       days: 0,
+      tranches: 0,
       feeBps: config.feeBps,
       enabled: true,
       provisional: false,
@@ -90,6 +92,30 @@ export function immediateFeeBps(config: ProtocolConfig): Bps {
 }
 
 /**
+ * Genera el calendario de tramos de cobro para el comercio:
+ * divide `financedNet` en `tranches` cuotas iguales a intervalos regulares
+ * de 30 días hasta `days`, absorbiendo el redondeo en el último tramo.
+ */
+export function payoutSchedule(
+  financedNet: Micro,
+  option: Pick<SettlementOption, "tranches" | "days">,
+  openedAt: UnixSeconds,
+  secondsPerDay = 86_400,
+): PayoutTranche[] {
+  if (!option.tranches || option.tranches <= 0 || !option.days || option.days <= 0) {
+    return [];
+  }
+  const n = option.tranches;
+  const base = Math.floor(financedNet / n);
+  return Array.from({ length: n }, (_, i) => ({
+    index: i,
+    amount: i === n - 1 ? financedNet - base * (n - 1) : base,
+    releaseAt: openedAt + Math.round(((i + 1) * option.days) / n) * secondsPerDay,
+    released: false,
+  }));
+}
+
+/**
  * Resultado del cálculo puro de la cotización: anticipo, financiado,
  * interés, cuotas con redondeo en la última, comisión por plazo y
  * adelanto/pendiente del comercio. Es exactamente la cuenta de
@@ -119,9 +145,11 @@ export interface QuoteTerms {
   merchantAdvance: Micro;
   /** Lo que el comercio cobra en la fecha (0 si es inmediata). */
   merchantPending: Micro;
+  /** Tramos de cobro del comercio según la liquidación elegida. */
+  payoutTranches: PayoutTranche[];
   /** Días hasta el cobro diferido del comercio (0 = inmediato). */
   settlementDays: number;
-  /** Cobertura requerida del fiador = financed × guarantorCoverageBps. */
+  /** Cobertura requerida del fiador = repayable (capital + interés) × guarantorCoverageBps. */
   requiredCoverage: Micro;
   /** Interés total aplicado (opción de plan + escalón), en bps. */
   interestTotalBps: Bps;
@@ -135,7 +163,9 @@ export interface QuoteTermsInput {
   /** Opción de plan ya resuelta (cantidad de cuotas + interés propio). */
   plan: { installments: number; interestTotalBps: Bps };
   /** Plazo de cobro ya resuelto (días hasta el cobro y comisión efectiva). */
-  settlement: { days: number; feeBps: Bps };
+  settlement: { days: number; feeBps: Bps; tranches?: number };
+  openedAt?: UnixSeconds;
+  secondsPerDay?: number;
 }
 
 /**
@@ -149,6 +179,8 @@ export function quoteTerms({
   tier,
   plan,
   settlement,
+  openedAt = 0,
+  secondsPerDay = 86_400,
 }: QuoteTermsInput): QuoteTerms {
   const downPayment = bpsOf(price, tier.downPaymentBps);
   const financed = price - downPayment;
@@ -164,6 +196,13 @@ export function quoteTerms({
   const merchantReceives = price - merchantFee;
   const merchantAdvance =
     settlement.days === 0 ? merchantReceives : downPayment;
+  const merchantPending = merchantReceives - merchantAdvance;
+  const payoutTranches = payoutSchedule(
+    merchantPending,
+    { tranches: settlement.tranches ?? 0, days: settlement.days },
+    openedAt,
+    secondsPerDay,
+  );
   return {
     price,
     downPayment,
@@ -175,9 +214,10 @@ export function quoteTerms({
     merchantFee,
     merchantReceives,
     merchantAdvance,
-    merchantPending: merchantReceives - merchantAdvance,
+    merchantPending,
+    payoutTranches,
     settlementDays: settlement.days,
-    requiredCoverage: bpsOf(financed, tier.guarantorCoverageBps),
+    requiredCoverage: bpsOf(repayable, tier.guarantorCoverageBps),
     interestTotalBps,
   };
 }
@@ -189,6 +229,8 @@ export interface QuoteTermsForArgs {
   installments?: InstallmentsOption;
   /** Plazo de cobro pedido; default "immediate". */
   settlement?: SettlementId;
+  openedAt?: UnixSeconds;
+  secondsPerDay?: number;
 }
 
 /**
@@ -215,7 +257,13 @@ export function quoteTermsFor(
     price,
     tier: config.guaranteedTiers[args.tier ?? 0],
     plan,
-    settlement: { days: settlement.days, feeBps: settlement.feeBps },
+    settlement: {
+      days: settlement.days,
+      feeBps: settlement.feeBps,
+      tranches: settlement.tranches,
+    },
+    openedAt: args.openedAt,
+    secondsPerDay: args.secondsPerDay ?? config.secondsPerDay,
   });
 }
 

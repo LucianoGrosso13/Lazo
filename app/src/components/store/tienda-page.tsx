@@ -77,12 +77,7 @@ function badgeText(
       // Misma cuenta que computeQuote: el maxPurchase del escalón cotizado
       // es la línea de crédito total; `exposure` es lo que ya está en uso.
       const tier = quote?.tier ?? 0;
-      const params =
-        quote?.withGuarantee === false
-          ? config.unguaranteedTiers[
-              Math.min(tier, config.unguaranteedTiers.length - 1)
-            ]
-          : config.guaranteedTiers[tier];
+      const params = config.guaranteedTiers[tier];
       return t.reasons.exceeds_credit_limit(
         fmt(exposure, 0),
         fmt(params.maxPurchase, 0),
@@ -95,6 +90,7 @@ function badgeText(
     case "exceeds_guarantee_coverage":
       return t.reasons.exceeds_guarantee_coverage;
     case "no_guarantee":
+    case "guarantor_required":
       return t.reasons.no_guarantee;
     case "blocked_after_default":
       return t.reasons.blocked_after_default;
@@ -103,6 +99,8 @@ function badgeText(
     case "protocol_halted":
       return t.reasons.protocol_halted;
     case "option_unavailable":
+    case "below_option_min":
+    case "pool_liquidity":
       return t.reasons.option_unavailable;
   }
 }
@@ -241,11 +239,7 @@ export function TiendaPage() {
   // (`reputation.activeExposure`). Misma cuenta que `computeQuote` en el mock.
   let margin: { used: Micro; limit: Micro } | null = null;
   if (reputation && config && featuredQuote) {
-    const params = featuredQuote.withGuarantee
-      ? config.guaranteedTiers[reputation.tier]
-      : config.unguaranteedTiers[
-          Math.min(reputation.tier, config.unguaranteedTiers.length - 1)
-        ];
+    const params = config.guaranteedTiers[reputation.tier];
     margin = { used: reputation.activeExposure, limit: params.maxPurchase };
   }
 

@@ -4,6 +4,7 @@ import { DEMO_STUDENT_TIER3 } from "../format";
 import { MERCHANTS } from "../../merchants";
 import type {
   Activity,
+  CounterOrder,
   Guarantee,
   Installment,
   Merchant,
@@ -48,6 +49,8 @@ export interface MockState {
   pool: Pool;
   activity: Activity[];
   planSeq: number;
+  counterOrders: Record<string, CounterOrder>;
+  orderSeq: number;
 }
 
 export const bpsOf = (amount: Micro, bps: number): Micro =>
@@ -174,6 +177,8 @@ export function seedState(config: ProtocolConfig): MockState {
     },
     activity: [],
     planSeq: 0,
+    counterOrders: {},
+    orderSeq: 0,
   };
   ensureStudent(state, DEMO_STUDENT_TIER3);
   const rep = state.reputations[DEMO_STUDENT_TIER3];

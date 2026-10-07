@@ -24,11 +24,13 @@ export type InstallmentsOption = 1 | 3 | 6;
 
 /** Opción de plan configurable (spec § "Términos del plan"). */
 export interface PlanOption {
-  installments: InstallmentsOption;
+  installments: 3 | 6;
   /** Interés TOTAL del plan sobre el capital financiado (no anual). */
   interestTotalBps: Bps;
+  /** Precio mínimo para ofrecer la opción (micro-USDC); 0 = sin mínimo. */
+  minPrice: Micro;
   enabled: boolean;
-  /** Términos provisionales: la UI los rotula. */
+  /** Términos provisionales: false en el mock; la UI deja de rotular. */
   provisional: boolean;
 }
 
@@ -40,11 +42,20 @@ export interface SettlementOption {
   id: SettlementId;
   /** Días desde la compra hasta que el comercio cobra lo financiado. */
   days: number;
+  /** Cantidad de tramos mensuales iguales (0 = inmediato). 30→1, 60→2, 90→3. */
+  tranches: number;
   /** Comisión sobre lo financiado; null = tarifa a confirmar → no elegible. */
   feeBps: Bps | null;
   enabled: boolean;
   /** Términos provisionales: la UI los rotula. */
   provisional: boolean;
+}
+
+export interface PayoutTranche {
+  index: number;
+  amount: Micro;
+  releaseAt: number;
+  released: boolean;
 }
 
 export type ProtocolState = "Normal" | "Halted" | "WithdrawsOnly";
@@ -84,7 +95,6 @@ export interface ProtocolConfig {
   /** Administración anual D8 (bps sobre saldo; la paga el pool). */
   adminFeeAnnualBps?: Bps;
   guaranteedTiers: [TierParams, TierParams, TierParams, TierParams];
-  unguaranteedTiers: [TierParams, TierParams];
   minFinancedToCount: Micro;
   state: ProtocolState;
   usdcMint: WalletAddress;
@@ -124,6 +134,9 @@ export type QuoteBlockReason =
   | "exceeds_guarantor_max_purchase"
   | "exceeds_guarantee_coverage"
   | "no_guarantee"
+  | "guarantor_required"
+  | "below_option_min"
+  | "pool_liquidity"
   | "blocked_after_default"
   | "has_active_plan"
   | "protocol_halted"
@@ -147,6 +160,8 @@ export interface Quote {
   merchantAdvance: Micro;
   /** Cobro diferido del comercio, a `settlementDays` días (0 si es inmediata). */
   merchantPending: Micro;
+  /** Calendario de tramos de cobro del comercio (vacío si es cobro inmediato). */
+  payoutTranches: PayoutTranche[];
   requiredCoverage: Micro;
   /** Cantidad de cuotas de la opción cotizada. */
   installmentsCount: number;
@@ -246,6 +261,8 @@ export interface Sale {
   pendingSettlement?: Micro;
   /** true cuando el cobro diferido ya se acreditó (true si falta). */
   settled?: boolean;
+  /** Tramos de cobro diferido del comercio. */
+  payoutTranches?: PayoutTranche[];
 }
 
 /** Espejo de `Merchant` + saldo de su ATA de cobro. */
@@ -297,13 +314,15 @@ export type ActivityKind =
   | "TierUp"
   | "TierDown"
   | "GuaranteeRegistered"
-  | "GuaranteeRevoked";
+  | "GuaranteeRevoked"
+  | "PayoutReleased";
 
 /** Bitácora para la UI (avisos, línea de tiempo de la mora). */
 export interface Activity {
   kind: ActivityKind;
   at: UnixSeconds;
   student?: WalletAddress;
+  merchant?: WalletAddress;
   planId?: string;
   amount?: Micro;
   signature?: string;
@@ -316,6 +335,23 @@ export interface DemoClock {
   daysAdvanced: number;
 }
 
+/** Orden generada en el mostrador del comercio para cobrar por link/QR. */
+export interface CounterOrder {
+  id: string;
+  merchant: WalletAddress;
+  amount: Micro;
+  description: string;
+  createdAt: UnixSeconds;
+  expiresAt: UnixSeconds;
+  status: "open" | "paid" | "expired";
+  planId?: string;
+}
+
+export interface CreateCounterOrderArgs {
+  amount: Micro;
+  description: string;
+}
+
 export interface OpenPlanArgs {
   student: WalletAddress;
   merchant: WalletAddress;
@@ -325,6 +361,8 @@ export interface OpenPlanArgs {
   installments?: InstallmentsOption;
   /** Liquidación pedida; sin valor usa el predeterminado del comercio. */
   settlement?: SettlementId;
+  /** Orden de mostrador asociada: toma precio y comercio de ella y la marca paid. */
+  orderId?: string;
 }
 
 /** Opciones pedidas al cotizar: plan de cuotas y plazo de cobro del comercio. */
@@ -372,7 +410,11 @@ export interface CuotasClient {
     settlement: SettlementId,
   ): Promise<Merchant>;
   getPool(): Promise<Pool>;
-  getActivity(filter?: { student?: WalletAddress; planId?: string }): Promise<Activity[]>;
+  getActivity(filter?: {
+    student?: WalletAddress;
+    merchant?: WalletAddress;
+    planId?: string;
+  }): Promise<Activity[]>;
 
   /** `student_init_reputation` (idempotente desde la UI). */
   initReputation(student: WalletAddress): Promise<TxResult<Reputation>>;
@@ -384,6 +426,16 @@ export interface CuotasClient {
   registerGuarantee(args: RegisterGuaranteeArgs): Promise<TxResult<Guarantee>>;
   /** `keeper_revoke_guarantee`. */
   revokeGuarantee(student: WalletAddress): Promise<TxResult<Guarantee>>;
+
+  /** Mostrador: crea una orden de cobro con vencimiento a 24 horas. */
+  createCounterOrder(
+    merchant: WalletAddress,
+    args: CreateCounterOrderArgs,
+  ): Promise<CounterOrder>;
+  /** Mostrador: consulta una orden por su id. */
+  getCounterOrder(id: string): Promise<CounterOrder>;
+  /** Mostrador: lista las órdenes de un comercio. */
+  listCounterOrders(merchant: WalletAddress): Promise<CounterOrder[]>;
 
   /** Solo modo demo: adelanta el reloj y corre el keeper (mora, aviso, cobro al fiador). */
   advanceDays(days: number): Promise<DemoClock>;
@@ -418,6 +470,7 @@ export class CuotasError extends Error {
       | "nothing_due"
       | "demo_only"
       | "not_implemented"
+      | "order_unavailable"
       | RealErrorCode,
     message?: string,
   ) {

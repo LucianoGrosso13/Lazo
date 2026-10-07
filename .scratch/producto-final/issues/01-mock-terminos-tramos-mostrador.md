@@ -4,7 +4,7 @@
 
 **Blocked by:** — (el coordinador carga antes la cifra verificada de la comparación; si no llegó, dejá `REFERENCE_FIGURES` como está y avisá)
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/lib/cuotas/{types.ts,demo-config.ts,mock.ts,terms.ts,format.ts,reference-figures.ts,accounts*.ts}`, `app/src/lib/cuotas/mock/*`, sus `*.test.ts`, `app/src/lib/cuotas/real.ts` (solo lo mínimo para compilar: métodos de mostrador → `option_unavailable`, sin `unguaranteedTiers`), nuevo `app/src/i18n/dictionaries/tiers.ts`. Arreglos mínimos de compilación en componentes que leen `unguaranteedTiers` o `provisional`, listados en el `worker_done`.
 
@@ -14,11 +14,11 @@ Notas:
 - `tiers.ts`: `tierLabel(i)` → "Tier 1 · Starter" … "Tier 4 · Full"; `tierShort(i)` → "Tier 1". Iguales en es y en.
 - Actividad nueva `PayoutReleased` (para el panel del comercio y el pool).
 
-- [ ] Tipos y config mock según spec (6c 300 bps + minPrice 350; 700/625/575/525 con 0/1/2/3 tramos; sin `unguaranteedTiers`; todo `provisional: false`)
-- [ ] `quote`: `guarantor_required`, `below_option_min`, `requiredCoverage = financed + interest`, `payoutTranches`
-- [ ] `openPlan`: chequeo de liquidez (`pool_liquidity`), tramos guardados en la venta, `orderId`
-- [ ] `advanceDays` libera tramos una sola vez, aunque el estudiante esté en mora
-- [ ] `createCounterOrder` / `getCounterOrder` / `listCounterOrders` con vencimiento a 24 h y `order_unavailable`
-- [ ] `tiers.ts` y `REFERENCE_FIGURES.modelAssumptions`
-- [ ] Todos los tests de spec § Testing (Mock) en verde; caso por defecto idéntico (951)
-- [ ] typecheck / lint / test / build en verde
+- [x] Tipos y config mock según spec (6c 300 bps + minPrice 350; 700/625/575/525 con 0/1/2/3 tramos; sin `unguaranteedTiers`; todo `provisional: false`)
+- [x] `quote`: `guarantor_required`, `below_option_min`, `requiredCoverage = financed + interest`, `payoutTranches`
+- [x] `openPlan`: chequeo de liquidez (`pool_liquidity`), tramos guardados en la venta, `orderId`
+- [x] `advanceDays` libera tramos una sola vez, aunque el estudiante esté en mora
+- [x] `createCounterOrder` / `getCounterOrder` / `listCounterOrders` con vencimiento a 24 h y `order_unavailable`
+- [x] `tiers.ts` y `REFERENCE_FIGURES.modelAssumptions`
+- [x] Todos los tests de spec § Testing (Mock) en verde; caso por defecto idéntico (951)
+- [x] typecheck / lint / test / build en verde

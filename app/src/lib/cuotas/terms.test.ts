@@ -6,6 +6,7 @@ import {
   d8Breakdown,
   defaultPlanOption,
   immediateFeeBps,
+  payoutSchedule,
   planOptionOf,
   planOptionsOf,
   quoteTerms,
@@ -40,6 +41,7 @@ const baseQuote = (over: Partial<Quote> = {}): Quote => ({
   merchantReceives: toMicro(951),
   merchantAdvance: toMicro(951),
   merchantPending: 0,
+  payoutTranches: [],
   requiredCoverage: toMicro(700),
   installmentsCount: 3,
   interestTotalBps: 0,
@@ -55,16 +57,16 @@ describe("planOptionsOf", () => {
   it("cae a una opción de `installmentsCount` cuotas si la config no las trae", () => {
     const config = legacyConfig();
     expect(planOptionsOf(config)).toEqual([
-      { installments: 3, interestTotalBps: 0, enabled: true, provisional: false },
+      { installments: 3, interestTotalBps: 0, enabled: true, minPrice: 0, provisional: false },
     ]);
     expect(defaultPlanOption(config)?.installments).toBe(3);
   });
 
-  it("devuelve las opciones de la DEMO_CONFIG (3 sin interés, 6 al 3% provisional)", () => {
+  it("devuelve las opciones de la DEMO_CONFIG (3 sin interés, 6 al 3%)", () => {
     const opts = planOptionsOf(DEMO_CONFIG);
     expect(opts).toEqual([
-      { installments: 3, interestTotalBps: 0, enabled: true, provisional: false },
-      { installments: 6, interestTotalBps: 300, enabled: true, provisional: true },
+      { installments: 3, interestTotalBps: 0, enabled: true, minPrice: 0, provisional: false },
+      { installments: 6, interestTotalBps: 300, enabled: true, minPrice: toMicro(350), provisional: false },
     ]);
     expect(planOptionOf(DEMO_CONFIG, 6)?.interestTotalBps).toBe(300);
     expect(planOptionOf(DEMO_CONFIG, 1)).toBeUndefined();
@@ -75,20 +77,20 @@ describe("settlementOptionsOf", () => {
   it("cae a cobro inmediato con `feeBps` si la config no las trae", () => {
     const config = legacyConfig();
     expect(settlementOptionsOf(config)).toEqual([
-      { id: "immediate", days: 0, feeBps: 700, enabled: true, provisional: false },
+      { id: "immediate", days: 0, feeBps: 700, enabled: true, tranches: 0, provisional: false },
     ]);
   });
 
   it("devuelve los cuatro plazos de la DEMO_CONFIG con sus comisiones", () => {
     const opts = settlementOptionsOf(DEMO_CONFIG);
-    expect(opts.map((o) => [o.id, o.days, o.feeBps])).toEqual([
-      ["immediate", 0, 700],
-      ["deferred_30", 30, 625],
-      ["deferred_60", 60, 550],
-      ["deferred_90", 90, 525],
+    expect(opts.map((o) => [o.id, o.days, o.feeBps, o.tranches])).toEqual([
+      ["immediate", 0, 700, 0],
+      ["deferred_30", 30, 625, 1],
+      ["deferred_60", 60, 575, 2],
+      ["deferred_90", 90, 525, 3],
     ]);
-    expect(opts[0].provisional).toBe(false);
-    expect(opts.slice(1).every((o) => o.provisional && o.enabled)).toBe(true);
+    expect(opts.every((o) => o.provisional === false)).toBe(true);
+    expect(opts.every((o) => o.enabled)).toBe(true);
   });
 });
 
@@ -100,8 +102,9 @@ describe("settlementAvailable", () => {
         id: "deferred_30",
         days: 30,
         feeBps: 625,
+        tranches: 1,
         enabled: false,
-        provisional: true,
+        provisional: false,
       }),
     ).toBe(false);
     expect(
@@ -109,8 +112,9 @@ describe("settlementAvailable", () => {
         id: "deferred_30",
         days: 30,
         feeBps: null,
+        tranches: 1,
         enabled: true,
-        provisional: true,
+        provisional: false,
       }),
     ).toBe(false);
     expect(settlementAvailable(settlementOptionOf(DEMO_CONFIG, "deferred_30"))).toBe(true);
@@ -128,6 +132,36 @@ describe("settlementDateOf", () => {
       settlementDateOf(openedAt, settlementOptionOf(DEMO_CONFIG, "deferred_30")!, spd),
     ).toBe(openedAt + 30 * spd);
     expect(settlementDateOf(openedAt, { days: 60 }, spd)).toBe(openedAt + 60 * spd);
+  });
+});
+
+describe("payoutSchedule", () => {
+  const openedAt = 1_700_000_000;
+  const spd = 86_400;
+
+  it("opción inmediata o 0 tramos devuelve lista vacía", () => {
+    expect(payoutSchedule(toMicro(651), { tranches: 0, days: 0 }, openedAt, spd)).toEqual([]);
+  });
+
+  it("90 días divide financiado neto en 3 tramos con fechas mensuales y absorbe resto en el último", () => {
+    // 700 financiados con 525 bps (5.25% = 36.75) -> 663.25 netos = 663_250_000 micro
+    const sch = payoutSchedule(toMicro(663.25), { tranches: 3, days: 90 }, openedAt, spd);
+    expect(sch).toHaveLength(3);
+    expect(sch.map((t) => t.amount)).toEqual([221_083_333, 221_083_333, 221_083_334]);
+    expect(sch.reduce((acc, t) => acc + t.amount, 0)).toBe(toMicro(663.25));
+    expect(sch[0].releaseAt).toBe(openedAt + 30 * spd);
+    expect(sch[1].releaseAt).toBe(openedAt + 60 * spd);
+    expect(sch[2].releaseAt).toBe(openedAt + 90 * spd);
+    expect(sch.every((t) => t.released === false)).toBe(true);
+  });
+
+  it("60 días divide financiado neto en 2 tramos exactos de 329.875", () => {
+    // 700 financiados con 575 bps (5.75% = 40.25) -> 659.75 netos = 659_750_000 micro
+    const sch = payoutSchedule(toMicro(659.75), { tranches: 2, days: 60 }, openedAt, spd);
+    expect(sch).toHaveLength(2);
+    expect(sch.map((t) => t.amount)).toEqual([329_875_000, 329_875_000]);
+    expect(sch[0].releaseAt).toBe(openedAt + 30 * spd);
+    expect(sch[1].releaseAt).toBe(openedAt + 60 * spd);
   });
 });
 
