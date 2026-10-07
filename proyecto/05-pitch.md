@@ -94,7 +94,7 @@ Mismos datos que la sección "Quiénes somos" de la web (ticket 06):
 - **Ignacio Albarracín**, 22 · Full Stack Developer.
 - Los dos estudian Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), en Tucumán, Argentina; se reciben en diciembre de 2026. Son amigos desde hace años.
 - Aportes de cada uno al repo para el formulario: [A CONFIRMAR].
-- Uso de IA (lo pide el listing): el equipo construyó con agentes de código (Claude Code como coordinador y workers Devin/GPT en worktrees, ver `04-plan.md` § Estado) bajo su revisión. Declararlo tal cual.
+- Uso de IA (lo pide el listing): el equipo construyó con agentes de código (Claude Code como coordinador y workers Devin y Gemini en worktrees, ver `04-plan.md` § Estado) bajo su revisión. Declararlo tal cual.
 
 ## Preguntas duras para ensayar
 
