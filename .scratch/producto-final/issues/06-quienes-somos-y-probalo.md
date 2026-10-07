@@ -4,7 +4,7 @@
 
 **Blocked by:** —
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios (todos nuevos):** `app/src/components/landing/quienes-somos.tsx`, `app/src/components/landing/probalo.tsx`, `app/src/components/landing/team.module.css`, `app/src/i18n/dictionaries/landing-equipo.ts`. No toques `page.tsx` ni `sections.tsx` (los integra 05 o el coordinador): exportá `QuienesSomos` y `Probalo`.
 
@@ -26,7 +26,7 @@ Notas:
   Una línea final: "Corre en Solana devnet: la plata es de prueba".
 - Tokens y componentes de `components/ui/`; versión quieta con `prefers-reduced-motion`.
 
-- [ ] `QuienesSomos` y `Probalo` exportados, bilingües
-- [ ] Sin datos inventados más allá de lo que dice este ticket
-- [ ] Capturas 390/1440 en `evidence/06-*` (montalos en una página de prueba local que **no** se commitea)
-- [ ] typecheck / lint / test / build en verde
+- [x] `QuienesSomos` y `Probalo` exportados, bilingües
+- [x] Sin datos inventados más allá de lo que dice este ticket
+- [x] Capturas 390/1440 en `evidence/06-*` (montalos en una página de prueba local que **no** se commitea)
+- [x] typecheck / lint / test / build en verde
