@@ -5,7 +5,7 @@ export const landingEquipo = defineDict({
     quienesSomos: {
       title: "Quiénes somos",
       problem:
-        "Millones de jóvenes sin tarjeta ni historial no acceden a cuotas, y la alternativa sin tarjeta cuesta mucho más.",
+        "Lazo nace de algo que vivimos de cerca: estudiantes sin tarjeta ni historial que no acceden a cuotas, y una alternativa sin tarjeta que cuesta mucho más.",
       sharedHeadline:
         "Estudiantes de Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), se reciben en diciembre de 2026, amigos desde hace años.",
       university: "UNSTA · Ingeniería en Informática",
@@ -16,7 +16,7 @@ export const landingEquipo = defineDict({
           name: "Luciano Grosso",
           age: 22,
           role: "Product Owner",
-          interest: "Apasionado por la blockchain y los productos financieros.",
+          interest: "Amante de la blockchain y de los productos financieros. Define qué construye Lazo, para quién y con qué reglas.",
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
         },
@@ -24,7 +24,7 @@ export const landingEquipo = defineDict({
           name: "Ignacio Albarracín",
           age: 22,
           role: "Full Stack Developer",
-          interest: "Apasionado por el desarrollo full stack y la arquitectura de software.",
+          interest: "Construye Lazo de punta a punta: el programa en Solana, la app y todo lo que los conecta.",
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",
         },
@@ -44,7 +44,7 @@ export const landingEquipo = defineDict({
         {
           num: "02",
           title: "Checkout con 6 cuotas",
-          desc: "Probá la financiación en 6 cuotas con interés total del 3% respaldado por el fiador.",
+          desc: "Elegí 6 cuotas y mirá el interés total, el anticipo de tu Tier y lo que cubre el fiador.",
           href: "/tienda",
           linkText: "Ver checkout",
         },
@@ -77,7 +77,7 @@ export const landingEquipo = defineDict({
     quienesSomos: {
       title: "About us",
       problem:
-        "Millions of young adults without a credit card or credit history cannot access installments, and no-card alternatives cost significantly more.",
+        "Lazo comes from something we see up close: students without a credit card or credit history who can't buy in installments, and a no-card alternative that costs far more.",
       sharedHeadline:
         "Computer Engineering students at Universidad del Norte Santo Tomás de Aquino (UNSTA), graduating in December 2026, longtime friends.",
       university: "UNSTA · Computer Engineering",
@@ -88,7 +88,7 @@ export const landingEquipo = defineDict({
           name: "Luciano Grosso",
           age: 22,
           role: "Product Owner",
-          interest: "Passionate about blockchain technology and financial products.",
+          interest: "Blockchain enthusiast with a passion for financial products. Defines what Lazo builds, for whom and under which rules.",
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
         },
@@ -96,7 +96,7 @@ export const landingEquipo = defineDict({
           name: "Ignacio Albarracín",
           age: 22,
           role: "Full Stack Developer",
-          interest: "Passionate about full-stack development and software architecture.",
+          interest: "Builds Lazo end to end: the Solana program, the app and everything that connects them.",
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",
         },
@@ -116,7 +116,7 @@ export const landingEquipo = defineDict({
         {
           num: "02",
           title: "Checkout with 6 installments",
-          desc: "Experience 6 installments with 3% total interest backed by the guarantor.",
+          desc: "Pick 6 installments and check the total interest, your Tier's down payment and what the guarantor covers.",
           href: "/tienda",
           linkText: "View checkout",
         },
