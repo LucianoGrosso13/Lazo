@@ -28,6 +28,14 @@ export function ConfirmSuccess({
   const { locale } = useLocale();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
   const received = plan.price - plan.merchantFee;
+  // Cobro diferido: hoy entra el anticipo y el resto a `settlementDays`;
+  // inmediato = todo al abrir (misma regla que `quote()`).
+  const settleDays = plan.terms?.settlementDays ?? 0;
+  const advance = settleDays === 0 ? received : plan.downPayment;
+  const pending = received - advance;
+  // Interés firmado = lo que se repaga menos lo financiado (datos del plan).
+  const repaid = plan.installments.reduce((a, i) => a + i.amount, 0);
+  const interest = Math.max(0, repaid - plan.financed);
 
   return (
     <div className={styles.success}>
@@ -35,7 +43,7 @@ export function ConfirmSuccess({
         viewBox="0 0 760 190"
         className={styles.successSvg}
         role="img"
-        aria-label={t.beamAria(fmt(received))}
+        aria-label={t.beamAria(fmt(advance))}
       >
         <defs>
           <radialGradient id="succ-fill" cx="50%" cy="118%" r="95%">
@@ -88,9 +96,9 @@ export function ConfirmSuccess({
 
       <h2 className={styles.successTitle}>{t.title}</h2>
       <p className={styles.successLead}>
-        {t.merchantPaidLead}{" "}
-        <BigNumber amount={received} size="lg" className={styles.savingsNum} />{" "}
-        {t.merchantPaidTail}
+        {t.merchantPaidLead(merchantName)}{" "}
+        <BigNumber amount={advance} size="lg" className={styles.savingsNum} />{" "}
+        {t.merchantPaidTail(settleDays)}
       </p>
       {getCuotas().mode === "real" ? (
         <ExplorerLink signature={signature} />
@@ -101,6 +109,11 @@ export function ConfirmSuccess({
       <div className={styles.successFacts}>
         <span>{t.youPaid(fmt(plan.downPayment))}</span>
         <span>{t.installments(plan.installments.length, fmt(plan.installments[0]?.amount ?? 0))}</span>
+        {interest > 0 ? <span>{t.interestFact(fmt(interest))}</span> : null}
+        {pending > 0 ? (
+          <span>{t.merchantLaterFact(merchantName, fmt(pending), settleDays)}</span>
+        ) : null}
+        {plan.terms?.provisional ? <span>{t.provisionalFact}</span> : null}
       </div>
 
       <div className={styles.successCtas}>

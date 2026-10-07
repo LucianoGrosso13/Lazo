@@ -13,6 +13,7 @@ import { checkout } from "@/i18n/dictionaries/checkout";
 import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
 import { GlassPanel } from "@/components/ui/glass";
+import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { StateMark } from "@/components/ui/state-mark";
 import { ReferenceTag } from "@/components/ui/badges";
@@ -38,7 +39,8 @@ export function ConfirmPanel({
   onBack: () => void;
   onSign: () => void;
 }) {
-  const t = useT(checkout).confirm;
+  const all = useT(checkout);
+  const t = all.confirm;
   const d = useT(design);
   const { locale } = useLocale();
   const fmt = (m: Micro, dd = 2) => formatUsdc(m, locale, dd);
@@ -53,6 +55,12 @@ export function ConfirmPanel({
         dateFmt.format(new Date((clock.now + (i + 1) * 30 * clock.secondsPerDay) * 1000)),
       )
     : [];
+  const settleDate =
+    clock && quote.settlementDays > 0
+      ? dateFmt.format(
+          new Date((clock.now + quote.settlementDays * clock.secondsPerDay) * 1000),
+        )
+      : null;
 
   const errMsg = error
     ? error.code in t.errors
@@ -64,6 +72,7 @@ export function ConfirmPanel({
     <GlassPanel className={styles.panel}>
       <div className={styles.panelHead}>
         <h2 className={styles.panelTitle}>{t.title}</h2>
+        {quote.provisional ? <Chip>{all.plans.provisional}</Chip> : null}
         {mock ? <ReferenceTag>{d.chrome.simulated}</ReferenceTag> : null}
       </div>
 
@@ -90,8 +99,20 @@ export function ConfirmPanel({
         <div className={styles.row}>
           <dt className={styles.rowKey}>{t.rows.merchant}</dt>
           <dd className={styles.rowVal}>
-            US$ {fmt(quote.merchantReceives)}{" "}
-            <span className={styles.due}>{t.instantly}</span>
+            {quote.settlementDays === 0 ? (
+              <>
+                US$ {fmt(quote.merchantReceives)}{" "}
+                <span className={styles.due}>{t.instantly}</span>
+              </>
+            ) : (
+              <>
+                {t.merchantLater(
+                  fmt(quote.merchantAdvance),
+                  fmt(quote.merchantPending),
+                  settleDate ?? "…",
+                )}
+              </>
+            )}
           </dd>
         </div>
         <div className={styles.row}>
@@ -101,6 +122,12 @@ export function ConfirmPanel({
             {dates.length ? <span className={styles.due}>{dates.join(" · ")}</span> : null}
           </dd>
         </div>
+        {quote.interest > 0 ? (
+          <div className={styles.row}>
+            <dt className={styles.rowKey}>{t.rows.interest}</dt>
+            <dd className={styles.rowVal}>+US$ {fmt(quote.interest)}</dd>
+          </div>
+        ) : null}
       </dl>
 
       {mock ? <p className={styles.previewNote}>{t.mockNote}</p> : null}

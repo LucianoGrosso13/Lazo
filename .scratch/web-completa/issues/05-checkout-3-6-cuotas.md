@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/checkout/*`, `app/src/app/checkout/*`, `app/src/i18n/dictionaries/checkout.ts`, `app/src/components/landing/prism-stage.tsx`, `prism-stage-3d.tsx`, `prism-3d-renderer.ts` (compartidos con el hero: mantener su API y que el hero siga igual). Solo lectura: `landing/split.ts`, `landing/hero.tsx`, `landing/use-config.ts`, `landing/reference.ts`.
 
@@ -14,10 +14,10 @@ Notas:
 - El prisma muestra tantas bandas como cuotas. Audit 390 px: las etiquetas de bandas del prisma ("DOWN PAYMENT US$300.00", "INSTALLMENT 1/2/3") quedan cortadas a la derecha (≈457–468 px): resolver en móvil.
 - Comparación con la competencia: sigue con `REFERENCE` y etiqueta "referencia", sin marcas.
 
-- [ ] Selector 3/6 que recalcula todo con `quote()`; 6 cuotas muestra interés, total y "provisional"
-- [ ] Opción no elegible bloqueada con motivo (incluido `option_unavailable`)
-- [ ] La compra se abre con el comercio del producto y queda en su cuenta; `/checkout/pc` sigue funcionando para Voltia
-- [ ] Éxito de compra muestra cuotas, interés y el plazo de cobro del comercio
-- [ ] Sin scroll horizontal y etiquetas del prisma legibles a 390 px; hero intacto
-- [ ] Capturas 390/1440 (3 y 6 cuotas) en `.scratch/web-completa/evidence/05-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Selector 3/6 que recalcula todo con `quote()`; 6 cuotas muestra interés, total y "provisional"
+- [x] Opción no elegible bloqueada con motivo (incluido `option_unavailable`)
+- [x] La compra se abre con el comercio del producto y queda en su cuenta; `/checkout/pc` sigue funcionando para Voltia
+- [x] Éxito de compra muestra cuotas, interés y el plazo de cobro del comercio
+- [x] Sin scroll horizontal y etiquetas del prisma legibles a 390 px; hero intacto
+- [x] Capturas 390/1440 (3 y 6 cuotas) en `.scratch/web-completa/evidence/05-*`
+- [x] typecheck / lint / test / build en verde

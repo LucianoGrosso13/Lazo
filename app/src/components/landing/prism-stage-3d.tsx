@@ -17,6 +17,12 @@ interface Props {
   bands: StageBand[];
   cracked: boolean;
   ariaLabel: string;
+  /**
+   * "overlay" (default): etiquetas de banda sobre el abanico. "below": el
+   * stage no las dibuja — el llamador las lista debajo (legible a 390 px,
+   * donde el abanico ocupa todo el ancho). Vale para el SVG y para el 3D.
+   */
+  labelsPlacement?: "overlay" | "below";
 }
 
 let webglCache: boolean | null = null;
@@ -74,7 +80,7 @@ function toSlices(geom: BandGeom[]): BandSlice[] {
   return geom.map((g) => ({ e0: g.e0, e1: g.e1, f0: g.f0, f1: g.f1, color: g.color, on: g.on }));
 }
 
-function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabel }: Props & { onFail: () => void }) {
+function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabel, labelsPlacement = "overlay" }: Props & { onFail: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Stage3DRenderer | null>(null);
   const [ready, setReady] = useState(false);
@@ -166,7 +172,7 @@ function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabe
     >
       {!svgGone && (
         <div className={styles.stage3dSvg} data-gone={ready || undefined} aria-hidden="true">
-          <PrismStage inputLabel={inputLabel} inputValue={inputValue} bands={bands} cracked={cracked} ariaLabel={ariaLabel} />
+          <PrismStage inputLabel={inputLabel} inputValue={inputValue} bands={bands} cracked={cracked} ariaLabel={ariaLabel} labelsPlacement={labelsPlacement} />
         </div>
       )}
       <canvas ref={canvasRef} className={styles.stage3dCanvas} data-ready={ready || undefined} aria-hidden="true" />
@@ -177,19 +183,21 @@ function Stage3DScene({ onFail, inputLabel, inputValue, bands, cracked, ariaLabe
           <span className={styles.labelKey}>{inputLabel}</span>
           <span className={styles.labelValue}>{inputValue}</span>
         </div>
-        {geom.map((g) =>
-          g.on ? (
-            <div
-              key={g.id}
-              className={styles.bandLabel}
-              style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, left: `${(FAN_END_X / VB_W) * 100 + 1.6}%`, ["--band" as string]: g.color }}
-              aria-hidden
-            >
-              <span className={styles.labelKey}>{g.label}</span>
-              <span className={styles.labelValue}>{g.value}</span>
-            </div>
-          ) : null,
-        )}
+        {labelsPlacement === "overlay"
+          ? geom.map((g) =>
+              g.on ? (
+                <div
+                  key={g.id}
+                  className={styles.bandLabel}
+                  style={{ top: `${(((g.f0 + g.f1) / 2) / VB_H) * 100}%`, left: `${(FAN_END_X / VB_W) * 100 + 1.6}%`, ["--band" as string]: g.color }}
+                  aria-hidden
+                >
+                  <span className={styles.labelKey}>{g.label}</span>
+                  <span className={styles.labelValue}>{g.value}</span>
+                </div>
+              ) : null,
+            )
+          : null}
       </div>
     </div>
   );
