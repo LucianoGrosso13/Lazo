@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/audience/para-comercios.tsx` (reemplazás el placeholder), nuevo diccionario `app/src/i18n/dictionaries/para-comercios.ts`, la `metadata` de `app/src/app/para-comercios/page.tsx`. Usá las primitivas de `components/audience/`.
 
@@ -18,8 +18,8 @@ Contenido mínimo:
 - Aparecer en el marketplace (link a `/comercio`): hoy con comercios de ejemplo.
 - FAQ (5–7) y CTAs: ver el panel demo del comercio (`/app/comercio`), ver el marketplace.
 
-- [ ] Todo lo de arriba en ES y EN, con números de la config/`quote()` y etiquetas correctas
-- [ ] Sin competidores ni billeteras nombradas; sin aliados ni métricas inventadas
-- [ ] Tabla de plazos legible en 390 px (tarjetas o scroll contenido)
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/10-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Todo lo de arriba en ES y EN, con números de la config/`quote()` y etiquetas correctas
+- [x] Sin competidores ni billeteras nombradas; sin aliados ni métricas inventadas
+- [x] Tabla de plazos legible en 390 px (tarjetas o scroll contenido)
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/10-*`
+- [x] typecheck / lint / test / build en verde
