@@ -3,11 +3,11 @@
 import Link from "next/link";
 import {
   formatUsdc,
+  immediateFeeBps,
   planOptionsOf,
+  quoteTerms,
   toMicro,
   type Micro,
-  type PlanOption,
-  type ProtocolConfig,
 } from "@/lib/cuotas";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { paraEstudiantes } from "@/i18n/dictionaries/para-estudiantes";
@@ -27,27 +27,6 @@ import {
 // Precio del ejemplo (fixture, no un número de negocio): el caso canónico de
 // las decisiones comerciales, una compra de US$ 1.000 en el escalón 0.
 const EXAMPLE_PRICE = toMicro(1000);
-
-/**
- * Misma cuenta que `computeQuote` (mock) para un comprador del escalón 0 con
- * fiador: la página no tiene wallet, así que cotiza el ejemplo desde la
- * config. Anticipo del escalón, interés de la opción de plan y la última
- * cuota absorbiendo el redondeo.
- */
-function exampleSplit(config: ProtocolConfig, price: Micro, option: PlanOption) {
-  const tier = config.guaranteedTiers[0];
-  const downPayment = Math.round((price * tier.downPaymentBps) / 10_000);
-  const financed = price - downPayment;
-  const interest = Math.round((financed * option.interestTotalBps) / 10_000);
-  const repayable = financed + interest;
-  const base = Math.floor(repayable / option.installments);
-  const installments = Array.from({ length: option.installments }, (_, i) =>
-    i === option.installments - 1
-      ? repayable - base * (option.installments - 1)
-      : base,
-  );
-  return { downPayment, financed, interest, installments, total: price + interest };
-}
 
 /** % legible desde bps: 300 → "3", 625 → "6,25" (es) / "6.25" (en). */
 function usePct() {
@@ -141,7 +120,15 @@ function HowToBuy() {
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {options.map((o) => {
-          const ex = exampleSplit(config, EXAMPLE_PRICE, o);
+          // Misma cotización que `quote()` para el escalón 0 con fiador:
+          // `quoteTerms` de `lib/cuotas/terms.ts` (el plazo del comercio no
+          // cambia lo que paga el estudiante; se resuelve con la inmediata).
+          const ex = quoteTerms({
+            price: EXAMPLE_PRICE,
+            tier: config.guaranteedTiers[0],
+            plan: o,
+            settlement: { days: 0, feeBps: immediateFeeBps(config) },
+          });
           return (
             <div key={o.installments} className="glass p-4 sm:p-5">
               <p className="flex items-center justify-between gap-2">

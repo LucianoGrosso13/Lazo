@@ -12,6 +12,8 @@ import type {
   Quote,
   SettlementId,
   SettlementOption,
+  TierIndex,
+  TierParams,
   UnixSeconds,
 } from "./types";
 
@@ -76,8 +78,145 @@ export function defaultPlanOption(config: ProtocolConfig): PlanOption | undefine
 }
 
 /** Una opción de liquidación se puede usar si está habilitada y tiene tarifa. */
-export function settlementAvailable(option: SettlementOption | undefined): boolean {
+export function settlementAvailable(
+  option: SettlementOption | undefined,
+): option is SettlementOption & { feeBps: Bps } {
   return option !== undefined && option.enabled && option.feeBps !== null;
+}
+
+/** Comisión del cobro inmediato: la opción "immediate" de la config o la histórica `feeBps`. */
+export function immediateFeeBps(config: ProtocolConfig): Bps {
+  return settlementOptionOf(config, "immediate")?.feeBps ?? config.feeBps;
+}
+
+/**
+ * Resultado del cálculo puro de la cotización: anticipo, financiado,
+ * interés, cuotas con redondeo en la última, comisión por plazo y
+ * adelanto/pendiente del comercio. Es exactamente la cuenta de
+ * `computeQuote` del mock — las pantallas sin wallet y el mock la
+ * comparten para que ninguna la reescriba a mano.
+ */
+export interface QuoteTerms {
+  /** Precio cotizado (eco del input, como en `Quote`). */
+  price: Micro;
+  /** Anticipo = price × downPaymentBps del escalón. */
+  downPayment: Micro;
+  /** Capital financiado = price − anticipo. */
+  financed: Micro;
+  /** Interés total del plan = financed × (opción + escalón). */
+  interest: Micro;
+  /** Lo que repone el comprador = financed + interest. */
+  repayable: Micro;
+  /** Monto de cada cuota; la última absorbe el redondeo. */
+  installments: Micro[];
+  /** Lo que paga el comprador en total = price + interest. */
+  total: Micro;
+  /** Comisión del comercio = financed × feeBps del plazo elegido. */
+  merchantFee: Micro;
+  /** Neto del comercio = price − merchantFee. */
+  merchantReceives: Micro;
+  /** Entra al comercio al abrir: todo si cobra hoy, solo el anticipo si difiere. */
+  merchantAdvance: Micro;
+  /** Lo que el comercio cobra en la fecha (0 si es inmediata). */
+  merchantPending: Micro;
+  /** Días hasta el cobro diferido del comercio (0 = inmediato). */
+  settlementDays: number;
+  /** Cobertura requerida del fiador = financed × guarantorCoverageBps. */
+  requiredCoverage: Micro;
+  /** Interés total aplicado (opción de plan + escalón), en bps. */
+  interestTotalBps: Bps;
+}
+
+export interface QuoteTermsInput {
+  /** Precio cotizado. */
+  price: Micro;
+  /** Escalón ya resuelto (guaranteed o unguaranteed, según el fiador). */
+  tier: Pick<TierParams, "downPaymentBps" | "interestBps" | "guarantorCoverageBps">;
+  /** Opción de plan ya resuelta (cantidad de cuotas + interés propio). */
+  plan: { installments: number; interestTotalBps: Bps };
+  /** Plazo de cobro ya resuelto (días hasta el cobro y comisión efectiva). */
+  settlement: { days: number; feeBps: Bps };
+}
+
+/**
+ * La cuenta de la cotización con las piezas ya elegidas. Es la de las
+ * decisiones comerciales (06): `I = A × i(n)`; cuotas `(A+I)/n` con la
+ * última absorbiendo el redondeo; comisión `F = A × f(liquidación)`; el
+ * comercio recibe `P − F`: el anticipo al abrir y `A − F` en la fecha.
+ */
+export function quoteTerms({
+  price,
+  tier,
+  plan,
+  settlement,
+}: QuoteTermsInput): QuoteTerms {
+  const downPayment = bpsOf(price, tier.downPaymentBps);
+  const financed = price - downPayment;
+  const interestTotalBps = plan.interestTotalBps + tier.interestBps;
+  const interest = bpsOf(financed, interestTotalBps);
+  const repayable = financed + interest;
+  const n = plan.installments;
+  const base = Math.floor(repayable / n);
+  const installments = Array.from({ length: n }, (_, i) =>
+    i === n - 1 ? repayable - base * (n - 1) : base,
+  );
+  const merchantFee = bpsOf(financed, settlement.feeBps);
+  const merchantReceives = price - merchantFee;
+  const merchantAdvance =
+    settlement.days === 0 ? merchantReceives : downPayment;
+  return {
+    price,
+    downPayment,
+    financed,
+    interest,
+    repayable,
+    installments,
+    total: price + interest,
+    merchantFee,
+    merchantReceives,
+    merchantAdvance,
+    merchantPending: merchantReceives - merchantAdvance,
+    settlementDays: settlement.days,
+    requiredCoverage: bpsOf(financed, tier.guarantorCoverageBps),
+    interestTotalBps,
+  };
+}
+
+export interface QuoteTermsForArgs {
+  /** Escalón con fiador de la config (default 0: el de una cuenta nueva). */
+  tier?: TierIndex;
+  /** Opción de plan pedida; default: la primera habilitada. */
+  installments?: InstallmentsOption;
+  /** Plazo de cobro pedido; default "immediate". */
+  settlement?: SettlementId;
+}
+
+/**
+ * Los mismos números que `quote()` para un comprador con fiador en el
+ * escalón `tier` de `guaranteedTiers`: el caso canónico que muestran las
+ * páginas públicas, que no tienen wallet para cotizar. `undefined` en los
+ * mismos casos en que `quote()` marca `option_unavailable`: opción de
+ * plan inexistente o deshabilitada; plazo inexistente, deshabilitado o
+ * con tarifa sin definir.
+ */
+export function quoteTermsFor(
+  config: ProtocolConfig,
+  price: Micro,
+  args: QuoteTermsForArgs = {},
+): QuoteTerms | undefined {
+  const plan =
+    args.installments === undefined
+      ? defaultPlanOption(config)
+      : planOptionOf(config, args.installments);
+  if (!plan?.enabled) return undefined;
+  const settlement = settlementOptionOf(config, args.settlement ?? "immediate");
+  if (!settlementAvailable(settlement)) return undefined;
+  return quoteTerms({
+    price,
+    tier: config.guaranteedTiers[args.tier ?? 0],
+    plan,
+    settlement: { days: settlement.days, feeBps: settlement.feeBps },
+  });
 }
 
 /**
@@ -122,7 +261,13 @@ export interface D8Breakdown {
   poolRemainder: Micro;
 }
 
-export function d8Breakdown(config: ProtocolConfig, quote: Quote): D8Breakdown {
+/** Lo que el reparto D8 lee de una cotización: `Quote` y `QuoteTerms` sirven. */
+export type D8Quote = Pick<
+  Quote,
+  "merchantFee" | "financed" | "merchantReceives" | "installments"
+>;
+
+export function d8Breakdown(config: ProtocolConfig, quote: D8Quote): D8Breakdown {
   const merchantFee = quote.merchantFee;
   const merchantAdvance = quote.financed - merchantFee;
   const origination = bpsOf(quote.financed, config.originationBps ?? 0);

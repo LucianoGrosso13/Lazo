@@ -96,7 +96,7 @@ Una idea por slide; se adapta al formato que confirme la organización. Títulos
 - ¿Qué parte necesita Solana y qué depende de un proveedor fuera de la cadena?
 - ¿Qué observaron con usuarios reales y qué sigue siendo una hipótesis?
 
-## Nota técnica: margen de crédito (divergencia mock ↔ programa)
+## Nota técnica: divergencias mock ↔ programa
 
 Para el jurado y para quien retome el programa — que no quede escondida:
 
@@ -104,3 +104,9 @@ Para el jurado y para quien retome el programa — que no quede escondida:
 - **Lo que hace el programa on-chain hoy:** fuerza **un solo plan por estudiante** — el `Plan` PDA se crea con seeds `[PLAN_SEED, student]` vía `init`, que falla si ya existe (`programa/programs/cuotas/src/instructions/open_plan.rs:146`). El cliente real (`app/src/lib/cuotas/real.ts`) mantiene la semántica vieja y emite `has_active_plan`.
 - **Por qué:** la demo corre sobre el cliente mock (`NEXT_PUBLIC_CUOTAS_MODE=mock`); el margen de crédito se implementó solo ahí (decisión del equipo, `.scratch/demo-polish/spec.md` §"Divergencia conocida"). No afecta lo que se muestra porque nada en la demo pega al programa real todavía (pendiente Fase A3, ver `proyecto/handoff-demo-devnet.md`).
 - **Evolución futura del programa (upgrade):** seeds `[PLAN_SEED, student, generation]` para permitir planes en paralelo + chequeo `active_exposure + repayable ≤ tope del escalón` en `open_plan`. Hasta entonces, el mock y el cliente real difieren en este punto.
+
+### Términos comerciales de la demo (tanda web completa, 2026-10-07)
+
+- **Lo que se ve en la demo:** 3 cuotas sin interés o 6 con 3% total sobre lo financiado (provisional); el comercio elige cobrar hoy (7%), a 30 (6,25%), 60 (5,5%) o 90 días (5,25%) y su venta queda pendiente hasta la fecha; cobertura del fiador 100% del capital pendiente en todos los escalones. Todo sale de `ProtocolConfig` del mock (`app/src/lib/cuotas/demo-config.ts`) y se calcula en `app/src/lib/cuotas/terms.ts`.
+- **Lo que hace el programa on-chain hoy:** solo 3 cuotas y cobro inmediato; el seed (`app/scripts/seed.ts`) conserva la cobertura 100/90/80/70 por escalón.
+- **Cómo decirlo en el pitch:** "la demo corre en devnet con un cliente simulado; las 6 cuotas y el cobro diferido son términos provisionales que todavía no están en el programa". No mostrarlos como funcionalidad on-chain.

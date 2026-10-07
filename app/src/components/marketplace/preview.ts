@@ -1,10 +1,12 @@
 // Vista previa de un plan para mostrar "desde N cuotas de X" sin wallet ni
-// consulta: la misma cuenta que `computeQuote` del mock para un estudiante
-// nuevo con fiador (escalón 0 de `guaranteedTiers`). Es solo presentación —
-// el checkout cotiza de verdad con `quote()`. Ningún número vive acá: todo
-// sale de la `ProtocolConfig` y de los helpers de términos.
+// consulta: `quoteTerms` de `lib/cuotas/terms.ts`, la misma cuenta que
+// `computeQuote` del mock para un estudiante nuevo con fiador (escalón 0 de
+// `guaranteedTiers`). Es solo presentación — el checkout cotiza de verdad
+// con `quote()`. Ningún número vive acá: todo sale de la `ProtocolConfig`.
 import {
+  immediateFeeBps,
   planOptionsOf,
+  quoteTerms,
   type Micro,
   type PlanOption,
   type ProtocolConfig,
@@ -35,26 +37,23 @@ export function previewPlan(
   price: Micro,
   option: PlanOption,
 ): PlanPreview {
-  const tier = config.guaranteedTiers[0];
-  const downPayment = Math.round((price * tier.downPaymentBps) / 10_000);
-  const financed = price - downPayment;
-  const interestTotalBps = option.interestTotalBps + tier.interestBps;
-  const interest = Math.round((financed * interestTotalBps) / 10_000);
-  const repayable = financed + interest;
-  const n = option.installments;
-  const base = Math.floor(repayable / n);
-  const installmentAmounts = Array.from({ length: n }, (_, i) =>
-    i === n - 1 ? repayable - base * (n - 1) : base,
-  );
+  const terms = quoteTerms({
+    price,
+    tier: config.guaranteedTiers[0],
+    plan: option,
+    // El plazo del comercio no cambia lo que paga el estudiante; la
+    // inmediata resuelve la comisión sin esperar nada.
+    settlement: { days: 0, feeBps: immediateFeeBps(config) },
+  });
   return {
-    installments: n,
-    downPayment,
-    interest,
-    installmentAmounts,
-    perInstallment: base,
-    total: price + interest,
+    installments: option.installments,
+    downPayment: terms.downPayment,
+    interest: terms.interest,
+    installmentAmounts: terms.installments,
+    perInstallment: terms.installments[0] ?? 0,
+    total: terms.total,
     provisional: option.provisional,
-    interestTotalBps,
+    interestTotalBps: terms.interestTotalBps,
   };
 }
 

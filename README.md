@@ -21,24 +21,29 @@ reputation on Solana.
 
 ## Product decisions — October 7, 2026
 
-The updated product specification offers one or three installments without buyer
-interest, and six with a moderate interest charge whose rate is still undecided.
-Merchants will choose a settlement schedule and its associated fee. The 7% of
-financed principal remains the reference for immediate settlement in the base
-three-installment flow pending clarification of its fee base; other prices and
-settlement dates need validation. The recovered business plan records a 4%
-origination fee on financed principal included in merchant fees, and a 2% annual
-servicing fee on outstanding principal paid by the pool; accrual rules and
-implementation remain pending. Guaranteed plans retain 100% principal coverage at
-every reputation tier. The contractual cap for interest and penalties is pending;
-100% coverage does not imply successful recovery from a card.
+Buyers choose **3 installments with no interest** or **6 installments with a
+3% total interest on the financed amount** (provisional). Merchants choose
+when they get paid, and pay less the longer they wait: **7% today, 6.25% at
+30 days, 5.5% at 60 days, 5.25% at 90 days**, always on the financed amount
+(the 7% immediate fee is the base flow; the deferred fees are provisional).
+Guaranteed plans keep **100% coverage of outstanding principal at every
+reputation tier**; plan interest and late fees are outside that coverage
+while the contractual cap is pending. The recovered business plan records a
+4% origination fee on financed principal (included in the merchant fee) and
+a 2% annual servicing fee paid by the pool; accrual rules remain pending.
+Rationale and sensitivity analysis: [`proyecto/10-tasa-6-cuotas-y-cobro-diferido.md`](proyecto/10-tasa-6-cuotas-y-cobro-diferido.md).
 
-**These are documented decisions, not shipped capabilities.** The existing demo
-still uses the browser mock by default. One/six installments, selectable merchant
-settlement and the new coverage policy require configuration, program, client,
-keeper and UI alignment before they can be demonstrated as working. New partner
-integrations and retail distribution are research proposals. No wallet partnership
-or new commercial traction has been obtained in this documentation update.
+**Where these terms live today.** All of them come from `ProtocolConfig` and
+are shipped in the **browser mock** that powers the demo: 3/6 installment
+checkout, merchant settlement choice with pending/settled sales, the merchant
+marketplace and the audience pages. Every provisional number is labelled
+"provisional" in the UI. **The onchain program still implements only 3
+installments with immediate settlement**, and its seed config keeps the
+original 100/90/80/70% coverage table; see
+[Known limitations](#known-limitations). New partner integrations and retail
+distribution are research proposals; no wallet partnership or commercial
+traction has been obtained, and the marketplace merchants are fictional and
+labelled "demo".
 
 Planning documents (internal, Spanish):
 [`commercial decisions`](proyecto/06-decisiones-comerciales.md),
@@ -80,7 +85,8 @@ Built at the Colosseum Crypto World's Fair — Superteam Argentina track.
 3. **Approve the plan on Solana.** The buyer reviews the transaction in their
    wallet. The `cuotas` program checks the configured limits and guarantee,
    records the plan, and coordinates the pool advance. The merchant receives
-   the purchase funds immediately, minus 7% of the financed amount.
+   the purchase funds minus a fee on the financed amount: 7% if paid today,
+   less if the merchant chooses to wait (mock only, see above).
 4. **Make payments and build reputation.** Payments are made in USDC (the demo
    uses devUSDC). Each completed plan can advance the buyer's onchain reputation
    and improve terms for future purchases, such as the initial payment or
@@ -132,10 +138,20 @@ cp .env.example .env.local   # NEXT_PUBLIC_CUOTAS_MODE=mock is the default
 npm run dev                  # http://localhost:3000
 ```
 
-Demo routes: `/tienda` (demo store) → `/checkout/[producto]` → buyer
-account `/app/estudiante`, merchant panel `/comercio`, pool `/pool`,
-guarantor invite `/fiador/<token>` (`/account` is an earlier mock-only
-account dashboard).
+What to open (all simulated, all labelled devnet/demo):
+
+| Route | What it shows |
+|---|---|
+| `/` | Landing: how Lazo works, the 3/6 options, merchant settlement and featured demo merchants |
+| `/comercio` → `/comercio/<address>` | Merchant marketplace: search, categories, 10 fictional demo merchants and their products |
+| `/tienda` → `/checkout/<product>` | Demo store and checkout with the 3 / 6 installment selector |
+| `/para-estudiantes`, `/para-comercios`, `/para-inversores` | Pages for students and families, merchants, and pool investors |
+| `/app` | Account entry with a demo identity selector: `/app/estudiante`, `/app/comercio` (settlement terms, pending → settled sales), `/app/admin` |
+| `/pool` | Junior/senior pool panel |
+| `/fiador/<token>` | Guarantor invite and onboarding (100% principal coverage) |
+
+The admin panel has a demo clock: advance it to watch a deferred sale settle
+or an installment go late. Every page works at 390 px (phone) width.
 
 ## Quick start — real mode (devnet)
 
@@ -195,7 +211,7 @@ The guarantor-sandbox and keeper variables (`FIADOR_*`, `DIDIT_*`, `MOBBEX_*`,
 ## Tests
 
 ```sh
-# Frontend — Vitest unit/integration (178 tests) + Playwright e2e
+# Frontend — Vitest unit/integration (258 tests) + Playwright e2e (43)
 cd app
 npm test                 # vitest run (src/**/*.test.ts*)
 npx playwright install chromium   # once, for the e2e suite
@@ -232,6 +248,14 @@ Deployment verification (byte-for-byte bytecode hash, transaction signatures,
 funding log): [`programa/DEPLOYMENT_REPORT.md`](programa/DEPLOYMENT_REPORT.md).
 
 ## Known limitations
+
+- **Mock ↔ program divergence.** The demo's 6-installment option, deferred
+  merchant settlement (30/60/90 days), 100% coverage at every tier and
+  parallel plans under a credit margin exist only in the browser mock. The
+  program still opens one 3-installment plan per buyer with immediate
+  settlement; its seed config (`app/scripts/seed.ts`) keeps the original
+  100/90/80/70% coverage table. Aligning it is planned work
+  (config contract, program, Codama client, keeper), not shipped.
 
 Full detail in [`programa/TEST_REPORT.md`](programa/TEST_REPORT.md) and
 [`proyecto/handoff-demo-devnet.md`](proyecto/handoff-demo-devnet.md):

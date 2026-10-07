@@ -8,7 +8,6 @@
 import Link from "next/link";
 import { Consulta } from "@/components/cuenta/consulta";
 import { REFERENCE } from "@/components/landing/reference";
-import { splitPurchase } from "@/components/landing/split";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
@@ -21,13 +20,14 @@ import {
   d8Breakdown,
   formatUsdc,
   planOptionOf,
+  quoteTermsFor,
   settlementOptionOf,
   settlementOptionsOf,
   toMicro,
   type Micro,
   type Pool,
   type ProtocolConfig,
-  type Quote,
+  type QuoteTerms,
 } from "@/lib/cuotas";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import {
@@ -44,38 +44,15 @@ const EXAMPLE_PRICE = toMicro(1000);
 
 /**
  * Cotización del ejemplo 1.000 / escalón 0 con fiador / 3 cuotas / cobro
- * inmediato. Es la misma cuenta que `quote()` (vía `splitPurchase`, como la
- * landing) sin consultar ni mutar estado del cliente, así el desglose D8 es
- * idéntico en mock y en real — los campos que `d8Breakdown` no lee se
- * completan desde la config para mantener el tipo `Quote`.
+ * inmediato: `quoteTermsFor` de `lib/cuotas/terms.ts`, la misma cuenta que
+ * `quote()` sin consultar ni mutar estado del cliente — así el desglose D8
+ * es idéntico en mock y en real.
  */
-function exampleQuote(config: ProtocolConfig): Quote {
-  const s = splitPurchase(config, EXAMPLE_PRICE, 0);
-  return {
-    price: s.price,
-    tier: s.tier,
-    withGuarantee: true,
-    downPayment: s.downPayment,
-    financed: s.financed,
-    installments: s.installments,
-    interest: 0,
-    total: s.price,
-    merchantFee: s.merchantFee,
-    merchantReceives: s.merchantReceives,
-    merchantAdvance: s.merchantReceives,
-    merchantPending: 0,
-    requiredCoverage: Math.round(
-      (s.financed * config.guaranteedTiers[0].guarantorCoverageBps) / 10_000,
-    ),
-    installmentsCount: s.installments.length,
-    interestTotalBps: 0,
-    settlementId: "immediate",
-    settlementDays: 0,
-    provisional: false,
-    eligible: true,
-    reasons: [],
-  };
-}
+const exampleTerms = (config: ProtocolConfig) =>
+  quoteTermsFor(config, EXAMPLE_PRICE, {
+    installments: 3,
+    settlement: "immediate",
+  });
 
 const numFmt = (locale: "es" | "en", opts: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", opts);
@@ -167,7 +144,13 @@ function PoolAhora({ pool }: { pool: Pool }) {
 }
 
 /** El reparto D8 de la compra de ejemplo, calculado con la config vigente. */
-function DesgloseD8({ config, quote }: { config: ProtocolConfig; quote: Quote }) {
+function DesgloseD8({
+  config,
+  quote,
+}: {
+  config: ProtocolConfig;
+  quote: QuoteTerms;
+}) {
   const t = useT(paraInversores).compra;
   const { locale } = useLocale();
   const usd = (m: Micro) => formatUsdc(m, locale);
@@ -222,14 +205,15 @@ export function ParaInversores() {
   const refPct = (n: number) =>
     `~${numFmt(locale, { maximumFractionDigits: 2 }).format(n)}%`;
 
-  const quote = config ? exampleQuote(config) : null;
+  const quote = config ? exampleTerms(config) : undefined;
   const d8 = config && quote ? d8Breakdown(config, quote) : null;
   const plan6 = config ? planOptionOf(config, 6) : undefined;
   const settleOpts = config ? settlementOptionsOf(config) : [];
-  const interest6 =
-    config && quote && plan6
-      ? Math.round((quote.financed * plan6.interestTotalBps) / 10_000)
-      : 0;
+  // Interés y total de la opción de 6 cuotas sobre la misma compra:
+  // la cotización real, no una cuenta paralela.
+  const terms6 = config
+    ? quoteTermsFor(config, EXAMPLE_PRICE, { installments: 6 })
+    : undefined;
 
   return (
     <div className="page-shell py-12 sm:py-16">
@@ -311,8 +295,8 @@ export function ParaInversores() {
               <p className="mt-3 text-sm leading-relaxed text-ink-2">
                 {t.seis.planesBody(
                   pct(plan6?.interestTotalBps ?? 0),
-                  usd(interest6),
-                  usd(quote.price + interest6),
+                  usd(terms6?.interest ?? 0),
+                  usd(terms6?.total ?? quote.price),
                 )}
               </p>
             </GlassPanel>
@@ -330,10 +314,13 @@ export function ParaInversores() {
               </div>
               <dl className="divide-y divide-beam/8">
                 {settleOpts.map((o) => {
-                  const fee =
-                    o.feeBps === null
-                      ? null
-                      : Math.round((quote.financed * o.feeBps) / 10_000);
+                  // Comisión y neto por plazo con la misma cotización que
+                  // `quote()`: plazo sin tarifa o deshabilitado → "—".
+                  const q = quoteTermsFor(config, quote.price, {
+                    installments: 3,
+                    settlement: o.id,
+                  });
+                  const fee = q?.merchantFee ?? null;
                   return (
                     <div
                       key={o.id}
@@ -347,10 +334,10 @@ export function ParaInversores() {
                       </dt>
                       <dd className="shrink-0 font-num text-sm tabular-nums text-ink">
                         {o.feeBps === null || fee === null ? "—" : pct(o.feeBps)}
-                        {fee !== null && (
+                        {q && fee !== null && (
                           <>
                             <span className="text-ink-ghost"> · </span>
-                            {usd(quote.price - fee)}
+                            {usd(q.merchantReceives)}
                           </>
                         )}
                       </dd>
