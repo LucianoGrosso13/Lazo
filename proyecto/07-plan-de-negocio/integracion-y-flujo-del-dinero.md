@@ -1,6 +1,6 @@
 # Lazo: cómo se integra y por dónde se mueve la plata
 
-**Fecha:** 6/10/2026 · Acompaña a `plan-de-negocio.md`. Responde las preguntas del equipo: ¿la gente se descarga una app?, ¿el comercio necesita un Posnet?, ¿cómo paga el estudiante?, ¿cómo le llega la plata del pool al comercio?
+**Fecha:** 6/10/2026 · Acompaña a `plan-de-negocio.md`. Responde las preguntas del equipo: ¿la gente se descarga una app?, ¿el comercio necesita un terminal tradicional?, ¿cómo paga el estudiante?, ¿cómo le llega la plata del pool al comercio?
 
 **Todo lo que describe este documento corre hoy en devnet** (la red de prueba de Solana: las transacciones son reales, pero la plata es de mentira), con devUSDC, un token de prueba. Cada parte dice si está **hecha**, **simulada** o es **roadmap**.
 
@@ -11,7 +11,7 @@ Los diagramas son Mermaid: se ven en GitHub y en VS Code con la vista previa de 
 ## 1. La respuesta corta
 
 1. **Nadie se descarga una app de Lazo.** Lazo es una web que se abre desde el celular con un link. El estudiante necesita una **wallet** (billetera digital que guarda sus USDC y firma las operaciones): hoy es Phantom; más adelante, una wallet que se crea con la cuenta de Google, sin descargar nada. El fiador y el comercio no necesitan wallet para empezar.
-2. **El comercio no necesita Posnet.** Online, pone un botón "Pagar en cuotas con Lazo" en su tienda. En el local, muestra un **QR** desde el celular. También puede mandar un **link de cobro** por WhatsApp.
+2. **El comercio no necesita terminal tradicional.** Online, pone un botón "Pagar en cuotas con Lazo" en su tienda. En el local, muestra un **QR** desde el celular. También puede mandar un **link de cobro** por WhatsApp.
 3. **La compra es una sola transacción en Solana.** El estudiante la firma y, en el mismo momento:
    - su anticipo va al comercio;
    - el pool le adelanta al comercio el resto, menos la comisión;
@@ -22,7 +22,7 @@ Los diagramas son Mermaid: se ven en GitHub y en VS Code con la vista previa de 
    - el fiador paga en pesos (tarjeta o DEBIN), solo si hay mora;
    - el estudiante podría pagar sus cuotas en pesos;
    - el comercio podría querer cobrar en pesos.
-   Esas conversiones las hace un socio registrado (Ripio, Bitso o Belo). **Hoy eso es roadmap o está simulado.**
+   Esas conversiones las hace un socio registrado (billeteras argentinas con rampa integrada). **Hoy eso es roadmap o está simulado.**
 
 ---
 
@@ -33,7 +33,7 @@ flowchart LR
     subgraph OFF["Fuera de la cadena (pesos, tarjetas, identidad)"]
         FIA["👪 Fiador<br/>link por WhatsApp<br/>KYC + fianza + tarjeta/DEBIN"]
         MOB["Mobbex<br/>(cobro en pesos al fiador)"]
-        RAMPA["Socio de rampa<br/>Ripio / Bitso / Belo<br/>pesos ⇄ USDC"]
+        RAMPA["Socio de rampa<br/>Billeteras argentinas<br/>pesos ⇄ USDC"]
         CVU["Cuenta en pesos<br/>(CVU/CBU)"]
         DIDIT["Didit<br/>(verificación de identidad)"]
     end
@@ -69,7 +69,7 @@ flowchart LR
 |---|---|---|---|---|
 | **Estudiante** | Hoy, la wallet Phantom (app o extensión). No hay app de Lazo | La web de Lazo en el celular + su wallet | Conecta la wallet en el checkout | **Hecho** (devnet). Login con Google sin descargar nada (Phantom embedded): **roadmap** |
 | **Fiador** | Nada | Un link que le manda el estudiante por WhatsApp | Abre el link, hace KYC con Didit, acepta la fianza con tope y carga la tarjeta o el DEBIN | **Código hecho**, falta la credencial del sandbox de Didit y Mobbex. En la demo se simula |
-| **Comercio** | Nada. Sin Posnet | Su panel web, desde el celular o la compu | Lazo lo registra (KYC del comercio) y él indica la wallet donde cobra | Panel **hecho**. Registro con KYC real: **roadmap** |
+| **Comercio** | Nada. Sin terminal tradicional | Su panel web, desde el celular o la compu | Lazo lo registra (KYC del comercio) y él indica la wallet donde cobra | Panel **hecho**. Registro con KYC real: **roadmap** |
 | **Inversor del pool** | Una wallet | El panel del pool | Deposita USDC en el tramo junior o senior | Junior **hecho**. Senior: **fuera de la demo** |
 | **Lazo (empresa)** | — | El **keeper**: un programa automático que vigila los vencimientos y dispara la mora y el cobro al fiador | Corre en un servidor | **Hecho** (tests). En la demo, el reloj se adelanta |
 
@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## 4. Cómo cobra el comercio: tres canales, ninguno con Posnet
+## 4. Cómo cobra el comercio: tres canales, ninguno con terminal tradicional
 
 | Canal | Cómo se ve | Cómo funciona por dentro | Estado |
 |---|---|---|---|
@@ -85,7 +85,7 @@ flowchart LR
 | **Local físico** (comercio cerca de la facultad) | El vendedor carga el precio en su panel y aparece un **QR** en su celular. El estudiante lo escanea con su wallet | Es un **Solana Pay "transaction request"**, un estándar de Solana para pagar con QR. La wallet le pide la transacción al servidor de Lazo, el estudiante la ve (destino, monto, red) y la firma. El vendedor ve el "pagado" en su panel al instante | **Roadmap** (investigado en `research/c` §3, no construido) |
 | **Link de cobro** | El comercio manda un link por WhatsApp o Instagram | Es el mismo checkout de la tienda online, con el producto y el precio ya cargados | **Roadmap** (es reutilizar el checkout) |
 
-**Por qué no hace falta Posnet:** un Posnet sirve para leer una tarjeta, y nuestro estudiante no tiene tarjeta. Lo que hace falta es que el estudiante firme desde su wallet, y para eso alcanza un QR o un link. Para el comercio, eso también es un ahorro: no paga alquiler de Posnet.
+**Por qué no hace falta terminal tradicional:** un terminal tradicional sirve para leer una tarjeta, y nuestro estudiante no tiene tarjeta. Lo que hace falta es que el estudiante firme desde su wallet, y para eso alcanza un QR o un link. Para el comercio, eso también es un ahorro: no paga alquiler de terminal tradicional.
 
 ---
 
@@ -196,8 +196,8 @@ El comercio cobra **USDC en su wallet de Solana**. Si quiere pesos, hay dos cami
 
 | Camino | Cómo | Quién lo hace | Estado |
 |---|---|---|---|
-| **1. Lo convierte él** | Manda los USDC a su cuenta de Ripio, Bitso o Belo (las tres aceptan USDC por Solana, `research/c` §4), los vende y retira a su CVU | El comercio | Posible hoy en mainnet. Fuera del producto |
-| **2. Lazo se lo deposita en pesos** | Lazo, con un socio (por ejemplo, la API de Ripio que retira a CVU), le manda pesos directo a su cuenta. Se cobra un spread | Socio de rampa registrado | **Roadmap**, cuando haya volumen. Fuera del MVP (`03-mvp.md`) |
+| **1. Lo convierte él** | Manda los USDC a su cuenta de billeteras argentinas con rampa integrada (las tres aceptan USDC por Solana, `research/c` §4), los vende y retira a su CVU | El comercio | Posible hoy en mainnet. Fuera del producto |
+| **2. Lazo se lo deposita en pesos** | Lazo, con un socio (por ejemplo, la API del socio de rampa que retira a CVU), le manda pesos directo a su cuenta. Se cobra un spread | Socio de rampa registrado | **Roadmap**, cuando haya volumen. Fuera del MVP (`03-mvp.md`) |
 
 **Lo que falta validar:** que el comercio acepte cobrar en USDC o con conversión a pesos (supuesto #2 de `02-validacion.md`). Hoy es una creencia: no hay ningún comercio con nombre.
 
@@ -220,7 +220,7 @@ El comercio cobra **USDC en su wallet de Solana**. Si quiere pesos, hay dos cami
 
 | Fricción | Qué pasa hoy | Cómo se resuelve |
 |---|---|---|
-| **El estudiante necesita USDC para el anticipo** | En devnet, se le da devUSDC de prueba | Comprar USDC en Belo, Bitso o Ripio, o pagar el anticipo en pesos por CVU con un socio (roadmap) |
+| **El estudiante necesita USDC para el anticipo** | En devnet, se le da devUSDC de prueba | Comprar USDC en billeteras argentinas, o pagar el anticipo en pesos por CVU con un socio (roadmap) |
 | **El estudiante necesita SOL para pagar la comisión de red** (fracciones de centavo por transacción) | El estudiante paga la comisión de cada transacción con SOL de prueba | Que Lazo pague la comisión de red por él (Solana lo permite). El costo ya está contemplado en el modelo (KYC + gas, US$1 por plan) |
 | **Descargar una wallet** | Phantom | Wallet con cuenta de Google (Phantom embedded), sin descargar nada |
 | **El comercio no conoce USDC** | Ve el cobro en su panel | Depósito en pesos con un socio (§9) |

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
 <rect width="820" height="460" fill="#ffffff" rx="12"/>
 <text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">Cuántas compras en cuotas por mes hacen falta para no perder plata</text>
-<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Cada plan le deja a Lazo US$27 (solo comisiones) o US$31 (con 25% del junior)</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Cada plan le deja a Lazo US$27 (solo comisiones) o US$27 (con 25% del junior)</text>
 <line x1="78" x2="796" y1="368.0" y2="368.0" stroke="#1d1b2e" stroke-width="1.2"/>
 <text x="70.0" y="372.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">0</text>
 <line x1="78" x2="796" y1="323.4" y2="323.4" stroke="#e6e4ef" stroke-width="1"/>
@@ -16,32 +16,32 @@
 <text x="70.0" y="148.8" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">1.250</text>
 <text x="167.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Piloto</text>
 <text x="167.8" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">US$6k/mes</text>
-<rect x="111.3" y="327.6" width="55.4" height="40.4" rx="3" fill="#7c3aed"/>
-<text x="139.0" y="321.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">226</text>
-<rect x="168.8" y="333.9" width="55.4" height="34.1" rx="3" fill="#0f9d6b"/>
-<text x="196.5" y="327.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">191</text>
+<rect x="111.3" y="327.8" width="55.4" height="40.2" rx="3" fill="#7c3aed"/>
+<text x="139.0" y="321.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">225</text>
+<rect x="168.8" y="327.6" width="55.4" height="40.4" rx="3" fill="#0f9d6b"/>
+<text x="196.5" y="321.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">226</text>
 <text x="347.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Tucumán</text>
 <text x="347.2" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">US$14k/mes</text>
-<rect x="290.8" y="273.7" width="55.4" height="94.3" rx="3" fill="#7c3aed"/>
-<text x="318.5" y="267.7" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">528</text>
-<rect x="348.2" y="288.4" width="55.4" height="79.6" rx="3" fill="#0f9d6b"/>
-<text x="376.0" y="282.4" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">446</text>
+<rect x="290.8" y="274.2" width="55.4" height="93.8" rx="3" fill="#7c3aed"/>
+<text x="318.5" y="268.2" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">525</text>
+<rect x="348.2" y="273.8" width="55.4" height="94.2" rx="3" fill="#0f9d6b"/>
+<text x="376.0" y="267.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">527</text>
 <text x="526.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">3 ciudades</text>
 <text x="526.8" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">US$25k/mes</text>
-<rect x="470.3" y="199.7" width="55.4" height="168.3" rx="3" fill="#7c3aed"/>
-<text x="498.0" y="193.7" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">943</text>
-<rect x="527.8" y="225.8" width="55.4" height="142.2" rx="3" fill="#0f9d6b"/>
-<text x="555.5" y="219.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">796</text>
+<rect x="470.3" y="200.6" width="55.4" height="167.4" rx="3" fill="#7c3aed"/>
+<text x="498.0" y="194.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">938</text>
+<rect x="527.8" y="199.8" width="55.4" height="168.2" rx="3" fill="#0f9d6b"/>
+<text x="555.5" y="193.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">942</text>
 <text x="706.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Nacional</text>
 <text x="706.2" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">US$35k/mes</text>
-<rect x="649.8" y="132.3" width="55.4" height="235.7" rx="3" fill="#7c3aed"/>
-<text x="677.5" y="126.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">1.320</text>
-<rect x="707.2" y="169.0" width="55.4" height="199.0" rx="3" fill="#0f9d6b"/>
-<text x="735.0" y="163.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">1.115</text>
+<rect x="649.8" y="133.6" width="55.4" height="234.4" rx="3" fill="#7c3aed"/>
+<text x="677.5" y="127.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">1.313</text>
+<rect x="707.2" y="132.6" width="55.4" height="235.4" rx="3" fill="#0f9d6b"/>
+<text x="735.0" y="126.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">1.318</text>
 <rect x="24" y="86" width="14" height="14" rx="3" fill="#7c3aed"/>
 <text x="44.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Solo comisiones</text>
 <rect x="157.0" y="86" width="14" height="14" rx="3" fill="#0f9d6b"/>
 <text x="177.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Comisiones + 25% del junior</text>
 <text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Ticket financiado medio US$650 (notebooks, PC). Opex por etapa: piloto, Tucumán, 3 ciudades, escala nacional.</text>
-<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Escenario de modelo-v2.py §8-9: mora 30%, recupero del fiador 80%. No es un pronóstico. Todo corre en devnet.</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Escenario de modelo-v3.py: hipótesis de calibración (mora base 8%, recupero fiador 80%). No es un pronóstico. Todo corre en devnet.</text>
 </svg>

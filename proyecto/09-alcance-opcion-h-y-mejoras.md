@@ -12,11 +12,12 @@ Orden de autoridad: instrucciones actuales del equipo → [decisiones vigentes](
 
 | Selección | Definición recuperada | Recorte vigente |
 |---|---|---|
-| H | El comercio elige entre esquemas de costo H1/H2 | Adaptar a duración y fecha de liquidación: 1/3 sin interés; 6 con interés comprador y comisión comercial por plazo |
-| 1 | Incorporar 6 cuotas; 12 más adelante | Solo 6; tasa moderada pendiente, no adoptar 14% del original |
-| 2 | Comercio elige cobrar hoy, a 30 o a 60 días con distinto precio | Elección aprobada; 30/60 días y descuentos de 2/4 puntos son candidatos, no tarifas aprobadas |
+| H | El comercio elige entre esquemas de costo H1/H2 | Adaptar a duración y fecha de liquidación: 3 sin interés; 6 con 3% total y comisión comercial por plazo en tramos |
+| 1 | Incorporar 6 cuotas; 12 más adelante | Solo 6 con 3% total sobre financiado (mínimo US$ 350); 3 sin interés |
+| 2 | Comercio elige cobrar hoy, a 30 o a 60 días con distinto precio | Cobro en tramos mensuales: hoy 7%, 30d 6,25%, 60d 5,75%, 90d 5,25% con compromiso onchain y chequeo de liquidez |
 | 10 | Capital ocioso a DeFi, solo con tesorería propia | Fondos propios identificados, nunca fondos ajenos ni reservas; prueba simulada hasta verificar compatibilidad devnet |
-| 11 | Descuentos para el fiador cuyo estudiante paga a tiempo | Beneficio comercial financiado por el comercio; nunca bajar la cobertura del 100% |
+| 11 | Descuentos para el fiador cuyo estudiante paga a tiempo | **DESCARTADA (2026-10-07):** eliminada de MVP, UI y roadmap; diluye el foco y subsidia sin evidencia |
+| Mostrador | Venta minorista presencial por link/QR propio | **PRIORIZADA EN MVP (2026-10-07):** el cajero genera orden/QR y el estudiante paga con su fianza vigente |
 
 ## H adaptada: dos elecciones independientes
 
@@ -80,15 +81,19 @@ Limitar además por tope configurado; no valorar posiciones como caja inmediata 
 
 La investigación oficial está en [compatibilidad de tesorería](research/g-capital-ocioso-devnet.md): Kamino publica despliegue devnet, pero no quedó verificado un mercado para nuestro mint; Jupiter publica direcciones Mainnet sin confirmar esta compatibilidad devnet. Por eso el alcance inicial recomendado es un adaptador simulado explícitamente rotulado. No se prometen 4,5% ni los +0,6–0,9% del escenario antiguo. No cambiar a mainnet para hacer funcionar una demo.
 
-## Idea 11 — fiador al día
+## Idea 11 — fiador al día [DESCARTADA 2026-10-07]
 
-**Experiencia propuesta:** el familiar entra a su panel mediante su identidad verificada y ve descuentos disponibles en comercios participantes. No necesita una wallet nueva para recibir un beneficio comercial. La compra sigue garantizada al 100%; el descuento no modifica su máximo contratado.
+**Estado: DESCARTADA.** Decisión del 2026-10-07: se elimina de la UI, del MVP y de la hoja de ruta. Motivo: la fianza es obligatoria y cubre el 100% de capital + interés en todos los planes; sumar un esquema de descuentos comerciales para fiadores añade fricción operativa, complejidades contractuales y subsidios cruzados sin evidencia de reducir mora.
 
-**Financiación:** cada comercio define beneficio, presupuesto, vigencia y condiciones. Sin acuerdo ni presupuesto, se usan fixtures rotuladas demo, nunca “comercios aliados” ficticios. Si Lazo cofinancia, contabilizar ese gasto como marketing y aprobarlo antes; no cargarlo al pool por defecto.
+*(Texto original conservado como antecedente):*
+El familiar entra a su panel mediante su identidad verificada y ve descuentos disponibles en comercios participantes. La compra sigue garantizada al 100%; el descuento no modifica su máximo contratado. Cada comercio define beneficio, presupuesto, vigencia y condiciones.
 
-**Elegibilidad propuesta a validar:** fianza vigente y sin atrasos pendientes, con al menos un pago efectivamente confirmado del estudiante. Decidir si la gracia cuenta como “al día”, cómo agregan varios estudiantes por fiador, mínimo de actividad, vigencia y tratamiento de devolución. No emitir por un simple estado del navegador ni por un alta sin pagos. Conservar PII fuera de la cadena.
+## Venta en mostrador por link/QR [PRIORIZADA EN MVP 2026-10-07]
 
-**Aceptación:** cupón acotado y de un solo uso, reserva/redención atómica, expiración, auditoría y cancelación de reservas. Verificar que dos canjes simultáneos no gasten el mismo presupuesto; que el comercio pueda pausar beneficios futuros; y que atraso posterior no reescriba pagos ni genere una deuda por un descuento ya canjeado. Definir antes la política de reversión por fraude/devolución. Medir aceptación del fiador, canje y costo, no afirmar que baja mora sin evidencia.
+**Estado: INCORPORADA AL MVP.** Decisión del 2026-10-07: el recorrido minorista presencial forma parte del producto final demostrado.
+- El comercio genera la orden con importe y descripción desde su panel (`/app/comercio/mostrador`), obteniendo un link y un código QR propio en SVG.
+- El estudiante escanea el QR desde su teléfono móvil y es redirigido a `/orden/[id]`, donde confirma la compra en 3 o 6 cuotas reutilizando su identidad y su fianza activa ya verificadas.
+- La orden vence a las 24 h y no requiere que el estudiante instale una app específica ni cargue los datos en el mostrador.
 
 ## Tareas y orden de trabajo
 
@@ -96,12 +101,13 @@ Se anota el plan; ninguna tarea se declara implementada. [04-plan](04-plan.md) m
 
 | Mejora | Cortes verificables y dueño propuesto | Dependencias / salida |
 |---|---|---|
-| 1 | Compañero: configuración/cotización/calendario; Luciano: cliente/selector; ambos: pagos y mora | C1–C6; presupuesto exacto en mock y real, pruebas negativas y pantalla revisada |
-| 2 | Compañero: obligación/reserva; Luciano: cuenta comercio; ambos: liquidación/conciliación | C1–C6; caja separada de cuentas por pagar y liquidación única |
-| 11 | Luciano: política, registro de presupuesto/cupón y panel; revisión del compañero | Pagos y fianza confiables; primero pruebas mock, después sandbox; no altera cobertura |
-| 10 | Compañero: contabilidad propia y adaptador simulado; Luciano: tablero/rotulado | Investigación, reservas y decisiones de riesgo cerradas; separado del crédito; integración devnet solo si se prueba compatible |
+| 1 | Compañero: configuración/cotización/calendario; Luciano: cliente/selector; ambos: pagos y mora | C1–C6; 6 cuotas al 3% (mínimo US$ 350) en mock y programa |
+| 2 | Compañero: obligación/reserva; Luciano: cuenta comercio; ambos: liquidación/conciliación | C1–C6; tramos mensuales (hoy 7%, 30d 6,25%, 60d 5,75%, 90d 5,25%) con compromiso onchain |
+| Mostrador | Luciano: panel cajero (`/app/comercio/mostrador`) y checkout (`/orden/[id]`); compañero: orden mock | MVP funcionando de punta a punta con QR y link |
+| 10 | Compañero: contabilidad propia y adaptador simulado; Luciano: tablero/rotulado | Módulo interno aislado (roadmap / simulación) |
+| 11 | **Descartada** por decisión de producto | Fuera de alcance |
 
-Prioridad propuesta: cerrar reglas y coherencia de la demo → 1/2 → recorrido minorista y validación de 07/08 → 11 → 10 como módulo interno aislado. Si no entra en la hackathon, mostrar 10/11 como roadmap. Una rama y commit por corte; no ampliar videos con funcionalidades no verificadas.
+Prioridad decidida: cerrar reglas y coherencia de la demo → 1 (6 cuotas al 3%) / 2 (cobro en tramos) → venta en mostrador (link/QR) en el MVP → 10 como simulación aislada. La idea 11 queda eliminada. Una rama y commit por corte; no ampliar videos con funcionalidades no verificadas.
 
 ## Pendientes concretos
 

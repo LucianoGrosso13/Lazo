@@ -14,7 +14,7 @@ from dataclasses import replace
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-_spec = importlib.util.spec_from_file_location("modelo", HERE / "modelo-v2.py")
+_spec = importlib.util.spec_from_file_location("modelo", HERE / "modelo-v3.py")
 m = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(m)
 
@@ -233,7 +233,7 @@ def vbars(name, title, subtitle, note, cats, series, ylo, yhi, yfmt, vfmt, sign_
 def pitch_charts():
     base = m.Risk()
     usdk = lambda v: "US$" + num(v / 1000, 0) + "k"
-    nota = "Escenario de modelo-v2.py §8-9: mora 30%, recupero del fiador 80%. No es un pronóstico. Todo corre en devnet."
+    nota = "Escenario de modelo-v3.py: hipótesis de calibración (mora base 8%, recupero fiador 80%). No es un pronóstico. Todo corre en devnet."
 
     # P1. Cuánto se queda la empresa de cada venta, frente a la industria
     sp = m.plan_split()
@@ -378,20 +378,21 @@ def main():
     OUT.mkdir(exist_ok=True)
     base = m.Risk()
     pctf = lambda v: num(v, 0) + "%"
-    nota_base = "Escenario del modelo (modelo-v2.py §8): mora 30%, recupero del fiador 80%. No es un pronóstico. Todo corre en devnet."
+    nota_base = "Escenario del modelo (modelo-v3.py): supuestos base (mora 8%, recupero fiador 80%). No es un pronóstico. Todo corre en devnet."
 
     # 1. Precio para el comercio
     hbar_chart(
         "01-precio-comercio.svg",
         "Cuánto paga el comercio por vender en 3 cuotas sin interés",
-        "Costo en % del precio de venta. Banco y Mercado Pago exigen que el comprador tenga tarjeta",
-        "Banco y Mercado Pago: tabla de Google modo IA, SIN VERIFICAR, + IVA. Lazo: propuesta (plan-de-negocio.md §3.4),\n"
-        "+ IVA a confirmar con un contador. El comprador de Lazo no necesita tarjeta.",
-        [("Mercado Pago", 18.5, RED, "al instante · con tarjeta · ~18-19% + IVA"),
-         ("Banco (Posnet)", 8.5, GREY, "a 8 días hábiles · con tarjeta · + alquiler"),
-         ("Lazo propuesto", 9.0, PURPLE, "al instante · sin tarjeta · sin Posnet"),
-         ("Lazo cobrando a 30 días", 7.0, BLUE, "propuesta, sin modelar todavía"),
-         ("Lazo hoy (programa)", 4.9, GREEN, "7% de lo financiado: Lazo no gana nada")],
+        "Costo en % del precio de venta (anticipo 30%, financiado 70%). La alternativa con tarjeta",
+        "La competencia: referencia de mercado de cobro al instante con tarjeta (~18-19% + IVA) vs. 8 días hábiles (~8,5% + IVA).\n"
+        "Lazo: tarifas vigentes sobre financiado (7%, 6,25%, 5,75%, 5,25%), traducidas a % del precio. El comprador no necesita tarjeta.",
+        [("La competencia (al instante)", 18.5, RED, "al instante · con tarjeta · ~18-19% + IVA"),
+         ("Alternativa bancaria (8 días)", 8.5, GREY, "a 8 días hábiles · con tarjeta"),
+         ("Lazo cobro hoy (7% financiado)", 4.9, PURPLE, "al instante · sin tarjeta"),
+         ("Lazo a 30 días (6,25% financiado)", 4.38, BLUE, "1 tramo día 30"),
+         ("Lazo a 60 días (5,75% financiado)", 4.03, GREEN, "2 tramos mensuales"),
+         ("Lazo a 90 días (5,25% financiado)", 3.68, GREEN, "3 tramos mensuales")],
         20, lambda v: num(v, 1) + "%")
 
     # 2. A dónde va la comisión
@@ -399,8 +400,8 @@ def main():
     stacked_bar(
         "02-a-donde-va-la-comision.svg",
         "A dónde va la comisión del comercio",
-        "PC de US$1.000, escalón 0 (anticipo 30%, financiado US$700), modo sin interés al 9% del precio",
-        "Valores esperados por plan. La pérdida es lo que no se recupera del estudiante ni del fiador, más los costos de cobro.\n" + nota_base,
+        "PC de US$1.000, Tier 1 · Starter (anticipo 30%, financiado US$700), cobro hoy al 7% sobre financiado (US$49)",
+        "Valores esperados por plan. La pérdida es la mora neta del recupero del fiador más aranceles.\n" + nota_base,
         [("Lazo: originación (4% de lo financiado)", sp["originacion"], PURPLE),
          ("Lazo: administración (2%/año sobre saldo)", sp["administracion"], BLUE),
          ("Pérdida esperada por mora, neta del fiador", sp["perdida"], RED),
