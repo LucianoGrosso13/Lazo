@@ -41,7 +41,7 @@ test("/comercio es el marketplace público: buscador, categorías y comercios de
   ).toBeVisible();
   // El comercio sembrado se llama "Voltia" y declara datos de prueba.
   await expect(page.getByRole("link", { name: /Voltia/ })).toBeVisible();
-  await expect(page.getByText(/demo/i).first()).toBeVisible();
+  await expect(page.getByText(/comercios de ejemplo|example merchants/i)).toBeVisible();
   await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
 });
 

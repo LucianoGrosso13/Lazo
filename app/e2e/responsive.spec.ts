@@ -18,6 +18,8 @@ const ROUTES = [
   "/app",
   "/app/estudiante",
   "/app/comercio",
+  "/app/comercio/mostrador",
+  "/orden/orden-invalida",
   "/app/admin",
   "/account",
   "/design",

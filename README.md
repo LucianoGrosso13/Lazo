@@ -22,28 +22,23 @@ reputation on Solana.
 ## Product decisions — October 7, 2026
 
 Buyers choose **3 installments with no interest** or **6 installments with a
-3% total interest on the financed amount** (provisional). Merchants choose
-when they get paid, and pay less the longer they wait: **7% today, 6.25% at
-30 days, 5.5% at 60 days, 5.25% at 90 days**, always on the financed amount
-(the 7% immediate fee is the base flow; the deferred fees are provisional).
-Guaranteed plans keep **100% coverage of outstanding principal at every
-reputation tier**; plan interest and late fees are outside that coverage
-while the contractual cap is pending. The recovered business plan records a
+3% total interest on the financed amount** (available from US$350). An active
+card guarantor is required for every plan and covers the full outstanding
+principal **and agreed interest**; late penalties are excluded. Merchants choose
+when they get paid: **7% today, 6.25% at 30 days, 5.75% at 60 days, or 5.25%
+at 90 days**, always on the financed amount. Deferred payouts are released in
+equal monthly tranches and guaranteed on their scheduled dates. The recovered business plan records a
 4% origination fee on financed principal (included in the merchant fee) and
 a 2% annual servicing fee paid by the pool; accrual rules remain pending.
 Rationale and sensitivity analysis: [`proyecto/10-tasa-6-cuotas-y-cobro-diferido.md`](proyecto/10-tasa-6-cuotas-y-cobro-diferido.md).
 
-**Where these terms live today.** All of them come from `ProtocolConfig` and
-are shipped in the **browser mock** that powers the demo: 3/6 installment
-checkout, merchant settlement choice with pending/settled sales, the merchant
-marketplace and the audience pages. Every provisional number is labelled
-"provisional" in the UI. **The onchain program still implements only 3
-installments with immediate settlement**, and its seed config keeps the
-original 100/90/80/70% coverage table; see
-[Known limitations](#known-limitations). New partner integrations and retail
-distribution are research proposals; no wallet partnership or commercial
-traction has been obtained, and the marketplace merchants are fictional and
-labelled "demo".
+**Where these terms run today.** The public web runs in the browser simulator
+(mock mode). The new Anchor program source supports 3 and 6 installments, the
+mandatory guarantor and principal-plus-interest coverage, merchant payout
+terms, and the onchain payout schedule described below. The devnet upgrade is
+pending approval: the binary deployed today is the previous program version.
+No public purchase uses the new program yet. Marketplace merchants are examples;
+there are no confirmed wallet partnerships or commercial traction.
 
 Planning documents (internal, Spanish):
 [`commercial decisions`](proyecto/06-decisiones-comerciales.md),
@@ -146,9 +141,10 @@ What to open (all simulated, all labelled devnet/demo):
 | `/comercio` → `/comercio/<address>` | Merchant marketplace: search, categories, 10 fictional demo merchants and their products |
 | `/tienda` → `/checkout/<product>` | Demo store and checkout with the 3 / 6 installment selector |
 | `/para-estudiantes`, `/para-comercios`, `/para-inversores` | Pages for students and families, merchants, and pool investors |
-| `/app` | Account entry with a demo identity selector: `/app/estudiante`, `/app/comercio` (settlement terms, pending → settled sales), `/app/admin` |
+| `/app` | Account entry with a demo identity selector: `/app/estudiante`, `/app/comercio` (settlement terms, payout tranches and sales), `/app/comercio/mostrador` (QR/link orders), `/app/admin` |
 | `/pool` | Junior/senior pool panel |
-| `/fiador/<token>` | Guarantor invite and onboarding (100% principal coverage) |
+| `/fiador/<token>` | Guarantor invite and onboarding (100% principal and agreed-interest coverage) |
+| `/orden/<id>` | Counter-sale order link and checkout |
 
 The admin panel has a demo clock: advance it to watch a deferred sale settle
 or an installment go late. Every page works at 390 px (phone) width.
@@ -195,14 +191,39 @@ The guarantor-sandbox and keeper variables (`FIADOR_*`, `DIDIT_*`, `MOBBEX_*`,
 [`docs/fiador-sandbox.md`](docs/fiador-sandbox.md) — they also live in
 `app/.env.local` and are never committed. No private key goes in any env file.
 
+## Program behavior in source
+
+The current Anchor source accepts **3 or 6 installments** from the configured
+`plan_options`. Six installments carry 300 basis points (3%) total interest
+and a configured minimum price; every plan requires an active guarantor, whose
+coverage includes the remaining principal and agreed interest.
+
+Reputation uses four configured tiers: **Tier 1 · Starter, Tier 2 · Steady,
+Tier 3 · Trusted, and Tier 4 · Full**. The protocol applies the configured
+down payment, purchase cap, and repayment rules at each tier; a higher tier
+does not remove the guarantor requirement.
+
+For merchant settlement, `open_plan` creates a `PayoutSchedule` PDA for each
+plan. Immediate settlement transfers the net financed amount at once. Deferred
+settlement leaves funds in the pool and records up to three monthly tranches;
+anyone may call `release_payout(index)` after a tranche's release time. The
+program releases each tranche once, reduces `Pool.committed_payouts`, and
+transfers the scheduled amount to the merchant. New plans require enough free
+pool liquidity for the current payout plus all outstanding commitments.
+
+These behaviors describe the **new program source**, not the binary currently
+running on devnet. The devnet upgrade is pending approval; the deployed binary
+is the previous version. The public web runs in the simulator.
+
 ## What's real vs mock vs sandbox
 
 | Component | Status |
 |---|---|
-| `cuotas` program | **Real** — deployed and byte-verified on devnet (but running the pre-credit-lifecycle binary; upgrade pending — see below). |
+| `cuotas` program source | **New source** — supports 3/6 installments, mandatory guarantor coverage including interest, and committed payout schedules. The devnet upgrade is pending approval; the deployed binary is the previous version. |
 | devUSDC mint | **Real** — exists on devnet (supply 0, nothing ever minted), worthless test token. |
-| Frontend chain client | **Real** — `app/src/lib/cuotas/real.ts`: devnet genesis-hash guard, simulate-before-sign, fails closed on any inconsistency. |
-| Codama client | **Real** — generated from the new program IDL into `app/src/generated/`. |
+| Public web | **Simulator** — the public experience currently runs in mock mode; it does not use the new program source. |
+| Frontend chain client | **Real client code** — `app/src/lib/cuotas/real.ts`: devnet genesis-hash guard, simulate-before-sign, fails closed on any inconsistency. |
+| Codama client | **Generated client code** — generated from the new program IDL into `app/src/generated/`; devnet upgrade pending approval. |
 | Keeper | **Real code, dry-run by default** — the loop only proposes; `--execute --approved-by --yes` per effect. Codama adapter guards devnet by genesis hash. |
 | Didit KYC / Mobbex cards | **Sandbox code complete, never run live** — integration + webhooks implemented and tested; live checks are pending sandbox credentials (fail closed: `didit_not_configured`, `mobbex_live_refused`). |
 | Frontend `mock` mode | **Mock** — default. Simulates the whole product (plans, late flow, reputation, pool, demo clock) in the browser. Clearly labelled; mock evidence never links to Solana Explorer. |
@@ -211,12 +232,12 @@ The guarantor-sandbox and keeper variables (`FIADOR_*`, `DIDIT_*`, `MOBBEX_*`,
 ## Tests
 
 ```sh
-# Frontend — Vitest unit/integration (258 tests) + Playwright e2e (43)
+# Frontend — Vitest unit/integration + Playwright e2e
 cd app
 npm test                 # vitest run (src/**/*.test.ts*)
 npx playwright install chromium   # once, for the e2e suite
 npm run test:e2e         # playwright (mock mode; PW_CUOTAS_MODE=real for devnet)
-npm run typecheck && npm run lint
+npm run typecheck && npm run lint && npm run build
 
 # Keeper — node:test unit suite (46 tests) + scripted-RPC e2e (9 tests)
 cd keeper
@@ -224,9 +245,9 @@ npm test
 npm run test:e2e         # real codecs against a scripted RPC transport
 npm run typecheck
 
-# Program — host unit tests (36) + LiteSVM acceptance suite (137)
+# Program — host unit tests (36) + LiteSVM acceptance suite (142)
 cd programa
-NO_DNA=1 anchor build --arch v1
+PATH="$HOME/.cargo/bin:$HOME/.local/share/solana/install/active_release/bin:$PATH" cargo-build-sbf --arch v1
 cargo test -p cuotas --lib
 cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast
 cargo fmt --all -- --check && cargo clippy -p cuotas --all-targets -- -D warnings
@@ -249,21 +270,20 @@ funding log): [`programa/DEPLOYMENT_REPORT.md`](programa/DEPLOYMENT_REPORT.md).
 
 ## Known limitations
 
-- **Mock ↔ program divergence.** The demo's 6-installment option, deferred
-  merchant settlement (30/60/90 days), 100% coverage at every tier and
-  parallel plans under a credit margin exist only in the browser mock. The
-  program still opens one 3-installment plan per buyer with immediate
-  settlement; its seed config (`app/scripts/seed.ts`) keeps the original
-  100/90/80/70% coverage table. Aligning it is planned work
-  (config contract, program, Codama client, keeper), not shipped.
+- **Devnet upgrade pending approval.** The new program source includes 3/6
+  installment plans, mandatory guarantors, coverage of principal plus agreed
+  interest, payout schedules, permissionless tranche release, and liquidity
+  commitments. The binary currently deployed on devnet is the previous version.
+  The public web runs in the simulator, so these new terms are not presented as
+  an onchain purchase.
 
 Full detail in [`programa/TEST_REPORT.md`](programa/TEST_REPORT.md) and
 [`proyecto/handoff-demo-devnet.md`](proyecto/handoff-demo-devnet.md):
 
-- **Devnet runs the old program binary** (no credit lifecycle). The reviewed
-  artifact with `open_plan` / `pay_installment` / `crank_mark_late` /
-  `keeper_register_recovery` is green locally (137 LiteSVM + 36 host tests)
-  but the upgrade is a pending, approval-gated step
+- **Devnet runs the previous program binary.** The new source and reviewed
+  artifact include `open_plan` / `pay_installment` / `crank_mark_late` /
+  `keeper_register_recovery` / `release_payout` and pass locally (142 LiteSVM +
+  36 host tests), but the upgrade is pending approval
   ([`programa/UPGRADE_DEVNET.md`](programa/UPGRADE_DEVNET.md)).
 - **Protocol state was never initialized** (`admin_init_config` / `pool_init`
   never ran; devUSDC supply is 0; no merchant registered). Until then the

@@ -41,7 +41,7 @@ test.describe("admin /app/admin — modo mock", () => {
     await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
   });
 
-  test("la identidad admin ve el panel: estado, escalones, pool, mora, bitácora y comercios", async ({
+test("la identidad admin ve el panel: estado, Tiers, pool, mora, bitácora y comercios", async ({
     page,
   }) => {
     // El selector navega a la cuenta del rol elegido.
@@ -54,9 +54,9 @@ test.describe("admin /app/admin — modo mock", () => {
     await expect(page.getByTestId("admin-autoridad")).toBeVisible();
     // Estado del protocolo con su control de cambio.
     await expect(page.getByTestId("admin-estado-actual")).toContainText(/normal/i);
-    // Escalones y reglas de mora, solo lectura desde la config.
+    // Tiers y reglas de mora, solo lectura desde la config.
     await expect(page.getByTestId("admin-escalones")).toBeVisible();
-    await expect(page.getByTestId("admin-escalones")).toContainText(/escal[oó]n 0/i);
+    await expect(page.getByTestId("admin-escalones")).toContainText(/Tier 1 · Starter/i);
     // Pool: NAV, tramos, utilización y crédito.
     await expect(page.getByTestId("admin-pool")).toBeVisible();
     await expect(page.getByTestId("admin-pool-nav")).toBeVisible();

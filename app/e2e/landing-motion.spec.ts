@@ -36,15 +36,15 @@ for (const locale of ["en", "es"] as const) {
 test("guarantor timeline markers are keyboard buttons with selected state", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   const markers = page.locator("section[aria-labelledby='guarantor-title'] button[data-kind]");
-  await expect(markers).toHaveCount(4);
-  await expect(markers.nth(0)).toHaveAttribute("aria-pressed", "true");
-  await markers.nth(1).focus();
-  await page.keyboard.press("Enter");
+  await expect(markers).toHaveCount(6);
   await expect(markers.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await markers.nth(0).focus();
+  await page.keyboard.press("Enter");
+  await expect(markers.nth(0)).toHaveAttribute("aria-pressed", "true");
   // El estado seleccionado se declara con data-active (las primitivas
   // animate-ui/Highlight se retiraron en el checkpoint UX/UI): un solo
   // marcador queda activo a la vez.
-  await expect(markers.nth(1)).toHaveAttribute("data-active", "true");
+  await expect(markers.nth(0)).toHaveAttribute("data-active", "true");
   await expect(
     page.locator(
       "section[aria-labelledby='guarantor-title'] button[data-active='true']",

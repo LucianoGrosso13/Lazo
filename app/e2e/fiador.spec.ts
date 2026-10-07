@@ -33,7 +33,7 @@ test("una invitación válida abre el alta sin wallet", async ({ page }) => {
   await expect(page.getByTestId("fiador-panel")).toHaveCount(0);
 });
 
-test("el alta llega a confirmar y queda bloqueada sin máximo definido", async ({
+test("el alta registra una fianza simulada con cobertura de capital e interés", async ({
   page,
 }) => {
   await page.goto("/app");
@@ -51,18 +51,18 @@ test("el alta llega a confirmar y queda bloqueada sin máximo definido", async (
   await continuar.click(); // documento → tarjeta de ejemplo
   await continuar.click(); // tarjeta → confirmar
 
-  // Q1 pendiente: sin fórmula del máximo no se registra una fianza con
-  // número inventado. El botón queda deshabilitado y el bloqueo declarado.
-  await expect(page.getByTestId("fiador-q1-bloqueado")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Aceptar y registrar" }),
-  ).toBeDisabled();
-  await expect(page.getByTestId("fiador-panel")).toHaveCount(0);
+  // La cobertura y el tope salen de la configuración del protocolo.
+  const registrar = page.getByRole("button", { name: /aceptar y registrar la fianza/i });
+  await expect(registrar).toBeEnabled();
+  await expect(page.getByText(/Cobertura sobre el capital pendiente|Coverage of outstanding balance/i)).toBeVisible();
+  await expect(page.getByText(/100%/).first()).toBeVisible();
+  await registrar.click();
+  await expect(page.getByTestId("fiador-panel")).toBeVisible();
 
-  // El mismo enlace recargado vuelve al alta (la invitación sigue activa).
+  // El enlace recupera el panel de la fianza ya registrada.
   await page.goto(href!);
-  await expect(page.getByTestId("fiador-alta")).toBeVisible();
-  await expect(page.getByTestId("fiador-panel")).toHaveCount(0);
+  await expect(page.getByTestId("fiador-panel")).toBeVisible();
+  await expect(page.getByTestId("fiador-alta")).toHaveCount(0);
   await expect(page.getByTestId("fiador-invalido")).toHaveCount(0);
 
   // Nada de evidencia onchain fabricada.

@@ -166,6 +166,12 @@ Spec `.scratch/web-completa/spec.md`, 15 tickets en `.scratch/web-completa/issue
 - Verificación: typecheck y lint sin errores, 258 tests Vitest y 42 e2e en verde (1 skip: modo real). Capturas 390/1440 de todas las rutas en `.scratch/web-completa/evidence/15-*`.
 - **Divergencia mock ↔ programa:** 6 cuotas, cobro diferido, cobertura 100% en todos los escalones y planes en paralelo existen solo en el mock. El programa sigue con 3 cuotas, cobro inmediato y el seed con cobertura 100/90/80/70. Detalle en `05-pitch.md` § Nota técnica. No se tocó el programa, no hubo deploy ni transacciones.
 
+### Cierre producto-final (2026-10-07) — ticket 15
+
+En curso en `pf/15-cierre` desde `t-producto-final` (`623b46a`). La web pública corre en el simulador; el upgrade del programa nuevo en devnet sigue pendiente de aprobación y el binario desplegado hoy es el anterior. El programa fuente implementa 3/6 cuotas, fiador obligatorio con cobertura de capital e interés, `PayoutSchedule` con `release_payout` y reserva de liquidez para tramos comprometidos. El mock incluye los mismos términos, el mostrador por QR/link y el reloj para liberar tramos aun cuando el estudiante entra en mora.
+
+La tanda cuenta con e2e para el checkout, fiador, cobro por tramos, home y mostrador, además de verificaciones de tipo, lint, tests y build. El E2E encontró un desborde horizontal en checkout a 390 px; la corrección está pendiente de autorización porque toca CSS fuera del ownership. Capturas y resultados ya confirmados quedan en `.scratch/producto-final/evidence/15-*`; el estado final se asentará al cerrar el ticket. No hubo deploy, firmas ni envíos de transacciones. El estado del código previo de Codama/keeper se documenta por separado porque el ticket 04 corre en paralelo.
+
 ## Cambios comerciales — tareas chicas posteriores a esta documentación
 
 Orden: cerrar C1 → C2 → C3 → C4 → C5 → C6. C7/C8 pueden avanzar con entrevistas y pruebas devnet en paralelo, sin prometer funcionalidades pendientes. Una rama por tarea; toda regla sale de la configuración y se congela en el plan al aceptarlo.
