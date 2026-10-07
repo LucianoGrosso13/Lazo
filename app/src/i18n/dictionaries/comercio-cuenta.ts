@@ -45,9 +45,9 @@ export const comercioCuenta = defineDict({
     comisionConfig: "{pct}% sobre lo financiado (config vigente)",
     alternativasTitle: "Frente a otras formas de vender en cuotas",
     alternativasNote:
-      "Cifras de terceros publicadas por el equipo como referencia (ene–abr 2026); no son cotizaciones vigentes ni una promesa.",
+      "Cifras de terceros publicadas por el equipo como referencia (oct 2026); no son cotizaciones vigentes ni una promesa.",
     refLazo: "Lazo · sobre lo financiado",
-    refCuotaSimple: "Financiación en mostrador (pymes)",
+    refCuotaSimple: "Cuotas MiPyME (pymes certificadas)",
     refMp: "Billeteras digitales",
     sobreElPrecio: "sobre el precio",
     referenciaTag: "referencia",
@@ -114,9 +114,9 @@ export const comercioCuenta = defineDict({
     comisionConfig: "{pct}% on the financed amount (current config)",
     alternativasTitle: "Against other ways of selling in installments",
     alternativasNote:
-      "Third-party figures published by the team as reference (Jan–Apr 2026); not live quotes or a promise.",
+      "Third-party figures published by the team as reference (Oct 2026); not live quotes or a promise.",
     refLazo: "Lazo · on the financed amount",
-    refCuotaSimple: "Store financing (SMBs)",
+    refCuotaSimple: "MiPyME Installments (certified SMBs)",
     refMp: "Digital wallets",
     sobreElPrecio: "on the price",
     referenciaTag: "reference",

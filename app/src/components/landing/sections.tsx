@@ -192,7 +192,7 @@ function Benefits() {
       ours: feePct,
       theirs: R.merchantFeePct.mercadoPago,
       max: R.merchantFeePct.mercadoPago,
-      vs: t.rows.merchant.vs(nf(R.merchantFeePct.cuotaSimple, 2), nf(R.merchantFeePct.mercadoPago, 2)),
+      vs: t.rows.merchant.vs(nf(R.merchantFeePct.cuotaMipyme, 2), nf(R.merchantFeePct.mercadoPago, 2)),
     },
     {
       who: t.rows.pool.who,

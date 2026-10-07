@@ -233,9 +233,9 @@ describe("quote", () => {
 describe("REFERENCE_FIGURES", () => {
   it("exporta las cifras de terceros con la nota de referencia", () => {
     expect(REFERENCE_FIGURES.note).toContain("referencia");
-    expect(REFERENCE_FIGURES.mercadoPagoCfteaPct.min).toBe(61);
-    expect(REFERENCE_FIGURES.mercadoPagoCfteaPct.max).toBe(388);
-    expect(REFERENCE_FIGURES.cuotaSimpleMerchantPct).toBeCloseTo(5.41);
+    expect(REFERENCE_FIGURES.mercadoPagoCfteaPct.min).toBe(76);
+    expect(REFERENCE_FIGURES.mercadoPagoCfteaPct.max).toBe(1376);
+    expect(REFERENCE_FIGURES.cuotaMipymeMerchantPct).toBeCloseTo(6.91);
     expect(REFERENCE_FIGURES.mercadoPagoMerchantPct).toBeCloseTo(12.49);
     expect(REFERENCE_FIGURES.gocuotasSettlementBusinessDays).toBe(22);
     expect(REFERENCE_FIGURES.lazoSeniorTargetYieldPct).toBe(8);

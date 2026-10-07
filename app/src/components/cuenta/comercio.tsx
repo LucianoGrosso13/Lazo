@@ -277,11 +277,11 @@ function Alternativas({ config, merchant }: { config?: ProtocolConfig; merchant?
           nombre={t.refCuotaSimple}
           detalle={
             <>
-              {fmtPct(REFERENCE_FIGURES.cuotaSimpleMerchantPct / 100, locale)}{" "}
+              {fmtPct(REFERENCE_FIGURES.cuotaMipymeMerchantPct / 100, locale)}{" "}
               <ReferenceTag>{t.referenciaTag}</ReferenceTag>
             </>
           }
-          valor01={REFERENCE_FIGURES.cuotaSimpleMerchantPct / 100}
+          valor01={REFERENCE_FIGURES.cuotaMipymeMerchantPct / 100}
           max01={max01}
           locale={locale}
         />
