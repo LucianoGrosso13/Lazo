@@ -119,7 +119,7 @@ Calendario (hora Argentina):
 
 ## Estado
 
-> Actualizado 2026-10-06 (rama `t-demo-devnet`). Detalle fino y bloqueos: `proyecto/handoff-demo-devnet.md` § "Estado real".
+> Estado vigente: cierre producto-final del 2026-10-07 (sección de abajo y `handoff-cierre-producto-final.md`). Antecedente del 2026-10-06 (rama `t-demo-devnet`); detalle y bloqueos de cadena: `proyecto/handoff-demo-devnet.md` § "Estado real".
 >
 > **Análisis de viabilidad para inversores/tribunales (6/10):** `proyecto/06-viabilidad/` — modelo financiero reproducible, investor paper EN, flujos de caja, memo legal y `04-cambios-rentabilidad.md` con las reglas de negocio a ajustar (esquema de precios, split de fee, cobertura por escalón, invariantes del pool).
 >
@@ -168,9 +168,13 @@ Spec `.scratch/web-completa/spec.md`, 15 tickets en `.scratch/web-completa/issue
 
 ### Cierre producto-final (2026-10-07) — ticket 15
 
-En curso en `pf/15-cierre` desde `t-producto-final` (`623b46a`). La web pública corre en el simulador; el upgrade del programa nuevo en devnet sigue pendiente de aprobación y el binario desplegado hoy es el anterior. El programa fuente implementa 3/6 cuotas, fiador obligatorio con cobertura de capital e interés, `PayoutSchedule` con `release_payout` y reserva de liquidez para tramos comprometidos. El mock incluye los mismos términos, el mostrador por QR/link y el reloj para liberar tramos aun cuando el estudiante entra en mora.
+Tanda completa integrada en `t-producto-final`, incluyendo los tickets 01–14, el trabajo recuperado del 15, el pitch aprobado y los cambios de Ignacio en `origin/main` (`006ccd3`: tiendas por comercio y cuentas). Se corrigieron los conflictos, el regreso del checkout de mostrador, el lockfile y el desborde del checkout a 390 px. El precio se verificó con 40 cambios rápidos en español e inglés.
 
-La tanda cuenta con e2e para el checkout, fiador, cobro por tramos, home y mostrador, además de verificaciones de tipo, lint, tests y build. El E2E encontró un desborde horizontal en checkout a 390 px; la corrección está pendiente de autorización porque toca CSS fuera del ownership. Capturas y resultados ya confirmados quedan en `.scratch/producto-final/evidence/15-*`; el estado final se asentará al cerrar el ticket. No hubo deploy, firmas ni envíos de transacciones. El estado del código previo de Codama/keeper se documenta por separado porque el ticket 04 corre en paralelo.
+Verificación final: typecheck, lint (0 errores; 7 warnings previos), build, 279 tests de app, 47 tests + 10 e2e del keeper, 36 tests host + 142 LiteSVM, fmt/clippy y Codama `generate:check`. Playwright contra el build de producción: **48 pasaron, 1 omitido** (modo real). Incluye 6 cuotas, mínimo, fiador obligatorio, venta en mostrador, tramos a 90 días aun con mora, home bilingüe y 16 rutas a 390 px. Capturas de checkout a 390/768/1440 en `.scratch/producto-final/evidence/15-checkout-final-*` (Chromium, viewports emulados).
+
+La web pública usa el simulador; la cadena se limita a devnet (red de prueba, fondos sin valor). El programa fuente implementa 3/6 cuotas, fiador obligatorio con cobertura de capital e interés, `PayoutSchedule`, `release_payout` y reserva de liquidez. El cliente Codama y el keeper están integrados; el keeper sigue en dry-run. **El upgrade del programa e inicialización de la config en devnet siguen pendientes de aprobación explícita**: el binario desplegado es el anterior. No hubo firmas ni envíos de transacciones.
+
+Destino de publicación autorizado: `main` en GitHub y el proyecto existente `lazo-cuotas` de Vercel, https://lazo-cuotas.vercel.app. Detalle para retomar: `handoff-cierre-producto-final.md`.
 
 ## Cambios comerciales — tareas chicas posteriores a esta documentación
 
