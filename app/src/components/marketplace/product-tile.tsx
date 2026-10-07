@@ -24,7 +24,7 @@ const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
 /**
  * Producto de un comercio del directorio: foto (o tile con gradiente +
  * inicial si falta), precio y el partido en cuotas que acepta el comercio
- * (3 sin interés / 6 con interés provisional, desde la config). El CTA va
+ * (opciones desde la config). El CTA va
  * al checkout de ese producto.
  */
 export function ProductTile({
@@ -38,6 +38,7 @@ export function ProductTile({
 }) {
   const t = useT(marketplace);
   const { locale } = useLocale();
+  const pct = (bps: number) => `${new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: 2 }).format(bps / 100)}%`;
   const [imgFailed, setImgFailed] = useState(false);
   const previews = planPreviews(config, p.price);
   const first = defaultPlanOption(config);
@@ -96,13 +97,12 @@ export function ProductTile({
           {previews.map(({ option, preview }) => (
             <li key={option.installments} className={styles.planLine}>
               <span className={styles.per}>
-                {t.planOptionLine(
-                  preview.installments,
-                  formatUsdc(preview.perInstallment, locale),
-                )}
+                {p.price < option.minPrice
+                  ? t.planMinimum(preview.installments, formatUsdc(option.minPrice, locale, 0))
+                  : t.planOptionLine(preview.installments, formatUsdc(preview.perInstallment, locale))}
               </span>
               <span className="ref-tag">
-                {preview.interest === 0 ? t.zeroInterest : t.provisionalTag}
+                {p.price < option.minPrice ? "" : preview.interest === 0 ? t.zeroInterest : pct(preview.interestTotalBps)}
               </span>
             </li>
           ))}

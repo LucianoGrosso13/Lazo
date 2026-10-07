@@ -210,7 +210,6 @@ export function MarketplacePage() {
       )}
 
       <p className={styles.notice}>
-        <span className="ref-tag">{t.demoTag}</span>
         {t.notice}
       </p>
       <p className={styles.foot}>{t.foot}</p>

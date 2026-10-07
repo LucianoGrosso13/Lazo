@@ -8,6 +8,7 @@ import { ExplorerLink, ReferenceTag } from "@/components/ui/badges";
 import { Chip } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
 import { garanteCuenta } from "@/i18n/dictionaries/fiador-cuenta";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import { fmtPct } from "../consulta";
 import {
@@ -97,7 +98,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
   const chargeDay = configQ.data?.guarantorChargeDay;
 
   // Alcance de la fianza sobre el capital pendiente: mismo porcentaje en
-  // todos los escalones si la config no los distingue; si no, el del escalón
+  // todos los Tiers si la config no los distingue; si no, el del Tier
   // cotizado. `null` mientras falten datos (no se inventa un número).
   const tierCoverage = configQ.data
     ? [...new Set(configQ.data.guaranteedTiers.map((x) => x.guarantorCoverageBps))]
@@ -175,7 +176,7 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {reputationQ.data && (
               <Chip on>
-                {t.panel.studentTier} {reputationQ.data.tier}
+                {tierLabel(reputationQ.data.tier)}
               </Chip>
             )}
             {reputationQ.data?.blockedFromNewPlans && (

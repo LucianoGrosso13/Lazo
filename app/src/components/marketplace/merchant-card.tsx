@@ -7,7 +7,7 @@ import styles from "./marketplace.module.css";
 
 /**
  * Tarjeta de comercio del marketplace: monograma con el gradiente de su
- * categoría, nombre, rubro y ciudad, etiqueta "demo" y cantidad de
+ * categoría, nombre, rubro y ciudad, y cantidad de
  * productos. Toda la tarjeta es el enlace al perfil.
  */
 export function MerchantCard({ merchant: m }: { merchant: DemoMerchant }) {
@@ -27,9 +27,8 @@ export function MerchantCard({ merchant: m }: { merchant: DemoMerchant }) {
       <span className={styles.cardBody}>
         <span className={styles.cardHead}>
           <span className={styles.cardName}>{m.name}</span>
-          <span className={styles.demoTag}>{t.demoTag}</span>
           {m.featured ? (
-            <span className={`${styles.demoTag} ${styles.featuredMark}`}>
+            <span className={`${styles.merchantMark} ${styles.featuredMark}`}>
               {t.featuredTag}
             </span>
           ) : null}

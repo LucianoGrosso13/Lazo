@@ -1,8 +1,7 @@
 "use client";
 
-// /comercio/[direccion] para un comercio del directorio demo: encabezado
-// con monograma, rubro, ciudad y etiqueta "demo"; opciones aceptadas desde
-// la config (3 sin interés / 6 provisional) y el plazo de cobro que el
+// /comercio/[direccion] para un comercio del directorio de ejemplo: encabezado
+// con monograma, rubro y ciudad; opciones aceptadas desde la config y el plazo que el
 // comercio eligió en el mock si existe; productos con el precio partido
 // y CTA al checkout. Direcciones fuera del directorio las atiende
 // `ComercioPublico` (la página decide, este componente no).
@@ -17,6 +16,7 @@ import { getCategory } from "@/lib/merchants";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { MerchantMonogram } from "./monogram";
 import { ProductTile } from "./product-tile";
+import { formatBps } from "@/components/store/plan-alt";
 import styles from "./marketplace.module.css";
 
 export function MerchantProfile({ merchant: m }: { merchant: DemoMerchant }) {
@@ -49,7 +49,6 @@ export function MerchantProfile({ merchant: m }: { merchant: DemoMerchant }) {
           <div className={styles.profileChips}>
             {category ? <Chip>{category.label[locale]}</Chip> : null}
             <Chip>{m.city}</Chip>
-            <Chip on>{t.demoTag}</Chip>
             {m.featured ? <Chip>{t.featuredTag}</Chip> : null}
           </div>
           <p className={styles.profileDesc}>{m.description[locale]}</p>
@@ -63,13 +62,11 @@ export function MerchantProfile({ merchant: m }: { merchant: DemoMerchant }) {
         <GlassPanel className={styles.accepted}>
           <span className={styles.acceptedKey}>{t.acceptedPlans}</span>
           {planOptionsOf(cfg).filter((o) => o.enabled).map((o) => (
-            <Chip key={o.installments} on={!o.provisional}>
+            <Chip key={o.installments} on>
               {t.planChip(o.installments)}
               {o.interestTotalBps === 0
                 ? ` · ${t.zeroInterest}`
-                : o.provisional
-                  ? ` · ${t.provisionalTag}`
-                  : ""}
+                : ` · ${formatBps(o.interestTotalBps, locale)} ${t.totalInterest}`}
             </Chip>
           ))}
           {settlement ? (
@@ -110,10 +107,6 @@ export function MerchantProfile({ merchant: m }: { merchant: DemoMerchant }) {
         <p className={styles.tierNote}>{t.tierNote}</p>
       </section>
 
-      <p className={styles.notice}>
-        <span className="ref-tag">{t.demoTag}</span>
-        {t.notice}
-      </p>
     </div>
   );
 }

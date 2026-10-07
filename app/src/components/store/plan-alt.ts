@@ -23,9 +23,9 @@ export function altPlanOption(config: ProtocolConfig): PlanOption | undefined {
 }
 
 /**
- * Cuotas de una opción para el escalón cotizado sin wallet (tier 0 con
+ * Cuotas de una opción para el Tier cotizado sin wallet (Tier 1 con
  * fiador). `quoteTerms` de `lib/cuotas/terms.ts`: la misma cuenta que
- * `computeQuote` del mock — anticipo del escalón, interés total de la
+ * `computeQuote` del mock — anticipo del Tier, interés total de la
  * opción sobre lo financiado y la última cuota absorbiendo el redondeo.
  */
 export function installmentsForOption(

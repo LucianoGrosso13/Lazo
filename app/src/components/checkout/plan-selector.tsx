@@ -9,14 +9,12 @@ import {
 } from "@/lib/cuotas";
 import { checkout } from "@/i18n/dictionaries/checkout";
 import { useLocale, useT } from "@/i18n/locale";
-import { Chip } from "@/components/ui/chip";
 import { pctOfBps } from "./format";
 import styles from "./checkout.module.css";
 
 /**
  * Selector de plan (radiogroup): cada opción muestra su interés total, el
- * monto de cada cuota según la cotización y la etiqueta "provisional" cuando
- * la opción lo declara. Una opción no elegible queda bloqueada con el motivo.
+ * monto de cada cuota según la cotización. Una opción no elegible queda bloqueada con el motivo.
  * Con una sola opción (modo real, sin `planOptions`) no se muestra: el
  * checkout queda como siempre, a 3 cuotas.
  */
@@ -47,7 +45,17 @@ export function PlanSelector({
         {options.map((o) => {
           const q = quotes?.find((x) => x.installmentsCount === o.installments);
           const unavailable =
-            !o.enabled || (q?.reasons.includes("option_unavailable") ?? false);
+            !o.enabled ||
+            (q?.reasons.some((reason) =>
+              ["option_unavailable", "below_option_min", "guarantor_required", "pool_liquidity"].includes(reason),
+            ) ?? false);
+          const unavailableText = q?.reasons.includes("below_option_min")
+            ? t.belowMin(o.installments, fmt(o.minPrice))
+            : q?.reasons.includes("guarantor_required")
+              ? t.guarantorRequired
+              : q?.reasons.includes("pool_liquidity")
+                ? t.noCapacity
+                : unavailable ? t.unavailable : null;
           const selected = o.installments === value;
           return (
             <button
@@ -56,6 +64,7 @@ export function PlanSelector({
               role="radio"
               aria-checked={selected}
               aria-disabled={unavailable || undefined}
+              disabled={unavailable}
               className={styles.planOpt}
               onClick={() => {
                 if (!unavailable) onChange(o.installments);
@@ -66,11 +75,10 @@ export function PlanSelector({
                 <span className={styles.planOptName}>
                   {t.option(o.installments)}
                 </span>
-                {o.provisional ? <Chip>{t.provisional}</Chip> : null}
               </span>
               <span className={styles.planOptSub}>
                 {unavailable ? (
-                  t.unavailable
+                  unavailableText
                 ) : (
                   <>
                     {o.interestTotalBps > 0

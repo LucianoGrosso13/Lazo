@@ -1,7 +1,7 @@
 import type { Micro, TierParams } from "@/lib/cuotas";
 
 /**
- * Reparto de la demo de /design: anticipo por escalón + cuotas parejas.
+ * Reparto de la vista /design: anticipo por Tier + cuotas parejas.
  * La última cuota absorbe el redondeo (regla del protocolo). Los montos se
  * derivan de `getConfig()` — nada de negocio hardcodeado.
  */

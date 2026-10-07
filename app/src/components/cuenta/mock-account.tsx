@@ -14,6 +14,7 @@ import { Chip } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
 import { StateMark, installmentMark } from "@/components/ui/state-mark";
 import { account } from "@/i18n/dictionaries/account";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import {
   DEMO_MERCHANT,
@@ -80,7 +81,7 @@ export function DetalleCuenta({ title, children }: { title: string; children: Re
 
 /**
  * Resumen de un vistazo para el comprador: saldo, deuda pendiente y próxima
- * cuota, más el escalón. Hace sus propias consultas (SWR las comparte).
+ * cuota, más el Tier. Hace sus propias consultas (SWR las comparte).
  */
 export function ResumenCuenta({ student }: { student: string }) {
   const t = useT(account);
@@ -102,7 +103,7 @@ export function ResumenCuenta({ student }: { student: string }) {
         <p className="text-xs uppercase tracking-wide text-ink-2">{t.summaryTitle}</p>
         {reputation && (
           <Chip on>
-            {t.tier} {reputation.tier}
+            {tierLabel(reputation.tier)}
           </Chip>
         )}
         {reputation?.blockedFromNewPlans && <Chip>{t.blocked}</Chip>}
@@ -223,7 +224,6 @@ export function PlanCard({ plan }: { plan: Plan }) {
   const interestBps =
     terms?.interestTotalBps ??
     (plan.financed > 0 ? Math.round((interestTotal * 10_000) / plan.financed) : 0);
-  const provisional = terms?.provisional ?? false;
   return (
     <GlassPanel className="p-6" data-testid="account-plan">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -239,7 +239,6 @@ export function PlanCard({ plan }: { plan: Plan }) {
             ? t.planInterestMeta(fmtPct(interestBps / 10_000, locale))
             : t.planInterestFree}
         </span>
-        {provisional && <Chip>{t.planProvisional}</Chip>}
       </p>
       <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Monto label={t.price} value={plan.price} />

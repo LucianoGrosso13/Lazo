@@ -5,6 +5,7 @@ import { toMicro, formatUsdc, DEMO_MERCHANT, type TierIndex } from "@/lib/cuotas
 import { productsByMerchant } from "@/lib/catalog";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { design } from "@/i18n/dictionaries/design";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
 import { StateMark, type MarkState } from "@/components/ui/state-mark";
@@ -55,6 +56,10 @@ export function DesignPage() {
   const split = config
     ? demoSplit(price, config.guaranteedTiers[tier], config.installmentsCount)
     : null;
+  const tierOptions = config?.guaranteedTiers.map((tierParams, i) => ({
+    value: String(i),
+    label: `${tierLabel(i)} · ${new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: 2 }).format(tierParams.downPaymentBps / 100)}%`,
+  })) ?? [];
 
   const prismBands = useMemo(
     () =>
@@ -221,12 +226,7 @@ export function DesignPage() {
             label={t.prism.tier}
             value={String(tier)}
             onChange={(v) => setTier(Number(v) as TierIndex)}
-            options={[
-              { value: "0", label: "0 · 30%" },
-              { value: "1", label: "1 · 20%" },
-              { value: "2", label: "2 · 10%" },
-              { value: "3", label: "3 · 0%" },
-            ]}
+            options={tierOptions}
           />
         </div>
       </Section>
@@ -291,12 +291,7 @@ export function DesignPage() {
                 label={t.prism.tier}
                 value={String(tier)}
                 onChange={(v) => setTier(Number(v) as TierIndex)}
-                options={[
-                  { value: "0", label: "0 · 30%" },
-                  { value: "1", label: "1 · 20%" },
-                  { value: "2", label: "2 · 10%" },
-                  { value: "3", label: "3 · 0%" },
-                ]}
+                options={tierOptions}
               />
               <SegmentedControl
                 label={t.prism.state}

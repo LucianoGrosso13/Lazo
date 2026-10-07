@@ -20,22 +20,22 @@ import styles from "./store.module.css";
 // Mismo espectro del hero: anticipo → cuota 1 → cuota 2 → cuota 3.
 const SPECTRUM = ["#9945FF", "#6C63FF", "#00C2FF", "#19FB9B"] as const;
 
-/** Lo que la card muestra: sale de `quote()` (con wallet) o del escalón 0. */
+/** Lo que la card muestra: sale de `quote()` (con wallet) o del Tier inicial. */
 export interface ProductTerms {
   tier: TierIndex;
   downPayment: Micro;
   installments: Micro[];
-  /** Primer motivo de bloqueo de `quote()` (o tope del escalón sin wallet). */
+  /** Primer motivo de bloqueo de `quote()` (o tope del Tier sin wallet). */
   blocked: QuoteBlockReason | null;
   /**
    * Segunda opción de la config (hoy: 6 cuotas con interés), cotizada con
-   * `quote(..., { installments })` o estimada en el escalón 0 sin wallet.
+   * `quote(..., { installments })` o estimada en el Tier inicial sin wallet.
    * null cuando la config no la ofrece o está deshabilitada.
    */
   alt: {
     installments: Micro[];
     interestTotalBps: Bps;
-    provisional: boolean;
+    minPrice: Micro;
   } | null;
 }
 
@@ -59,11 +59,12 @@ export function ProductCard({
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
   const bands = [terms.downPayment, ...terms.installments];
   const altText = terms.alt
-    ? t.altOption(
+    ? p.price < terms.alt.minPrice
+      ? t.altMinimum(terms.alt.installments.length, fmt(terms.alt.minPrice, 0))
+      : t.altOption(
         terms.alt.installments.length,
         fmt(terms.alt.installments[0]),
         formatBps(terms.alt.interestTotalBps, locale),
-        terms.alt.provisional,
       )
     : null;
 

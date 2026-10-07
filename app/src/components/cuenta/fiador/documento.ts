@@ -10,9 +10,7 @@ export interface MandatoDemo {
   /** Tope de compras respaldadas (micro-USDC). */
   maxPurchase: Micro;
   /**
-   * Máximo total de la fianza (micro-USDC). `null` mientras la fórmula del
-   * máximo (Q1) esté pendiente: el documento lo declara, jamás inventa un
-   * número provisional.
+   * Máximo total de la fianza (micro-USDC), igual al tope aceptado por compra.
    */
   coverageMax: Micro | null;
   /**
@@ -53,12 +51,11 @@ export function textoMandato(m: MandatoDemo): string {
       "TERMS",
       `1. The guarantor backs purchases of up to ${usd(m.maxPurchase)} each.`,
       pct != null
-        ? `2. The guarantee covers ${pct}% of the outstanding principal of each backed purchase.`
-        : "2. The guarantee's coverage of the outstanding principal is PENDING DEFINITION.",
-      "   Plan interest (when the plan has any) and late fees are outside that coverage: their treatment is PENDING DEFINITION.",
+        ? `2. The guarantee covers ${pct}% of the remaining plan balance (outstanding principal + contractual interest); late fees are excluded.`
+        : "2. The guarantee covers 100% of the remaining plan balance: outstanding principal plus contractual interest. Late fees are excluded.",
       m.coverageMax != null
         ? `3. The maximum the guarantor can be charged in total per purchase is ${usd(m.coverageMax)}.`
-        : "3. The guarantor's total maximum is PENDING DEFINITION (the maximum formula is not defined yet).",
+        : `3. The total maximum the guarantor accepts is ${usd(m.coverageMax ?? m.maxPurchase)} per purchase.`,
       "4. The guarantor is only charged if the student misses an installment after the notice and grace period configured in the protocol.",
       "",
       "DISCLAIMER",
@@ -72,19 +69,18 @@ export function textoMandato(m: MandatoDemo): string {
     "",
     `Emitida: ${fecha}`,
     `Estudiante (dirección Solana): ${m.student}`,
-    `Garante: ${m.guarantorName}`,
+      `Fiador: ${m.guarantorName}`,
     "Medio de cargo: tarjeta de crédito registrada en el procesador (sandbox, simulada).",
     "",
     "CONDICIONES",
-    `1. El garante respalda compras de hasta ${usd(m.maxPurchase)} cada una.`,
+    `1. El fiador respalda compras de hasta ${usd(m.maxPurchase)} cada una.`,
     pct != null
-      ? `2. La fianza cubre el ${pct}% del capital pendiente de cada compra respaldada.`
-      : "2. La cobertura de la fianza sobre el capital pendiente está PENDIENTE DE DEFINICIÓN.",
-    "   El interés del plan (cuando el plan lo tiene) y los punitorios por mora quedan fuera de esa cobertura: su tratamiento está PENDIENTE DE DEFINICIÓN.",
+      ? `2. La fianza cubre el ${pct}% de lo que falta pagar del plan (capital + interés contractual); el punitorio por mora queda afuera.`
+      : "2. La fianza cubre el 100% de lo que falta pagar del plan: capital pendiente más interés contractual. El punitorio por mora queda afuera.",
     m.coverageMax != null
-      ? `3. Lo máximo que el garante puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
-      : "3. Lo máximo que el garante puede llegar a pagar está PENDIENTE DE DEFINICIÓN (la fórmula del máximo aún no está definida).",
-    "4. El garante solo paga si el estudiante no paga una cuota después del aviso y la gracia configurados en el protocolo.",
+      ? `3. Lo máximo que el fiador puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
+        : `3. El máximo total que el fiador acepta es ${usd(m.coverageMax ?? m.maxPurchase)} por compra.`,
+    "4. El fiador solo paga si el estudiante no paga una cuota después del aviso y la gracia configurados en el protocolo.",
     "",
     "ALCANCE",
     "Documento de demostración de la demo devnet de Lazo. No es una firma",
