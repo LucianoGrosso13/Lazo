@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="820" height="460" fill="#ffffff" rx="12"/>
+<text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">Senior: cobra seguro. Junior: gana más, pero pierde primero</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Rendimiento anual de cada tramo del pool según cómo salga el año</text>
+<line x1="78" x2="796" y1="356.6" y2="356.6" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="360.6" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">-100%</text>
+<line x1="78" x2="796" y1="299.8" y2="299.8" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="303.8" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">-50%</text>
+<line x1="78" x2="796" y1="243.0" y2="243.0" stroke="#1d1b2e" stroke-width="1.2"/>
+<text x="70.0" y="247.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">0%</text>
+<line x1="78" x2="796" y1="186.2" y2="186.2" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="190.2" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">50%</text>
+<line x1="78" x2="796" y1="129.4" y2="129.4" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="133.4" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">100%</text>
+<text x="167.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año bueno</text>
+<text x="167.8" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 20%</text>
+<rect x="111.3" y="233.9" width="55.4" height="9.1" rx="3" fill="#0284c7"/>
+<text x="139.0" y="227.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="168.8" y="138.5" width="55.4" height="104.5" rx="3" fill="#0f9d6b"/>
+<text x="196.5" y="132.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">92%</text>
+<text x="347.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año normal</text>
+<text x="347.2" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 30%</text>
+<rect x="290.8" y="233.9" width="55.4" height="9.1" rx="3" fill="#0284c7"/>
+<text x="318.5" y="227.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="348.2" y="176.1" width="55.4" height="66.9" rx="3" fill="#0f9d6b"/>
+<text x="376.0" y="170.1" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">59%</text>
+<text x="526.8" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año malo</text>
+<text x="526.8" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 40%, recupero 65%</text>
+<rect x="470.3" y="233.9" width="55.4" height="9.1" rx="3" fill="#0284c7"/>
+<text x="498.0" y="227.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="527.8" y="243.0" width="55.4" height="62.7" rx="3" fill="#0f9d6b"/>
+<text x="555.5" y="319.7" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-55%</text>
+<text x="706.2" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año muy malo</text>
+<text x="706.2" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 50%, recupero 50%</text>
+<rect x="649.8" y="243.0" width="55.4" height="21.6" rx="3" fill="#0284c7"/>
+<text x="677.5" y="278.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-19%</text>
+<rect x="707.2" y="243.0" width="55.4" height="113.6" rx="3" fill="#0f9d6b"/>
+<text x="735.0" y="370.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-100%</text>
+<rect x="24" y="86" width="14" height="14" rx="3" fill="#0284c7"/>
+<text x="44.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Senior (tramo protegido)</text>
+<rect x="216.39999999999998" y="86" width="14" height="14" rx="3" fill="#0f9d6b"/>
+<text x="236.4" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">Junior (tramo de primera pérdida)</text>
+<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Senior = 80% del pool, 8% fijo, cobra primero (como un préstamo). Junior = 20%, se queda con lo que sobra (como un socio).</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Si el junior ganara menos que el senior, nadie lo pondría, y sin junior no hay protección para el senior. No es un pronóstico.</text>
+</svg>

@@ -155,7 +155,7 @@ Orden: cerrar C1 → C2 → C3 → C4 → C5 → C6. C7/C8 pueden avanzar con en
 
 | ID | Responsable propuesto | Entregable | Listo cuando |
 |---|---|---|---|
-| C1 | Luciano + compañero | Definición de H/ideas 1,2,10,11, vencimiento de 1 cuota, tasa 6, tarifas/plazos, split y techo de fianza | Decisiones explícitas en 06; no inventar tasas ni correspondencias |
+| C1 | Luciano + compañero | H/ideas identificadas en 09; cerrar vencimiento de 1 cuota, tasa 6, base del 7%, tarifas/plazos, devengo D8 y techo de fianza | Fuente recuperada; solo las reglas abiertas requieren decisión explícita en 06/09 |
 | C2 | Compañero con revisión de Luciano | Contrato de configuración por modalidad/plazo, cobertura 100%, calendario y migración versionada | Caso base 3/7% sigue igual; 1/6 y liquidación diferida representables; términos de planes previos no cambian |
 | C3 | Compañero | Programa: cotización/apertura por opción, contabilidad de adelantos y obligaciones diferidas, interés y redondeos | Tests negativos de términos inválidos, límites de fianza y exposición; sumas exactas y devolución sin doble cobro |
 | C4 | Luciano | Cliente Codama y API única cuotas; mock y real con opciones iguales | Config/quote/openPlan reflejan mismos términos; divergencias de planes paralelos documentadas |
@@ -166,7 +166,7 @@ Orden: cerrar C1 → C2 → C3 → C4 → C5 → C6. C7/C8 pueden avanzar con en
 
 ### Estado de esta tanda documental (2026-10-07)
 
-- Decisiones 1/3/6, liquidación por elección y cobertura 100% registradas; tasas y H/ideas numeradas pendientes.
+- Decisiones 1/3/6, liquidación por elección y cobertura 100% registradas. Tras recuperar GitHub: H e ideas numeradas identificadas; tasas/base del 7% y detalles contractuales abiertos. Alcance de implementación en 09, sin código nuevo.
 - Nuevos documentos de GTM/alianzas y minorista investigados con workers Orca GPT-6.1 Sol medium; no constituyen alianzas ni tracción.
 - Pitch separado en 2 minutos + demo de hasta 3, checklist oficial y consejos de From the chapter en 05.
 - No se modificó código financiero, no se hizo deploy, no se firmaron ni enviaron transacciones. El recorrido real sigue pendiente de los bloqueos en `handoff-demo-devnet.md`.
@@ -179,5 +179,14 @@ Run Orca `run_23d3db9ced4a`. Workers efectivos: GPT-6.1 Sol / medium, en este ch
 |---|---|---|---|
 | `task_4cb4e47ceb5d` / `ctx_37038c1767c0` | Alianzas/GTM documentados | `07-go-to-market-y-alianzas.md`, fuentes oficiales, límites de APIs y plan sin contacto externo | `worker-release`: released |
 | `task_08e3bfe4b1cd` / `ctx_3d39b1d8ce22` | Minorista y sensibilidad documentados | `08-minorista-y-economia.md`; coordinador reprodujo las cinco filas de ticket/plazo y sus días de capital | `worker-release`: released |
+| `task_afba958e4419` / `ctx_cb9857ac8cfb` | Idea 10 investigada; simulador recomendado | `research/g-capital-ocioso-devnet.md`; fuentes oficiales no prueban mercado devnet compatible con el mint propio | `worker-release`: released |
 
 Revisión: links locales Markdown sin destinos faltantes; `git diff --check` sin errores. Son controles documentales y aritméticos, no pruebas nuevas de la app o del programa. No quedan workers de este Run pendientes de limpieza.
+
+### Integración del plan de negocio de GitHub (2026-10-07)
+
+Recuperados 30 archivos originales de `06-viabilidad/` y `07-plan-de-negocio/` desde main `a0b804d7c2a71a64229325588f23c456e1a82784`, byte por byte; el plan coincide con Downloads. Sus modelos/gráficos quedan como escenarios históricos. No se mergeó código remoto ni se alteraron los cambios de app preexistentes.
+
+`09-alcance-opcion-h-y-mejoras.md` identifica H y las ideas 1/2/10/11, describe pantallas, flujos, límites, dependencias y aceptación. Se recupera D8 (4% originación + 2% anual administración), sin adoptar interés a 3 cuotas, cobertura decreciente ni tasas/proyecciones históricas. Prioridad propuesta: C1–C6 para 1/2; recorrido minorista y validación; descuentos al fiador; tesorería propia simulada como módulo aislado.
+
+Verificación adicional: originales idénticos al commit fuente, links locales resueltos y ejemplo contable D8 reproducido con precisión decimal (salida pool 679; administración ilustrativa 2,333333). Los documentos editados pasan el control de whitespace; dos originales recuperados (`plan-de-negocio.md` y `salida-modelo-v2.md`) conservan una línea vacía adicional al final para mantener su identidad byte por byte. No se ejecutaron modelos históricos, pruebas de runtime ni transacciones. La base definitiva del 7% permanece abierta porque fuente y demo difieren; consulta registrada al equipo.

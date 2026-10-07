@@ -23,6 +23,8 @@ Consultadas el 7/10/2026:
 
 **Lo que debe resultar cierto:** comercios aceptan pagar por esta conversión/financiación; compradores y fiadores completan el alta; recupero efectivo y costos dejan margen; una billetera acepta distribuirlo. Son hipótesis. Investigación y experimentos: `07-go-to-market-y-alianzas.md` y `08-minorista-y-economia.md`.
 
+**Roadmap comercial recuperado:** H se adapta al pedido actual; las ideas elegidas son seis cuotas, fecha de liquidación, descuentos para el fiador al día y tesorería propia ociosa. Detalle en `09-alcance-opcion-h-y-mejoras.md`. Presentar las dos últimas como roadmap; no atribuirles menor mora o rentabilidad lograda. Las tasas/TIR del pitch histórico de `07-plan-de-negocio/` no aplican automáticamente a esta política. D8 registra originación 4% + administración 2% anual como reparto, no como margen neto.
+
 ## Video de pitch — 2:00
 
 Reservar pausas; aproximadamente 230 palabras. Equipo y problema en cámara, producto en pantalla. No abrir con animación de logo.

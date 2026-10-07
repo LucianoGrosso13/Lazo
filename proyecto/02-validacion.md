@@ -319,15 +319,15 @@ Hallazgos que desafían decisiones tomadas acá (detalle y números en `06-viabi
 | Tema | Decisión del equipo | Lo que falta validar |
 |---|---|---|
 | Plazos al comprador | 1 y 3 cuotas sin interés; 6 con interés moderado | Qué significa 1 cuota; tasa total de 6 y costo efectivo |
-| Comercio | Comisión según cuándo elige cobrar; mantiene el costo comercial en 6 cuotas | Tarifas y fechas por modalidad, reparto empresa/pool y mora si cobra diferido |
+| Comercio | Comisión según cuándo elige cobrar; mantiene el costo comercial en 6 cuotas | Tarifas/fechas, base del 7%, devengo del reparto D8 y mora si cobra diferido |
 | Referencia de 7% | Sobre financiado en el flujo inmediato base de 3 cuotas | No se generaliza a todos los plazos sin cotizar |
 | Fiador | Cobertura 100% en todos los escalones; mejora anticipo/límite con reputación | Techo contractual con interés/punitorios y recupero efectivo; obligación no es cobro garantizado |
 | Distribución | Investigar alianza con billetera/exchange; comenzar en una cuña y ampliar | Interés comercial, API, costos y responsabilidades; cero alianzas confirmadas |
 | Minorista | Diseñar compras pequeñas fáciles y medir margen por operación | Ticket mínimo, reutilización del alta y categoría de entrada |
-| H e ideas 1/2/10/11 | Elecciones registradas | Contenido exacto ausente en este checkout; aclaración solicitada, sin inventar correspondencias |
+| H e ideas 1/2/10/11 | H adaptada; 1 seis cuotas, 2 fecha de cobro, 10 tesorería propia, 11 descuentos al fiador | Fuente recuperada de GitHub §3/10; alcance y condiciones en 09, tasas históricas no aprobadas |
 
 Estas decisiones reemplazan Q9/Q11 en cobertura decreciente, la promesa de que el fiador arriesga menos al bajar el anticipo de Q14 y la generalización de Q15 a todos los planes. A igual precio, bajar el anticipo **aumenta el capital garantizado**. Las propuestas del addendum de viabilidad (interés a 3 cuotas, cobertura 85–90%, split 5/2) no fueron aprobadas y no son política vigente.
 
-El directorio `06-viabilidad/` y su modelo citado arriba no están presentes en este checkout al revisar el 7/10. Se conservan las notas como antecedentes, pero sus cifras no se usan como evidencia nueva ni prueba de rentabilidad.
+Al iniciar la revisión del 7/10 faltaban `06-viabilidad/` y `07-plan-de-negocio/`; luego se recuperaron de GitHub main `a0b804d`, sin modificar sus originales. Son antecedentes, no evidencia nueva ni prueba de rentabilidad. El §14, D8, registra la decisión del 6/10 de originación 4% + administración 2% anual; se conserva con la nueva política. Fuente, conflictos y recorte en `09-alcance-opcion-h-y-mejoras.md`.
 
 Definiciones, fórmulas, pendientes y ejemplo base: `06-decisiones-comerciales.md`. Alianzas y experimentos: `07-go-to-market-y-alianzas.md`. Minorista y cuenta económica: `08-minorista-y-economia.md`. La evidencia propia sigue siendo el test de mesa registrado; no hay ventas, volumen comercial ni acuerdos nuevos documentados.

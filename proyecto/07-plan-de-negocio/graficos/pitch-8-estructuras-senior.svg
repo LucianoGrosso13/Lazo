@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="820" height="460" fill="#ffffff" rx="12"/>
+<text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">Que el senior también gane en los años buenos</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Rendimiento anual según cómo se reparte el pool (A: senior fijo · B: senior con participación · C: un solo tramo)</text>
+<line x1="78" x2="796" y1="338.6" y2="338.6" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="342.6" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">-50%</text>
+<line x1="78" x2="796" y1="265.1" y2="265.1" stroke="#1d1b2e" stroke-width="1.2"/>
+<text x="70.0" y="269.1" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">0%</text>
+<line x1="78" x2="796" y1="191.5" y2="191.5" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="195.5" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">50%</text>
+<line x1="78" x2="796" y1="118.0" y2="118.0" stroke="#e6e4ef" stroke-width="1"/>
+<text x="70.0" y="122.0" font-size="11" fill="#6b6880" text-anchor="end" font-weight="normal">100%</text>
+<text x="197.7" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año bueno</text>
+<text x="197.7" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 20%</text>
+<rect x="122.1" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
+<text x="140.2" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="160.4" y="248.4" width="36.3" height="16.7" rx="3" fill="#0284c7"/>
+<text x="178.5" y="242.4" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">11%</text>
+<rect x="198.7" y="149.5" width="36.3" height="115.5" rx="3" fill="#0f9d6b"/>
+<text x="216.8" y="143.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">79%</text>
+<rect x="237.0" y="228.6" width="36.3" height="36.5" rx="3" fill="#9ca3af"/>
+<text x="255.1" y="222.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">25%</text>
+<text x="437.0" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año normal</text>
+<text x="437.0" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 30%</text>
+<rect x="361.4" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
+<text x="379.6" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="399.7" y="250.3" width="36.3" height="14.8" rx="3" fill="#0284c7"/>
+<text x="417.9" y="244.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">10%</text>
+<rect x="438.0" y="190.5" width="36.3" height="74.6" rx="3" fill="#0f9d6b"/>
+<text x="456.1" y="184.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">51%</text>
+<rect x="476.3" y="238.3" width="36.3" height="26.7" rx="3" fill="#9ca3af"/>
+<text x="494.4" y="232.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">18%</text>
+<text x="676.3" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año malo</text>
+<text x="676.3" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 40%, recupero 65%</text>
+<rect x="600.7" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
+<text x="618.9" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="639.0" y="253.3" width="36.3" height="11.8" rx="3" fill="#0284c7"/>
+<text x="657.2" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="677.3" y="265.1" width="36.3" height="81.1" rx="3" fill="#0f9d6b"/>
+<text x="695.5" y="360.2" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-55%</text>
+<rect x="715.6" y="265.1" width="36.3" height="6.8" rx="3" fill="#9ca3af"/>
+<text x="733.8" y="285.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-5%</text>
+<rect x="24" y="86" width="14" height="14" rx="3" fill="#93c5fd"/>
+<text x="44.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">A. Senior fijo</text>
+<rect x="150.39999999999998" y="86" width="14" height="14" rx="3" fill="#0284c7"/>
+<text x="170.4" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">B. Senior con participación</text>
+<rect x="362.59999999999997" y="86" width="14" height="14" rx="3" fill="#0f9d6b"/>
+<text x="382.6" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">B. Junior</text>
+<rect x="456.0" y="86" width="14" height="14" rx="3" fill="#9ca3af"/>
+<text x="476.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">C. Un solo tramo</text>
+<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">B = el senior cobra un piso de 8% y además 20% de lo que el pool gane por encima de ese 8%. El junior cobra el resto.</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">En un año malo, A y B son iguales: el junior pierde primero y el senior cobra su 8%. En C pierden todos por igual. No es un pronóstico.</text>
+</svg>

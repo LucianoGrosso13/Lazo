@@ -32,7 +32,7 @@ Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y so
 ## Capabilities and Constraints
 
 - Decisión vigente: cobertura del fiador 100% en todos los escalones. Anticipo/topes heredados de referencia: 30%/1.000 → 20%/1.000 → 10%/1.250 → 0%/1.500 devUSDC. El código puede conservar valores anteriores hasta C2–C6. Tasa de 6, máximo contractual de fianza y tarifas por plazo pendientes; no inventarlos.
-- Referencia del flujo inmediato de 3 cuotas: comercio cobra precio − 7% × financiado (PC de 1.000 en escalón 0: recibe 951). Cotizar otras opciones por config; costos y split empresa/pool todavía pendientes.
+- Referencia del flujo inmediato de 3 cuotas: comercio cobra precio − 7% × financiado (PC de 1.000 en escalón 0: recibe 951). Cotizar otras opciones por config; costos y devengo del reparto D8 (4% originación + 2% anual administración) pendientes. H y mejoras 1/2/10/11 detalladas en `proyecto/09-alcance-opcion-h-y-mejoras.md`, aún sin implementar.
 - Mora: días 1-5 gracia (día 3 aviso al fiador), día 6 punitorio 5% sobre la cuota vencida, día 15 cobro al fiador, baja de escalón, `late_count + 1`, bloquea planes nuevos.
 - Ningún número de negocio va hardcodeado en la UI: sale de la config del protocolo.
 - Simulado y declarado: USDC (devUSDC), paso del tiempo, tienda demo, estudiante en escalón 3 (datos de ejemplo), inversores senior. Didit y Mobbex todavía no conectados: el fiador se simula en esta etapa.

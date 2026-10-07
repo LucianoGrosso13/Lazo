@@ -1,6 +1,6 @@
 # Decisiones comerciales vigentes de Lazo
 
-Actualizado: 2026-10-07. Fuente: pedido explícito de Luciano en esta sesión. Este documento y el addendum vigente de `02-validacion.md` prevalecen sobre tablas históricas. Estado: **decisiones de producto documentadas; nuevas modalidades aún no implementadas ni validadas comercialmente**.
+Actualizado: 2026-10-07. Fuentes: pedido explícito de Luciano en esta sesión y antecedente D8 del plan recuperado de GitHub (ver 09). Este documento y el addendum vigente de `02-validacion.md` prevalecen sobre tablas históricas. Estado: **decisiones de producto documentadas; nuevas modalidades aún no implementadas ni validadas comercialmente**.
 
 ## Cuotas y cobro al comercio
 
@@ -10,7 +10,7 @@ Actualizado: 2026-10-07. Fuente: pedido explícito de Luciano en esta sesión. E
 | 3 cuotas | Sin interés | 7% sobre el monto financiado como referencia de cobro inmediato; otra tarifa si elige esperar | Flujo base de la demo actual; nuevas opciones de liquidación pendientes |
 | 6 cuotas | Interés moderado sobre el monto financiado | También paga comisión según el plazo de liquidación elegido | Modalidad aprobada; tasa y tarifas pendientes de calibrar |
 
-El comercio elige **cuándo recibir el dinero**. Recibirlo inmediatamente requiere adelantar capital; esperar reduce esa necesidad. La propuesta es ofrecer precios menores al esperar, sujetos a una cuenta económica y al contrato de quién asume la mora. No hay fechas ni descuentos nuevos aprobados. El 7% no pasa a ser una tasa obligatoria para todos los planes y plazos.
+El comercio elige **cuándo recibir el dinero**. Recibirlo inmediatamente requiere adelantar capital; esperar reduce esa necesidad. La propuesta es ofrecer precios menores al esperar, sujetos a una cuenta económica y al contrato de quién asume la mora. No hay fechas ni descuentos nuevos aprobados. El 7% no pasa a ser una tasa obligatoria para todos los planes y plazos. **Base por aclarar:** H1 del plan histórico equivale a 7% del precio con anticipo de 30%, mientras la demo usa 7% de lo financiado; se mantiene esta última como referencia provisional, sin confundir ambas cifras.
 
 El interés de 6 cuotas se expresa como porcentaje **total del plan sobre el capital financiado**, con importe total, cronograma y costo efectivo visibles. Estar denominado en dólares digitales no prueba que sea barato ni rentable; quien cobra en pesos conserva riesgo cambiario. USDC es un token diseñado para seguir el valor del dólar; la demo usa **devUSDC, un token propio sin valor**, en **devnet, la red de prueba de Solana**.
 
@@ -19,7 +19,7 @@ Si `P` es precio, `D` anticipo y `A=P-D` capital financiado:
 - Interés del comprador: `I=A×i(n)`, con `i(1)=i(3)=0` y `i(6)>0`, tasa pendiente.
 - Total comprador: `D+A+I`. Cuotas sobre el saldo: `(A+I)/n`, con redondeo en unidades mínimas y ajuste final para conservar exactamente el total.
 - Comisión comercio: `F=A×f(n, plazo_liquidación)`. Neto total comercio: `P-F`, salvo costos adicionales expresamente informados. El anticipo nunca se cobra dos veces.
-- La comisión debe repartir remuneración del capital y operación de Lazo; **el split todavía no está decidido**. Comisión bruta no equivale a ganancia de la empresa.
+- Reparto recuperado del §14, D8, del plan: **4% de originación sobre financiado para Lazo, incluido en la comisión comercial; 2% anual de administración sobre saldo pagado por el pool**. El recupero de mora queda en el pool. Devengo, base temporal y aplicación a liquidación diferida siguen pendientes; comisión bruta no equivale a ganancia de la empresa. Cuenta sin doble cobro en `09-alcance-opcion-h-y-mejoras.md`.
 
 Ejemplo base vigente: precio 1.000, anticipo 300, financiación 700, 3 cuotas sin interés → total comprador 1.000 y neto comercio 951 con liquidación inmediata al 7%. En precisión de 6 decimales: dos cuotas de 233,333333 y última de 233,333334. La pantalla puede mostrar 233,33 redondeado, pero la contabilidad debe conservar el total.
 
@@ -48,18 +48,18 @@ Construir Lazo como medio de pago integrable y buscar una billetera como canal d
 
 Añadir un recorrido minorista mediante link o QR propio, reutilizando identidad y fianza vigentes dentro de sus límites. Menor ticket no significa menor costo: debe cubrir procesador, capital, pérdidas, rampa, soporte y adquisición. Propuesta, sensibilidad y validación en `08-minorista-y-economia.md`. Es una ampliación propuesta para validar, no tracción ni integración ya obtenida.
 
-## Referencias del pedido aún sin definición
+## H e ideas seleccionadas: fuente recuperada
 
-- **Opción H:** elección registrada, definición no encontrada en este checkout. No se equipara a ningún esquema por inferencia.
-- **Ideas 1, 2, 10 y 11:** selección registrada, contenido no encontrado. No se reutiliza la numeración de otras listas del repo.
-- Se pidió aclaración en el chat; al recibir el contenido, agregar descripción exacta, recorte y criterios de aceptación en `04-plan.md` antes de implementar esas referencias.
+La opción **H** significa “el comercio elige”. Se adapta al pedido vigente: 1/3 sin interés y 6 con interés comprador, más comisión comercial según cuándo cobra. No conserva el interés en 3 cuotas ni el modo de 6 sin interés del H histórico.
+
+Del §10 del plan: **1 = seis cuotas; 2 = elegir cuándo cobrar; 10 = capital ocioso a DeFi solo con tesorería propia; 11 = descuentos comerciales para el fiador al día**. Alcance, flujos, pendientes, economía y criterios de aceptación en `09-alcance-opcion-h-y-mejoras.md`. Sus tarifas y rendimientos originales no quedaron aprobados al elegir las ideas.
 
 ## Próximas decisiones para implementar
 
 1. Qué significa 1 cuota y cuándo vence; calendario de 3/6 cuotas.
-2. Tasa total de 6, tarifas por modalidad/plazo, split empresa/capital y costos visibles.
+2. Tasa total de 6, base del 7%, tarifas por modalidad/plazo, devengo del reparto 4%/2% y costos visibles.
 3. Plazos de liquidación, exposición del pool y tratamiento de mora, devolución y cancelación para cada opción.
 4. Máximo de fianza con interés, punitorios y exposición agregada.
-5. Contenido exacto de H y de las cuatro ideas seleccionadas.
+5. Elegibilidad/presupuesto de beneficios y reserva/tope de tesorería; compatibilidad devnet antes de integrar protocolos.
 
 Ninguna de estas cifras nuevas se hardcodea: el contrato de configuración debe extender `ProtocolConfig`, guardando una copia de términos en cada plan. Cambiar la config no modifica deudas ya aceptadas. Solo devnet y sandbox; cualquier transacción firmada o enviada requiere aprobación explícita.

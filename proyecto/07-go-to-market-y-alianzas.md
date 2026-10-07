@@ -20,7 +20,7 @@ Estas son las decisiones recibidas para este trabajo, aunque haya versiones ante
 
 Ejemplo de precio de referencia, no cotización de un partner: venta de 1.000, anticipo de 300, financiado de 700, comisión de 49; comercio recibe 951 antes de cualquier otro costo pendiente. No presentar el 7% como margen libre para repartir: todavía debe pagar fondeo, pérdidas, operación y rampas.
 
-La instrucción actual reemplaza la cobertura decreciente de versiones anteriores. El tramo histórico sin fiador sigue fuera de la UI del MVP; no se decidió borrarlo de la configuración ni lanzarlo comercialmente. No cambia el código ni certifica que la demo implemente 1/6 cuotas o cobro diferido: `03-mvp.md` tiene como recorrido base 3 cuotas y cobro inmediato. El coordinador integra las decisiones en los documentos canónicos. **No tenemos definida la opción H ni las ideas 1, 2, 10 y 11: no les asignamos correspondencia.**
+La instrucción actual reemplaza la cobertura decreciente de versiones anteriores. El tramo histórico sin fiador sigue fuera de la UI del MVP; no se decidió borrarlo de la configuración ni lanzarlo comercialmente. No cambia el código ni certifica que la demo implemente 1/6 cuotas o cobro diferido: `03-mvp.md` tiene como recorrido base 3 cuotas y cobro inmediato. El coordinador integra las decisiones en los documentos canónicos. **Actualización tras recuperar el plan de GitHub:** H y las ideas 1/2/10/11 están identificadas y recortadas en `09-alcance-opcion-h-y-mejoras.md`; sus tasas históricas no se adoptan automáticamente.
 
 ## 2. Scorecard: qué está publicado y qué falta demostrar
 
@@ -159,4 +159,4 @@ Todas las fuentes enlazadas arriba se consultaron el **2026-10-07**. Las página
 
 El hallazgo positivo más relevante es la existencia de programas de terceros: SDK de Lemon, API/sandbox de Ripio y oferta de APIs de belo. Los huecos más relevantes son acceso de Lazo, costos, soporte específico Solana en el contrato B2B, ejecución del programa desde wallets custodiales y aprobación del caso de crédito. No verificamos integración operativa con ninguno; no hay contacto ni aceptación obtenidos en esta investigación.
 
-Para cerrar la decisión, faltan tasa de 6 cuotas, precios por plazo de cobro, reparto económico, entidad responsable del crédito y evaluación de recupero del fiador. Son pendientes del equipo y de la negociación; este documento no los reemplaza con supuestos silenciosos.
+Para cerrar la decisión, faltan tasa de 6 cuotas, precios por plazo de cobro, devengo del reparto 4% de originación + 2% anual de administración registrado en D8, entidad responsable del crédito y evaluación de recupero del fiador. Son pendientes del equipo y de la negociación; este documento no los reemplaza con supuestos silenciosos.

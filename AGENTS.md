@@ -27,7 +27,7 @@ Sos un compañero de equipo en una hackathon. Respondé en español rioplatense,
 **Correr:** `cd app && npm install && npm run dev`. Para compilar y probar el programa sin desplegar, usá los comandos de `README.md` § Tests; `anchor test` puede enviar un deploy a devnet y requiere aprobación explícita. Las variables van en `app/.env.local` (nunca se commitea).
 
 **Convenciones:**
-- Antes de modificar cuotas, cobro del comercio o fianza, leé `proyecto/06-decisiones-comerciales.md` y el addendum vigente de `proyecto/02-validacion.md`: prevalecen sobre rondas históricas. Para distribución consultá `proyecto/07-go-to-market-y-alianzas.md`; para minorista y rentabilidad, `proyecto/08-minorista-y-economia.md`. Reglas pendientes se preguntan, no se inventan.
+- Antes de modificar cuotas, cobro del comercio o fianza, leé `proyecto/06-decisiones-comerciales.md` y el addendum vigente de `proyecto/02-validacion.md`: prevalecen sobre rondas históricas. Para distribución consultá `proyecto/07-go-to-market-y-alianzas.md`; para minorista y rentabilidad, `proyecto/08-minorista-y-economia.md`. H y mejoras 1/2/10/11 están definidas en `proyecto/09-alcance-opcion-h-y-mejoras.md`; los modelos de `06-viabilidad/` y `07-plan-de-negocio/` son antecedentes recuperados, no precios ni retornos actuales. Reglas pendientes se preguntan, no se inventan.
 - Ningún número de negocio va hardcodeado: vive en `ProtocolConfig`.
 - El front habla con la cadena solo a través de `app/src/lib/cuotas.ts` (tiene una versión mock y una real).
 - Una rama por tarea (`t1.6-checkout`), PR chico y commits seguidos.

@@ -8,7 +8,7 @@ Probar un **link/QR propio de Lazo para compras minoristas**, con alta del fiado
 
 El modelo ilustrativo de este documento da contribución negativa para tickets de US$20 en todas las variantes financiadas examinadas. No demuestra que el minorista sea imposible: identifica cuánto deben mejorar costos, recupero y precio para habilitarlo. Tampoco demuestra rentabilidad para tickets mayores: faltan evidencia de comportamiento, cotizaciones completas y validación de costos y riesgos.
 
-Leídos: `AGENTS.md`, `02-validacion.md` (rondas y addendum), `03-mvp.md`, `04-plan.md` (Estado) y `research/d-modelo-economico-pool.md`. El Estado informa integraciones Didit/Mobbex pendientes de credenciales; **no se da por probado el cobro real al fiador**. El addendum refiere una carpeta `06-viabilidad/` que no estaba disponible en este checkout al revisar; no se usó su contenido como evidencia. Los retornos históricos de research/d responden a otros precios y coberturas, omiten costos relevantes para retail y no son promesas actuales.
+Leídos: `AGENTS.md`, `02-validacion.md` (rondas y addendum), `03-mvp.md`, `04-plan.md` (Estado) y `research/d-modelo-economico-pool.md`. El Estado informa integraciones Didit/Mobbex pendientes de credenciales; **no se da por probado el cobro real al fiador**. El addendum refiere una carpeta `06-viabilidad/` que no estaba disponible al iniciar esta revisión y luego se recuperó de GitHub junto al plan de negocio; se conserva como antecedente, no evidencia comercial nueva (ver 09). Los retornos históricos de research/d responden a otros precios y coberturas, omiten costos relevantes para retail y no son promesas actuales.
 
 ### Decisiones recibidas para esta propuesta
 
@@ -20,11 +20,11 @@ Estas instrucciones actuales reemplazan, para el diseño de este documento, las 
 | Comercio | Elige cuándo cobrar y una tarifa según plazo. **7% sobre lo financiado es referencia de cobro inmediato a 3 cuotas**. Otras tarifas no aprobadas |
 | Fiador | **Cobertura obligatoria del 100% en todos los escalones**. La obligación no equivale a recupero efectivo del 100% |
 | Escalera | Mejora anticipo y límite; no disminuye cobertura. Menor anticipo puede aumentar exposición absoluta del fiador |
-| Reparto | Empresa/pool pendiente; no tratar 7% como ingreso de ambos simultáneamente |
+| Reparto | D8 recuperado: originación 4% del financiado a Lazo y administración 2% anual sobre saldo pagada por pool; devengo pendiente, no duplicar ingresos |
 | 1 cuota | Resolver si significa **contado hoy** o **financiación a un mes**. No presentar las dos cosas como equivalentes |
 | Alcance | Documento de propuesta. Demo devnet; tarifas, múltiples planes y devoluciones aquí diseñadas no están implementadas |
 
-No se dispone de la definición de la opción H ni de las ideas 1/2/10/11. No se les atribuye contenido ni se declara que esta propuesta las desarrolla.
+H y las ideas 1/2/10/11 quedaron identificadas al recuperar el plan: ver `09-alcance-opcion-h-y-mejoras.md`. Esta sensibilidad minorista conserva hipótesis propias, no las convierte en tarifas aprobadas ni demuestra el reparto de ingresos.
 
 ## Fuentes oficiales y qué permiten concluir
 
@@ -206,14 +206,14 @@ Conclusión condicional: ni la cobertura 100% ni un ticket grande aseguran resul
 
 ### Reparto empresa/pool sin doble contar
 
-Propuesta de contabilidad, **sin porcentajes aprobados**:
+Contabilidad a implementar con el antecedente D8 recuperado: **4% de originación sobre financiado para Lazo, incluido en comisión comercial; 2% anual sobre saldo como administración a cargo del pool**. El recupero de mora va al pool. El ejemplo separado está en 09; la sensibilidad consolidada de arriba no calcula rentabilidad específica de cada actor:
 
 1. Registrar comisión e interés cobrado una sola vez a nivel consolidado.
 2. Asignar a quien corresponda costo de capital, pérdidas y procesamiento de recupero; operación, KYC, soporte, rampa, fraude comercial y adquisición. No duplicar el costo de capital como “h” y además otro rendimiento fijo al pool.
 3. Definir `R_empresa + R_pool = ingresos externos totales`. Una transferencia interna de comisión disminuye ingreso de uno y aumenta el del otro; no aumenta C consolidada.
 4. Calcular `C_empresa=R_empresa-costos_empresa` y `C_pool=R_pool-costos_pool`; su suma debe coincidir con C consolidada. Ambos deben satisfacer sus restricciones de liquidez/capital; un resultado consolidado positivo puede dejar a uno deficitario.
 
-Alternativas a discutir: tarifa fija por operación para empresa, porcentaje de ingresos netos o waterfall después de costos/reserva. Todas pendientes. Cobrar suscripción al comercio o conseguir subsidio explícito podría financiar tickets chicos, pero exige aceptación y costo de servicio medidos; no es ingreso aprobado ni convierte la contribución subsidiada en rentabilidad independiente. No ofrecer APY ni rendimiento garantizado al inversor.
+Devengo, costos a cargo de cada actor y tratamiento de liquidación diferida siguen pendientes; no sustituir el reparto D8 por otra tarifa sin decisión del equipo. Cobrar suscripción al comercio o conseguir subsidio explícito podría financiar tickets chicos, pero exige aceptación y costo de servicio medidos; no es ingreso aprobado ni convierte la contribución subsidiada en rentabilidad independiente. No ofrecer APY ni rendimiento garantizado al inversor.
 
 ## Validación medible y condiciones para ampliar
 
@@ -253,6 +253,6 @@ Definir antes de expandir caps de exposición y pérdidas, reglas de pausa por f
 2. Elegir categoría inicial y banda a probar con comercios, conservando límites/reputación actuales hasta aprobación.
 3. Definir matriz de tarifa por cuotas/plazo, interés total de seis, moneda/fecha de liquidación y riesgo que acepta cada parte.
 4. Aprobar política de devolución, exposición agregada y revisión del consentimiento del fiador. Cobertura siempre 100%; recupero se mide.
-5. Obtener costos completos y decidir reparto empresa/pool con conciliación consolidada. No prometer “rentable”, “sin riesgo” o rendimiento al pool a partir de esta sensibilidad.
+5. Obtener costos completos y aplicar el reparto D8 empresa/pool con conciliación consolidada y políticas de devengo explícitas. No prometer “rentable”, “sin riesgo” o rendimiento al pool a partir de esta sensibilidad.
 
 La acción siguiente es probar y cotizar una oferta minorista concreta; el documento deja lista esa conversación sin convertir las hipótesis en reglas del producto.

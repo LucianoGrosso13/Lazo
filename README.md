@@ -25,8 +25,11 @@ The updated product specification offers one or three installments without buyer
 interest, and six with a moderate interest charge whose rate is still undecided.
 Merchants will choose a settlement schedule and its associated fee. The 7% of
 financed principal remains the reference for immediate settlement in the base
-three-installment flow; other prices, settlement dates and the capital/operator
-revenue split need validation. Guaranteed plans retain 100% principal coverage at
+three-installment flow pending clarification of its fee base; other prices and
+settlement dates need validation. The recovered business plan records a 4%
+origination fee on financed principal included in merchant fees, and a 2% annual
+servicing fee on outstanding principal paid by the pool; accrual rules and
+implementation remain pending. Guaranteed plans retain 100% principal coverage at
 every reputation tier. The contractual cap for interest and penalties is pending;
 100% coverage does not imply successful recovery from a card.
 
@@ -40,8 +43,12 @@ or new commercial traction has been obtained in this documentation update.
 Planning documents (internal, Spanish):
 [`commercial decisions`](proyecto/06-decisiones-comerciales.md),
 [`distribution and wallet alliances`](proyecto/07-go-to-market-y-alianzas.md),
-[`retail economics and validation`](proyecto/08-minorista-y-economia.md), and
-[`pitch and demo preparation`](proyecto/05-pitch.md).
+[`retail economics and validation`](proyecto/08-minorista-y-economia.md),
+[`pitch and demo preparation`](proyecto/05-pitch.md), and
+[`H and selected improvements`](proyecto/09-alcance-opcion-h-y-mejoras.md).
+Recovered business-plan models are historical scenarios, not current validated
+pricing or returns. Guarantor discounts and an isolated, own-treasury simulation
+are planned additions; no third-party funds or real-money DeFi are used.
 
 Built at the Colosseum Crypto World's Fair — Superteam Argentina track.
 
