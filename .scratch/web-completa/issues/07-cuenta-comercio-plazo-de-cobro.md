@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/cuenta/comercio.tsx`, `app/src/i18n/dictionaries/comercio-cuenta.ts`, `app/src/app/(cuenta)/app/comercio/page.tsx`. No eliminar exports existentes de `comercio.tsx` (el ticket 06 puede importarlos).
 
@@ -16,9 +16,9 @@ Notas:
 - Audit 390 px en `/comercio/<dirección>`: la dirección deja 2 caracteres huérfanos al cortar y los botones de embed se acomodan mal. Corregir en la vista pública/cuenta.
 - La comparación "Frente a otras formas de vender en cuotas" sigue con `REFERENCE_FIGURES` y etiqueta "referencia", sin marcas.
 
-- [ ] Tabla de plazos con comisión, neto y fecha; predeterminado elegible y persistido (mock)
-- [ ] Ventas con plazo y estado; saldo pendiente visible; tras adelantar el reloj, la venta pasa a cobrada
-- [ ] Sin "%%"; dirección y botones bien en 390 px
-- [ ] Sin scroll horizontal a 390 px; tap targets ≥ 40×40
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/07-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Tabla de plazos con comisión, neto y fecha; predeterminado elegible y persistido (mock)
+- [x] Ventas con plazo y estado; saldo pendiente visible; tras adelantar el reloj, la venta pasa a cobrada
+- [x] Sin "%%"; dirección y botones bien en 390 px
+- [x] Sin scroll horizontal a 390 px; tap targets ≥ 40×40
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/07-*`
+- [x] typecheck / lint / test / build en verde
