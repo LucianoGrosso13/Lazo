@@ -282,6 +282,7 @@ pub fn open_plan(
     usdc_mint: &Address,
     merchant_wallet: &Address,
     price: u64,
+    installments: u8,
     guarantee: Option<Address>,
 ) -> Instruction {
     let pool = pda::pool(usdc_mint).0;
@@ -304,7 +305,7 @@ pub fn open_plan(
             ro(TOKEN_PROGRAM_ID),
             ro(system_program::ID),
         ],
-        instruction::OpenPlan { price }.data(),
+        instruction::OpenPlan { price, installments }.data(),
     )
 }
 

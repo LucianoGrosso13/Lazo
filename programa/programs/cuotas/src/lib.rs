@@ -113,10 +113,10 @@ pub mod cuotas {
         instructions::keeper_guarantee::handle_keeper_revoke_guarantee(ctx)
     }
 
-    /// Student opens a 3-installment plan: down payment to the merchant, pool
-    /// advance minus the merchant fee, Plan PDA created. Normal state only.
-    pub fn open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
-        instructions::open_plan::handle_open_plan(ctx, price)
+    /// Student opens a plan (3 or 6 installments): down payment to the merchant,
+    /// pool advance minus the merchant fee, Plan PDA created. Normal state only.
+    pub fn open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) -> Result<()> {
+        instructions::open_plan::handle_open_plan(ctx, price, installments)
     }
 
     /// Student pays the first unresolved installment (principal + penalty).

@@ -92,4 +92,10 @@ pub enum CuotasError {
     ReceiptAlreadyUsed,
     #[msg("Recovery requires a plan backed by an active guarantee")]
     PlanNotGuaranteed,
+    #[msg("An active guarantee is required to open a plan")]
+    GuarantorRequired,
+    #[msg("Purchase price is below the minimum for the selected plan option")]
+    BelowOptionMin,
+    #[msg("The requested installment option is not available or enabled")]
+    OptionUnavailable,
 }

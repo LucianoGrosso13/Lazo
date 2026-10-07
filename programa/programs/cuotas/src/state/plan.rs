@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{BPS_DENOMINATOR, INSTALLMENT_COUNT};
+use crate::constants::{BPS_DENOMINATOR, MAX_INSTALLMENTS};
 use crate::error::CuotasError;
 
 /// One fixed installment of a [`Plan`]. The status is derived, never stored:
@@ -47,7 +47,7 @@ impl Installment {
     }
 }
 
-/// A 3-installment credit plan, PDA ["plan", student]. One active plan per
+/// A 3- or 6-installment credit plan, PDA ["plan", student]. One active plan per
 /// student (Q5): `open_plan` uses `init`, so a second plan fails while one
 /// exists; the settling pay/recovery closes the account and frees the PDA.
 ///
@@ -66,7 +66,7 @@ pub struct Plan {
     pub down_payment: u64,
     /// Principal advanced by the pool: `price - down_payment`.
     pub financed: u64,
-    /// Interest over financed (`interest_bps`, 0 in every current tier).
+    /// Interest over financed (`interest_total_bps`).
     pub interest: u64,
     /// Merchant fee over financed (`fee_bps`), credited to LPs at open.
     pub merchant_fee: u64,
@@ -80,8 +80,10 @@ pub struct Plan {
     /// Still counts toward tier-ups: financed >= min AND never past grace.
     /// Set false permanently the first time an installment goes past grace.
     pub counts: bool,
-    /// Fixed 3-installment schedule (last absorbs rounding).
-    pub installments: [Installment; INSTALLMENT_COUNT],
+    /// Number of active installments in this plan (e.g. 3 or 6).
+    pub installment_count: u8,
+    /// Schedule with up to MAX_INSTALLMENTS (unused slots empty and resolved).
+    pub installments: [Installment; MAX_INSTALLMENTS],
     /// Copy of `Reputation::plans_opened` at origination. The PDA is reused
     /// across plans (close frees it), and two plans may share `opened_at`;
     /// this value is what `pay_installment` checks to reject quotes issued
@@ -99,22 +101,32 @@ impl Plan {
             .ok_or(CuotasError::MathOverflow.into())
     }
 
+    /// Slice of active installments according to `installment_count`.
+    pub fn active_installments(&self) -> &[Installment] {
+        &self.installments[..self.installment_count as usize]
+    }
+
     /// Index of the first unresolved installment, if any.
     pub fn first_unpaid(&self) -> Option<usize> {
-        self.installments.iter().position(|i| !i.resolved())
+        self.active_installments()
+            .iter()
+            .position(|i| !i.resolved())
     }
 
     pub fn fully_resolved(&self) -> bool {
-        self.installments.iter().all(|i| i.resolved())
+        self.active_installments().iter().all(|i| i.resolved())
     }
 
     pub fn charged_count(&self) -> usize {
-        self.installments.iter().filter(|i| i.charged).count()
+        self.active_installments()
+            .iter()
+            .filter(|i| i.charged)
+            .count()
     }
 
     /// Whether `receipt` is already recorded on a charged installment.
     pub fn has_receipt(&self, receipt: &[u8; 32]) -> bool {
-        self.installments
+        self.active_installments()
             .iter()
             .any(|i| i.charged && i.receipt_hash == *receipt)
     }
@@ -132,12 +144,18 @@ pub fn bps_of(amount: u64, bps: u16) -> Result<u64> {
     u64::try_from(out).map_err(|_| CuotasError::MathOverflow.into())
 }
 
-/// Split `repayable` into 3 installments: the first two are `floor(/3)`, the
+/// Split `repayable` into `n` installments: the first n-1 are `floor(/n)`, the
 /// last absorbs the rounding remainder so the sum is exact.
-pub fn split_installments(repayable: u64) -> [u64; INSTALLMENT_COUNT] {
-    let base = repayable / INSTALLMENT_COUNT as u64;
-    let last = repayable - base * (INSTALLMENT_COUNT as u64 - 1);
-    [base, base, last]
+pub fn split_installments(repayable: u64, n: u8) -> Vec<u64> {
+    assert!(n > 0, "installment count must be positive");
+    let n_u64 = n as u64;
+    let base = repayable / n_u64;
+    let last = repayable - base * (n_u64 - 1);
+    let mut out = vec![base; n as usize];
+    if let Some(l) = out.last_mut() {
+        *l = last;
+    }
+    out
 }
 
 /// Due timestamp of installment `index` from the config schedule:
@@ -175,15 +193,31 @@ mod tests {
     #[test]
     fn installments_sum_exactly_with_last_absorbing_rounding() {
         // PC case: 700 USDC financed at 0% -> 233.333333/233.333333/233.333334.
-        let parts = split_installments(700_000_000);
-        assert_eq!(parts, [233_333_333, 233_333_333, 233_333_334]);
+        let parts = split_installments(700_000_000, 3);
+        assert_eq!(parts, vec![233_333_333, 233_333_333, 233_333_334]);
         assert_eq!(parts.iter().sum::<u64>(), 700_000_000);
-        let parts = split_installments(10);
-        assert_eq!(parts, [3, 3, 4]);
-        let parts = split_installments(2);
-        assert_eq!(parts, [0, 0, 2]);
-        let parts = split_installments(0);
-        assert_eq!(parts, [0, 0, 0]);
+
+        // 6 cuotas case: 721 USDC repayable (700 financed + 21 interest)
+        let parts6 = split_installments(721_000_000, 6);
+        assert_eq!(
+            parts6,
+            vec![
+                120_166_666,
+                120_166_666,
+                120_166_666,
+                120_166_666,
+                120_166_666,
+                120_166_670
+            ]
+        );
+        assert_eq!(parts6.iter().sum::<u64>(), 721_000_000);
+
+        let parts = split_installments(10, 3);
+        assert_eq!(parts, vec![3, 3, 4]);
+        let parts = split_installments(2, 3);
+        assert_eq!(parts, vec![0, 0, 2]);
+        let parts = split_installments(0, 3);
+        assert_eq!(parts, vec![0, 0, 0]);
     }
 
     #[test]
@@ -252,7 +286,15 @@ mod tests {
             tier: 0,
             with_guarantee: true,
             counts: true,
-            installments: [inst(true, false), inst(false, false), inst(false, true)],
+            installment_count: 3,
+            installments: [
+                inst(true, false),
+                inst(false, false),
+                inst(false, true),
+                inst(true, false),
+                inst(true, false),
+                inst(true, false),
+            ],
             generation: 0,
             bump: 255,
         };
@@ -285,6 +327,7 @@ mod tests {
             tier: 3,
             with_guarantee: true,
             counts: true,
+            installment_count: 6,
             installments: [Installment {
                 amount: 1,
                 due_at: 1,
@@ -293,7 +336,7 @@ mod tests {
                 charged: true,
                 marked_late: true,
                 receipt_hash: [9; 32],
-            }; INSTALLMENT_COUNT],
+            }; MAX_INSTALLMENTS],
             generation: 0,
             bump: 255,
         };

@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 };
 
 use crate::constants::{
-    CONFIG_SEED, GUARANTEE_SEED, LP_JUNIOR_SEED, LP_SENIOR_SEED, MERCHANT_SEED, PLAN_SEED,
-    POOL_SEED, REPUTATION_SEED, USDC_DECIMALS, VAULT_SEED,
+    CONFIG_SEED, GUARANTEE_SEED, LP_JUNIOR_SEED, LP_SENIOR_SEED, MAX_INSTALLMENTS, MERCHANT_SEED,
+    PLAN_SEED, POOL_SEED, REPUTATION_SEED, USDC_DECIMALS, VAULT_SEED,
 };
 use crate::error::CuotasError;
 use crate::events::PlanOpened;
@@ -41,7 +41,7 @@ use crate::state::{
 /// (`reputation.late_count == 0`), no active plan (`init` fails if the PDA
 /// exists), merchant active, and the vault must hold the advance.
 #[derive(Accounts)]
-#[instruction(price: u64)]
+#[instruction(price: u64, installments: u8)]
 pub struct OpenPlan<'info> {
     #[account(mut)]
     pub student: Signer<'info>,
@@ -155,7 +155,7 @@ pub struct OpenPlan<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
+pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64, installments: u8) -> Result<()> {
     let config = &ctx.accounts.config;
     require!(price > 0, CuotasError::InvalidPrice);
     require!(
@@ -167,21 +167,33 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
         CuotasError::InvalidReputationTier
     );
 
-    let with_guarantee = ctx.accounts.guarantee.as_ref().is_some_and(|g| g.active);
-    let tier: TierParams = if with_guarantee {
-        config.guaranteed_tiers[ctx.accounts.reputation.tier as usize]
-    } else {
-        let idx = ctx.accounts.reputation.tier.min(1) as usize;
-        config.unguaranteed_tiers[idx]
-    };
+    let guarantee = ctx
+        .accounts
+        .guarantee
+        .as_ref()
+        .ok_or(CuotasError::GuarantorRequired)?;
+    require!(guarantee.active, CuotasError::GuarantorRequired);
+
+    let opt = config
+        .plan_options
+        .iter()
+        .find(|o| o.installments == installments && o.enabled)
+        .ok_or(CuotasError::OptionUnavailable)?;
+    require!(price >= opt.min_price, CuotasError::BelowOptionMin);
+
+    let tier: TierParams = config.guaranteed_tiers[ctx.accounts.reputation.tier as usize];
     require!(price <= tier.max_purchase, CuotasError::PriceExceedsTierMax);
+    require!(
+        price <= guarantee.max_purchase,
+        CuotasError::PriceExceedsGuarantorMax
+    );
 
     let down_payment = bps_of(price, tier.down_payment_bps)?;
     let financed = price
         .checked_sub(down_payment)
         .ok_or(CuotasError::MathOverflow)?;
     require!(financed > 0, CuotasError::InvalidPrice);
-    let interest = bps_of(financed, tier.interest_bps)?;
+    let interest = bps_of(financed, opt.interest_total_bps)?;
     let repayable = financed
         .checked_add(interest)
         .ok_or(CuotasError::MathOverflow)?;
@@ -190,18 +202,10 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
         .checked_sub(merchant_fee)
         .ok_or(CuotasError::MathOverflow)?;
 
-    if with_guarantee {
-        let guarantee = ctx.accounts.guarantee.as_ref().unwrap();
-        require!(
-            price <= guarantee.max_purchase,
-            CuotasError::PriceExceedsGuarantorMax
-        );
-        let required_coverage = bps_of(financed, tier.guarantor_coverage_bps)?;
-        require!(
-            required_coverage <= guarantee.coverage_max,
-            CuotasError::InsufficientGuaranteeCoverage
-        );
-    }
+    require!(
+        repayable <= guarantee.coverage_max,
+        CuotasError::InsufficientGuaranteeCoverage
+    );
 
     require!(
         advance <= ctx.accounts.vault.amount,
@@ -209,24 +213,31 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
     );
 
     let opened_at = Clock::get()?.unix_timestamp;
-    let amounts = split_installments(repayable);
-    let mut installments = [Installment {
+    let amounts = split_installments(repayable, installments);
+    let mut plan_installments = [Installment {
         amount: 0,
         due_at: 0,
         penalty: 0,
-        paid: false,
+        paid: true,
         charged: false,
         marked_late: false,
         receipt_hash: [0; 32],
-    }; 3];
-    for (i, slot) in installments.iter_mut().enumerate() {
-        slot.amount = amounts[i];
-        slot.due_at = due_at(
-            opened_at,
-            i,
-            config.installment_interval_days,
-            config.seconds_per_day,
-        )?;
+    }; MAX_INSTALLMENTS];
+    for (i, &amount) in amounts.iter().enumerate() {
+        plan_installments[i] = Installment {
+            amount,
+            due_at: due_at(
+                opened_at,
+                i,
+                config.installment_interval_days,
+                config.seconds_per_day,
+            )?,
+            penalty: 0,
+            paid: false,
+            charged: false,
+            marked_late: false,
+            receipt_hash: [0; 32],
+        };
     }
 
     // Effects before interactions: book pool + reputation state first so a
@@ -318,9 +329,10 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
     plan.merchant_fee = merchant_fee;
     plan.opened_at = opened_at;
     plan.tier = ctx.accounts.reputation.tier;
-    plan.with_guarantee = with_guarantee;
+    plan.with_guarantee = true;
     plan.counts = counts;
-    plan.installments = installments;
+    plan.installment_count = installments;
+    plan.installments = plan_installments;
     plan.generation = ctx.accounts.reputation.plans_opened;
     plan.bump = ctx.bumps.plan;
 
@@ -335,7 +347,7 @@ pub fn handle_open_plan(ctx: Context<OpenPlan>, price: u64) -> Result<()> {
         merchant_fee,
         installments: amounts,
         tier: plan.tier,
-        with_guarantee,
+        with_guarantee: true,
         counts,
     });
     Ok(())

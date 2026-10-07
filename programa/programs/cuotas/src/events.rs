@@ -105,7 +105,7 @@ pub struct PlanOpened {
     pub financed: u64,
     pub interest: u64,
     pub merchant_fee: u64,
-    pub installments: [u64; 3],
+    pub installments: Vec<u64>,
     pub tier: u8,
     pub with_guarantee: bool,
     pub counts: bool,

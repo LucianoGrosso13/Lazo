@@ -89,15 +89,20 @@ pub fn credit_env_guaranteed(
     (env, world)
 }
 
-/// Send `open_plan(price)` for the world student, selecting the guarantee
-/// account when `world.guaranteed` (program ID slot otherwise).
+/// Send `open_plan(price)` for the world student with default 3 installments,
+/// selecting the guarantee account when `world.guaranteed` (program ID slot otherwise).
 pub fn open(env: &mut Env, w: &CreditWorld, price: u64) -> TxOutcome {
+    open_installments(env, w, price, 3)
+}
+
+/// Send `open_plan(price, installments)` for the world student.
+pub fn open_installments(env: &mut Env, w: &CreditWorld, price: u64, installments: u8) -> TxOutcome {
     let g = w.guaranteed.then(|| pda::guarantee(&w.student).0);
-    let i = ix::open_plan(&w.student, &env.usdc_mint, &w.merchant_wallet, price, g);
+    let i = ix::open_plan(&w.student, &env.usdc_mint, &w.merchant_wallet, price, installments, g);
     env.send(&[i], &env.actors.alice.insecure_clone(), &[])
 }
 
-/// Send `open_plan(price)` for an arbitrary student keypair (fresh wallets
+/// Send `open_plan(price, 3)` for an arbitrary student keypair (fresh wallets
 /// need their own reputation + ATA set up by the caller).
 pub fn open_as(
     env: &mut Env,
@@ -106,11 +111,24 @@ pub fn open_as(
     price: u64,
     guarantee: Option<Address>,
 ) -> TxOutcome {
+    open_as_installments(env, student, w, price, 3, guarantee)
+}
+
+/// Send `open_plan(price, installments)` for an arbitrary student keypair.
+pub fn open_as_installments(
+    env: &mut Env,
+    student: &Keypair,
+    w: &CreditWorld,
+    price: u64,
+    installments: u8,
+    guarantee: Option<Address>,
+) -> TxOutcome {
     let i = ix::open_plan(
         &student.pubkey(),
         &env.usdc_mint,
         &w.merchant_wallet,
         price,
+        installments,
         guarantee,
     );
     env.send(&[i], student, &[])
@@ -185,6 +203,15 @@ pub fn warp_to(env: &mut Env, abs_now: i64) {
 pub fn open_pc1000(env: &mut Env, w: &CreditWorld) -> (spec::SpecQuote, cuotas::Plan) {
     let q = spec::spec_quote_guaranteed(1_000 * USDC, 0);
     open(env, w, 1_000 * USDC).expect_ok("open PC1000");
+    let plan = env.plan(&w.student).expect("plan must exist");
+    (q, plan)
+}
+
+/// Open the canonical PC-1000 guaranteed plan with 6 installments (tier 0)
+/// and return the spec quote + the created plan.
+pub fn open_pc1000_6cuotas(env: &mut Env, w: &CreditWorld) -> (spec::SpecQuote, cuotas::Plan) {
+    let q = spec::spec_quote_guaranteed_options(1_000 * USDC, 0, 6);
+    open_installments(env, w, 1_000 * USDC, 6).expect_ok("open PC1000 6 cuotas");
     let plan = env.plan(&w.student).expect("plan must exist");
     (q, plan)
 }

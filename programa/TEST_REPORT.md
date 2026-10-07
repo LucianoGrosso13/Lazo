@@ -1,37 +1,33 @@
 # Cuotas — LiteSVM Acceptance Test Report
 
-**Result: 137/137 in-process LiteSVM tests GREEN + 36/36 host unit tests
+**Result: 139/139 in-process LiteSVM tests GREEN + 36/36 host unit tests
 GREEN. Zero failures, zero ignored, zero deliberately-red tests.**
 
-**Acceptance is NOT final business sign-off.** The technical suite passes
-against the compiled artifact, but devnet deployment + real mint creation
-remain **pending explicit user approval**. This report proves what the
-compiled artifact does; it does not approve deployment or real funds.
+**Acceptance is NOT final business sign-off.** The technical suite covers the
+local artifact only. This report does not claim the updated program is live on
+devnet or approve any deployment or real-fund use.
 
 ## Program under test
 
 | item | value |
 |---|---|
-| SBF artifact | `target/deploy/cuotas.so`, 611688 bytes |
-| artifact SHA256 | `6cc01ba869ec1d56fe286a75a483eb25d55c506fcf55bc14b9f7befe5adc9400` |
-| IDL | `target/idl/cuotas.json`, 85600 bytes |
-| IDL SHA256 | `99527745ffa2482178c541ed8b12e2dbcc9625a5e372f7241e2492be8a1aefa5` |
-| build | `NO_DNA=1 anchor build --arch v1` (rebuilt immediately before this run) |
+| SBF artifact | `target/deploy/cuotas.so`, 698488 bytes |
+| artifact SHA256 | `2c3d4a0fd5004b298014938690ad7bc334f1bb5b63beeb29505ebc4098b36723` |
+| IDL | Not regenerated in this environment; Anchor CLI is unavailable |
+| build | `cargo-build-sbf --arch v1 --manifest-path programs/cuotas/Cargo.toml --sbf-out-dir target/deploy` (rebuilt before tests) |
 | runtime | LiteSVM 0.16 in-process — no mocks, no stubs, no network, no `anchor test`, no deploy |
 
 The path-dependency on `programs/cuotas` keeps discriminators/layouts/error
 variants in sync with source, but path-dep alone does NOT prove the `.so`
 is fresh — the SHA256 above is the binding evidence that tests ran against
-the artifact rebuilt for this report (the `plans_opened`/`generation`
-generation discriminator re-tagged the artifact; earlier hash `751cba9d…`
-is superseded).
+the artifact rebuilt for this report. The source branch has not been deployed.
 
 ## How to run
 
 ```sh
 cd programa
-NO_DNA=1 anchor build --arch v1                                          # SBF artifact (evidence build, verified)
-cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 137 tests)
+cargo-build-sbf --arch v1 --manifest-path programs/cuotas/Cargo.toml --sbf-out-dir target/deploy
+cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 139 tests)
 cargo test -p cuotas --lib                                               # host-only unit tests (36 tests)
 ```
 
@@ -44,7 +40,7 @@ deploy); the suite is in-process only.
 ## Results — suite executed against the verified artifact
 
 ```
-admin_config.rs        19 passed   bootstrap matrix, param validation, notice-day
+admin_config.rs        19 passed   bootstrap matrix, 3/6 option and coverage validation
 pool_lp.rs             33 passed   deposits, withdrawals, NAV, edge states
 loss.rs                 9 passed   waterfall, bounds, provisional cash sweep
 merchant_reputation.rs  7 passed   merchant + reputation registration
@@ -52,18 +48,18 @@ guarantee.rs           13 passed   lifecycle, mandate freshness, exposure
 pause_matrix.rs         5 passed   op x state matrix incl. pool_init gate
 adversarial.rs          7 passed   I-05 inflation attack, burns, conservation
 regressions.rs          5 passed   R1–R5 all GREEN (table below)
-plan_open.rs           12 passed   open_plan: terms, tracks, gates, adversarial
+plan_open.rs           13 passed   open_plan: terms, gates, adversarial
 plan_pay.rs            13 passed   pay_installment: settle, replay, tiers, rollback
-plan_recovery.rs       14 passed   crank_mark_late + keeper_register_recovery
+plan_recovery.rs       15 passed   crank_mark_late + keeper_register_recovery
 --------------------------------------
-TOTAL                 137 passed / 0 failed / 0 ignored   (~21 s in-process)
+TOTAL                 139 passed / 0 failed / 0 ignored   (in-process)
 + cargo test -p cuotas --lib: 36/36 host unit tests pass (exact-divisibility,
   inflation rejection, gain conservation, orphan/wipe handling, config
   validation incl. notice-day ordering, plan schedule math)
 ```
 
-All 16 instruction builders in `ix.rs` match `target/idl/cuotas.json`
-account-by-account (names, order, writable/signer flags): no ABI drift.
+The Anchor CLI is unavailable here, so an updated IDL was not generated or
+compared in this ticket; client generation remains with ticket 04.
 
 ## Credit lifecycle — real instructions, no fixtures
 
@@ -80,6 +76,11 @@ price 1000 USDC → down payment 300 USDC, financed 700 USDC, merchant fee
 `spec.rs` floor-division math and matched field-by-field on the decoded
 `Plan`, plus `PlanOpened` event payload.
 
+The six-installment quote is also asserted exactly: 700 USDC financed plus
+21 USDC interest produces 721 USDC due across six installments, with the last
+installment absorbing the rounding remainder. Its guarantor coverage must be
+at least 721 USDC.
+
 **Conservation + invariant** are asserted at every step: exact token deltas
 across student/merchant/keeper/LP/vault/treasury ATAs, and
 `vault + outstanding_credit == junior_capital + senior_capital`
@@ -88,10 +89,11 @@ pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
 
 ### Coverage highlights
 
-- **open_plan**: guaranteed vs unguaranteed track selection, S0/S1 clamps
-  (incl. tier-3 reputation clamped to S1 without a guarantee), guarantor
-  `max_purchase`/`coverage_max` binding, revoked/hidden guarantee fallback,
-  `InvalidPrice`/`PriceExceedsTierMax`/`PriceExceedsGuarantorMax`/
+- **open_plan**: active guarantee required, 3/6 option lookup and per-option
+  minimum, six-payment exact sum and due schedule, full principal-plus-interest
+  guarantee coverage, guarantor `max_purchase`/`coverage_max` binding, revoked
+  or hidden guarantee rejection, `GuarantorRequired`/`BelowOptionMin`/
+  `OptionUnavailable`/`PriceExceedsTierMax`/`PriceExceedsGuarantorMax`/
   `InsufficientGuaranteeCoverage`/`BlockedFromNewPlans`/
   `InvalidReputationTier`/`MerchantInactive`, one-open-plan-per-student
   (PDA `init` occupied → rejected), all 16 account slots corrupted
@@ -105,8 +107,7 @@ pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
   (`StaleInstallmentIndex`, `StalePlan`), duplicate-payment rejection
   (`InstallmentAlreadyResolved`), pay on a closed plan, guarantor-charged
   plan still payable but never counts, under-100-financed plans settle but
-  don't count, guaranteed ladder 0→1→2→3 capped, unguaranteed completion
-  caps at S1, student-balance rollback, account-integrity matrix,
+  don't count, guaranteed ladder 0→1→2→3 capped, student-balance rollback, account-integrity matrix,
   cross-student redirection.
 - **crank_mark_late**: permissionless caller, day-5 (grace) vs day-6
   boundary via clock warps, `MarkTooEarly`, `AlreadyMarkedLate`
@@ -117,7 +118,7 @@ pay/late-pay/recovery lifecycle (`token_conservation_across_mixed_lifecycle`).
   installments accelerated before their own grace period, receipt-hash
   replay/double-recovery rejected (`ReceiptAlreadyUsed`), zero hash
   rejected (`InvalidReceiptHash`), `RecoveryTooEarly`, `StaleInstallmentIndex`
-  on skipped indexes, `PlanNotGuaranteed` on unguaranteed plans, keeper-only
+  on skipped indexes, defensive `PlanNotGuaranteed` guard, keeper-only
   authority, account-integrity matrix, keeper-insufficient-balance full
   rollback, `late_count > 0` blocks new plans forever (derived gate — no
   Reputation layout change), works under Halted/WithdrawsOnly.
@@ -134,10 +135,10 @@ value on `Plan.generation`; `pay_installment` takes a third arg
 pins the new behavior: the stale A-quote `(index 0, opened_at_A, gen_A)`
 fails `StalePlan` while the honest B-quote `(0, opened_at_A, gen_B)` pays.
 
-Account growth: `Reputation` 26→34 bytes, `Plan` 309→317 bytes (8-byte
+Account growth: `Reputation` 26→34 bytes, `Plan` 317→494 bytes (8-byte
 discriminator included). Safe on devnet because no Reputation/Plan
-accounts exist there — the deployed artifact predates the credit
-lifecycle and no protocol state was ever initialized.
+accounts exist there — the deployed artifact predates these local changes and
+no protocol state was ever initialized.
 
 ## Regressions — all resolved on this source
 

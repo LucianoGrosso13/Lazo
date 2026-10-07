@@ -4,7 +4,7 @@
 
 **Blocked by:** —
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `programa/programs/cuotas/src/**`, `programa/tests/**`, `programa/README.md` (§ Tests si cambian comandos), `programa/TEST_REPORT.md`. **No** tocar `app/` (el cliente lo regenera el 04).
 
@@ -15,8 +15,8 @@ Notas:
 - **Nunca `anchor test` ni `anchor deploy`.** Solo los comandos LiteSVM de `README.md`.
 - Revisá `SECURITY_REVIEW.md`: los invariantes de cuotas deben seguir valiendo con n = 6 (suma exacta, sin overflow, sin slots fantasma pagables).
 
-- [ ] Config con `plan_options`, sin `unguaranteed_tiers`
-- [ ] 6 cuotas: 1.000 / tier 0 → interés 21, seis cuotas que suman 721 exacto, vencimientos cada `installment_interval_days`
-- [ ] Sin garantía activa → `GuarantorRequired`; precio < mínimo → `BelowOptionMin`; cobertura < financiado + interés → `InsufficientGuaranteeCoverage`
-- [ ] `pay_installment`, `crank_mark_late`, cobro al fiador y recovery funcionan con 6 cuotas (tests nuevos)
-- [ ] Suite existente adaptada y en verde; `TEST_REPORT.md` actualizado
+- [x] Config con `plan_options`, sin `unguaranteed_tiers`
+- [x] 6 cuotas: 1.000 / tier 0 → interés 21, seis cuotas que suman 721 exacto, vencimientos cada `installment_interval_days`
+- [x] Sin garantía activa → `GuarantorRequired`; precio < mínimo → `BelowOptionMin`; cobertura < financiado + interés → `InsufficientGuaranteeCoverage`
+- [x] `pay_installment`, `crank_mark_late`, cobro al fiador y recovery funcionan con 6 cuotas (tests nuevos)
+- [x] Suite existente adaptada y en verde; `TEST_REPORT.md` actualizado

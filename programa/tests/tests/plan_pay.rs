@@ -4,7 +4,8 @@
 
 use cuotas::{CuotasError, InstallmentPaid, PlanSettled, ProtocolState};
 use cuotas_tests::credit::{
-    credit_env, credit_env_guaranteed, open, open_pc1000, pay, pay_with, warp_to,
+    credit_env_guaranteed, open, open_installments, open_pc1000, pay, pay_with,
+    warp_to,
 };
 use cuotas_tests::env::{pk, Env, USDC};
 use cuotas_tests::err::{
@@ -164,7 +165,7 @@ fn pay_rejects_stale_duplicate_and_bad_index() {
     expect_cuotas_err(&out, CuotasError::StalePlan, "wrong generation");
     // nothing moved
     let plan = env.plan(&w.student).unwrap();
-    assert!(!plan.installments.iter().any(|i| i.resolved()));
+    assert!(!plan.active_installments().iter().any(|i| i.resolved()));
 
     // happy path, then replay: the same approval must NOT pay the next one
     pay(&mut env, &student, 0).expect_ok("pay0");
@@ -210,7 +211,7 @@ fn same_second_reopen_rejects_stale_quote() {
     let out = pay_with(&mut env, &student, 0, opened_a, gen_a);
     expect_cuotas_err(&out, CuotasError::StalePlan, "stale generation on reopened PDA");
     assert!(
-        !env.plan(&w.student).unwrap().installments.iter().any(|i| i.resolved()),
+        !env.plan(&w.student).unwrap().active_installments().iter().any(|i| i.resolved()),
         "stale replay moved nothing"
     );
 
@@ -272,7 +273,7 @@ fn pay_allowed_in_halted_and_withdraws_only() {
 /// captured for the OLD plan cannot pay the new one (StalePlan).
 #[test]
 fn settle_frees_pda_reopen_works_and_stale_quotes_die() {
-    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_500 * USDC, 800 * USDC);
+    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_500 * USDC, 1_100 * USDC);
     let student = env.actors.alice.insecure_clone();
     let (_q, plan1) = open_pc1000(&mut env, &w);
     let opened1 = plan1.opened_at;
@@ -300,11 +301,12 @@ fn settle_frees_pda_reopen_works_and_stale_quotes_die() {
 /// but never counts toward plans_completed or the tier.
 #[test]
 fn under_minimum_plan_settles_but_never_tiers_up() {
-    let (mut env, w) = credit_env(10_000 * USDC, 500 * USDC);
+    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 500 * USDC, 1_000 * USDC, 800 * USDC);
     let student = env.actors.alice.insecure_clone();
-    open(&mut env, &w, 150 * USDC).expect_ok("open S0 150");
+    // Price 100 at tier 0 guaranteed: down 30, financed 70 < min 100
+    open(&mut env, &w, 100 * USDC).expect_ok("open guaranteed 100");
     let plan = env.plan(&w.student).unwrap();
-    assert!(!plan.counts, "financed 75 < 100 minimum");
+    assert!(!plan.counts, "financed 70 < 100 minimum");
 
     for i in 0..3 {
         let out = pay(&mut env, &student, i);
@@ -326,7 +328,7 @@ fn under_minimum_plan_settles_but_never_tiers_up() {
 /// at 3: a fourth completed plan increments plans_completed but not the tier.
 #[test]
 fn guaranteed_ladder_tiers_up_and_caps_at_3() {
-    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_500 * USDC, 800 * USDC);
+    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_500 * USDC, 1_100 * USDC);
     let student = env.actors.alice.insecure_clone();
 
     for round in 0..4u8 {
@@ -345,45 +347,51 @@ fn guaranteed_ladder_tiers_up_and_caps_at_3() {
     assert_eq!(env.reputation(&w.student).tier, 3, "cap holds at tier 3");
 }
 
-/// Unguaranteed plans cap the tier at S1: an S1-tier student with a revoked
-/// guarantee completes a counting unguaranteed plan — it books
-/// plans_completed but cannot push past the unguaranteed ceiling.
+/// Full happy path for 6 cuotas: 6 on-time payments settle the plan, close the
+/// PDA, bump tier 0->1, and preserve exact token conservation.
 #[test]
-fn unguaranteed_completion_counts_but_tier_caps_at_s1() {
-    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 5_000 * USDC, 1_500 * USDC, 800 * USDC);
+fn pay_all_6cuotas_on_time_settles_closes_and_tiers_up() {
+    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 2_000 * USDC, 1_000 * USDC, 800 * USDC);
     let student = env.actors.alice.insecure_clone();
-    let keeper = env.actors.keeper.insecure_clone();
+    let q = spec::spec_quote_guaranteed_options(PC_PRICE, 0, 6);
+    let vault_before_open = env.token_balance(&env.protocol().vault);
 
-    // earn tier 1 on the guaranteed track first
-    open(&mut env, &w, PC_PRICE).expect_ok("plan1");
-    for i in 0..3 {
-        pay(&mut env, &student, i).expect_ok("settle plan1");
+    open_installments(&mut env, &w, PC_PRICE, 6).expect_ok("open 6 cuotas");
+    let plan = env.plan(&w.student).expect("plan exists");
+    assert_eq!(plan.installment_count, 6);
+
+    for i in 0..5u8 {
+        pay_and_assert(&mut env, &w, i, 0);
     }
-    assert_eq!(env.reputation(&w.student).tier, 1);
-    env.warp_secs(1);
 
-    // guarantor pulls out -> unguaranteed track; S1 caps at 300 / 30% down
-    let i = ix::keeper_revoke_guarantee(&keeper.pubkey(), &w.student);
-    env.send(&[i], &keeper, &[]).expect_ok("revoke");
-    open(&mut env, &w, 200 * USDC).expect_ok("open unguaranteed S1");
-    let plan = env.plan(&w.student).unwrap();
-    assert!(!plan.with_guarantee);
-    assert!(plan.counts, "financed 140 >= min counts");
-    assert_eq!(plan.down_payment, 60 * USDC, "S1 terms: 30% down");
+    let out = pay(&mut env, &student, 5);
+    let meta = out.expect_ok("final pay installment 5");
+    let settled = events::emitted_one::<PlanSettled>(meta);
+    assert!(settled.counts);
+    assert_eq!(settled.new_tier, 1);
+    assert_eq!(settled.plans_completed, 1);
 
-    for i in 0..3 {
-        let out = pay(&mut env, &student, i);
-        let meta = out.expect_ok("pay");
-        if i == 2 {
-            let settled = events::emitted_one::<PlanSettled>(meta);
-            assert!(settled.counts);
-            assert_eq!(settled.plans_completed, 2);
-            assert_eq!(settled.new_tier, 1, "unguaranteed cap: tier stays at S1");
-        }
-    }
+    // Plan PDA closed
+    assert!(env.plan(&w.student).is_none());
+    assert!(!env.program_account_live(&w.plan_pda), "plan account closed");
+
     let rep = env.reputation(&w.student);
-    assert_eq!(rep.tier, 1);
-    assert_eq!(rep.plans_completed, 2);
+    assert_eq!(rep.tier, 1, "tier up on counting 6-cuotas settlement");
+    assert_eq!(rep.plans_completed, 1);
+    assert_eq!(rep.active_exposure, 0);
+
+    // End-to-end token conservation:
+    // Student paid down (300) + 6 installments (721) = 1_021 USDC.
+    assert_eq!(env.token_balance(&w.student_ata), 2_000 * USDC - (PC_PRICE + q.interest));
+    // Merchant got down (300) + advance (651) = 951 USDC.
+    assert_eq!(env.token_balance(&w.settlement_ata), q.merchant_total);
+    // Vault netted fee (49) + interest (21) = 70 USDC over the whole cycle.
+    assert_eq!(env.token_balance(&env.protocol().vault), vault_before_open + q.fee + q.interest);
+
+    let pool = env.pool();
+    assert_eq!(pool.outstanding_credit, 0);
+    assert_eq!(pool.junior_capital, 10_000 * USDC + q.fee + q.interest);
+    assert_eq!(env.accounting_delta(), 0);
 }
 
 /// Every account slot in pay_installment is bound: wrong mint/ATA/PDAs fail,
@@ -461,7 +469,7 @@ fn pay_rejects_corrupted_accounts_and_wrong_signer() {
 
     // nothing moved
     let plan = env.plan(&w.student).unwrap();
-    assert!(!plan.installments.iter().any(|i| i.resolved()));
+    assert!(!plan.active_installments().iter().any(|i| i.resolved()));
     assert_eq!(env.accounting_delta(), 0);
 }
 

@@ -38,12 +38,12 @@ fn init_stores_spec_config() {
         assert_eq!(t.guarantor_coverage_bps, cov, "tier {i} coverage");
         assert_eq!(t.max_purchase, max, "tier {i} max_purchase");
     }
-    for (i, t) in c.unguaranteed_tiers.iter().enumerate() {
-        let (dp, int, cov, max) = spec::UNGUARANTEED_TIERS[i];
-        assert_eq!(t.down_payment_bps, dp, "S{i} down_payment_bps");
-        assert_eq!(t.interest_bps, int);
-        assert_eq!(t.guarantor_coverage_bps, cov);
-        assert_eq!(t.max_purchase, max);
+    for (i, opt) in c.plan_options.iter().enumerate() {
+        let expected = spec::PLAN_OPTIONS[i];
+        assert_eq!(opt.installments, expected.installments, "plan_option {i} installments");
+        assert_eq!(opt.interest_total_bps, expected.interest_total_bps, "plan_option {i} interest_total_bps");
+        assert_eq!(opt.min_price, expected.min_price, "plan_option {i} min_price");
+        assert_eq!(opt.enabled, expected.enabled, "plan_option {i} enabled");
     }
 }
 
@@ -234,9 +234,15 @@ fn init_validates_params() {
         Box::new(|p| p.treasury = solana_pubkey::Pubkey::default()),
         Box::new(|p| p.guaranteed_tiers[0].down_payment_bps = 10_001),
         Box::new(|p| p.guaranteed_tiers[1].guarantor_coverage_bps = 10_001),
-        Box::new(|p| p.unguaranteed_tiers[0].interest_bps = 10_001),
+        Box::new(|p| p.plan_options[1].interest_total_bps = 1_001),
         Box::new(|p| p.guaranteed_tiers[3].max_purchase = 0),
-        Box::new(|p| p.unguaranteed_tiers[1].max_purchase = 0),
+        Box::new(|p| p.plan_options[0].installments = 0),
+        Box::new(|p| p.plan_options[0].installments = 7),
+        Box::new(|p| p.plan_options[0].installments = 6), // missing 3 cuotas
+        Box::new(|p| p.plan_options[1].installments = 4),
+        Box::new(|p| p.plan_options[1].installments = 3), // duplicate option
+        Box::new(|p| p.plan_options[0].enabled = false), // 3 cuota base disabled
+        Box::new(|p| p.guaranteed_tiers[2].guarantor_coverage_bps = 9_999),
     ];
     for (n, mutate) in mutants.into_iter().enumerate() {
         let mut env = Env::new();

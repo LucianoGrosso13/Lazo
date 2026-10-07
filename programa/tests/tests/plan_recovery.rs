@@ -8,7 +8,7 @@ use cuotas::{
     CuotasError, InstallmentMarkedLate, PlanSettled, ProtocolState, RecoveryRegistered,
 };
 use cuotas_tests::credit::{
-    credit_env, credit_env_guaranteed, crank, fund_keeper, new_student, open, open_as,
+    credit_env_guaranteed, crank, fund_keeper, new_student, open, open_as,
     open_pc1000, pay, recover, warp_to, CreditWorld,
 };
 use cuotas_tests::env::{pk, Env, USDC};
@@ -364,17 +364,96 @@ fn recovery_downgrades_one_tier_step() {
 /// legitimately past the charge day.
 #[test]
 fn recovery_rejects_unguaranteed_plans() {
-    let (mut env, w) = credit_env(10_000 * USDC, 500 * USDC);
-    fund_keeper(&mut env, 10_000 * USDC);
-    open(&mut env, &w, 150 * USDC).expect_ok("open unguaranteed");
+    let (mut env, w) = late_world();
     let plan = env.plan(&w.student).unwrap();
     warp_to(&mut env, plan.installments[0].due_at + 30 * spec::SECONDS_PER_DAY as i64);
+
+    env.edit_plan(&w.student, |p| p.with_guarantee = false);
 
     let keeper = keeper_kp(&env);
     let out = recover(&mut env, &keeper, &w.student, 0, R1);
     expect_cuotas_err(&out, CuotasError::PlanNotGuaranteed, "no charge without fiador");
     assert!(!env.plan(&w.student).unwrap().installments[0].resolved());
     assert_eq!(env.reputation(&w.student).late_count, 0);
+}
+
+/// Acceptance for 6-cuotas recovery:
+/// - Installment 0 is cranked at day 6 (due0 + 360 s) with 5% penalty
+/// - Installment 0 is recovered by keeper at day 15 (due0 + 900 s)
+/// - Installment 1 at day 15 (due1 + 900 s) triggers second recovery: ACCELERATES all remaining installments (1..6)
+/// - Only installment 1 gets penalty; undue installments 2..6 have 0 penalty
+/// - Plan settles, closes PDA, late_count = 2, accounting invariant holds.
+#[test]
+fn recovery_6cuotas_first_charge_and_second_accelerates_remaining() {
+    let (mut env, w) = credit_env_guaranteed(10_000 * USDC, 2_000 * USDC, 1_000 * USDC, 800 * USDC);
+    fund_keeper(&mut env, 10_000 * USDC);
+    let keeper = keeper_kp(&env);
+    let keeper_ata = spl::ata(&keeper.pubkey(), &env.usdc_mint, &spl::TOKEN_PROGRAM_ID);
+    let attacker = env.actors.attacker.insecure_clone();
+
+    cuotas_tests::credit::open_installments(&mut env, &w, PC_PRICE, 6).expect_ok("open 6 cuotas");
+    let plan0 = env.plan(&w.student).unwrap();
+    assert_eq!(plan0.installment_count, 6);
+    let due0 = plan0.installments[0].due_at;
+    let due1 = plan0.installments[1].due_at;
+    let p0 = spec::spec_penalty(plan0.installments[0].amount);
+    let p1 = spec::spec_penalty(plan0.installments[1].amount);
+
+    // Day 6 of installment 0: crank mark late
+    warp_to(&mut env, due0 + 360);
+    let out = crank(&mut env, &attacker, &w.student, 0);
+    let meta = out.expect_ok("crank 6-cuotas inst0");
+    let ev = events::emitted_one::<InstallmentMarkedLate>(meta);
+    assert_eq!(ev.index, 0);
+    assert_eq!(ev.penalty, p0);
+
+    // Day 15 of installment 0: keeper first recovery (charges only inst 0)
+    warp_to(&mut env, due0 + 900);
+    let v0 = env.token_balance(&env.protocol().vault);
+    let k0 = env.token_balance(&keeper_ata);
+    let a0 = plan0.installments[0].amount;
+
+    let out = recover(&mut env, &keeper, &w.student, 0, R1);
+    let meta = out.expect_ok("first recovery 6 cuotas");
+    let ev = events::emitted_one::<RecoveryRegistered>(meta);
+    assert_eq!(ev.charged_indexes, vec![0u8]);
+    assert_eq!(ev.principal, a0);
+    assert_eq!(ev.penalties, p0);
+    assert!(!ev.accelerated);
+    assert_eq!(ev.late_count, 1);
+
+    assert_eq!(env.token_balance(&env.protocol().vault), v0 + a0 + p0);
+    assert_eq!(env.token_balance(&keeper_ata), k0 - (a0 + p0));
+    assert_eq!(env.accounting_delta(), 0);
+
+    // Day 15 of installment 1: keeper second recovery -> ACCELERATES!
+    // Remaining installments are 1, 2, 3, 4, 5.
+    warp_to(&mut env, due1 + 900);
+    let v1 = env.token_balance(&env.protocol().vault);
+    let k1 = env.token_balance(&keeper_ata);
+    let remaining_principal: u64 = plan0.installments[1..6].iter().map(|i| i.amount).sum();
+
+    let out = recover(&mut env, &keeper, &w.student, 1, R2);
+    let meta = out.expect_ok("second recovery accelerates remaining 5 installments");
+    let ev = events::emitted_one::<RecoveryRegistered>(meta);
+    assert!(ev.accelerated);
+    assert_eq!(ev.charged_indexes, vec![1u8, 2u8, 3u8, 4u8, 5u8]);
+    assert_eq!(ev.principal, remaining_principal);
+    // Only inst1 gets penalty, future 2..6 have NO penalty!
+    assert_eq!(ev.penalties, p1);
+    assert_eq!(ev.late_count, 2);
+
+    let total2 = remaining_principal + p1;
+    assert_eq!(env.token_balance(&env.protocol().vault), v1 + total2);
+    assert_eq!(env.token_balance(&keeper_ata), k1 - total2);
+
+    // Plan is completely resolved and closed!
+    assert!(env.plan(&w.student).is_none(), "plan closed after accelerated recovery");
+    let rep = env.reputation(&w.student);
+    assert_eq!(rep.active_exposure, 0);
+    assert_eq!(rep.late_count, 2);
+    assert_eq!(env.pool().outstanding_credit, 0);
+    assert_eq!(env.accounting_delta(), 0);
 }
 
 /// Keeper-only authority and account integrity for the recovery path.
@@ -459,7 +538,7 @@ fn recovery_rejects_wrong_role_and_corrupted_accounts() {
 
     // absolutely nothing was booked by any of the above
     let plan = env.plan(&w.student).unwrap();
-    assert!(!plan.installments.iter().any(|i| i.resolved()));
+    assert!(!plan.active_installments().iter().any(|i| i.resolved()));
     assert_eq!(env.reputation(&w.student).late_count, 0);
     assert_eq!(env.accounting_delta(), 0);
 }
