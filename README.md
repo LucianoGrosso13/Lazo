@@ -4,7 +4,7 @@
 
 Lazo uses Solana to make installment purchases clear, verifiable, and useful
 in everyday commerce. A buyer sees the payment schedule and costs before
-confirming. The merchant gets paid right away, while the buyer's payments build
+confirming. The base three-installment flow advances funds immediately, while the buyer's payments build
 an onchain record that can unlock better terms over time.
 
 When a purchase needs a guarantor, a family member or another trusted person
@@ -16,8 +16,32 @@ payments, reputation progress, and a verifiable reference to the guarantee.
 Lazo was made to turn crypto into practical payment infrastructure: stablecoin
 settlement, transparent records, and programmable payment plans. The merchant
 receives the buyer's initial payment and the pool's advance immediately, less
-a 7% fee on the financed amount. Each completed plan helps build a portable
+a 7% fee on the financed amount in that base flow. Each completed plan helps build a portable
 reputation on Solana.
+
+## Product decisions — October 7, 2026
+
+The updated product specification offers one or three installments without buyer
+interest, and six with a moderate interest charge whose rate is still undecided.
+Merchants will choose a settlement schedule and its associated fee. The 7% of
+financed principal remains the reference for immediate settlement in the base
+three-installment flow; other prices, settlement dates and the capital/operator
+revenue split need validation. Guaranteed plans retain 100% principal coverage at
+every reputation tier. The contractual cap for interest and penalties is pending;
+100% coverage does not imply successful recovery from a card.
+
+**These are documented decisions, not shipped capabilities.** The existing demo
+still uses the browser mock by default. One/six installments, selectable merchant
+settlement and the new coverage policy require configuration, program, client,
+keeper and UI alignment before they can be demonstrated as working. New partner
+integrations and retail distribution are research proposals. No wallet partnership
+or new commercial traction has been obtained in this documentation update.
+
+Planning documents (internal, Spanish):
+[`commercial decisions`](proyecto/06-decisiones-comerciales.md),
+[`distribution and wallet alliances`](proyecto/07-go-to-market-y-alianzas.md),
+[`retail economics and validation`](proyecto/08-minorista-y-economia.md), and
+[`pitch and demo preparation`](proyecto/05-pitch.md).
 
 Built at the Colosseum Crypto World's Fair — Superteam Argentina track.
 

@@ -1,5 +1,7 @@
 # 03 - MVP: "Cuotas sin tarjeta, con fiador"
 
+> **Vigente 2026-10-07:** leer `06-decisiones-comerciales.md`. Se mantienen 3 cuotas como recorrido de referencia para terminar la demo; el producto incorpora 1/3 sin interés y 6 con interés, liquidación elegible por el comercio y fiador 100% en todos los escalones. Esas ampliaciones aún no están implementadas. El guion de abajo es objetivo de construcción, no evidencia de funcionamiento real.
+
 Sesión del 2026-10-03. Skill: `/solana-tuc-mvp`. Borrador armado de corrido a pedido del equipo ("hagamos todo ya o por lo menos planeemos"). Cada sección está marcada con lo que falta confirmar.
 
 **Veredicto heredado:** angostar a la cuña + clon consciente. La demo **tiene que mostrar la cuña**: un fiador con tarjeta que solo paga si el estudiante no paga, una escalera que mejora las condiciones y un pool auditable onchain. Si el video muestra solo "comprar en cuotas", se ve igual que Mercado Pago o Yumi y no suma.
@@ -12,13 +14,13 @@ Cada pantalla clave muestra uno de estos tres beneficios con números, siempre a
 
 | Para quién | Beneficio | Número a mostrar | Dónde se ve |
 |---|---|---|---|
-| **Estudiante** | 3 cuotas **sin interés**, sin tarjeta propia y sin usar el límite del familiar. Cada plan pagado baja el anticipo y sube el tope | PC de US$1.000: paga 1.000 en total (300 + 3 × 233,33) contra ~1.290 reales en MP (CFTEA 61-388%). Muestra cuánto baja el anticipo en el escalón siguiente | Checkout y panel del estudiante |
-| **Comercio** | Cobra **al instante** y vende a clientes sin tarjeta, sin riesgo de mora (el riesgo es del pool) | Costo: 7% de lo financiado = **4,9% del precio** en el escalón 0, contra 5,41% de Cuota Simple y ~12,49% de MP por 3 cuotas sin interés. GOcuotas paga a 22 días hábiles | Panel del comercio |
-| **Pool / inversor** | Rendimiento en USD respaldado por fiadores, con tramos, y **cada préstamo, pago y recupero es verificable onchain** | Rendimiento esperado del tramo senior ~8% (Kamino ~6%, Jupiter ~5%). El junior absorbe la primera pérdida. Mora de equilibrio ~44% en el escalón 0 | Panel del pool |
+| **Estudiante** | 1 y 3 cuotas sin interés; 6 con interés moderado, tasa pendiente. Sin tarjeta propia; el respaldo no prepaga la compra y un eventual cargo sí puede consumir límite del fiador. Cada plan pagado baja el anticipo y sube el tope | Caso base ilustrativo de 3 cuotas: PC de 1.000 devUSDC, total 1.000 (anticipo 300 + cuotas sobre 700, ajustando redondeo final). Comparaciones de terceros pendientes de recotizar. Muestra cuánto baja el anticipo en el escalón siguiente | Checkout y panel del estudiante |
+| **Comercio** | Elige plazo de cobro y costo, y vende a compradores sin tarjeta. Caso base: adelanto al instante; asignación del riesgo en cobro diferido pendiente | Referencia inmediato/3 cuotas: 7% de lo financiado = 4,9% del precio en escalón 0. Otras tarifas y fechas pendientes; sin afirmar ahorro frente a comparaciones no recotizadas | Panel del comercio |
+| **Pool / inversor** | Trazabilidad del capital y pérdidas en tramos; objetivo: cada préstamo, pago y recupero verificable onchain | Tesorería y wallets de prueba; junior absorbe primera pérdida. Rendimiento y mora de equilibrio requieren recalcular costos, split y recupero; no prometer APY | Panel del pool |
 
 ## Usuario, momento wow y guion de demo
 
-**Usuario:** Luciano, estudiante de la UNT. Quiere una PC de US$1.000 en 3 cuotas, no tiene tarjeta propia, y en Mercado Pago le cobran un CFTEA de 61% a 388%. Su mamá tiene tarjeta de crédito, pero no quiere prestarla para cada compra.
+**Usuario de ejemplo:** Luciano, estudiante de la UNT, quiere una PC de 1.000 en 3 cuotas sin tarjeta propia. Un garante con tarjeta respalda el plan. Validar también compras minoristas recurrentes; el caso de PC no prueba demanda en todos los rubros.
 
 **Momento wow:** **el estudiante no paga una cuota y, sin que nadie haga nada, se le cobra la tarjeta al fiador. El pool registra el recupero onchain con el comprobante, y el comercio ya había cobrado todo el primer día.** Es la cuña en 20 segundos: crédito sin tarjeta propia, respaldado por la familia, auditable.
 
@@ -33,7 +35,7 @@ Cada pantalla clave muestra uno de estos tres beneficios con números, siempre a
 
 ## Tipo de producto y flujo central
 
-**Tipo:** pagos y cobros (pago en USDC con registro onchain), con crédito arriba. Wow de la fila: "llega al instante, sin intermediario". El nuestro suma que el riesgo lo respalda el fiador.
+**Tipo:** medio de pago con financiación y respaldo. Hay intermediarios para tarjeta, identidad y conversión; el registro del plan y los movimientos del pool se proyectan verificables en Solana.
 
 **Flujo central (una persona, un recorrido):**
 1. Checkout en la tienda → "Pagar en 3 cuotas" → conecta Phantom (devnet).
@@ -64,26 +66,27 @@ Cada pantalla clave muestra uno de estos tres beneficios con números, siempre a
 5. Cameo de Tiendanube con medio de pago personalizado.
 6. KYC del estudiante con Didit.
 
-**No entra (no se discute de nuevo):** tramo sin fiador en la UI (queda solo en la config); varios planes por estudiante; avaladores por cohorte; cuotas fijas en pesos; off-ramp a pesos del comercio; app oficial de Tiendanube o plugin de WooCommerce; firma digital certificada; disputas de contracargo; LP tokens componibles o yield en Kamino; mainnet.
+**No entra (no se discute de nuevo):** tramo sin fiador en la UI (queda solo en la config); varios planes por estudiante en el programa (el mock sí permite margen compartido, ver nota técnica en 05); avaladores por cohorte; cuotas fijas en pesos; off-ramp a pesos del comercio; app oficial de Tiendanube o plugin de WooCommerce; firma digital certificada; disputas de contracargo; LP tokens componibles o yield en Kamino; mainnet.
 
 ✔ 3/6
 
-## Real vs. simulado
+## Real vs. simulado — estado documentado, sin nueva prueba técnica
 
-| Parte | Estado | Cómo se declara |
+La última comprobación técnica está en `handoff-demo-devnet.md` (6/10). Esta actualización sólo verifica documentos; no reejecuta compras ni pruebas del programa.
+
+| Parte | Estado registrado | Qué declarar en el video |
 |---|---|---|
-| Programa, pool, plan, cuotas, reputación | **Real** (devnet) | "Corre en devnet" |
-| USDC | **Simulado**: mint propio devUSDC | "USDC de prueba en devnet" |
-| Pago del anticipo y de las cuotas con Phantom | **Real** (devnet) | — |
-| El comercio cobra al instante | **Real** (ATA del comercio, se ve en Explorer) | — |
-| KYC del fiador con Didit | **Real** (free tier) | — |
-| Fianza | **Real como click-wrap** + PDF + hash onchain. **Simulada** la firma digital certificada | "Firma digital certificada: roadmap" |
-| Tarjeta del fiador y cobro | **Real contra el sandbox de Mobbex** (tarjeta de prueba) | "Sandbox: en producción es el mismo rail que usa GOcuotas" |
-| Keeper (vencimientos y cobro al fiador) | **Real**, script del equipo | "Punto de confianza off-chain, auditado con el hash del comprobante" |
-| Paso del tiempo | **Simulado**: `seconds_per_day` configurable | "En la demo, un día dura segundos" |
-| Tienda | **Simulada**: tienda demo propia | "Botón de checkout integrable, roadmap Tiendanube/WooCommerce" |
-| Estudiante en escalón 3 | **Datos de ejemplo** | — |
-| Inversores senior | **Simulados**: wallets de prueba | "Nunca se ofrece al público argentino" |
+| Front por defecto | Mock en navegador | “Browser simulation; no blockchain transaction” |
+| Programa: núcleo y ciclo de crédito | Código y tests locales registrados; upgrade/init/fondeo devnet pendientes | No mostrar el ciclo como ejecutado en cadena sin una transacción observada |
+| Cliente real y Codama | Código disponible; falta e2e real tras upgrade | “Devnet integration pending end-to-end verification” |
+| devUSDC | Mint propio de prueba, sin valor | “Test tokens on Solana devnet” |
+| Comercio cobra 951, pago y recupero | Simulados en el recorrido mock actual | Sin hash ni link Explorer inventado |
+| Didit, Mobbex y keeper | Código disponible; credenciales y flujo real pendientes | Onboarding/cargo mock, o sandbox sólo cuando se observe realmente |
+| Fianza | Máximo contractual aún pendiente | Hash no sustituye consentimiento ni prueba cobro |
+| Tiempo, tienda y escalón avanzado | Datos y reloj de demo | Simulación y persona de ejemplo |
+| Pool e inversores | Tesorería/wallets de prueba | Sin fondeo ni rendimiento real |
+| 1/6 cuotas, plazo de cobro y fiador 100% | Nuevas decisiones documentadas | Roadmap hasta completar C1–C6 |
+| Alianzas y minorista | Investigación/plan | Sin acuerdos, ventas ni tracción nueva |
 
 ✔ 4/6
 

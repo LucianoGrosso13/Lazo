@@ -6,12 +6,14 @@ Para: el compañero de equipo (o el agente que use: Claude Code, Devin, etc.). E
 
 Hackathon Colosseum (track Superteam Argentina, sede Tucumán). La entrega es el **12/10/2026**, con producto funcional en **devnet** y video de 3 minutos, en inglés.
 
-**Qué hacemos:** cuotas en USDC para estudiantes sin tarjeta de crédito propia. Un **familiar con tarjeta de crédito firma como fiador**: solo se le cobra si el estudiante no paga, con un tope. El comercio cobra al instante. Cada plan pagado sube al estudiante de **escalón**: baja el anticipo, sube el tope, baja el interés y baja la exposición del fiador, que **nunca se libera del todo**. La reputación queda onchain, pero **solo el escalón y los contadores**, nunca el detalle de las compras.
+> **Actualización 2026-10-07:** este brief describe el núcleo histórico. Antes de modificar compra, configuración o garantía, leer `06-decisiones-comerciales.md` y las tareas C1–C6 de `04-plan.md`; las nuevas modalidades están documentadas, no implementadas.
+
+**Qué hacemos:** cuotas en USDC para estudiantes sin tarjeta de crédito propia. Un **familiar con tarjeta de crédito firma como fiador**: solo se le cobra si el estudiante no paga, con un tope. El comercio elige el plazo de cobro y su comisión asociada; el flujo histórico adelanta al instante. Cada plan pagado sube al estudiante de **escalón**: baja el anticipo y sube el tope. La cobertura del fiador es **100% en todos los escalones** y nunca se libera durante el plan. La reputación queda onchain, pero **solo el escalón y los contadores**, nunca el detalle de las compras.
 
 **Cómo se mueve la plata en un plan:**
 1. El estudiante compra por P. Paga el anticipo (P × anticipo%) directo al comercio.
 2. El pool adelanta el resto (A) al comercio, menos una comisión de 7% sobre A.
-3. El estudiante devuelve A **sin interés** en **3 cuotas mensuales fijas en USDC**. El costo lo paga el comercio con la comisión.
+3. El flujo base devuelve A sin interés en 3 cuotas mensuales. La nueva decisión permite 1/3 sin interés y 6 con interés moderado, aún sin tasa; su implementación requiere versionar términos y calendario. La comisión del comercio depende del plazo elegido; el 7% del punto anterior sigue como referencia del flujo inmediato de 3 cuotas.
 4. Si no paga, el backend (keeper) le cobra al fiador fuera de la cadena (tarjeta en el sandbox de Mobbex). Después deposita ese recupero en el pool con la instrucción `registrar_recupero` y deja el hash del comprobante.
 
 **Pool:** en el MVP es plata del equipo en devnet. Tiene **dos tramos**: el **junior**, que es del equipo y absorbe primero las pérdidas, y el **senior**, que fondean wallets de prueba. Nunca se ofrece a inversores reales.
@@ -22,14 +24,14 @@ La **tabla de escalones** ya está cerrada (ver abajo), pero **ningún número v
 
 ### Tabla de escalones (valores iniciales de la config)
 
-El interés es 0% en todos los escalones (decisión del 2026-10-03), pero `interest_bps` queda en la config por si cambia. Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón, y `guarantor_coverage_bps` × monto financiado ≤ `Guarantee.coverage_max`.
+Para el flujo base de 3 cuotas el interés es 0% en todos los escalones. La decisión del 7/10 requiere precio por modalidad (1/3/6) y plazo de cobro: un único `interest_bps` por escalón no alcanza. Los valores de 6 cuotas están pendientes; no cargarlos por inferencia. Se aplican dos condiciones a cada compra: precio ≤ `max_purchase` del escalón, y `guarantor_coverage_bps` × monto financiado ≤ `Guarantee.coverage_max`.
 
 | Escalón | `down_payment_bps` | `interest_bps` | `guarantor_coverage_bps` | `max_purchase` |
 |---|---|---|---|---|
 | Con fiador 0 | 3000 | 0 | 10000 | 1.000 USDC |
-| Con fiador 1 | 2000 | 0 | 9000 | 1.000 USDC |
-| Con fiador 2 | 1000 | 0 | 8000 | 1.250 USDC |
-| Con fiador 3 | 0 | 0 | 7000 | 1.500 USDC |
+| Con fiador 1 | 2000 | 0 | 10000 | 1.000 USDC |
+| Con fiador 2 | 1000 | 0 | 10000 | 1.250 USDC |
+| Con fiador 3 | 0 | 0 | 10000 | 1.500 USDC |
 | Sin fiador S0 | 5000 | 0 | 0 | 150 USDC |
 | Sin fiador S1 | 3000 | 0 | 0 | 300 USDC |
 

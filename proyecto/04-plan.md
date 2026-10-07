@@ -1,5 +1,7 @@
 # 04 - Plan de construcción
 
+> **Actualización comercial 2026-10-07:** documentación nueva aprobada en `06-decisiones-comerciales.md`; investigación de alianzas en `07-go-to-market-y-alianzas.md` y minorista en `08-minorista-y-economia.md`. El estado de código de abajo es previo: no certifica que 1/6 cuotas, liquidación elegible o cobertura 100% estén implementadas. La autorización de esta sesión es actualizar documentos e investigar.
+
 Sesión del 2026-10-03. Skill: `/solana-tuc-planificar`. Armado de corrido junto con `03-mvp.md`, a pedido del equipo. **Antes de escribir código del front, Luciano tiene que dar el OK.**
 
 L = Luciano (front + off-chain). C = compañero (programa Anchor). Las horas son **a confirmar**: el plan asume trabajo parcial de los dos entre el 3/10 y el 12/10.
@@ -146,3 +148,36 @@ Calendario (hora Argentina):
 - [ ] T3.4 UX
 - [ ] T3.5 Seguridad
 - [ ] TF.1-3 Entrega
+
+## Cambios comerciales — tareas chicas posteriores a esta documentación
+
+Orden: cerrar C1 → C2 → C3 → C4 → C5 → C6. C7/C8 pueden avanzar con entrevistas y pruebas devnet en paralelo, sin prometer funcionalidades pendientes. Una rama por tarea; toda regla sale de la configuración y se congela en el plan al aceptarlo.
+
+| ID | Responsable propuesto | Entregable | Listo cuando |
+|---|---|---|---|
+| C1 | Luciano + compañero | Definición de H/ideas 1,2,10,11, vencimiento de 1 cuota, tasa 6, tarifas/plazos, split y techo de fianza | Decisiones explícitas en 06; no inventar tasas ni correspondencias |
+| C2 | Compañero con revisión de Luciano | Contrato de configuración por modalidad/plazo, cobertura 100%, calendario y migración versionada | Caso base 3/7% sigue igual; 1/6 y liquidación diferida representables; términos de planes previos no cambian |
+| C3 | Compañero | Programa: cotización/apertura por opción, contabilidad de adelantos y obligaciones diferidas, interés y redondeos | Tests negativos de términos inválidos, límites de fianza y exposición; sumas exactas y devolución sin doble cobro |
+| C4 | Luciano | Cliente Codama y API única cuotas; mock y real con opciones iguales | Config/quote/openPlan reflejan mismos términos; divergencias de planes paralelos documentadas |
+| C5 | Luciano | Checkout 1/3/6 y cuenta comercio con plazo/neto/fecha; fiador con exposición 100% | Probado en pantalla: total, calendario, costo y máximo claros; opciones no disponibles bloqueadas; mock rotulado |
+| C6 | Ambos | Keeper y pruebas de compra, pagos, mora, recupero y devolución por modalidad | Nada registra ingreso sin evidencia; escenarios de cargo rechazado/contracargo y sin doble recupero; devnet e2e pendiente de aprobación por tx |
+| C7 | Luciano | Validación minorista y cuenta económica de 08 | Resultados con participantes reales, denominador, fecha y evidencia; margen bajo escenarios, no APY prometido |
+| C8 | Luciano | Paquete de alianza de 07 y preparación de acercamiento | Demo, ficha de responsabilidades, costos y propuesta listos; contactar requiere instrucción explícita |
+
+### Estado de esta tanda documental (2026-10-07)
+
+- Decisiones 1/3/6, liquidación por elección y cobertura 100% registradas; tasas y H/ideas numeradas pendientes.
+- Nuevos documentos de GTM/alianzas y minorista investigados con workers Orca GPT-6.1 Sol medium; no constituyen alianzas ni tracción.
+- Pitch separado en 2 minutos + demo de hasta 3, checklist oficial y consejos de From the chapter en 05.
+- No se modificó código financiero, no se hizo deploy, no se firmaron ni enviaron transacciones. El recorrido real sigue pendiente de los bloqueos en `handoff-demo-devnet.md`.
+
+### Evidencia de coordinación y revisión documental
+
+Run Orca `run_23d3db9ced4a`. Workers efectivos: GPT-6.1 Sol / medium, en este checkout con scopes exclusivos.
+
+| Tarea | Resultado aceptado | Evidencia | Limpieza |
+|---|---|---|---|
+| `task_4cb4e47ceb5d` / `ctx_37038c1767c0` | Alianzas/GTM documentados | `07-go-to-market-y-alianzas.md`, fuentes oficiales, límites de APIs y plan sin contacto externo | `worker-release`: released |
+| `task_08e3bfe4b1cd` / `ctx_3d39b1d8ce22` | Minorista y sensibilidad documentados | `08-minorista-y-economia.md`; coordinador reprodujo las cinco filas de ticket/plazo y sus días de capital | `worker-release`: released |
+
+Revisión: links locales Markdown sin destinos faltantes; `git diff --check` sin errores. Son controles documentales y aritméticos, no pruebas nuevas de la app o del programa. No quedan workers de este Run pendientes de limpieza.

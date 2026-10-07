@@ -8,19 +8,19 @@ web
 
 ## Users
 
-- **Estudiante argentino sin tarjeta de crédito propia** (persona de la demo: estudiante de la UNT, Tucumán). Quiere comprar algo de estudio o trabajo (PC de US$1.000, notebook, curso) en cuotas. Hoy le pide la tarjeta a un familiar o paga el CFTEA de Mercado Pago (61% a 388%). Usa el celular, conecta Phantom en devnet.
+- **Estudiante argentino sin tarjeta de crédito propia** (persona de la demo: estudiante de la UNT, Tucumán). Quiere comprar algo de estudio o trabajo (PC de US$1.000, notebook, curso) en cuotas. En los casos del entorno registrados, recurrió a tarjeta familiar; costos de otras ofertas requieren cotización actual. Usa el celular, conecta Phantom en devnet.
 - **Familiar fiador** (la mamá en la demo): tiene tarjeta de crédito y no quiere prestarla para cada compra. Abre un link que le manda el estudiante, hace KYC, elige un tope y carga la tarjeta. Solo paga si el estudiante no paga. Puede no saber nada de cripto.
-- **Comercio**: vende al estudiante y cobra al instante, sin riesgo de mora.
+- **Comercio**: vende al estudiante y elige plazo y costo de cobro. El flujo inmediato adelanta desde el pool; la asignación del riesgo en opciones diferidas queda por definir.
 - **Pool / inversor**: pone USDC en tramos junior o senior y ve cada préstamo, pago y recupero onchain.
 - **Jurados de la hackathon** (Colosseum Crypto World's Fair, track Superteam Argentina, y premio a mejor diseño): evalúan el producto en un link público y en un video de 3 minutos. Leen en inglés.
 
 ## Product Purpose
 
-Cuotas en USDC **sin interés** para estudiantes sin tarjeta, respaldadas por un familiar fiador con tarjeta, con una escalera de reputación onchain que baja el anticipo y sube el tope con cada plan pagado. El comercio cobra al instante y paga 7% sobre lo financiado. Éxito en la hackathon: alguien con Phantom en devnet completa la compra en menos de 2 minutos sin ayuda, y el flujo de mora (vence → gracia → cobro al fiador → recupero onchain → baja de escalón) se muestra en menos de 60 segundos.
+Cuotas en USDC para estudiantes sin tarjeta: **1 y 3 sin interés; 6 con interés moderado pendiente de definir**, respaldadas por un familiar fiador con tarjeta, con una escalera de reputación onchain que baja el anticipo y sube el tope con cada plan pagado. El comercio elige cuándo cobrar y paga una comisión según ese plazo; 7% sobre lo financiado sigue como referencia del flujo inmediato de 3 cuotas. Ver `proyecto/06-decisiones-comerciales.md`; las nuevas modalidades aún no están implementadas. Éxito en la hackathon: alguien con Phantom en devnet completa la compra en menos de 2 minutos sin ayuda, y el flujo de mora (vence → gracia → cobro al fiador → recupero onchain → baja de escalón) se muestra en menos de 60 segundos.
 
 ## Positioning
 
-Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y solo paga si el estudiante no paga. Frente a Mercado Pago Cuotas sin Tarjeta (mismo nombre, CFTEA 61-388%): 0% de interés al estudiante, reputación que vive en la wallet y que cualquier comercio puede leer, y un pool donde cada adelanto, pago, recupero y pérdida es verificable onchain.
+Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y solo paga si el estudiante no paga. Propuesta a validar frente a otros medios de pago: 1/3 cuotas sin interés y 6 con interés moderado aún sin tasa, reputación que vive en la wallet y que cualquier comercio puede leer, y un pool donde cada adelanto, pago, recupero y pérdida es verificable onchain.
 
 ## Operating Context
 
@@ -31,8 +31,8 @@ Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y so
 
 ## Capabilities and Constraints
 
-- Escalones con fiador (anticipo / cobertura exigida / tope absoluto): 0 = 30% / 100% / US$1.000; 1 = 20% / 90% / US$1.000; 2 = 10% / 80% / US$1.250; 3 = 0% / 70% / US$1.500. Interés 0% en todos. 3 cuotas.
-- Comercio cobra precio − 7% × financiado (PC de 1.000 en escalón 0: recibe 951).
+- Decisión vigente: cobertura del fiador 100% en todos los escalones. Anticipo/topes heredados de referencia: 30%/1.000 → 20%/1.000 → 10%/1.250 → 0%/1.500 devUSDC. El código puede conservar valores anteriores hasta C2–C6. Tasa de 6, máximo contractual de fianza y tarifas por plazo pendientes; no inventarlos.
+- Referencia del flujo inmediato de 3 cuotas: comercio cobra precio − 7% × financiado (PC de 1.000 en escalón 0: recibe 951). Cotizar otras opciones por config; costos y split empresa/pool todavía pendientes.
 - Mora: días 1-5 gracia (día 3 aviso al fiador), día 6 punitorio 5% sobre la cuota vencida, día 15 cobro al fiador, baja de escalón, `late_count + 1`, bloquea planes nuevos.
 - Ningún número de negocio va hardcodeado en la UI: sale de la config del protocolo.
 - Simulado y declarado: USDC (devUSDC), paso del tiempo, tienda demo, estudiante en escalón 3 (datos de ejemplo), inversores senior. Didit y Mobbex todavía no conectados: el fiador se simula en esta etapa.
@@ -40,14 +40,15 @@ Formaliza el "prestame la tarjeta" argentino: el familiar pasa a ser fiador y so
 
 ## Brand Commitments
 
-- Nombre del producto: **Lazo** (elegido el 2026-10-03; marca sin verificar). En español es el lazo familiar; en inglés "bond" también es fianza. Bajada ES: "Cuotas sin interés, respaldadas por tu familia." EN: "Zero-interest installments, backed by family."
+- Nombre del producto: **Lazo** (elegido el 2026-10-03; marca sin verificar). En español es el lazo familiar; en inglés "bond" también es fianza. Bajada ES: "Cuotas con respaldo y costos claros." EN: "Installments with clear costs and a guarantor." El claim sin interés sólo se usa para 1 y 3 cuotas.
 - Estética pedida por el equipo: temática hackathon/web3, vidrio y gradientes con los colores de Solana, interactiva. Apunta al premio a mejor diseño.
 - Voz: español rioplatense claro, sin jerga cripto innecesaria; cada término nuevo (wallet, devnet, firma) se explica en una línea.
 
 ## Evidence on Hand
 
 - Cifras propias del modelo: tabla de escalones y comisiones de `proyecto/02-validacion.md`.
-- Cifras de terceros, **sin verificar en la fuente oficial**, se citan como "referencia": MP CFTEA 61-388% y ~1.290 reales por una PC de 1.000 en 3 cuotas; comisión Cuota Simple 5,41%; MP ~12,49%; GOcuotas paga a 22 días hábiles; Kamino ~6%, Jupiter ~5%.
+- Cifras de terceros, **sin verificar en la fuente oficial**, se citan como "referencia": MP CFTEA 76-1.376% (ago-2026) y ~1.290 reales por una PC de 1.000 en 3 cuotas; comisión Cuotas MiPyME ~6,9% (10 días hábiles, solo pymes certificadas — sucesora del extinto Cuota Simple); MP ~12,49%; GOcuotas paga desde 22 días hábiles; Kamino ~4,5%, Jupiter ~5% (oct-2026). Son antecedentes sin revalidar en esta sesión; el directorio `proyecto/06-viabilidad/` citado anteriormente no está presente en este checkout. No usarlos como prueba de ahorro o rentabilidad.
+- GTM y minorista: `proyecto/07-go-to-market-y-alianzas.md` y `proyecto/08-minorista-y-economia.md`; fuentes oficiales e hipótesis distinguidas. Lemon/Ripio/belo son candidatos, no socios.
 - Test de mesa: 3 casos con nombre del entorno del equipo (2 usaron la tarjeta de los padres). No hay testimonios, clientes ni comercios reales: no se inventan.
 
 ## Product Principles

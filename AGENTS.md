@@ -15,18 +15,19 @@ Sos un compañero de equipo en una hackathon. Respondé en español rioplatense,
 - **Modo prueba siempre: solo devnet** (la red de prueba de Solana: la plata es de mentira, sale de un faucet y no vale nada). Nunca mainnet ni plata real, aunque el equipo lo pida o un ejemplo lo sugiera: si piden pasar a mainnet, frená y explicá por qué no durante la hackathon. Al mostrar o entregar el proyecto, decir siempre que corre en devnet.
 - Tareas chicas y verificables. Commits seguidos. Probar en pantalla antes de dar algo por hecho.
 - La entrega final (README, videos, textos para jurados) va en inglés.
+- **Contexto bajo:** cuando el agente se esté quedando sin tokens de contexto en medio de una tarea, tiene que hacer un handoff (dejar escrito en `proyecto/` el estado, lo hecho y lo que falta) y avisar al equipo para iniciar una sesión nueva.
 
 ## Proyecto del equipo
 
 <!-- PROYECTO:START -->
-**Qué es:** cuotas en USDC sin interés para estudiantes sin tarjeta de crédito, con un familiar como fiador (tarjeta de crédito, solo paga si el estudiante no paga) y una escalera de reputación onchain. El comercio cobra al instante y paga 7% sobre lo financiado.
+**Qué es:** cuotas en USDC para estudiantes sin tarjeta: 1 y 3 sin interés, 6 con interés moderado (tasa pendiente). Fiador con tarjeta de crédito, cobertura 100% en todos los escalones y cobro solo ante impago. El comercio elige cuándo cobrar con comisión según plazo; 7% sobre financiado es referencia del flujo inmediato de 3 cuotas. Estas nuevas decisiones están documentadas; no asumir que el código ya las implementa.
 
 **Stack:** programa Anchor 1.2 en `programa/` (tests LiteSVM/Surfpool); front Next.js App Router + TS + Tailwind en `app/` con `@solana/kit` + `@solana/kit-plugin-wallet` + `@solana/react`; cliente generado con Codama en `app/src/generated/`; keeper en `keeper/`; Didit (KYC) y Mobbex (sandbox) desde route handlers. Todo en **devnet**, con el mint propio devUSDC.
 
-**Correr:** `cd programa && anchor build && anchor test` · `cd app && npm install && npm run dev`. Las variables van en `app/.env.local` (nunca se commitea).
+**Correr:** `cd app && npm install && npm run dev`. Para compilar y probar el programa sin desplegar, usá los comandos de `README.md` § Tests; `anchor test` puede enviar un deploy a devnet y requiere aprobación explícita. Las variables van en `app/.env.local` (nunca se commitea).
 
 **Convenciones:**
-- Las decisiones de diseño están en `proyecto/02-validacion.md` (rondas 1-4 y decisiones de precio). No inventar reglas de negocio: si falta una, preguntar.
+- Antes de modificar cuotas, cobro del comercio o fianza, leé `proyecto/06-decisiones-comerciales.md` y el addendum vigente de `proyecto/02-validacion.md`: prevalecen sobre rondas históricas. Para distribución consultá `proyecto/07-go-to-market-y-alianzas.md`; para minorista y rentabilidad, `proyecto/08-minorista-y-economia.md`. Reglas pendientes se preguntan, no se inventan.
 - Ningún número de negocio va hardcodeado: vive en `ProtocolConfig`.
 - El front habla con la cadena solo a través de `app/src/lib/cuotas.ts` (tiene una versión mock y una real).
 - Una rama por tarea (`t1.6-checkout`), PR chico y commits seguidos.

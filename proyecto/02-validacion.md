@@ -1,5 +1,7 @@
 # 02 - Validación: "Cuotas sin tarjeta"
 
+> **Vigente desde 2026-10-07:** 1 y 3 cuotas sin interés; 6 cuotas con interés al comprador, tasa pendiente; comisión del comercio según plazo de cobro; fiador al 100% en todos los escalones. Ver `06-decisiones-comerciales.md`. Las rondas y cifras siguientes se conservan como historial; las coberturas decrecientes y las propuestas de interés a 3 cuotas quedaron reemplazadas. Investigación comercial actual en `07-go-to-market-y-alianzas.md` y `08-minorista-y-economia.md`.
+
 Sesión del 2026-10-03 (sede Tucumán). Skill: `/solana-tuc-validar`.
 
 ## La idea en una línea
@@ -293,3 +295,39 @@ Reemplazan la Q4 de la ronda 1 (interés explícito) y la columna de interés de
 | Sin fiador | ~10% |
 
 Con 30% de mora, el escalón 0 rinde ~+10% anual. El tramo sin fiador pierde, y se acepta como costo de adquisición con tope chico (US$150-300). Si el comercio paga 7% sobre lo financiado, **el escalón 3 (anticipo 0%) le cuesta más al comercio que el escalón 0**. A revisar con comercios reales.
+
+---
+
+## Addendum 2026-10-06 — análisis de viabilidad (post-validación)
+
+Se completó un análisis de viabilidad para inversores y tribunales en `proyecto/06-viabilidad/` (4 workers de investigación + modelo financiero reproducible en `modelo-financiero.py`). Cambios de contexto verificados que actualizan este documento:
+
+- **Cuota Simple terminó el 30/06/2025.** Sucesora: Cuotas MiPyME (Payway+CAME), ~6,9% a 3 cuotas, cobro a 10 días hábiles, solo MiPyMEs certificadas. Las comparaciones del pitch que citan 5,41% ya están actualizadas.
+- **CFTEA de MP Cuotas sin Tarjeta actualizado:** 76–1.376% (disclosure de la empresa, ago-2026). El rango 61–388% de este documento quedó viejo.
+- **Yields USDC Solana (oct-2026):** Kamino ~4,5%, Jupiter ~4-5,4%, Huma PST ~7,7%.
+
+Hallazgos que desafían decisiones tomadas acá (detalle y números en `06-viabilidad/`):
+
+1. **Q15 (0% al estudiante, 7% al comercio todo al pool) deja el senior sin margen** y a la empresa sin revenue. Propuesta: esquema B — interés 6→3% por escalón + fee comercio 7% con split 5% pool / 2% empresa. Ver `04-cambios-rentabilidad.md` §1-2.
+2. **La cobertura decreciente del fiador (100→70%) invierte la rentabilidad por escalón:** a mora constante ~30%, el escalón 3 pierde ~15%/año. La escalera solo cierra si la mora cae por escalón — hipótesis a medir; mientras tanto, piso de cobertura ~85-90%.
+3. **El chargeback del cargo al fiador es el talón de Aquiles** (83-86% de desconocimientos se resuelven a favor del tarjetahabiente, BCRA PUSF 2025): `r=80%` es supuesto a medir, no hecho.
+4. **"Sin interés" como claim exige cláusula anti-recargo** en el contrato del comercio (Res. 51/2017).
+5. **Fraude comercio×estudiante no está mitigado** en el modelo (el comercio cobra al instante): hace falta tope por comercio + holdback + clawback.
+
+## Decisiones vigentes — 2026-10-07
+
+| Tema | Decisión del equipo | Lo que falta validar |
+|---|---|---|
+| Plazos al comprador | 1 y 3 cuotas sin interés; 6 con interés moderado | Qué significa 1 cuota; tasa total de 6 y costo efectivo |
+| Comercio | Comisión según cuándo elige cobrar; mantiene el costo comercial en 6 cuotas | Tarifas y fechas por modalidad, reparto empresa/pool y mora si cobra diferido |
+| Referencia de 7% | Sobre financiado en el flujo inmediato base de 3 cuotas | No se generaliza a todos los plazos sin cotizar |
+| Fiador | Cobertura 100% en todos los escalones; mejora anticipo/límite con reputación | Techo contractual con interés/punitorios y recupero efectivo; obligación no es cobro garantizado |
+| Distribución | Investigar alianza con billetera/exchange; comenzar en una cuña y ampliar | Interés comercial, API, costos y responsabilidades; cero alianzas confirmadas |
+| Minorista | Diseñar compras pequeñas fáciles y medir margen por operación | Ticket mínimo, reutilización del alta y categoría de entrada |
+| H e ideas 1/2/10/11 | Elecciones registradas | Contenido exacto ausente en este checkout; aclaración solicitada, sin inventar correspondencias |
+
+Estas decisiones reemplazan Q9/Q11 en cobertura decreciente, la promesa de que el fiador arriesga menos al bajar el anticipo de Q14 y la generalización de Q15 a todos los planes. A igual precio, bajar el anticipo **aumenta el capital garantizado**. Las propuestas del addendum de viabilidad (interés a 3 cuotas, cobertura 85–90%, split 5/2) no fueron aprobadas y no son política vigente.
+
+El directorio `06-viabilidad/` y su modelo citado arriba no están presentes en este checkout al revisar el 7/10. Se conservan las notas como antecedentes, pero sus cifras no se usan como evidencia nueva ni prueba de rentabilidad.
+
+Definiciones, fórmulas, pendientes y ejemplo base: `06-decisiones-comerciales.md`. Alianzas y experimentos: `07-go-to-market-y-alianzas.md`. Minorista y cuenta económica: `08-minorista-y-economia.md`. La evidencia propia sigue siendo el test de mesa registrado; no hay ventas, volumen comercial ni acuerdos nuevos documentados.

@@ -9,7 +9,7 @@ Fecha: 2026-10-03. Estado: checkpoint de cierre inmediato solicitado por el usua
 - Lectura de comercio y pool pública, sin wallet. Cuenta admin por ProtocolConfig.admin, comercio por cuenta Merchant, estudiante por descarte de lecturas válidas. Errores no conceden permisos.
 - Selector sólo mock; permite recorrer los cuatro roles y un estudiante en escalón3. No autoriza acciones reales.
 - Cuentas nuevas /app/estudiante y /app/comercio conservan /panel y /comercio del header de sesión A.
-- Topes, interés cero, comisión comercio y mora salen de config; exposición del saldo, cobertura para habilitar compra y máximo de fianza se muestran como conceptos distintos. No conversión a pesos sin cotización.
+- Topes, interés por modalidad (1/3 cero, 6 pendiente), comisión según plazo de cobro, cobertura 100% del fiador y mora deben salir de config; el contrato actual aún requiere cambios C1–C6 de 04. Ver 06-decisiones-comerciales.md; exposición del saldo, cobertura para habilitar compra y máximo de fianza se muestran como conceptos distintos. No conversión a pesos sin cotización.
 - Simulaciones de KYC, tarjeta de crédito, recibos y tiempo visibles. No firmas ficticias ni enlaces Explorer de mock. USDC de esta demo es devUSDC, un token de prueba sin valor.
 
 ## Reparto
