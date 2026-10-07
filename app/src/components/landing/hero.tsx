@@ -93,7 +93,7 @@ export function LandingHero() {
               inputValue={`US$ ${fmt(split.price, 0)}`}
               bands={bands}
               cracked={!split.withinTier}
-              ariaLabel={t.stageAria(fmt(split.price, 0), fmt(split.downPayment), fmt(split.installments[0]))}
+              ariaLabel={t.stageAria(fmt(split.price, 0), fmt(split.downPayment), fmt(split.installments[0]), split.installments.length)}
             />
           ) : (
             <div className={styles.stageSkeleton} />
@@ -207,7 +207,7 @@ export function LandingHero() {
                 <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
               </span>
               <span className={styles.compareNum}>
-                US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· 0% {t.interest}</small>
+                US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· {t.interest3}</small>
               </span>
             </div>
             <div className={styles.compareRow}>
