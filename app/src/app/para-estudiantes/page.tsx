@@ -4,7 +4,7 @@ import { ParaEstudiantes } from "@/components/audience/para-estudiantes";
 export const metadata: Metadata = {
   title: "Estudiantes y familias · Lazo",
   description:
-    "Cómo funciona Lazo para estudiantes y familias: 3 cuotas sin interés o 6 con interés provisional, fiador al 100%, escalera de anticipo y reglas claras de mora. Demo simulada en Solana devnet.",
+    "Cómo funciona Lazo para estudiantes y familias: 3 cuotas sin interés o 6 con 3% total (desde US$ 350), fiador obligatorio al 100% de capital e interés, tiers con reglas visibles y línea de mora. Demo simulada en Solana devnet.",
 };
 
 // Página por audiencia: el contenido vive en components/audience/ y los

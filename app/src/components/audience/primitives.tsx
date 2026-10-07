@@ -151,12 +151,14 @@ const CALLOUT_BANDS = {
   provisional: "#c4a3ff",
   demo: "#00c2ff",
   devnet: "#9945ff",
+  supuestos: "#c4a3ff",
 } as const;
 
 /**
- * Callout de declaración: marca "provisional" (términos a confirmar), "demo"
- * (dato o actor simulado) o "devnet" (corre en la red de prueba). La etiqueta
- * sale del diccionario compartido; el cuerpo lo escribe cada página.
+ * Callout de declaración: marca "supuestos" (hipótesis de modelo), "demo"
+ * (dato o actor simulado), "devnet" (corre en la red de prueba) o
+ * "provisional" (compatibilidad). La etiqueta sale del diccionario
+ * compartido; el cuerpo lo escribe cada página.
  */
 export function Callout({
   variant,

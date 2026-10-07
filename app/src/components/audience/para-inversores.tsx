@@ -3,11 +3,11 @@
 // /para-inversores: de dónde sale el rendimiento del pool, cómo se reparte
 // cada compra (desglose D8), tramos, riesgos y qué es verificable. Ningún
 // número de negocio está hardcodeado: salen de getConfig()/helpers y del pool
-// en vivo. Todo rendimiento se declara ilustrativo; las cifras de terceros,
+// en vivo. El objetivo se declara como supuesto del modelo; las cifras de terceros,
 // "referencia".
 import Link from "next/link";
 import { Consulta } from "@/components/cuenta/consulta";
-import { REFERENCE } from "@/components/landing/reference";
+import { REFERENCE_FIGURES } from "@/lib/cuotas/reference-figures";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
@@ -15,11 +15,12 @@ import { Chip } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { paraInversores } from "@/i18n/dictionaries/para-inversores";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import {
   d8Breakdown,
   formatUsdc,
-  planOptionOf,
+  planOptionsOf,
   quoteTermsFor,
   settlementOptionOf,
   settlementOptionsOf,
@@ -35,24 +36,20 @@ import {
   AudienceSection,
   Callout,
   Faq,
-  StatCard,
   StepList,
 } from "./primitives";
 
-/** Compra de ejemplo del doc 09: la PC de US$1.000 en escalón 0. */
+/** Precio de ejemplo para calcular D8 desde la configuración del protocolo. */
 const EXAMPLE_PRICE = toMicro(1000);
 
 /**
- * Cotización del ejemplo 1.000 / escalón 0 con fiador / 3 cuotas / cobro
+ * Cotización del ejemplo con Tier 1 y fiador / 3 cuotas / cobro
  * inmediato: `quoteTermsFor` de `lib/cuotas/terms.ts`, la misma cuenta que
  * `quote()` sin consultar ni mutar estado del cliente — así el desglose D8
  * es idéntico en mock y en real.
  */
-const exampleTerms = (config: ProtocolConfig) =>
-  quoteTermsFor(config, EXAMPLE_PRICE, {
-    installments: 3,
-    settlement: "immediate",
-  });
+const exampleTerms = (config: ProtocolConfig, installments?: 3 | 6) =>
+  quoteTermsFor(config, EXAMPLE_PRICE, { installments, settlement: "immediate" });
 
 const numFmt = (locale: "es" | "en", opts: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", opts);
@@ -200,19 +197,20 @@ export function ParaInversores() {
   const usd = (m: Micro) => formatUsdc(m, locale);
   const pct = (bps: number) =>
     `${numFmt(locale, { maximumFractionDigits: 2 }).format(bps / 100)}%`;
-  const signed = (n: number) =>
-    numFmt(locale, { signDisplay: "exceptZero", maximumFractionDigits: 2 }).format(n);
   const refPct = (n: number) =>
     `~${numFmt(locale, { maximumFractionDigits: 2 }).format(n)}%`;
+  const assumptions = REFERENCE_FIGURES.modelAssumptions;
 
-  const quote = config ? exampleTerms(config) : undefined;
+  const planOptions = config ? planOptionsOf(config) : [];
+  const plan6 = planOptions.find((option) => option.enabled && option.interestTotalBps > 0);
+  const standardPlan = planOptions.find((option) => option.enabled && option.interestTotalBps === 0) ?? planOptions.find((option) => option.enabled);
+  const quote = config ? exampleTerms(config, standardPlan?.installments) : undefined;
   const d8 = config && quote ? d8Breakdown(config, quote) : null;
-  const plan6 = config ? planOptionOf(config, 6) : undefined;
   const settleOpts = config ? settlementOptionsOf(config) : [];
-  // Interés y total de la opción de 6 cuotas sobre la misma compra:
+  // Interés y total de la opción con interés sobre la misma compra:
   // la cotización real, no una cuenta paralela.
   const terms6 = config
-    ? quoteTermsFor(config, EXAMPLE_PRICE, { installments: 6 })
+    ? quoteTermsFor(config, EXAMPLE_PRICE, { installments: plan6?.installments })
     : undefined;
 
   return (
@@ -244,9 +242,10 @@ export function ParaInversores() {
         <AudienceSection
           title={t.compra.title}
           intro={t.compra.intro(
+            tierLabel(0),
             usd(quote.price),
             pct(config.guaranteedTiers[0].downPaymentBps),
-            quote.installments.length,
+            standardPlan?.installments ?? quote.installments.length,
           )}
         >
           <StepList
@@ -289,8 +288,7 @@ export function ParaInversores() {
           <div className="grid gap-4 lg:grid-cols-2">
             <GlassPanel className="p-4 sm:p-5">
               <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-beam">
-                {t.seis.planesTitle}
-                {plan6?.provisional ? <Chip>{common.callout.provisional}</Chip> : null}
+                {t.seis.planesTitle(plan6?.installments ?? 0)}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-ink-2">
                 {t.seis.planesBody(
@@ -303,9 +301,6 @@ export function ParaInversores() {
             <GlassPanel className="p-4 sm:p-5">
               <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-beam">
                 {t.seis.cobroTitle}
-                {settleOpts.some((o) => o.provisional) ? (
-                  <Chip>{common.callout.provisional}</Chip>
-                ) : null}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-ink-2">{t.seis.cobroBody}</p>
               <div className="mt-4 flex items-baseline justify-between gap-3 font-num text-[0.6875rem] uppercase tracking-[0.14em] text-ink-ghost">
@@ -317,7 +312,7 @@ export function ParaInversores() {
                   // Comisión y neto por plazo con la misma cotización que
                   // `quote()`: plazo sin tarifa o deshabilitado → "—".
                   const q = quoteTermsFor(config, quote.price, {
-                    installments: 3,
+                    installments: standardPlan?.installments,
                     settlement: o.id,
                   });
                   const fee = q?.merchantFee ?? null;
@@ -328,9 +323,6 @@ export function ParaInversores() {
                     >
                       <dt className="flex flex-wrap items-center gap-2 text-sm text-ink-2">
                         {o.days === 0 ? t.seis.cobroHoy : t.seis.cobroDias(o.days)}
-                        {o.provisional ? (
-                          <Chip>{common.callout.provisional}</Chip>
-                        ) : null}
                       </dt>
                       <dd className="shrink-0 font-num text-sm tabular-nums text-ink">
                         {o.feeBps === null || fee === null ? "—" : pct(o.feeBps)}
@@ -345,6 +337,23 @@ export function ParaInversores() {
                   );
                 })}
               </dl>
+              <p className="mt-3 text-sm leading-relaxed text-ink-2">{t.seis.compromiso}</p>
+              {settleOpts.filter((o) => o.tranches > 0).map((o) => {
+                const q = quoteTermsFor(config, quote.price, { installments: standardPlan?.installments, settlement: o.id });
+                return q ? (
+                  <div key={`tranches-${o.id}`} className="mt-3 border-t border-hairline pt-3">
+                    <p className="text-sm font-medium text-beam">{t.seis.calendario(o.days)}</p>
+                    <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                      {q.payoutTranches.map((tranche) => (
+                        <li key={tranche.index} className="flex justify-between gap-3 text-sm text-ink-2">
+                          <span>{t.seis.tramo(tranche.index + 1, o.tranches)} · {t.seis.dia(Math.round((o.days / o.tranches) * (tranche.index + 1)))}</span>
+                          <span className="font-num tabular-nums">{usd(tranche.amount)} devUSDC</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null;
+              })}
             </GlassPanel>
           </div>
           <div className="mt-4">
@@ -377,26 +386,21 @@ export function ParaInversores() {
             ))}
           </ul>
           <div className="mt-8">
-            <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-beam">
-              {t.riesgos.escenariosTitle}
-              <Chip>{t.riesgos.hipotesisTag}</Chip>
-            </h3>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
-              {t.riesgos.escenariosIntro}
-            </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              {t.riesgos.escenarios.map((e) => (
-                <StatCard
-                  key={e.id}
-                  value={`${signed(e.c)} US$`}
-                  label={e.name}
-                  note={t.riesgos.escenarioParams(e.d, e.r, e.h)}
-                />
-              ))}
-            </div>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">
-              {t.riesgos.escenariosNote}
-            </p>
+            <Callout variant="supuestos" title={t.riesgos.supuestosTitle}>
+              <p>{t.riesgos.supuestosIntro}</p>
+              <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  [t.riesgos.anticipo, assumptions.downPaymentPct],
+                  [t.riesgos.default, assumptions.defaultRatePct],
+                  [t.riesgos.recupero, assumptions.recoveryRatePct],
+                  [t.riesgos.costoCapital, assumptions.costOfCapitalAnnualPct],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between gap-3 border-b border-hairline py-2">
+                    <dt>{label}</dt><dd className="font-num tabular-nums">{value}%</dd>
+                  </div>
+                ))}
+              </dl>
+            </Callout>
           </div>
         </AudienceSection>
       )}
@@ -407,11 +411,10 @@ export function ParaInversores() {
           <ul className="space-y-3">
             <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <span className="text-sm text-ink">
-                {t.rendimiento.lazo}{" "}
-                <Chip className="normal-case">{t.rendimiento.ilustrativoTag}</Chip>
+                {t.rendimiento.lazo}
               </span>
               <span className="font-num text-sm tabular-nums text-green">
-                {refPct(REFERENCE.apyPct.lazoSeniorTarget)}
+                {refPct(REFERENCE_FIGURES.lazoSeniorTargetYieldPct)}
               </span>
             </li>
             <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -419,7 +422,7 @@ export function ParaInversores() {
                 Kamino <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
               </span>
               <span className="font-num text-sm tabular-nums text-ink-3">
-                {refPct(REFERENCE.apyPct.kamino)}
+                {refPct(REFERENCE_FIGURES.kaminoYieldPct)}
               </span>
             </li>
             <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -427,7 +430,7 @@ export function ParaInversores() {
                 Jupiter Lend <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
               </span>
               <span className="font-num text-sm tabular-nums text-ink-3">
-                {refPct(REFERENCE.apyPct.jupiter)}
+                {refPct(REFERENCE_FIGURES.jupiterYieldPct)}
               </span>
             </li>
           </ul>

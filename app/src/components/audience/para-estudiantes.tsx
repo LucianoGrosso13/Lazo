@@ -9,8 +9,8 @@ import {
   toMicro,
   type Micro,
 } from "@/lib/cuotas";
-import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { paraEstudiantes } from "@/i18n/dictionaries/para-estudiantes";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
@@ -25,7 +25,7 @@ import {
 } from "./primitives";
 
 // Precio del ejemplo (fixture, no un número de negocio): el caso canónico de
-// las decisiones comerciales, una compra de US$ 1.000 en el escalón 0.
+// las decisiones comerciales, una compra de US$ 1.000 en Tier 1 · Starter.
 const EXAMPLE_PRICE = toMicro(1000);
 
 /** % legible desde bps: 300 → "3", 625 → "6,25" (es) / "6.25" (en). */
@@ -104,7 +104,6 @@ function ExampleRow({
 
 function HowToBuy() {
   const t = useT(paraEstudiantes).how;
-  const shared = useT(audienceCommon);
   const { locale } = useLocale();
   const pct = usePct();
   const config = useProtocolConfig();
@@ -116,11 +115,11 @@ function HowToBuy() {
     <AudienceSection title={t.title}>
       <StepList steps={t.steps.map((s) => ({ title: s.t, body: s.d }))} />
       <p className="mt-8 text-sm font-medium text-ink-2">
-        {t.example.title(fmt(EXAMPLE_PRICE, 0))}
+        {t.example.title(fmt(EXAMPLE_PRICE, 0), tierLabel(0))}
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {options.map((o) => {
-          // Misma cotización que `quote()` para el escalón 0 con fiador:
+          // Cotización para Tier 1 · Starter con fiador obligatorio:
           // `quoteTerms` de `lib/cuotas/terms.ts` (el plazo del comercio no
           // cambia lo que paga el estudiante; se resuelve con la inmediata).
           const ex = quoteTerms({
@@ -138,7 +137,12 @@ function HowToBuy() {
                 {o.interestTotalBps === 0 ? (
                   <Chip on>{t.example.interestFree}</Chip>
                 ) : (
-                  <Chip>{shared.callout.provisional}</Chip>
+                  <Chip>
+                    {t.example.optionBadge(
+                      pct(o.interestTotalBps),
+                      fmt(o.minPrice, 0),
+                    )}
+                  </Chip>
                 )}
               </p>
               <dl className="mt-4 grid gap-2 text-sm">
@@ -176,16 +180,33 @@ function Ladder() {
   return (
     <AudienceSection
       title={t.title}
-      intro={t.intro(formatUsdc(config.minFinancedToCount, locale, 0), config.graceDays)}
+      intro={t.intro(
+        tierLabel(0),
+        formatUsdc(config.minFinancedToCount, locale, 0),
+        config.graceDays,
+        config.guarantorChargeDay,
+      )}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {config.guaranteedTiers.map((tier, n) => (
           <StatCard
             key={n}
             value={pct(tier.downPaymentBps)}
-            label={`${t.tier(n)} · ${t.down}`}
+            label={`${tierLabel(n)} · ${t.down}`}
             note={t.cap(formatUsdc(tier.maxPurchase, locale, 0))}
           />
+        ))}
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        {t.rules.map((r) => (
+          <div key={r.title} className="glass p-4 sm:p-5">
+            <p className="font-medium text-beam">{r.title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-ink-2">
+              {typeof r.body === "string"
+                ? r.body
+                : r.body(formatUsdc(config.minFinancedToCount, locale, 0), config.graceDays, config.guarantorChargeDay)}
+            </p>
+          </div>
         ))}
       </div>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">
@@ -266,9 +287,6 @@ function Family() {
             </p>
           </div>
         ))}
-      </div>
-      <div className="mt-4 max-w-2xl">
-        <Callout variant="provisional">{t.pending}</Callout>
       </div>
     </AudienceSection>
   );

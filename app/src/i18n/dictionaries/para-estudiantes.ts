@@ -1,7 +1,7 @@
 import { defineDict } from "../locale";
 
 /**
- * Contenido de /para-estudiantes (ticket 09): cómo funciona Lazo para quien
+ * Contenido de /para-estudiantes (ticket 11): cómo funciona Lazo para quien
  * compra y para el familiar fiador. Los números se inyectan desde la config
  * del protocolo en el componente; acá solo viven los textos y sus huecos.
  */
@@ -10,58 +10,74 @@ export const paraEstudiantes = defineDict({
     hero: {
       eyebrow: "Estudiantes y familias",
       title: "Cuotas para estudiar, con el respaldo de tu familia",
-      lede: "Lazo te deja comprar en cuotas en comercios adheridos y pagar con dólares digitales (USDC), aunque no tengas tarjeta de crédito. Un familiar queda como fiador: respalda tu plan con un tope acordado y solo paga si vos no pagás.",
+      lede: "Lazo te deja comprar en cuotas en comercios adheridos y pagar con dólares digitales (USDC), aunque no tengas tarjeta de crédito. Un familiar actúa como fiador obligatorio: respalda lo que falta pagar de capital e interés, con un tope acordado, y solo paga si vos no pagás.",
       ctaStore: "Ir a la tienda",
       ctaMerchants: "Ver comercios",
     },
     what: {
       title: "Qué es Lazo",
-      body: "Comprás hoy y pagás en cuotas mensuales en dólares digitales. El anticipo y el tope dependen de tu escalón; la tarjeta de tu fiador solo se usa si una cuota queda impaga.",
+      body: "Comprás hoy y pagás en cuotas mensuales en dólares digitales. El anticipo y el tope de compra dependen de tu tier; un familiar como fiador obligatorio respalda lo que falta pagar del plan y su tarjeta solo se cobra si una cuota queda impaga.",
       devnet:
-        "Todo corre en devnet, la red de prueba de Solana, con devUSDC: un token propio de mentira que no vale nada. Ningún cobro de esta demo es real.",
+        "Todo corre en devnet, la red de prueba de Solana, con devUSDC: un token propio de prueba que no vale nada. Ningún cobro de esta demo es real.",
     },
     how: {
       title: "Cómo comprar",
       steps: [
         {
           t: "Elegí el comercio y el producto",
-          d: "Buscá por nombre o categoría en la tienda o en el directorio. Los comercios de esta demo son ficticios y llevan etiqueta demo.",
+          d: "Buscá por nombre o categoría en la tienda o en el marketplace. Los comercios de esta demo son ficticios y de ejemplo.",
         },
         {
-          t: "Elegí 3 o 6 cuotas",
-          d: "3 cuotas sin interés, o 6 con un interés total provisional sobre lo financiado. Antes de confirmar ves anticipo, monto de cada cuota, fechas y total.",
+          t: "Elegí una opción de cuotas",
+          d: "Elegí una opción de cuotas disponible. Antes de confirmar ves el anticipo, el monto de cada cuota, las fechas, el interés total y el mínimo de compra que indica cada opción.",
         },
         {
-          t: "Aprobá la compra",
-          d: "Si tu fiador está vigente y la compra entra en tu escalón, el plan se abre y el anticipo se paga en el momento.",
+          t: "Aprobá la compra con tu fiador",
+          d: "Sin fiador no hay plan. Si tu familiar aceptó la fianza y la compra entra en tu tier, el plan se abre y el anticipo se paga en el momento.",
         },
         {
           t: "Pagá las cuotas mes a mes",
-          d: "Desde tu panel, con tu wallet conectada. Cada plan terminado a tiempo te sube un escalón.",
+          d: "Desde tu panel, con tu wallet conectada. Cada plan terminado a tiempo te sube de tier.",
         },
       ],
       example: {
-        title: (price: string) =>
-          `Ejemplo con la config de la demo: compra de US$ ${price} en el escalón 0`,
+        title: (price: string, tierName: string) =>
+          `Ejemplo con la config del protocolo: compra de US$ ${price} en ${tierName}`,
         option: (n: number) => `${n} cuotas`,
         interestFree: "sin interés",
+        optionBadge: (pct: string, min: string) => `${pct} total · desde US$ ${min}`,
         down: "Anticipo al comprar",
         each: "Cada cuota",
         interest: "Interés total",
         interestNote: (pct: string) => `(${pct} del financiado)`,
         total: "Pagás en total",
-        note: "Los montos se muestran redondeados: la última cuota absorbe el centésimo para que el total cierre exacto. El interés de 6 cuotas se cobra una sola vez sobre lo financiado.",
+        note: "Los montos se muestran redondeados: la última cuota absorbe el centésimo para que el total cierre exacto. El interés y el mínimo de cada opción salen de la configuración del protocolo.",
       },
     },
     ladder: {
-      title: "La escalera",
-      intro: (minFinanced: string, graceDays: number) =>
-        `Arrancás en el escalón 0. Cada plan que terminás de pagar — financiando al menos US$ ${minFinanced} y sin pasar los ${graceDays} días de gracia — te sube un escalón: menos anticipo y más tope.`,
-      tier: (n: number) => `Escalón ${n}`,
+      title: "Tiers y reglas de progresión",
+      intro: (tier: string, minFinanced: string, graceDays: number, chargeDay: number) =>
+        `Arrancás en ${tier}. Sin fiador activo no se puede abrir ningún plan. Subís 1 Tier al saldar un plan con al menos US$ ${minFinanced} financiados sin pagos después de los ${graceDays} días de gracia. Si pagás con atraso pero antes del día ${chargeDay}, no sumás ni bajás. Bajás 1 Tier si una cuota llega al día ${chargeDay} impaga y se cobra al fiador.`,
+      tier: (n: number) => `Tier ${n + 1}`,
       down: "anticipo",
       cap: (max: string) => `tope por compra US$ ${max}`,
       coverage: (pct: string) =>
-        `En todos los escalones tu fiador cubre el ${pct} del capital financiado que quede pendiente. Subir de escalón no lo libera.`,
+        `En todos los tiers tu fiador cubre el ${pct} de lo que resta pagar (capital e interés). El punitorio por mora no lo cubre el fiador. Subir de tier no reduce la fianza.`,
+      rules: [
+        {
+          title: "Sin fiador no hay plan",
+          body: "La fianza es obligatoria en todos los tiers. No existe la compra sin respaldo familiar.",
+        },
+        {
+          title: "Subir de tier",
+          body: (minFinanced: string, graceDays: number, _chargeDay: number) =>
+            `Saldar un plan con al menos US$ ${minFinanced} financiados y sin pagos después de los ${graceDays} días de gracia te sube 1 Tier: menos anticipo y más tope. Los atrasos resueltos antes del cobro al fiador no suman ni bajan.`,
+        },
+        {
+          title: "Bajar de tier",
+          body: "Si una cuota llega impaga al día de cobro al fiador y se le cobra, bajás 1 Tier y no podés abrir nuevos planes.",
+        },
+      ],
     },
     late: {
       title: "Si te atrasás con una cuota",
@@ -76,62 +92,64 @@ export const paraEstudiantes = defineDict({
         },
         grace: {
           t: "Días de gracia, sin recargo",
-          d: "Podés pagar solo la cuota; el plan sigue contando para la escalera.",
+          d: "Podés pagar solo la cuota; el plan sigue contando para subir de tier.",
         },
         notice: {
           t: "Aviso al fiador",
-          d: "Todavía dentro de la gracia: tu familiar recibe una notificación, pero no hay cobro.",
+          d: "Todavía dentro de la gracia: tu familiar recibe una notificación preventiva, pero no hay ningún cobro.",
         },
         penalty: {
-          t: "Recargo",
+          t: "Recargo por mora",
           d: (pct: string) =>
-            `Se suma un recargo del ${pct} sobre la cuota vencida y ese plan deja de contar para subir de escalón.`,
+            `Se suma un recargo del ${pct} sobre la cuota vencida y ese plan deja de contar para subir de tier.`,
         },
         charge: {
-          t: "Cobro al fiador",
-          d: "Se cobra la cuota con el recargo de la tarjeta del fiador. Bajás un escalón y no podés abrir planes nuevos.",
+          t: "Cobro al fiador y baja de Tier",
+          d: "Se cobra la cuota de la tarjeta del fiador. Bajás un Tier y no podés abrir planes nuevos hasta regularizar.",
         },
       },
       footnote:
-        "Si otra cuota del mismo plan llega impaga al día del cobro al fiador, se le cobra todo el saldo restante y el plan pasa a recuperado.",
+        "El fiador cubre el capital y el interés pactado que queden por pagar, pero no el recargo por mora. Si otra cuota del mismo plan llega impaga al día del cobro al fiador, se le cobra todo el saldo restante del plan y el plan pasa a recuperado.",
     },
     family: {
       title: "Para la familia: ser fiador",
       intro:
-        "Si un estudiante te invita a respaldar su plan, esto es lo que aceptás. En la demo no hay cobros reales.",
+        "En Lazo la fianza es obligatoria: sin fiador no hay plan. Si un estudiante te invita a respaldarlo, estas son las condiciones claras:",
       items: [
         {
-          t: "Cubrís el 100% del capital pendiente",
-          d: "En todos los escalones respondés por el total de lo financiado que quede por pagar, ni más ni menos.",
+          t: "Sin fiador no hay plan",
+          d: "La fianza con tarjeta es obligatoria para abrir cualquier plan, en todos los tiers. No existe compra sin respaldo.",
+        },
+        {
+          t: "Cubrís capital e interés",
+          d: "Cubrís lo financiado y el interés pactado que queden por pagar. Los recargos punitorios por atraso quedan afuera y son a cargo del estudiante.",
         },
         {
           t: "Solo pagás si el estudiante no paga",
           d: (graceDays: number, noticeDay: number, chargeDay: number) =>
-            `Hay ${graceDays} días de gracia, un aviso a tu nombre al día ${noticeDay} y recién al día ${chargeDay} un posible cobro a tu tarjeta.`,
+            `Hay ${graceDays} días de gracia, un aviso preventivo a tu nombre al día ${noticeDay} y recién al día ${chargeDay} un posible cobro a tu tarjeta.`,
         },
         {
           t: "El tope lo acordás antes de aceptar",
-          d: "Ves el monto máximo de la fianza y lo elegís antes de firmar: ningún plan puede superarlo.",
+          d: "Ves el monto máximo de la fianza antes de aceptar la invitación: ningún plan puede superar el límite que autorizaste.",
         },
         {
-          t: "Subir de escalón no te libera",
-          d: "Que el estudiante complete planes y suba de escalón mejora su anticipo y su tope; tu cobertura sigue siendo el 100% del capital pendiente.",
+          t: "Subir de tier no te libera",
+          d: "Que el estudiante complete planes y suba de tier mejora su anticipo y su tope; tu cobertura sigue incluyendo todo el saldo pendiente mientras el plan continúe activo.",
         },
       ],
-      pending:
-        "Pendiente de definir: si la fianza también cubre el interés de los planes de 6 cuotas y los recargos por atraso, y cuál es su techo exacto.",
     },
     next: {
       title: "Lo que viene",
       tag: "roadmap",
       items: [
         {
-          t: "Comprar en el local con un QR o un link",
-          d: "El comercio muestra un QR o te manda un link de Lazo. Te identificás y comprás sin repetir el alta: tu identidad y tu fiador siguen vigentes dentro de su límite.",
+          t: "Billeteras argentinas como canal",
+          d: "Evaluamos que billeteras locales distribuyan Lazo y conviertan pesos a dólares digitales. Canal en estudio: no hay acuerdos firmados.",
         },
         {
-          t: "Descuentos para fiadores al día",
-          d: "En evaluación: descuentos en comercios para el familiar cuyo estudiante paga a tiempo. Lo define cada comercio y no cambia la cobertura del 100%.",
+          t: "Tesorería propia en DeFi, simulada",
+          d: "Solo fondos propios de Lazo — nunca el pool ni el dinero de usuarios — con integración simulada hasta verificar compatibilidad en devnet.",
         },
       ],
     },
@@ -140,7 +158,7 @@ export const paraEstudiantes = defineDict({
       items: [
         {
           q: "¿Necesito tarjeta de crédito?",
-          a: "No. Vos pagás el anticipo y las cuotas en dólares digitales desde tu wallet. La tarjeta la registra tu fiador y solo se usa si una cuota queda impaga.",
+          a: "No. Vos pagás el anticipo y las cuotas en dólares digitales desde tu wallet. La tarjeta la registra tu fiador obligatorio y solo se cobra si una cuota queda impaga.",
         },
         {
           q: "¿Qué es una wallet?",
@@ -152,15 +170,19 @@ export const paraEstudiantes = defineDict({
         },
         {
           q: "¿Puedo tener más de un plan a la vez?",
-          a: "En la demo, sí: mientras lo que debés entre en el margen de tu escalón, y cada compra se aprueba por separado. En el programa en cadena la regla vigente es un plan por estudiante.",
+          a: "En la demo, sí: mientras lo que debés entre en el margen de tu tier, y cada compra se aprueba por separado. En el programa en cadena la regla vigente es un plan por estudiante.",
         },
         {
           q: "¿Qué pasa con mis datos?",
           a: "La verificación de identidad y la tarjeta del fiador viven fuera de la cadena, con el proveedor del alta. En la cadena solo quedan montos, fechas y estados del plan.",
         },
         {
+          q: "¿Qué cubre exactamente el fiador?",
+          a: "El fiador cubre todo lo que resta pagar del plan: capital financiado e interés pactado. Los recargos punitorios por mora no están cubiertos por el fiador y son responsabilidad del estudiante.",
+        },
+        {
           q: "¿Esto es real?",
-          a: "Es una demo: corre en devnet, la red de prueba de Solana, con devUSDC, un token sin valor. Los comercios son ficticios y ningún cobro es real.",
+          a: "Es una demo: corre en devnet, la red de prueba de Solana, con devUSDC, un token sin valor. Los comercios son de ejemplo y ningún cobro es real.",
         },
       ],
     },
@@ -175,30 +197,30 @@ export const paraEstudiantes = defineDict({
     hero: {
       eyebrow: "Students and families",
       title: "Installments for your studies, backed by your family",
-      lede: "Lazo lets you buy in installments at participating merchants and pay with digital dollars (USDC), even without a credit card. A family member acts as guarantor: they back your plan with an agreed cap and only pay if you don't.",
+      lede: "Lazo lets you buy in installments at participating merchants and pay with digital dollars (USDC), even without a credit card. A family member acts as mandatory guarantor: they cover the outstanding financed amount and interest up to an agreed cap, and only pay if you don't.",
       ctaStore: "Go to the store",
       ctaMerchants: "Browse merchants",
     },
     what: {
       title: "What Lazo is",
-      body: "You buy today and pay in monthly installments in digital dollars. The down payment and the cap depend on your tier; your guarantor's card is only used if an installment goes unpaid.",
+      body: "You buy today and pay in monthly installments in digital dollars. Your down payment and purchase cap depend on your tier; a family member acts as mandatory guarantor for the outstanding plan balance, and their card is only charged if an installment goes unpaid.",
       devnet:
-        "Everything runs on devnet, Solana's test network, with devUSDC: a fake in-house token worth nothing. No charge in this demo is real.",
+        "Everything runs on devnet, Solana's test network, with devUSDC: an in-house test token worth nothing. No charge in this demo is real.",
     },
     how: {
       title: "How to buy",
       steps: [
         {
           t: "Pick the merchant and the product",
-          d: "Search by name or category in the store or the directory. The merchants in this demo are fictional and carry a demo label.",
+          d: "Search by name or category in the store or the marketplace. The merchants in this demo are sample merchants.",
         },
         {
-          t: "Choose 3 or 6 installments",
-          d: "3 installments interest-free, or 6 with a provisional total interest on the financed amount. Before confirming you see the down payment, each installment, dates and the total.",
+          t: "Choose an installment option",
+          d: "Choose an available installment option. Before confirming, you see the down payment, each installment, due dates, total interest and the minimum purchase shown for that option.",
         },
         {
-          t: "Approve the purchase",
-          d: "If your guarantor is active and the purchase fits your tier, the plan opens and the down payment is paid right away.",
+          t: "Approve the purchase with your guarantor",
+          d: "Without an active guarantor there is no plan. If your family member accepted the guarantee and the purchase fits your tier, the plan opens and the down payment is paid right away.",
         },
         {
           t: "Pay the installments month by month",
@@ -206,27 +228,43 @@ export const paraEstudiantes = defineDict({
         },
       ],
       example: {
-        title: (price: string) =>
-          `Example from the demo config: a US$ ${price} purchase on tier 0`,
+        title: (price: string, tierName: string) =>
+          `Example from the protocol config: a US$ ${price} purchase on ${tierName}`,
         option: (n: number) => `${n} installments`,
         interestFree: "interest-free",
+        optionBadge: (pct: string, min: string) => `${pct} total · from US$ ${min}`,
         down: "Down payment at checkout",
         each: "Each installment",
         interest: "Total interest",
         interestNote: (pct: string) => `(${pct} of financed)`,
         total: "You pay in total",
-        note: "Amounts are shown rounded: the last installment absorbs the cent so the total closes exactly. Interest on 6 installments is charged once on the financed amount.",
+        note: "Amounts are rounded: the last installment absorbs the cent so the total closes exactly. Each option's interest and minimum come from protocol configuration.",
       },
     },
     ladder: {
-      title: "The tier ladder",
-      intro: (minFinanced: string, graceDays: number) =>
-        `You start on tier 0. Every plan you finish paying — financing at least US$ ${minFinanced} and never passing the ${graceDays}-day grace period — moves you up a tier: lower down payment, higher cap.`,
-      tier: (n: number) => `Tier ${n}`,
+      title: "Tiers and progression rules",
+      intro: (tier: string, minFinanced: string, graceDays: number, chargeDay: number) =>
+        `You start on ${tier}. Without an active guarantor no plan can be opened. You move up 1 Tier when finishing a plan financing at least US$ ${minFinanced} with no payments past the ${graceDays}-day grace period. If you pay late within grace or with late fee before day ${chargeDay}, you neither gain nor lose a tier. You drop 1 Tier if an installment reaches day ${chargeDay} unpaid and is charged to the guarantor.`,
+      tier: (n: number) => `Tier ${n + 1}`,
       down: "down payment",
       cap: (max: string) => `per-purchase cap US$ ${max}`,
       coverage: (pct: string) =>
-        `On every tier your guarantor covers ${pct} of the financed capital still outstanding. Moving up a tier does not release them.`,
+        `On every tier your guarantor covers ${pct} of what remains to be paid (capital and interest). Late penalties are not covered by the guarantor. Moving up a tier does not reduce the guarantee.`,
+      rules: [
+        {
+          title: "Without a guarantor there is no plan",
+          body: "A guarantee is mandatory across all tiers. There are no purchases without family backing.",
+        },
+        {
+          title: "Moving up a tier",
+          body: (minFinanced: string, graceDays: number, _chargeDay: number) =>
+            `Paying off a plan with at least US$ ${minFinanced} financed and no payments after the ${graceDays}-day grace period moves you up 1 Tier: lower down payment and higher cap. Late payments resolved before the guarantor is charged neither add nor subtract a tier.`,
+        },
+        {
+          title: "Dropping a tier",
+          body: "If an installment is still unpaid on the guarantor charge day and the guarantor is charged, you drop 1 Tier and cannot open new plans.",
+        },
+      ],
     },
     late: {
       title: "If you fall behind on an installment",
@@ -241,11 +279,11 @@ export const paraEstudiantes = defineDict({
         },
         grace: {
           t: "Grace days, no late fee",
-          d: "You can pay just the installment; the plan still counts toward your ladder.",
+          d: "You can pay just the installment; the plan still counts toward a tier-up.",
         },
         notice: {
-          t: "Guarantor is warned",
-          d: "Still within grace: your family member gets a notification, but there is no charge.",
+          t: "Guarantor warning",
+          d: "Still within grace: your family member gets a preventive notification, with no charge.",
         },
         penalty: {
           t: "Late fee",
@@ -253,50 +291,52 @@ export const paraEstudiantes = defineDict({
             `A ${pct} late fee is added to the overdue installment and that plan stops counting toward a tier-up.`,
         },
         charge: {
-          t: "Guarantor is charged",
-          d: "The installment plus the late fee is charged to the guarantor's card. You drop a tier and can't open new plans.",
+          t: "Guarantor charged and Tier drop",
+          d: "The overdue installment is charged to the guarantor's card. You drop one Tier and cannot open new plans until settled.",
         },
       },
       footnote:
-        "If a second installment of the same plan reaches the guarantor-charge day unpaid, the whole remaining balance is charged to the guarantor and the plan moves to recovered.",
+        "The guarantor covers the remaining capital and agreed interest, but not late fees. If a second installment of the same plan reaches the guarantor-charge day unpaid, the full remaining balance is charged to the guarantor and the plan moves to recovered.",
     },
     family: {
       title: "For the family: being a guarantor",
       intro:
-        "If a student invites you to back their plan, this is what you agree to. In the demo no charges are real.",
+        "In Lazo a guarantee is mandatory: without a guarantor there is no plan. If a student invites you to back them, these are the clear conditions:",
       items: [
         {
-          t: "You cover 100% of the outstanding capital",
-          d: "On every tier you answer for the full financed amount still owed — no more, no less.",
+          t: "Without a guarantor there is no plan",
+          d: "A card-backed guarantee is mandatory to open any plan across all tiers. There are no unbacked purchases.",
+        },
+        {
+          t: "You cover capital and interest",
+          d: "You cover the financed capital and agreed plan interest still owed. Late penalties are excluded and remain the student's responsibility.",
         },
         {
           t: "You only pay if the student doesn't",
           d: (graceDays: number, noticeDay: number, chargeDay: number) =>
-            `There is a ${graceDays}-day grace period, a warning addressed to you on day ${noticeDay}, and only on day ${chargeDay} a possible charge to your card.`,
+            `There is a ${graceDays}-day grace period, a preventive notice in your name on day ${noticeDay}, and only on day ${chargeDay} a possible charge to your card.`,
         },
         {
           t: "The cap is agreed before you accept",
-          d: "You see the guarantee's maximum amount and choose it before signing: no plan can exceed it.",
+          d: "You see the guarantee's maximum amount before accepting the invitation: no plan can exceed the limit you authorized.",
         },
         {
-          t: "A higher tier doesn't release you",
-          d: "The student completing plans and moving up tiers improves their down payment and cap; your coverage stays at 100% of the outstanding capital.",
+          t: "Moving up a tier does not release you",
+          d: "The student completing plans and moving up tiers improves their down payment and cap; your coverage includes the full outstanding balance while the plan is active.",
         },
       ],
-      pending:
-        "Still to be defined: whether the guarantee also covers interest on 6-installment plans and late fees, and its exact ceiling.",
     },
     next: {
       title: "What's coming",
       tag: "roadmap",
       items: [
         {
-          t: "Buying in-store with a QR or a link",
-          d: "The merchant shows a QR or sends you a Lazo link. You identify yourself and buy without repeating onboarding: your identity and guarantor stay active within their limits.",
+          t: "Argentine wallets as a channel",
+          d: "We are evaluating having local wallets distribute Lazo and convert pesos to digital dollars. Channel under study: no signed agreements.",
         },
         {
-          t: "Discounts for on-time guarantors",
-          d: "Under evaluation: merchant discounts for the family member whose student pays on time. Each merchant sets them and they don't change the 100% coverage.",
+          t: "Own treasury in DeFi, simulated",
+          d: "Only Lazo's own treasury — never the pool or user funds — with simulated integration until verifying compatibility on devnet.",
         },
       ],
     },
@@ -305,7 +345,7 @@ export const paraEstudiantes = defineDict({
       items: [
         {
           q: "Do I need a credit card?",
-          a: "No. You pay the down payment and installments in digital dollars from your wallet. Your guarantor registers the card and it's only used if an installment goes unpaid.",
+          a: "No. You pay the down payment and installments in digital dollars from your wallet. The card is registered by your mandatory guarantor and is only charged if an installment goes unpaid.",
         },
         {
           q: "What is a wallet?",
@@ -324,8 +364,12 @@ export const paraEstudiantes = defineDict({
           a: "Identity verification and the guarantor's card live offchain, with the onboarding provider. Only amounts, dates and plan states are stored onchain.",
         },
         {
+          q: "What exactly does the guarantor cover?",
+          a: "The guarantor covers everything left to pay: financed capital and agreed interest. Late penalties are not covered by the guarantor and remain the student's responsibility.",
+        },
+        {
           q: "Is this real?",
-          a: "It's a demo: it runs on devnet, Solana's test network, with devUSDC, a worthless token. The merchants are fictional and no charge is real.",
+          a: "It's a demo: it runs on devnet, Solana's test network, with devUSDC, a worthless token. The merchants are sample merchants and no charge is real.",
         },
       ],
     },
