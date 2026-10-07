@@ -736,6 +736,34 @@ button.chip {
   opacity: 1;
   translate: 0 0;
 }
+
+/* --------------------- Base responsive compartida -----------------------
+   Riel de página, corte de direcciones largas y tap targets. El scroll
+   horizontal se arregla en la causa; nada de overflow-x: hidden global. */
+
+/* Riel único: el mismo aire lateral en header, páginas y footer. */
+.page-shell {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .page-shell {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Direcciones y hashes largos: cortan dentro de su caja, nunca la empujan. */
+.addr {
+  overflow-wrap: anywhere;
+}
+
+/* Tap target cómodo en pantallas táctiles (≥ 40×40 px). */
+.tap {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
 }
 
 /* --------------------------- Movimiento ---------------------------------- */

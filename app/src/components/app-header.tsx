@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
+import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { useLocale, useT } from "@/i18n/locale";
 import { ChipButton, SegmentedControl } from "@/components/ui/chip";
 import { WalletButton } from "./wallet-button";
@@ -16,7 +17,7 @@ import { WalletButton } from "./wallet-button";
  * (composición reproducible en .scratch/demo-polish/brand). PNG RGBA, el
  * header siempre va sobre fondo oscuro. Decorativa: el texto "Lazo" ya nombra.
  */
-function PrismaGlyph({ className = "" }: { className?: string }) {
+export function PrismaGlyph({ className = "" }: { className?: string }) {
   return (
     <Image
       src="/brand/logo-prisma.png"
@@ -61,17 +62,17 @@ const DEMO_DESTINATIONS = [
     match: (p: string) => p.startsWith("/tienda") || p.startsWith("/checkout"),
   },
   {
+    key: "comercios",
+    href: "/comercio",
+    band: "#00C2FF",
+    match: (p: string) => p.startsWith("/comercio"),
+  },
+  {
     key: "cuenta",
     href: "/app",
     band: "#6C63FF",
     match: (p: string) =>
       p.startsWith("/app") || p.startsWith("/panel") || p.startsWith("/fiador"),
-  },
-  {
-    key: "comercio",
-    href: "/comercio",
-    band: "#00C2FF",
-    match: (p: string) => p.startsWith("/comercio"),
   },
   {
     key: "pool",
@@ -81,10 +82,40 @@ const DEMO_DESTINATIONS = [
   },
 ] as const;
 
+/** "Cómo funciona ▾": una página por audiencia, en el dropdown y en la hoja. */
+const HOW_DESTINATIONS = [
+  {
+    key: "estudiantes",
+    href: "/para-estudiantes",
+    band: "#00C2FF",
+    match: (p: string) => p.startsWith("/para-estudiantes"),
+  },
+  {
+    key: "comercios",
+    href: "/para-comercios",
+    band: "#19FB9B",
+    match: (p: string) => p.startsWith("/para-comercios"),
+  },
+  {
+    key: "inversores",
+    href: "/para-inversores",
+    band: "#c4a3ff",
+    match: (p: string) => p.startsWith("/para-inversores"),
+  },
+] as const;
+
 const MORE_DESTINATIONS = [
   { key: "how", href: "/#how", band: "#f4f1ff", match: () => false },
   { key: "design", href: "/design", band: "#c4a3ff", match: (p: string) => p === "/design" },
 ] as const;
+
+type NavItem = {
+  key: string;
+  href: string;
+  band: string;
+  label: string;
+  match: (p: string) => boolean;
+};
 
 function isActive(href: string, match: (p: string) => boolean, pathname: string) {
   return match(pathname) || (href === pathname && !href.includes("#"));
@@ -107,15 +138,38 @@ function SpectralMarker({ layoutId, band }: { layoutId: string; band: string }) 
       );
 }
 
-/** Menú de destinos secundarios: cierra con Escape, click afuera o al perder foco. */
-function MoreMenu({
+/** Entrada directa de la cinta de destinos (escritorio). */
+function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+  const active = isActive(item.href, item.match, pathname);
+  return (
+    <Link
+      href={item.href}
+      className="app-nav-item"
+      data-active={active || undefined}
+      aria-current={active ? "page" : undefined}
+      style={{ ["--band" as string]: item.band }}
+    >
+      {active ? <SpectralMarker layoutId="nav-marker" band={item.band} /> : null}
+      {item.label}
+    </Link>
+  );
+}
+
+/**
+ * Dropdown de la cinta (Cómo funciona, Más): teclado (abre con ↓, cierra con
+ * Escape devolviendo el foco), click afuera y blur fuera del menú. Cuando un
+ * destino suyo está activo, el prisma lo marca igual que a los links.
+ */
+function NavMenu({
   label,
+  band = "#f4f1ff",
   items,
   pathname,
   onNavigate,
 }: {
   label: string;
-  items: readonly { key: string; href: string; band: string; label: string; match: (p: string) => boolean }[];
+  band?: string;
+  items: readonly NavItem[];
   pathname: string;
   onNavigate?: () => void;
 }) {
@@ -161,7 +215,9 @@ function MoreMenu({
             setOpen(true);
           }
         }}
+        style={{ ["--band" as string]: band }}
       >
+        {anyActive ? <SpectralMarker layoutId="nav-marker" band={band} /> : null}
         {label}
         <svg
           aria-hidden
@@ -212,20 +268,51 @@ function MoreMenu({
 export function AppHeader() {
   const t = useT(common);
   const d = useT(design);
+  const a = useT(audienceCommon);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  const labels: Record<string, string> = {
+  const demoLabels: Record<string, string> = {
     tienda: t.nav.tienda,
+    comercios: t.nav.comercios,
     cuenta: t.nav.cuenta,
-    comercio: t.nav.comercio,
     pool: t.nav.pool,
+  };
+  const howLabels: Record<string, string> = {
+    estudiantes: a.pages.estudiantes.nav,
+    comercios: a.pages.comercios.nav,
+    inversores: a.pages.inversores.nav,
+  };
+  const moreLabels: Record<string, string> = {
     how: d.chrome.howItWorks,
     design: d.chrome.designLink,
   };
-  const demoNav = DEMO_DESTINATIONS.map((i) => ({ ...i, label: labels[i.key] }));
-  const moreNav = MORE_DESTINATIONS.map((i) => ({ ...i, label: labels[i.key] }));
+  const demoNav: NavItem[] = DEMO_DESTINATIONS.map((i) => ({ ...i, label: demoLabels[i.key] }));
+  const howNav: NavItem[] = HOW_DESTINATIONS.map((i) => ({ ...i, label: howLabels[i.key] }));
+  const moreNav: NavItem[] = MORE_DESTINATIONS.map((i) => ({ ...i, label: moreLabels[i.key] }));
+
+  // La hoja se cierra al navegar (cualquier cambio de ruta) y con Escape.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const sheetGroups = [
+    { key: "demo", label: d.chrome.groupDemo, items: demoNav },
+    { key: "how", label: d.chrome.groupHow, items: howNav },
+    { key: "more", label: d.chrome.groupMore, items: moreNav },
+  ];
+  let sheetIndex = 0;
 
   return (
     <header className="sticky top-0 z-50">
@@ -247,23 +334,18 @@ export function AppHeader() {
           </Link>
 
           <nav aria-label={d.chrome.navLabel} className="app-nav hidden lg:inline-flex">
-            {demoNav.map((item) => {
-              const active = isActive(item.href, item.match, pathname);
-              return (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className="app-nav-item"
-                  data-active={active || undefined}
-                  aria-current={active ? "page" : undefined}
-                  style={{ ["--band" as string]: item.band }}
-                >
-                  {active ? <SpectralMarker layoutId="nav-marker" band={item.band} /> : null}
-                  {item.label}
-                </Link>
-              );
-            })}
-            <MoreMenu
+            {demoNav.slice(0, 2).map((item) => (
+              <NavLink key={item.key} item={item} pathname={pathname} />
+            ))}
+            <NavMenu
+              label={a.navLabel}
+              items={howNav}
+              pathname={pathname}
+            />
+            {demoNav.slice(2).map((item) => (
+              <NavLink key={item.key} item={item} pathname={pathname} />
+            ))}
+            <NavMenu
               label={d.chrome.more}
               items={moreNav}
               pathname={pathname}
@@ -278,7 +360,7 @@ export function AppHeader() {
               <WalletButton />
             </span>
             <ChipButton
-              className="xl:hidden"
+              className="tap justify-center xl:hidden"
               aria-expanded={open}
               aria-controls="app-nav-sheet"
               aria-label={open ? d.chrome.menuClose : d.chrome.menuOpen}
@@ -325,45 +407,32 @@ export function AppHeader() {
             className="glass glass-deep mx-4 mt-2 p-4 xl:hidden"
           >
             <nav aria-label={d.chrome.navLabel} className="flex flex-col">
-              <p className="app-sheet-label">{d.chrome.groupDemo}</p>
-              {demoNav.map((item, index) => {
-                const active = isActive(item.href, item.match, pathname);
-                return (
-                  <MotionLink
-                    key={item.key}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="app-sheet-link"
-                    data-active={active || undefined}
-                    aria-current={active ? "page" : undefined}
-                    style={{ ["--band" as string]: item.band }}
-                    initial={{ opacity: reduceMotion ? 1 : 0.55 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : index * 0.035 }}
-                    whileTap={reduceMotion ? undefined : { color: item.band }}
-                  >
-                    <span aria-hidden className="app-band-dot" style={{ ["--band" as string]: item.band }} />
-                    {item.label}
-                  </MotionLink>
-                );
-              })}
-              <p className="app-sheet-label">{d.chrome.groupMore}</p>
-              {moreNav.map((item, index) => (
-                <MotionLink
-                  key={item.key}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="app-sheet-link"
-                  data-active={isActive(item.href, item.match, pathname) || undefined}
-                  style={{ ["--band" as string]: item.band }}
-                  initial={{ opacity: reduceMotion ? 1 : 0.55 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : (demoNav.length + index) * 0.035 }}
-                  whileTap={reduceMotion ? undefined : { color: item.band }}
-                >
-                  <span aria-hidden className="app-band-dot" style={{ ["--band" as string]: item.band }} />
-                  {item.label}
-                </MotionLink>
+              {sheetGroups.map((group) => (
+                <div key={group.key}>
+                  <p className="app-sheet-label">{group.label}</p>
+                  {group.items.map((item) => {
+                    const active = isActive(item.href, item.match, pathname);
+                    const index = sheetIndex++;
+                    return (
+                      <MotionLink
+                        key={item.key}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className="app-sheet-link"
+                        data-active={active || undefined}
+                        aria-current={active ? "page" : undefined}
+                        style={{ ["--band" as string]: item.band }}
+                        initial={{ opacity: reduceMotion ? 1 : 0.55 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : index * 0.035 }}
+                        whileTap={reduceMotion ? undefined : { color: item.band }}
+                      >
+                        <span aria-hidden className="app-band-dot" style={{ ["--band" as string]: item.band }} />
+                        {item.label}
+                      </MotionLink>
+                    );
+                  })}
+                </div>
               ))}
             </nav>
             <div className="mt-4 flex items-center justify-between gap-3">
