@@ -6,6 +6,16 @@
 
 La demo y cualquier piloto autorizado durante la hackathon siguen **solo en devnet**, la red de prueba de Solana donde el dinero no tiene valor. **devUSDC es un token propio de prueba, no USDC emitido por Circle**; USDC es un activo digital diseñado para seguir el valor del dólar. Una wallet o billetera sirve para guardar y mover activos; en una custodial, el proveedor administra las claves. Una rampa convierte entre pesos y cripto. Una API permite que dos sistemas se comuniquen; un SDK reúne herramientas para integrar un producto. KYC es la verificación de identidad, y compliance es el trabajo de cumplimiento normativo.
 
+## Addendum de posicionamiento — revisión del pitch, 2026-10-07
+
+Pedido actual: ampliar el relato de estudiantes a **trabajadores informales, personas con ingresos parcialmente registrados y estudiantes sin acceso suficiente a crédito**. La cuña universitaria de abajo queda como antecedente/propuesta de reclutamiento, no como todo el mercado. “No bancarizados” no equivale a no tener tarjeta: muchos ya usan billeteras. Sin fiador con tarjeta, el producto actual no habilita plan.
+
+Recomendación para el cierre, aún a definir por el equipo: medio de pago integrable en billeteras existentes; checkout propio para aprender; cotizar rampas y distribución por separado. **Lemon ya publica crédito respaldado en bitcoin y cuotas**; hay que evaluar complemento/competencia, además de la brecha Solana del SDK. Ripio/belo tienen ofertas B2B que justifican evaluarlas para infraestructura, sin acceso ni acuerdos aprobados. Evidencia nueva, precedentes y límites en [research/h](research/h-distribucion-fintech-y-billetera.md).
+
+La masividad puede amortizar costos fijos; necesita margen positivo por compra después del socio, capital, pérdidas y operación. Crear otra billetera/exchange no demuestra ni garantiza ese margen o audiencia. No se acordó reparto, fondeo ni exclusividad. Las pruebas durante la hackathon siguen solo en devnet; no prueban repago ni rentabilidad comercial. Guion revisado en [05-pitch](05-pitch.md).
+
+Las referencias de abajo a una cuota/tasas pendientes anteceden al addendum de `06` y `10`: hoy la demo propuesta usa solo tres/seis, seis al 3% total provisional y cobro hoy/30/60/90 con tarifas provisionales de 7/6,25/5,5/5,25% del financiado. No adoptar tablas históricas como precios actuales.
+
 ## 1. Reglas de negocio que lleva esta propuesta
 
 Estas son las decisiones recibidas para este trabajo, aunque haya versiones anteriores diferentes en los documentos:
