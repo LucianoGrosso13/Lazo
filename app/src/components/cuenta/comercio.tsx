@@ -16,6 +16,7 @@ import { GlassPanel, GlassSlab } from "@/components/ui/glass";
 import { comercioCuenta } from "@/i18n/dictionaries/comercio-cuenta";
 import { cuentas } from "@/i18n/dictionaries/cuentas";
 import { useLocale, useT } from "@/i18n/locale";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { productsByMerchant } from "@/lib/catalog";
 import { getDirectoryMerchant } from "@/lib/merchants";
 import {
@@ -26,6 +27,7 @@ import {
   getCuotas,
   settlementAvailable,
   settlementOptionsOf,
+  payoutSchedule,
   type Merchant,
   type ProtocolConfig,
   type Quote,
@@ -231,6 +233,46 @@ function CajaCheckout({ owner }: { owner: string }) {
   );
 }
 
+/** Acceso destacado a "Venta en mostrador" (/app/comercio/mostrador). */
+function AccesoMostrador() {
+  const t = useT(comercioCuenta);
+  return (
+    <GlassPanel
+      data-testid="comercio-mostrador-card"
+      className="relative overflow-hidden border-cyan/25 bg-gradient-to-r from-cyan/[0.06] via-beam/[0.02] to-transparent px-5 py-5"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-cyan/15 text-cyan">
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                />
+              </svg>
+            </span>
+            <h2 className="text-base font-semibold text-beam">{t.mostradorCardTitle}</h2>
+            <Chip on>{t.mostradorCardBadge}</Chip>
+          </div>
+          <p className="max-w-xl text-sm leading-relaxed text-ink-2">
+            {t.mostradorCardDesc}
+          </p>
+        </div>
+        <Link
+          href="/app/comercio/mostrador"
+          data-testid="comercio-mostrador-link"
+          className={`${buttonClasses("primary", "md")} shrink-0 self-start sm:self-center`}
+        >
+          {t.mostradorCardBoton} →
+        </Link>
+      </div>
+    </GlassPanel>
+  );
+}
+
 function DatosComercio({ merchant }: { merchant: Merchant }) {
   const t = useT(comercioCuenta);
   const { locale } = useLocale();
@@ -322,7 +364,49 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
                       <EvidenceMark evidence={{ kind: "signature", signature: s.signature }} />
                     </span>
                   </div>
-                  {days > 0 && (
+                  {s.payoutTranches && s.payoutTranches.length > 0 ? (
+                    <div className="mt-3 rounded-xl border border-beam/10 bg-beam/[0.02] p-3 text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-beam/8 pb-2 text-ink-3">
+                        <span className="font-medium text-ink-2">{t.calendarioTramosVenta}</span>
+                        <span className="text-ink-ghost">
+                          {t.anticipoCobrado}: <span className="font-num tabular-nums text-beam">US$ {formatUsdc(s.downPayment, locale)}</span>
+                        </span>
+                      </div>
+                      <ul className="mt-2 space-y-1.5">
+                        {s.payoutTranches.map((tr) => (
+                          <li
+                            key={tr.index}
+                            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-beam/[0.03] px-2.5 py-1.5"
+                          >
+                            <span className="flex items-center gap-2 text-ink">
+                              <span
+                                aria-hidden
+                                className={`size-2 shrink-0 rounded-full ${
+                                  tr.released
+                                    ? "bg-green"
+                                    : "bg-cyan shadow-[0_0_6px_rgb(0_194_255/0.5)]"
+                                }`}
+                              />
+                              <span className="font-medium">
+                                {t.tramoNumero
+                                  .replace("{index}", String(tr.index + 1))
+                                  .replace("{total}", String(s.payoutTranches!.length))}
+                              </span>
+                              <span className="text-ink-ghost">· {fmtDia(tr.releaseAt, locale)}</span>
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <span className="font-num text-sm tabular-nums text-beam font-medium">
+                                US$ {formatUsdc(tr.amount, locale)}
+                              </span>
+                              <Chip on={tr.released}>
+                                {tr.released ? t.estadoLiberado : t.estadoPendiente}
+                              </Chip>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : days > 0 ? (
                     <p className="mt-1.5 text-xs leading-relaxed text-ink-ghost">
                       {settled
                         ? t.ventaCobradaDetalle.replace("{fecha}", fmtDia(cobroAt, locale))
@@ -330,7 +414,7 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
                             .replace("{monto}", `US$ ${formatUsdc(pendienteVenta, locale)}`)
                             .replace("{fecha}", fmtDia(cobroAt, locale))}
                     </p>
-                  )}
+                  ) : null}
                 </li>
               );
             })}
@@ -338,6 +422,32 @@ function DatosComercio({ merchant }: { merchant: Merchant }) {
         )}
       </GlassPanel>
     </div>
+  );
+}
+
+function HistorialLiberaciones({ owner }: { owner: WalletAddress }) {
+  const t = useT(comercioCuenta);
+  const { locale } = useLocale();
+  const res = useCuotasQuery(["comercio-liberaciones", owner], (c) =>
+    c.getActivity({ merchant: owner }),
+  );
+  const liberaciones = (res.data ?? []).filter((item) => item.kind === "PayoutReleased");
+  if (liberaciones.length === 0) return null;
+  return (
+    <GlassPanel className="px-5 py-5">
+      <h2 className="text-base font-semibold text-beam">{t.actividadTitle}</h2>
+      <ul className="mt-3 divide-y divide-beam/8">
+        {liberaciones.map((item, index) => (
+          <li key={`${item.at}-${item.planId}-${index}`} className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-1 last:pb-1">
+            <span className="text-sm text-ink">{t.actividadLiberacion} · {fmtDia(item.at, locale)}</span>
+            <span className="flex items-center gap-2">
+              <span className="font-num text-sm tabular-nums text-beam">US$ {formatUsdc(item.amount ?? 0, locale)} devUSDC</span>
+              {item.signature && <EvidenceMark evidence={{ kind: "signature", signature: item.signature }} />}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </GlassPanel>
   );
 }
 
@@ -465,15 +575,12 @@ function PlazosCobro({
                       />
                     )}
                     <span className="text-sm font-medium text-ink">{plazo}</span>
-                    {opt.provisional && (
-                      <span className="ref-tag">{t.plazoProvisional}</span>
-                    )}
                     {selected && <Chip on>{t.plazoPredeterminado}</Chip>}
                     {!available && <span className="ref-tag">{t.plazoAConfirmar}</span>}
                   </span>
-                  <span className="min-w-0 text-xs text-ink-3">
+                  <span className="min-w-0 text-sm text-ink-3">
                     {opt.feeBps !== null
-                      ? `${fmtPct01(opt.feeBps / 10_000, locale)} ${t.plazoSobreFinanciado}`
+                      ? `${fmtPct01(opt.feeBps / 10_000, locale)} ${t.plazoSobreFinanciado}${q ? ` · ${t.plazosComision} US$ ${formatUsdc(q.merchantFee, locale)}` : ""}`
                       : t.plazoAConfirmar}
                   </span>
                   <span className="ml-auto flex flex-wrap items-baseline justify-end gap-x-2 text-right">
@@ -486,6 +593,34 @@ function PlazosCobro({
                       {t.plazoColFecha} {fecha}
                     </span>
                   </span>
+                  {q && (
+                    <span className="w-full basis-full border-t border-beam/8 pt-2 text-left">
+                      <span className="flex flex-wrap justify-between gap-2 text-xs font-medium text-ink-2">
+                        <span>{t.plazosCalendarioTramos}</span>
+                        <span className="font-num tabular-nums text-beam">{t.plazosNetoTotal}: US$ {formatUsdc(q.merchantReceives, locale)}</span>
+                      </span>
+                      <span className="mt-1 grid gap-1 sm:grid-cols-2">
+                        {opt.tranches > 0 && (
+                          <span className="flex flex-wrap items-center justify-between gap-x-3 rounded-lg bg-beam/[0.03] px-2.5 py-1.5 text-sm">
+                            <span className="text-ink-3">{t.plazosAnticipoHoy}</span>
+                            <span className="font-num tabular-nums text-beam">US$ {formatUsdc(q.merchantAdvance, locale)}</span>
+                          </span>
+                        )}
+                        {payoutSchedule(q.merchantPending, opt, data.now, data.secondsPerDay).map((tr) => (
+                          <span key={tr.index} className="flex flex-wrap items-center justify-between gap-x-3 rounded-lg bg-beam/[0.03] px-2.5 py-1.5 text-sm">
+                            <span className="text-ink-3">{t.plazosTramoItem.replace("{n}", String(tr.index + 1))} · {fmtDia(tr.releaseAt, locale)}</span>
+                            <span className="font-num tabular-nums text-beam">US$ {formatUsdc(tr.amount, locale)}</span>
+                          </span>
+                        ))}
+                        {opt.tranches === 0 && (
+                          <span className="flex flex-wrap items-center justify-between gap-x-3 rounded-lg bg-beam/[0.03] px-2.5 py-1.5 text-sm">
+                            <span className="text-ink-3">{t.plazoInmediatoTodo}</span>
+                            <span className="font-num tabular-nums text-beam">US$ {formatUsdc(q.merchantAdvance, locale)}</span>
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  )}
                 </>
               );
               return (
@@ -509,8 +644,9 @@ function PlazosCobro({
             })}
           </ul>
           {ejemplo && (
-            <p className="mt-3 text-xs leading-relaxed text-ink-ghost">
+            <p className="mt-3 text-sm leading-relaxed text-ink-ghost">
               {t.plazosEjemplo
+                .replace("{tier}", tierLabel(ejemplo.tier))
                 .replace("{precio}", `US$ ${formatUsdc(ejemplo.price, locale)}`)
                 .replace("{anticipo}", `US$ ${formatUsdc(ejemplo.downPayment, locale)}`)
                 .replace("{financiado}", `US$ ${formatUsdc(ejemplo.financed, locale)}`)}
@@ -645,6 +781,8 @@ export function ComercioView({
           <div className="space-y-6">
             <DatosComercio merchant={m} />
             <PlazosCobro owner={address} merchant={m} editable={variante === "cuenta"} />
+            {variante === "cuenta" && <AccesoMostrador />}
+            {variante === "cuenta" && <HistorialLiberaciones owner={address} />}
           </div>
         )}
       </Consulta>
