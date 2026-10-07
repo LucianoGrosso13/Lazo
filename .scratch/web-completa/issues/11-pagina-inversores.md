@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Archivos propios:** `app/src/components/audience/para-inversores.tsx` (reemplazás el placeholder), nuevo diccionario `app/src/i18n/dictionaries/para-inversores.ts`, la `metadata` de `app/src/app/para-inversores/page.tsx`. Usá las primitivas de `components/audience/`.
 
@@ -18,8 +18,8 @@ Contenido mínimo:
 - Roadmap rotulado: tesorería propia en DeFi solo con fondos propios, simulada, nunca con capital del pool.
 - FAQ (5–7) y CTAs: ver el pool, leer cómo funciona para comercios/estudiantes.
 
-- [ ] Todo lo de arriba en ES y EN, con números de la config/helpers; nada hardcodeado
-- [ ] Sin APY prometido; riesgos explícitos; etiquetas "referencia"/"ilustrativo"/"provisional"
-- [ ] Desglose legible a 390 px
-- [ ] Capturas 390/1440 en `.scratch/web-completa/evidence/11-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Todo lo de arriba en ES y EN, con números de la config/helpers; nada hardcodeado
+- [x] Sin APY prometido; riesgos explícitos; etiquetas "referencia"/"ilustrativo"/"provisional"
+- [x] Desglose legible a 390 px
+- [x] Capturas 390/1440 en `.scratch/web-completa/evidence/11-*`
+- [x] typecheck / lint / test / build en verde
