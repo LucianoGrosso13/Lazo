@@ -8,7 +8,7 @@
 
 **Blocked by:** —
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `proyecto/10-tasa-6-cuotas-y-cobro-diferido.md`, `proyecto/research/modelo-tarifas-6-cuotas-y-diferido.py`, `proyecto/06-decisiones-comerciales.md` (addendum al final), `proyecto/09-alcance-opcion-h-y-mejoras.md` (marcar el descuento al fiador como descartado y el mostrador como MVP), `proyecto/07-plan-de-negocio/**`, `CLAUDE.md` (solo § "Qué es").
 
@@ -26,8 +26,8 @@ Notas:
 - Supuestos rotulados como hipótesis, nunca como métricas de Lazo.
 - **`CLAUDE.md` § "Qué es":** reflejar lo decidido (sin "provisionales"; 60 días al 5,75%; tramos; fiador obligatorio; 6 cuotas en el programa).
 
-- [ ] Doc 10 decidido, con las dos tablas y la sección de tramos
-- [ ] Script con tramos, reproducible (`python3 -I …`)
-- [ ] Addendum en 06; 09 marcado
-- [ ] `modelo-v3.py` + gráficos + plan y pitch de negocio reescritos
-- [ ] `CLAUDE.md` § "Qué es" al día
+- [x] Doc 10 decidido, con las dos tablas y la sección de tramos
+- [x] Script con tramos, reproducible (`python3 -I …`)
+- [x] Addendum en 06; 09 marcado
+- [x] `modelo-v3.py` + gráficos + plan y pitch de negocio reescritos
+- [x] `CLAUDE.md` § "Qué es" al día
