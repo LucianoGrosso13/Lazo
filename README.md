@@ -238,7 +238,7 @@ npx playwright install chromium   # once, for the e2e suite
 npm run test:e2e         # playwright (mock mode; PW_CUOTAS_MODE=real for devnet)
 npm run typecheck && npm run lint && npm run build
 
-# Keeper — node:test unit suite (46 tests) + scripted-RPC e2e (9 tests)
+# Keeper — node:test unit suite (47 tests) + scripted-RPC e2e (10 tests)
 cd keeper
 npm test
 npm run test:e2e         # real codecs against a scripted RPC transport

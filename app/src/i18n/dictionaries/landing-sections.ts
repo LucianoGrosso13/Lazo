@@ -201,13 +201,13 @@ export const landingSections = defineDict({
     },
     honest: {
       title: "Qué corre en la cadena y qué en el simulador",
-      realTitle: "En la cadena (Solana devnet)",
+      realTitle: "Programa para Solana devnet",
       real: [
-        "Programa Anchor en Solana devnet con planes de 3 y 6 cuotas",
+        "Código Anchor probado localmente con planes de 3 y 6 cuotas",
         "Fiador obligatorio con cobertura del 100% de capital e interés",
         "Pool de liquidez con tramo senior y cuentas verificables",
         "Calendario de tramos del comercio (PayoutSchedule) y control de liquidez del pool",
-
+        "La actualización del programa en devnet está pendiente; la web pública usa el simulador",
       ],
       simTitle: "En el simulador",
       sim: [
@@ -425,13 +425,13 @@ export const landingSections = defineDict({
     },
     honest: {
       title: "What runs onchain and what runs in the simulator",
-      realTitle: "Onchain (Solana devnet)",
+      realTitle: "Program for Solana devnet",
       real: [
-        "Anchor program on Solana devnet with 3 and 6 installment plans",
+        "Locally tested Anchor source with 3 and 6 installment plans",
         "Mandatory guarantor covering 100% of capital and interest",
         "Liquidity pool with senior tranche and verifiable accounts",
         "Merchant payout schedule (PayoutSchedule) and pool liquidity check",
-
+        "The devnet program upgrade is pending; the public web uses the simulator",
       ],
       simTitle: "In the simulator",
       sim: [

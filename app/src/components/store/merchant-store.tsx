@@ -322,7 +322,6 @@ export function MerchantStore({ merchant: m }: { merchant: DemoMerchant }) {
                     : tm.settlementIn(settlement.days)}
                 </Chip>
               ) : null}
-              <Chip on>{tm.demoTag}</Chip>
               {m.featured ? <Chip>{tm.featuredTag}</Chip> : null}
             </div>
             <p className={styles.merchantDesc}>{m.description[locale]}</p>

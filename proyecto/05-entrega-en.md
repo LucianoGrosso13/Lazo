@@ -14,7 +14,7 @@ Installments without a credit card: backed by family, settled on Solana.
 
 ## Short description
 
-Lazo lets students without a credit card buy in installments, backed by a family member who signs as guarantor and is only charged if the student stops paying. Students choose 3 interest-free installments or 6 at a 3% total charge; merchants choose to get paid today or in guaranteed monthly tranches. Every paid plan raises the student's Tier, recorded on Solana. Runs on Solana devnet.
+Lazo lets students without a credit card buy in installments, backed by a family member who signs as guarantor and is only charged if the student stops paying. Students choose 3 interest-free installments or 6 at a 3% total charge; merchants choose to get paid today or in guaranteed monthly tranches. Qualifying plans repaid on time can raise the student's Tier, recorded on Solana. Runs on Solana devnet.
 
 ## Long description
 
@@ -77,10 +77,10 @@ Repository: [https://github.com/LucianoGrosso13/Lazo](https://github.com/Luciano
 
 ## What's onchain vs simulated
 
-**Onchain (Solana devnet):**
+**Program source for Solana devnet (upgrade pending):**
 - The `cuotas` program: pool with junior and senior tranches, plan opening, installment payments, late marking, guarantor recovery registration, Tier and counters, guarantee registry.
-- 3 and 6 installments, mandatory guarantor, and guarantor coverage of principal plus interest, implemented in the program. Deployed to devnet: [A CONFIRMAR: program upgrade and config init done on devnet].
-- Merchant payout tranches (`PayoutSchedule`, `release_payout`, pool liquidity check): [A CONFIRMAR: onchain if ticket 03 merged; otherwise move this line to "Simulated"].
+- 3 and 6 installments, mandatory guarantor, and coverage of principal plus interest are implemented and tested locally. The new program upgrade and config initialization on devnet remain pending explicit approval; the deployed binary is the previous version.
+- Merchant payout tranches (`PayoutSchedule`, `release_payout`, pool liquidity check) are implemented in the integrated program source and tested locally. They are not yet deployed; the public walkthrough uses the browser simulator.
 
 **Simulated (browser simulator used by the public web app):**
 - The full walkthrough for judges, with no wallet or card required.

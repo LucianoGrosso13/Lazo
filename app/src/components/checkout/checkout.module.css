@@ -722,11 +722,12 @@
 }
 
 .compareNum {
+  min-width: 0;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
   font-size: 0.95rem;
   text-align: right;
-  white-space: nowrap;
+  white-space: normal;
   color: var(--color-beam);
 }
 
@@ -749,7 +750,7 @@
 
 @media (max-width: 640px) {
   .compareRow {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .compareTrack {

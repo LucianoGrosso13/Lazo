@@ -11,8 +11,8 @@ dir 0700 / files 0600); it is never committed or printed.
 
 Devnet runs the old binary today (sha `8d05b07f`, 469,824 bytes — no credit
 lifecycle). The locally rebuilt artifact (`target/deploy/cuotas.so`, sha
-`ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19`,
-668,592 bytes; compiled with Anchor CLI 1.2.0 / Solana 3.1.14 / `--arch v1`) adds 3/6-installment plans with mandatory guarantor coverage of principal + interest, configurable 3/6 plan options, four merchant settlement options, `PayoutSchedule` commitments, and permissionless `release_payout`, alongside `open_plan`, `pay_installment`, `crank_mark_late` and `keeper_register_recovery`. `admin_init_config` **cannot run against the old binary**: the
+`049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda`,
+741,992 bytes; rebuilt locally with `cargo-build-sbf --arch v1` on 2026-10-07) adds 3/6-installment plans with mandatory guarantor coverage of principal + interest, configurable 3/6 plan options, four merchant settlement options, `PayoutSchedule` commitments, and permissionless `release_payout`, alongside `open_plan`, `pay_installment`, `crank_mark_late` and `keeper_register_recovery`. `admin_init_config` **cannot run against the old binary**: the
 `ConfigParams` layout changed, so init with the new client fails with
 `InvalidConfig 6010` (verified by dry-run simulation on 2026-10-06).
 Upgrade first, then init.
@@ -27,7 +27,14 @@ Upgrade first, then init.
 | Stranded buffer (from the interrupted first deploy) | `DUgcg4Y2FTujLeV1X4CQPVAogPyrgsHopZgnxP56ddNW` — **2.38758476 SOL**, 469,861 B. Too small for the new artifact; closing recovers the SOL. |
 | devUSDC mint | `8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y` (supply 0, mint authority = deployer) |
 
-## Funding math (devnet lamports, observed ~5,081 lamports/byte rent-exempt)
+## Funding estimate — refresh before approving any transaction
+
+The figures below are historical estimates for the earlier 668,592-byte
+artifact. The final integrated artifact is 741,992 bytes, so these amounts
+are not a current funding quote. Re-query devnet rent and account balances
+before the upgrade. Do not use the historical top-up as approval to send.
+
+### Historical math (observed ~5,081 lamports/byte rent-exempt)
 
 - New buffer: 37-byte header + 668,592 B program → 668,629 B ≈ **3.40 SOL** upfront at the observed ~5,081 lamports/byte.
 - ProgramData is currently 610,365 B; auto-extend is about +58,264 B ≈ **+0.30 SOL** (permanent).
@@ -63,7 +70,7 @@ second buffer (devnet congestion caused 3 retries last time).
 
 ```sh
 sha256sum programa/target/deploy/cuotas.so
-# must print ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
+# must print 049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda
 # if rebuilding this checkout: cd programa && NO_DNA=1 anchor build --arch v1 --ignore-keys
 
 solana program deploy programa/target/deploy/cuotas.so \
@@ -75,7 +82,7 @@ solana program deploy programa/target/deploy/cuotas.so \
 
 If it is interrupted: rerun the exact same command — written chunks are
 skipped. The upgrade extends ProgramData in place (same address), copies the
-buffer bytes into it, then closes the buffer: its ~3.40 SOL return to the
+buffer bytes into it, then closes the buffer: its rent-exempt balance returns to the
 deployer.
 
 ## Step 4 — verify the deployed bytes
@@ -86,11 +93,11 @@ directly:
 ```sh
 solana program dump E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ /tmp/deployed-cuotas.so -u devnet
 sha256sum /tmp/deployed-cuotas.so
-# must equal ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
+# must equal 049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda
 ```
 
 (`solana program show E6pB2UER… -u devnet` should report a refreshed deploy
-slot and a ProgramData length of 668,629 bytes; authority `BY6ZB2…Mehf`.)
+slot and a ProgramData length sufficient for the verified artifact; authority `BY6ZB2…Mehf`.)
 
 ## Step 5 — seed: init + funding proposals
 

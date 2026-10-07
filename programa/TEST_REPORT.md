@@ -1,6 +1,6 @@
 # Cuotas — LiteSVM Acceptance Test Report
 
-**Result: 139/139 in-process LiteSVM tests GREEN + 36/36 host unit tests
+**Result: 142/142 in-process LiteSVM tests GREEN + 36/36 host unit tests
 GREEN. Zero failures, zero ignored, zero deliberately-red tests.**
 
 **Acceptance is NOT final business sign-off.** The technical suite covers the
@@ -11,9 +11,9 @@ devnet or approve any deployment or real-fund use.
 
 | item | value |
 |---|---|
-| SBF artifact | `target/deploy/cuotas.so`, 698488 bytes |
-| artifact SHA256 | `2c3d4a0fd5004b298014938690ad7bc334f1bb5b63beeb29505ebc4098b36723` |
-| IDL | Not regenerated in this environment; Anchor CLI is unavailable |
+| SBF artifact | `target/deploy/cuotas.so`, 741992 bytes |
+| artifact SHA256 | `049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda` |
+| IDL | Generated from the integrated source with `anchor idl build`; checked against Codama |
 | build | `cargo-build-sbf --arch v1 --manifest-path programs/cuotas/Cargo.toml --sbf-out-dir target/deploy` (rebuilt before tests) |
 | runtime | LiteSVM 0.16 in-process — no mocks, no stubs, no network, no `anchor test`, no deploy |
 
@@ -27,7 +27,7 @@ the artifact rebuilt for this report. The source branch has not been deployed.
 ```sh
 cd programa
 cargo-build-sbf --arch v1 --manifest-path programs/cuotas/Cargo.toml --sbf-out-dir target/deploy
-cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 139 tests)
+cargo +stable test --manifest-path tests/Cargo.toml --no-fail-fast       # in-process acceptance suite (all 142 tests)
 cargo test -p cuotas --lib                                               # host-only unit tests (36 tests)
 ```
 
@@ -50,16 +50,17 @@ adversarial.rs          7 passed   I-05 inflation attack, burns, conservation
 regressions.rs          5 passed   R1–R5 all GREEN (table below)
 plan_open.rs           13 passed   open_plan: terms, gates, adversarial
 plan_pay.rs            13 passed   pay_installment: settle, replay, tiers, rollback
+payout_schedule.rs      3 passed   reserve liquidity, release tranches, prevent replay
 plan_recovery.rs       15 passed   crank_mark_late + keeper_register_recovery
 --------------------------------------
-TOTAL                 139 passed / 0 failed / 0 ignored   (in-process)
+TOTAL                 142 passed / 0 failed / 0 ignored   (in-process)
 + cargo test -p cuotas --lib: 36/36 host unit tests pass (exact-divisibility,
   inflation rejection, gain conservation, orphan/wipe handling, config
   validation incl. notice-day ordering, plan schedule math)
 ```
 
-The Anchor CLI is unavailable here, so an updated IDL was not generated or
-compared in this ticket; client generation remains with ticket 04.
+The final integrated source was rebuilt on 2026-10-07. IDL generation and
+Codama verification were run locally; no transaction was signed or sent.
 
 ## Credit lifecycle — real instructions, no fixtures
 
