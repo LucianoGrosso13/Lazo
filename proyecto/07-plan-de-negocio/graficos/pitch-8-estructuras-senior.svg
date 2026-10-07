@@ -14,32 +14,32 @@
 <text x="197.7" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 20%</text>
 <rect x="122.1" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
 <text x="140.2" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
-<rect x="160.4" y="248.4" width="36.3" height="16.7" rx="3" fill="#0284c7"/>
-<text x="178.5" y="242.4" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">11%</text>
-<rect x="198.7" y="149.5" width="36.3" height="115.5" rx="3" fill="#0f9d6b"/>
-<text x="216.8" y="143.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">79%</text>
-<rect x="237.0" y="228.6" width="36.3" height="36.5" rx="3" fill="#9ca3af"/>
-<text x="255.1" y="222.6" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">25%</text>
+<rect x="160.4" y="253.3" width="36.3" height="11.8" rx="3" fill="#0284c7"/>
+<text x="178.5" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="198.7" y="265.1" width="36.3" height="66.7" rx="3" fill="#0f9d6b"/>
+<text x="216.8" y="345.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-45%</text>
+<rect x="237.0" y="265.1" width="36.3" height="3.9" rx="3" fill="#9ca3af"/>
+<text x="255.1" y="283.0" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-3%</text>
 <text x="437.0" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año normal</text>
 <text x="437.0" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 30%</text>
 <rect x="361.4" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
 <text x="379.6" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
-<rect x="399.7" y="250.3" width="36.3" height="14.8" rx="3" fill="#0284c7"/>
-<text x="417.9" y="244.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">10%</text>
-<rect x="438.0" y="190.5" width="36.3" height="74.6" rx="3" fill="#0f9d6b"/>
-<text x="456.1" y="184.5" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">51%</text>
-<rect x="476.3" y="238.3" width="36.3" height="26.7" rx="3" fill="#9ca3af"/>
-<text x="494.4" y="232.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">18%</text>
+<rect x="399.7" y="253.3" width="36.3" height="11.8" rx="3" fill="#0284c7"/>
+<text x="417.9" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
+<rect x="438.0" y="265.1" width="36.3" height="120.6" rx="3" fill="#0f9d6b"/>
+<text x="456.1" y="399.7" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-82%</text>
+<rect x="476.3" y="265.1" width="36.3" height="14.7" rx="3" fill="#9ca3af"/>
+<text x="494.4" y="293.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-10%</text>
 <text x="676.3" y="386.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">Año malo</text>
 <text x="676.3" y="400.0" font-size="11" fill="#6b6880" text-anchor="middle" font-weight="normal">mora 40%, recupero 65%</text>
-<rect x="600.7" y="253.3" width="36.3" height="11.8" rx="3" fill="#93c5fd"/>
-<text x="618.9" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
-<rect x="639.0" y="253.3" width="36.3" height="11.8" rx="3" fill="#0284c7"/>
-<text x="657.2" y="247.3" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">8%</text>
-<rect x="677.3" y="265.1" width="36.3" height="81.1" rx="3" fill="#0f9d6b"/>
-<text x="695.5" y="360.2" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-55%</text>
-<rect x="715.6" y="265.1" width="36.3" height="6.8" rx="3" fill="#9ca3af"/>
-<text x="733.8" y="285.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-5%</text>
+<rect x="600.7" y="265.1" width="36.3" height="21.7" rx="3" fill="#93c5fd"/>
+<text x="618.9" y="300.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-15%</text>
+<rect x="639.0" y="265.1" width="36.3" height="21.7" rx="3" fill="#0284c7"/>
+<text x="657.2" y="300.8" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-15%</text>
+<rect x="677.3" y="265.1" width="36.3" height="147.1" rx="3" fill="#0f9d6b"/>
+<text x="695.5" y="426.1" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-100%</text>
+<rect x="715.6" y="265.1" width="36.3" height="46.8" rx="3" fill="#9ca3af"/>
+<text x="733.8" y="325.9" font-size="12" fill="#1d1b2e" text-anchor="middle" font-weight="700">-32%</text>
 <rect x="24" y="86" width="14" height="14" rx="3" fill="#93c5fd"/>
 <text x="44.0" y="98.0" font-size="12" fill="#1d1b2e" text-anchor="start" font-weight="normal">A. Senior fijo</text>
 <rect x="150.39999999999998" y="86" width="14" height="14" rx="3" fill="#0284c7"/>

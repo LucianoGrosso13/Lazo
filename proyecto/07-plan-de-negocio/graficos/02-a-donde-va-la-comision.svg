@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
 <rect width="820" height="460" fill="#ffffff" rx="12"/>
 <text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">A dónde va la comisión del comercio</text>
-<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">PC de US$1.000, escalón 0 (anticipo 30%, financiado US$700), modo sin interés al 9% del precio</text>
-<text x="24.0" y="110.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lo que paga el comercio por una PC de US$1.000: US$90,00</text>
-<rect x="24.0" y="122" width="240.2" height="70" fill="#7c3aed"/>
-<text x="144.1" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$28,00</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">PC de US$1.000, Tier 1 · Starter (anticipo 30%, financiado US$700), cobro hoy al 7% sobre financiado (US$49)</text>
+<text x="24.0" y="110.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lo que paga el comercio por una PC de US$1.000: US$49,00</text>
+<rect x="24.0" y="122" width="441.1" height="70" fill="#7c3aed"/>
+<text x="244.6" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$28,00</text>
 <rect x="24" y="214" width="14" height="14" rx="3" fill="#7c3aed"/>
-<text x="46.0" y="226.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Lazo: originación (4% de lo financiado) — US$28,00 (31%)</text>
-<rect x="264.2" y="122" width="20.0" height="70" fill="#0284c7"/>
+<text x="46.0" y="226.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Lazo: originación (4% de lo financiado) — US$28,00 (57%)</text>
+<rect x="465.1" y="122" width="36.8" height="70" fill="#0284c7"/>
 <rect x="24" y="248" width="14" height="14" rx="3" fill="#0284c7"/>
-<text x="46.0" y="260.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Lazo: administración (2%/año sobre saldo) — US$2,33 (3%)</text>
-<rect x="284.2" y="122" width="290.5" height="70" fill="#dc2626"/>
-<text x="429.4" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$33,87</text>
+<text x="46.0" y="260.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Lazo: administración (2%/año sobre saldo) — US$2,33 (5%)</text>
+<rect x="501.9" y="122" width="163.5" height="70" fill="#dc2626"/>
+<text x="583.7" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$10,38</text>
 <rect x="24" y="282" width="14" height="14" rx="3" fill="#dc2626"/>
-<text x="46.0" y="294.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Pérdida esperada por mora, neta del fiador — US$33,87 (38%)</text>
-<rect x="574.7" y="122" width="221.3" height="70" fill="#0f9d6b"/>
-<text x="685.3" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$25,80</text>
+<text x="46.0" y="294.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Pérdida esperada por mora, neta del fiador — US$10,38 (21%)</text>
+<rect x="665.4" y="122" width="130.6" height="70" fill="#0f9d6b"/>
+<text x="730.7" y="162.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">US$8,29</text>
 <rect x="24" y="316" width="14" height="14" rx="3" fill="#0f9d6b"/>
-<text x="46.0" y="328.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Ganancia del pool (inversores) — US$25,80 (29%)</text>
-<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Valores esperados por plan. La pérdida es lo que no se recupera del estudiante ni del fiador, más los costos de cobro.</text>
-<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Escenario del modelo (modelo-v2.py §8): mora 30%, recupero del fiador 80%. No es un pronóstico. Todo corre en devnet.</text>
+<text x="46.0" y="328.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="normal">Ganancia del pool (inversores) — US$8,29 (17%)</text>
+<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Valores esperados por plan. La pérdida es la mora neta del recupero del fiador más aranceles.</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Escenario del modelo (modelo-v3.py): supuestos base (mora 8%, recupero fiador 80%). No es un pronóstico. Todo corre en devnet.</text>
 </svg>

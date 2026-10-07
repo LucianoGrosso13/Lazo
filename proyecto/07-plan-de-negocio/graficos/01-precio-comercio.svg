@@ -1,27 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="460" viewBox="0 0 820 460" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
 <rect width="820" height="460" fill="#ffffff" rx="12"/>
 <text x="24.0" y="34.0" font-size="19" fill="#1d1b2e" text-anchor="start" font-weight="700">Cuánto paga el comercio por vender en 3 cuotas sin interés</text>
-<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Costo en % del precio de venta. Banco y Mercado Pago exigen que el comprador tenga tarjeta</text>
-<text x="24.0" y="108.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Mercado Pago</text>
-<text x="24.0" y="124.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">al instante · con tarjeta · ~18-19% + IVA</text>
-<rect x="280" y="88.0" width="418.1" height="32.0" rx="4" fill="#dc2626"/>
-<text x="706.1" y="109.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">18,5%</text>
-<text x="24.0" y="165.2" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Banco (Posnet)</text>
-<text x="24.0" y="181.2" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">a 8 días hábiles · con tarjeta · + alquiler</text>
-<rect x="280" y="145.2" width="192.1" height="32.0" rx="4" fill="#9ca3af"/>
-<text x="480.1" y="166.2" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">8,5%</text>
-<text x="24.0" y="222.4" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo propuesto</text>
-<text x="24.0" y="238.4" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">al instante · sin tarjeta · sin Posnet</text>
-<rect x="280" y="202.4" width="203.4" height="32.0" rx="4" fill="#7c3aed"/>
-<text x="491.4" y="223.4" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">9,0%</text>
-<text x="24.0" y="279.6" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo cobrando a 30 días</text>
-<text x="24.0" y="295.6" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">propuesta, sin modelar todavía</text>
-<rect x="280" y="259.6" width="158.2" height="32.0" rx="4" fill="#0284c7"/>
-<text x="446.2" y="280.6" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">7,0%</text>
-<text x="24.0" y="336.8" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo hoy (programa)</text>
-<text x="24.0" y="352.8" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">7% de lo financiado: Lazo no gana nada</text>
-<rect x="280" y="316.8" width="110.7" height="32.0" rx="4" fill="#0f9d6b"/>
-<text x="398.7" y="337.8" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">4,9%</text>
-<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Banco y Mercado Pago: tabla de Google modo IA, SIN VERIFICAR, + IVA. Lazo: propuesta (plan-de-negocio.md §3.4),</text>
-<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">+ IVA a confirmar con un contador. El comprador de Lazo no necesita tarjeta.</text>
+<text x="24.0" y="56.0" font-size="13" fill="#6b6880" text-anchor="start" font-weight="normal">Costo en % del precio de venta (anticipo 30%, financiado 70%). La alternativa con tarjeta</text>
+<text x="24.0" y="105.3" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">La competencia (al instante)</text>
+<text x="24.0" y="121.3" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">al instante · con tarjeta · ~18-19% + IVA</text>
+<rect x="280" y="88.0" width="418.1" height="26.7" rx="4" fill="#dc2626"/>
+<text x="706.1" y="106.3" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">18,5%</text>
+<text x="24.0" y="153.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Alternativa bancaria (8 días)</text>
+<text x="24.0" y="169.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">a 8 días hábiles · con tarjeta</text>
+<rect x="280" y="135.7" width="192.1" height="26.7" rx="4" fill="#9ca3af"/>
+<text x="480.1" y="154.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">8,5%</text>
+<text x="24.0" y="200.7" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo cobro hoy (7% financiado)</text>
+<text x="24.0" y="216.7" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">al instante · sin tarjeta</text>
+<rect x="280" y="183.3" width="110.7" height="26.7" rx="4" fill="#7c3aed"/>
+<text x="398.7" y="201.7" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">4,9%</text>
+<text x="24.0" y="248.3" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo a 30 días (6,25% financiado)</text>
+<text x="24.0" y="264.3" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">1 tramo día 30</text>
+<rect x="280" y="231.0" width="99.0" height="26.7" rx="4" fill="#0284c7"/>
+<text x="387.0" y="249.3" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">4,4%</text>
+<text x="24.0" y="296.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo a 60 días (5,75% financiado)</text>
+<text x="24.0" y="312.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">2 tramos mensuales</text>
+<rect x="280" y="278.7" width="91.1" height="26.7" rx="4" fill="#0f9d6b"/>
+<text x="379.1" y="297.0" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">4,0%</text>
+<text x="24.0" y="343.7" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="600">Lazo a 90 días (5,25% financiado)</text>
+<text x="24.0" y="359.7" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">3 tramos mensuales</text>
+<rect x="280" y="326.3" width="83.2" height="26.7" rx="4" fill="#0f9d6b"/>
+<text x="371.2" y="344.7" font-size="13" fill="#1d1b2e" text-anchor="start" font-weight="700">3,7%</text>
+<text x="24.0" y="422.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">La competencia: referencia de mercado de cobro al instante con tarjeta (~18-19% + IVA) vs. 8 días hábiles (~8,5% + IVA).</text>
+<text x="24.0" y="438.0" font-size="11" fill="#6b6880" text-anchor="start" font-weight="normal">Lazo: tarifas vigentes sobre financiado (7%, 6,25%, 5,75%, 5,25%), traducidas a % del precio. El comprador no necesita tarjeta.</text>
 </svg>
