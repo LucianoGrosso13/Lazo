@@ -13,9 +13,9 @@ export const common = defineDict({
     },
     footer: {
       navLabel: "Mapa del sitio",
-      explore: "La demo",
+      explore: "Explorar",
       how: "Cómo funciona",
-      legend: "Demo simulada · Solana devnet",
+      legend: "Solana devnet · Red de prueba: los fondos no tienen valor monetario",
     },
     devnet: "Demo · devnet previsto",
     devnetHint: "Esta interfaz usa datos simulados. Solana devnet es la red de prueba prevista; sus fondos no tienen valor monetario.",
@@ -40,9 +40,9 @@ export const common = defineDict({
     },
     footer: {
       navLabel: "Site map",
-      explore: "The demo",
+      explore: "Explore",
       how: "How it works",
-      legend: "Simulated demo · Solana devnet",
+      legend: "Solana devnet · Test network: funds have no monetary value",
     },
     devnet: "Demo · devnet planned",
     devnetHint: "This interface uses simulated data. Solana devnet is the planned test network; its funds have no monetary value.",

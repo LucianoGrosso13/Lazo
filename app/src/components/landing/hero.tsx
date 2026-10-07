@@ -9,7 +9,6 @@ import { landingHero } from "@/i18n/dictionaries/landing-hero";
 import { useLocale, useT } from "@/i18n/locale";
 import type { StageBand } from "./prism-stage";
 import { PrismStage3D } from "./prism-stage-3d";
-import { REFERENCE } from "./reference";
 import { splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
 import styles from "./landing.module.css";
@@ -73,8 +72,6 @@ export function LandingHero() {
       ]
     : [];
 
-  const lazoTotal = toMicro(price);
-  const mpTotal = Math.round(lazoTotal * (1 + REFERENCE.mpInstallmentMarkup));
   const checkoutHref = productId ? `/checkout/${productId}` : "/tienda";
 
   const pickProduct = (p: Product) => {
@@ -194,33 +191,6 @@ export function LandingHero() {
             <span className={styles.devnetDot} aria-hidden />
             {t.devnet}
           </p>
-        </div>
-      </div>
-
-      <div className={styles.compare}>
-        <h2 className={styles.compareTitle}>{t.compareTitle}</h2>
-        <div className={styles.compareDetails}>
-          <div className={styles.compareRows}>
-            <div className={styles.compareRow}>
-              <span className={styles.compareWho}>{t.lazo}</span>
-              <span className={styles.compareTrack} aria-hidden>
-                <span className={styles.beamLazo} style={{ transform: `scaleX(${lazoTotal / mpTotal})` }} />
-              </span>
-              <span className={styles.compareNum}>
-                US$ <ChangingNumber value={fmt(lazoTotal, 0)} /> <small>· {t.interest3}</small>
-              </span>
-            </div>
-            <div className={styles.compareRow}>
-              <span className={styles.compareWho}>{t.mp}</span>
-              <span className={styles.compareTrack} aria-hidden>
-                <span className={styles.beamAlt} style={{ transform: "scaleX(1)" }} />
-              </span>
-              <span className={styles.compareNum}>
-                ~US$ <ChangingNumber value={fmt(mpTotal, 0)} /> <small className={styles.refTag}>{t.reference}</small>
-              </span>
-            </div>
-          </div>
-          <p className={styles.savings}><ChangingNumber value={t.savings(fmt(mpTotal - lazoTotal, 0))} /></p>
         </div>
       </div>
     </section>

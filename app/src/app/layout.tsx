@@ -22,9 +22,9 @@ const martian = Martian_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lazo · Credit for commerce — 3 installments interest-free, 6 with low interest",
+  title: "Lazo · Credit for commerce — 3 installments interest-free, 6 with 3% total",
   description:
-    "A simulated demo of installments for shoppers: 3 interest-free or 6 with low interest, backed by a family guarantor covering 100% of the capital while merchants choose when to get paid. No payments or transactions are processed; the planned test environment is Solana devnet.",
+    "Installments for shoppers: 3 interest-free or 6 with 3% total, backed by a family guarantor covering 100% of the balance while merchants choose when to get paid. Built on Solana devnet.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

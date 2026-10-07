@@ -22,12 +22,15 @@ import {
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { landingSections } from "@/i18n/dictionaries/landing-sections";
+import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT, type Locale } from "@/i18n/locale";
 import { ChangingNumber, MotionLink, SPECTRUM } from "./hero";
 import { REFERENCE } from "./reference";
-import { merchantFeeOfPrice, splitPurchase } from "./split";
+import { splitPurchase } from "./split";
 import { useProtocolConfig } from "./use-config";
 import styles from "./landing.module.css";
+import { QuienesSomos } from "./quienes-somos";
+import { Probalo } from "./probalo";
 
 const EXAMPLE_PRICE = toMicro(1000);
 const TIERS: TierIndex[] = [0, 1, 2, 3];
@@ -54,12 +57,15 @@ export function LandingSections() {
     <div className={`${styles.landing}`}>
       <Audiences />
       <Installments />
-      <Ladder />
+      <Tiers />
       <Guarantor />
       <Merchants />
+      <Comparison />
       <Benefits />
       <Roadmap />
       <Honest />
+      <Probalo />
+      <QuienesSomos />
       <Close />
     </div>
   );
@@ -115,7 +121,7 @@ function Installments() {
   const { locale } = useLocale();
   const config = useProtocolConfig();
   const options = config ? planOptionsOf(config).filter((o) => o.enabled) : [];
-  // Ejemplo con la cotización real: el estudiante nuevo de la demo (escalón 0).
+  // Ejemplo con la cotización real para quien empieza en Tier 1.
   const key = options.map((o) => o.installments).join("-");
   const quotesQ = useCuotasQuery(
     options.length > 0 ? ["landing-plan-example", key] : null,
@@ -152,14 +158,14 @@ function Installments() {
                   {o.installments}
                   <span className={styles.planUnit}>{t.unit(o.installments)}</span>
                 </span>
-                {o.provisional ? <span className={styles.tagBand}>{t.provisional}</span> : null}
               </div>
               <p className={styles.planInterest}>
                 {o.interestTotalBps === 0
                   ? t.interestFree
                   : t.interestTotal(nf(o.interestTotalBps / 100))}
               </p>
-              <p className={styles.planExample}>{t.example(fmt(EXAMPLE_PRICE, 0))}</p>
+              <p className={styles.planExample}>{t.example(fmt(EXAMPLE_PRICE, 0), tierLabel(0))}</p>
+              {o.minPrice > 0 ? <p className={styles.planExample}>{t.minPriceNote(fmt(o.minPrice, 0))}</p> : null}
               <dl className={styles.planRows}>
                 <div className={styles.planRow}>
                   <dt>{t.down}</dt>
@@ -187,8 +193,8 @@ function Installments() {
   );
 }
 
-function Ladder() {
-  const t = useT(landingSections).ladder;
+function Tiers() {
+  const t = useT(landingSections).tiers;
   const { locale } = useLocale();
   const config = useProtocolConfig();
   const [active, setActive] = useState<TierIndex>(0);
@@ -197,9 +203,9 @@ function Ladder() {
   const ex = splitPurchase(config, EXAMPLE_PRICE, active);
 
   return (
-    <section className={styles.section} aria-labelledby="ladder-title">
+    <section className={styles.section} aria-labelledby="tiers-title">
       <div className={styles.sectionHead}>
-        <h2 id="ladder-title" className={styles.h2}>
+        <h2 id="tiers-title" className={styles.h2}>
           {t.title}
         </h2>
         <p className={styles.sectionLede}>{t.lede}</p>
@@ -228,7 +234,7 @@ function Ladder() {
                   {t.cap} <b>US$ {formatUsdc(tier.maxPurchase, locale, 0)}</b>
                 </span>
                 <span>
-                  {t.coverage} <b>{pct(tier.guarantorCoverageBps)}</b>
+                  {t.coverage} <b>{t.coverageValue(pct(tier.guarantorCoverageBps))}</b>
                 </span>
               </span>
               {n === 0 ? <span className={styles.stepFlag}>{t.start}</span> : null}
@@ -240,7 +246,16 @@ function Ladder() {
       <p className={styles.ladderExample} aria-live="polite">
         <ChangingNumber value={t.example(formatUsdc(EXAMPLE_PRICE, locale, 0), formatUsdc(ex.downPayment, locale))} />
       </p>
-      <p className={styles.coverageNote}>{t.coverageNote}</p>
+      <div className={styles.tierRules}>
+        <h3 className={styles.h3}>{t.rulesTitle}</h3>
+        <p className={styles.sectionLede}>{t.rulesSubtitle}</p>
+        <dl className={styles.tierRulesList}>
+          <div><dt>{t.ruleUp.title}</dt><dd>{t.ruleUp.desc(formatUsdc(config.minFinancedToCount, locale, 0), config.graceDays)}</dd></div>
+          <div><dt>{t.ruleNeutral.title}</dt><dd>{t.ruleNeutral.desc(config.graceDays, config.guarantorChargeDay)}</dd></div>
+          <div><dt>{t.ruleDown.title}</dt><dd>{t.ruleDown.desc(config.guarantorChargeDay)}</dd></div>
+          <div><dt>{t.ruleGuarantor.title}</dt><dd>{t.ruleGuarantor.desc}</dd></div>
+        </dl>
+      </div>
     </section>
   );
 }
@@ -254,11 +269,13 @@ function Guarantor() {
   const end = config.guarantorChargeDay;
   const at = (day: number) => `${(day / end) * 100}%`;
   const marks = [
-    { day: 0, label: t.events.due, kind: "due" },
-    { day: config.guarantorNoticeDay, label: t.events.notice, kind: "notice" },
-    { day: config.graceDays + 1, label: t.events.penalty(`${config.penaltyBps / 100}%`), kind: "penalty" },
-    { day: end, label: t.events.charge, kind: "charge" },
-  ];
+    { day: 0, key: "day0", kind: "day0", label: t.marks.day0.label, what: t.marks.day0.what, who: t.marks.day0.who },
+    { day: 0, key: "due", kind: "due", label: t.marks.due.label, what: t.marks.due.what, who: t.marks.due.who },
+    { day: config.graceDays, key: "grace", kind: "grace", label: t.marks.grace.label(config.graceDays), what: t.marks.grace.what, who: t.marks.grace.who },
+    { day: config.guarantorNoticeDay, key: "notice", kind: "notice", label: t.marks.notice.label(config.guarantorNoticeDay), what: t.marks.notice.what, who: t.marks.notice.who },
+    { day: config.graceDays + 1, key: "penalty", kind: "penalty", label: t.marks.penalty.label(config.graceDays + 1, `${config.penaltyBps / 100}%`), what: t.marks.penalty.what(`${config.penaltyBps / 100}%`), who: t.marks.penalty.who },
+    { day: end, key: "charge", kind: "charge", label: t.marks.charge.label(end), what: t.marks.charge.what, who: t.marks.charge.who },
+  ].sort((a, b) => a.day - b.day);
 
   return (
     <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="guarantor-title">
@@ -281,11 +298,12 @@ function Guarantor() {
 
       <div className={styles.ruler}>
         <p className={styles.rulerTitle}>{t.rulerTitle}</p>
+        <p className={styles.rulerFoot}>{t.rulerSubtitle}</p>
         <div className={styles.timelineLayout}>
           <div className={styles.timelineEvents} aria-label={t.rulerTitle}>
             {marks.map((m) => (
               <button
-                key={m.kind}
+                key={m.key}
                 type="button"
                 data-kind={m.kind}
                 data-active={activeMark === m.kind ? "true" : undefined}
@@ -299,7 +317,7 @@ function Guarantor() {
               </button>
             ))}
           </div>
-          <div className={styles.timelineTrack} data-grace={t.events.grace}>
+          <div className={styles.timelineTrack} data-grace={t.marks.grace.label(config.graceDays)}>
             <motion.span className={styles.timelineProgress} animate={{ scaleX: (marks.find((m) => m.kind === activeMark)?.day ?? 0) / end }} transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }} />
             <span className={styles.timelineGrace} style={{ width: at(config.graceDays) }} />
             {Array.from({ length: end + 1 }, (_, d) => (
@@ -308,10 +326,11 @@ function Guarantor() {
           </div>
         </div>
         <div className={styles.timelineDetail} aria-live="polite">
-          <p className={styles.rulerFoot}>{t.receipt}</p>
           <p className={styles.timelineSelected}>
-            <b>{t.day(marks.find((m) => m.kind === activeMark)?.day ?? 0)} · {marks.find((m) => m.kind === activeMark)?.label}</b>
+            <b>{marks.find((m) => m.kind === activeMark)?.label}</b>
           </p>
+          <p className={styles.rulerFoot}>{marks.find((m) => m.kind === activeMark)?.what}</p>
+          <p className={styles.rulerFoot}>{marks.find((m) => m.kind === activeMark)?.who}</p>
         </div>
       </div>
     </section>
@@ -327,13 +346,13 @@ function Merchants() {
     <section className={styles.section} aria-labelledby="merchants-title">
       <div className={styles.sectionHead}>
         <h2 id="merchants-title" className={styles.h2}>
-          {t.title} <span className={styles.tag}>{t.demoTag}</span>
+          {t.title}
         </h2>
         <p className={styles.sectionLede}>{t.lede}</p>
       </div>
       <div className={styles.merchantGrid} role="list">
         {featured.map((m) => (
-          <MerchantCard key={m.address} merchant={m} locale={locale} productsLabel={t.products(m.products.length)} demoTag={t.demoTag} />
+          <MerchantCard key={m.address} merchant={m} locale={locale} productsLabel={t.products(m.products.length)} />
         ))}
       </div>
       <div className={styles.merchantFoot}>
@@ -353,12 +372,10 @@ function MerchantCard({
   merchant: m,
   locale,
   productsLabel,
-  demoTag,
 }: {
   merchant: DemoMerchant;
   locale: Locale;
   productsLabel: string;
-  demoTag: string;
 }) {
   const reduceMotion = useReducedMotion();
   const [imgFailed, setImgFailed] = useState(false);
@@ -393,10 +410,7 @@ function MerchantCard({
         <span className={styles.merchantMeta}>
           {category?.label[locale]} · {m.city}
         </span>
-        <span className={styles.merchantTags}>
-          <span className={styles.tag}>{demoTag}</span>
-          <span className={styles.merchantCount}>{productsLabel}</span>
-        </span>
+        <span className={styles.merchantCount}>{productsLabel}</span>
       </span>
     </MotionLink>
   );
@@ -410,69 +424,88 @@ function Benefits() {
   if (!config) return null;
   const nf = (v: number, d = 1) =>
     new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: d }).format(v);
-  // La comisión del comercio hoy depende del plazo de cobro que elige: el
-  // rango sale de las opciones habilitadas con tarifa de la config.
-  const feePctOfPrice = (bps: number) =>
-    (bps * (10_000 - config.guaranteedTiers[0].downPaymentBps)) / 10_000 / 100;
-  const fees = settlementOptionsOf(config)
-    .filter((o) => o.enabled && o.feeBps !== null)
-    .map((o) => feePctOfPrice(o.feeBps ?? 0));
-  const feeMax = fees.length > 0 ? Math.max(...fees) : merchantFeeOfPrice(config, 0);
-  const feeMin = fees.length > 0 ? Math.min(...fees) : feeMax;
-  const feeValue = feeMin === feeMax ? `${nf(feeMax)}%` : `${nf(feeMin)}–${nf(feeMax)}%`;
-  const R = REFERENCE;
-
-  const rows = [
-    {
-      who: t.rows.student.who,
-      value: t.rows.student.value,
-      label: t.rows.student.label,
-      ours: 0,
-      theirs: R.mpInstallmentMarkup * 100,
-      max: R.mpInstallmentMarkup * 100,
-      vs: t.rows.student.vs(nf(R.mpInstallmentMarkup * 100, 0)),
-    },
-    {
-      who: t.rows.merchant.who,
-      value: feeValue,
-      label: t.rows.merchant.label,
-      ours: feeMax,
-      theirs: R.merchantFeePct.mercadoPago,
-      max: R.merchantFeePct.mercadoPago,
-      vs: t.rows.merchant.vs(nf(R.merchantFeePct.cuotaMipyme, 2), nf(R.merchantFeePct.mercadoPago, 2)),
-    },
-    {
-      who: t.rows.pool.who,
-      value: `~${R.apyPct.lazoSeniorTarget}%`,
-      label: t.rows.pool.label,
-      ours: R.apyPct.lazoSeniorTarget,
-      theirs: R.apyPct.kamino,
-      max: R.apyPct.lazoSeniorTarget,
-      vs: t.rows.pool.vs(String(R.apyPct.kamino), String(R.apyPct.jupiter)),
-    },
-  ];
+  const assumptions = REFERENCE.modelAssumptions;
+  const settlement = settlementOptionsOf(config).filter((o) => o.enabled && o.feeBps !== null);
+  const fees = settlement.map((option) => ({
+    days: option.days,
+    pct: (option.feeBps ?? 0) / 100,
+    tranches: option.tranches,
+  }));
+  const poolTarget = REFERENCE.apyPct.lazoSeniorTarget;
 
   return (
     <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="benefits-title">
-      <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>
-        {t.title}
-      </h2>
-      <div className={styles.ledger}>
-        {rows.map((r, i) => (
-          <div key={r.who} className={styles.ledgerRow} style={{ ["--band" as string]: SPECTRUM[i + 1] }}>
-            <span className={styles.ledgerWho}>{r.who}</span>
-            <span className={styles.ledgerValue}>{r.value}</span>
-            <span className={styles.ledgerLabel}>{r.label}</span>
-            <span className={styles.ledgerBeams} aria-hidden>
-              <span className={styles.ledgerBeamOurs} style={{ transform: `scaleX(${Math.max(0.015, r.ours / r.max)})`, ["--beam-scale" as string]: Math.max(0.015, r.ours / r.max) }} />
-              <span className={styles.ledgerBeamTheirs} style={{ transform: `scaleX(${r.theirs / r.max})`, ["--beam-scale" as string]: r.theirs / r.max }} />
-            </span>
-            <span className={styles.ledgerVs}>
-              {r.vs} <small className={styles.refTag}>{s.reference}</small>
-            </span>
-          </div>
-        ))}
+      <div className={styles.sectionHead}>
+        <h2 id="benefits-title" className={`${styles.h2} ${styles.h2Wide}`}>{t.title}</h2>
+        <p className={styles.sectionLede}>{t.lede}</p>
       </div>
+      <div className={styles.economicsRows}>
+        <div className={styles.economicsRow}>
+          <h3>{t.merchant.who}</h3>
+          <p>{fees.map((fee) => `${fee.days === 0 ? (locale === "es" ? "Hoy" : "Today") : `${fee.days} ${locale === "es" ? "días" : "days"}`} ${nf(fee.pct, 2)}%`).join(" · ")}</p>
+          <p className={styles.rulerFoot}>{t.merchant.detail}</p>
+        </div>
+        <div className={styles.economicsRow}>
+          <h3>{t.pool.who}</h3>
+          <p>{t.pool.target(poolTarget)} · {t.pool.label}</p>
+          <p className={styles.rulerFoot}>{t.pool.detail}</p>
+        </div>
+      </div>
+      <div className={styles.assumptions}>
+        <h3>{t.assumptionsTitle}</h3>
+        <p className={styles.rulerFoot}>{t.assumptionsSubtitle}</p>
+        <dl className={styles.assumptionList}>
+          <div><dt>{t.assumptions.downPayment.label}</dt><dd>{t.assumptions.downPayment.value(assumptions.downPaymentPct)}</dd></div>
+          <div><dt>{t.assumptions.defaultRate.label}</dt><dd>{t.assumptions.defaultRate.value(assumptions.defaultRatePct)}</dd></div>
+          <div><dt>{t.assumptions.recoveryRate.label}</dt><dd>{t.assumptions.recoveryRate.value(assumptions.recoveryRatePct)}</dd></div>
+          <div><dt>{t.assumptions.capitalCost.label}</dt><dd>{t.assumptions.capitalCost.value(assumptions.costOfCapitalAnnualPct)}</dd></div>
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function Comparison() {
+  const t = useT(landingSections).comparison;
+  const { locale } = useLocale();
+  const config = useProtocolConfig();
+  if (!config) return null;
+  const nf = (value: number, digits = 2) => new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", { maximumFractionDigits: digits }).format(value);
+  const fmt = (micro: Micro, digits = 2) => formatUsdc(micro, locale, digits);
+  const three = splitPurchase(config, EXAMPLE_PRICE, 0);
+  const sixOption = planOptionsOf(config).find((o) => o.installments === 6 && o.enabled);
+  const tier = config.guaranteedTiers[0];
+  const down = Math.round((EXAMPLE_PRICE * tier.downPaymentBps) / 10_000);
+  const financed = EXAMPLE_PRICE - down;
+  const sixInterest = sixOption ? Math.round((financed * sixOption.interestTotalBps) / 10_000) : 0;
+  const sixBase = sixOption ? Math.floor((financed + sixInterest) / sixOption.installments) : 0;
+  const sixInstallmentAmounts = sixOption ? Array.from({ length: sixOption.installments }, (_, i) => i === sixOption.installments - 1 ? financed + sixInterest - sixBase * (sixOption.installments - 1) : sixBase) : [];
+  const total3 = three.downPayment + three.installments.reduce((a, b) => a + b, 0);
+  const total6 = sixOption ? down + sixInstallmentAmounts.reduce((a, b) => a + b, 0) : 0;
+  const referenceRange = REFERENCE.cfteaRangePct;
+  return (
+    <section className={`${styles.section} ${styles.sectionQuiet}`} aria-labelledby="comparison-title">
+      <div className={styles.sectionHead}>
+        <h2 id="comparison-title" className={styles.h2}>{t.title}</h2>
+        <p className={styles.sectionLede}>{t.lede(fmt(EXAMPLE_PRICE, 0), fmt(down, 0), fmt(financed, 0))}</p>
+      </div>
+      <div className={styles.comparisonGrid}>
+        <article className={styles.comparisonItem}>
+          <h3>{t.lazo3.who}</h3><strong>US$ {fmt(total3, 0)}</strong>
+          <p>{t.lazo3.interest(nf(0), fmt(0))}</p><p>{t.lazo3.terms(fmt(down, 0), three.installments.length, fmt(three.installments[0]))}</p>
+        </article>
+        {sixOption ? <article className={styles.comparisonItem}>
+          <h3>{t.lazo6.who}</h3><strong>US$ {fmt(total6, 0)}</strong>
+          <p>{t.lazo6.interest(nf((sixOption?.interestTotalBps ?? 0) / 100), fmt(sixInterest))}</p><p>{t.lazo6.terms(fmt(down, 0), sixInstallmentAmounts.length, fmt(sixInstallmentAmounts[0]))}</p>
+        </article> : null}
+        <article className={styles.comparisonItem}>
+          <h3>{t.competition.who} <small className={styles.refTag}>{t.reference}</small></h3>
+          <strong>{t.competition.rangeLabel(referenceRange.min, referenceRange.max)}</strong>
+          <p>{t.competition.terms}</p>
+          <p>{t.competition.detail}</p>
+        </article>
+      </div>
+      <p className={styles.planFoot}>{t.sourceNote}</p>
     </section>
   );
 }
@@ -575,7 +608,6 @@ function Close() {
       <MotionLink href="/tienda" className={styles.ctaPrimary} whileHover={reduceMotion ? undefined : { scale: 1.018 }} whileTap={reduceMotion ? undefined : { scale: 0.985 }}>
         {t.cta}
       </MotionLink>
-      <p className={styles.closeFoot}>{t.foot}</p>
     </footer>
   );
 }
