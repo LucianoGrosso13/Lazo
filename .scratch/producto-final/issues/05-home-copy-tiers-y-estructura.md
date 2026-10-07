@@ -12,7 +12,7 @@
 
 **Blocked by:** 01 (06 para integrar sus componentes; si 06 todavía no se mergeó, el coordinador los integra al mergear)
 
-**Status:** ready
+**Status:** done
 
 **Archivos propios:** `app/src/app/page.tsx`, `app/src/components/landing/{hero.tsx,sections.tsx,landing.module.css,split.ts,reference.ts}`, `app/src/i18n/dictionaries/{landing-hero.ts,landing-sections.ts,common.ts}`, `app/src/components/site-footer.tsx`, `app/src/app/layout.tsx` (solo metadata).
 
@@ -28,11 +28,11 @@ Notas:
   - en la cadena (devnet): programa con 3/6 cuotas, fiador obligatorio, pool; tramos si entra 03;
   - en el simulador: reloj, pagos con tarjeta, identidad, mostrador, comercios de ejemplo.
 
-- [ ] Cero "provisional", "ilustrativo", "escalón" o "nivel" en el home (es y en)
-- [ ] Tabla de reglas de tiers desde la config
-- [ ] Leyenda de la línea de mora
-- [ ] Comparación de costo total con fuente
-- [ ] "Supuestos", "Qué viene" (2 ítems) y "Qué corre en la cadena y qué en el simulador"
-- [ ] Aviso de devnet único en el footer + línea del hero
-- [ ] 390/1440 sin scroll horizontal; capturas `evidence/05-*`
-- [ ] typecheck / lint / test / build en verde
+- [x] Cero "provisional", "ilustrativo", "escalón" o "nivel" en el home (es y en)
+- [x] Tabla de reglas de tiers desde la config
+- [x] Leyenda de la línea de mora
+- [x] Comparación de costo total con fuente
+- [x] "Supuestos", "Qué viene" (2 ítems) y "Qué corre en la cadena y qué en el simulador"
+- [x] Aviso de devnet único en el footer + línea del hero
+- [x] 390/1440 sin scroll horizontal; capturas `evidence/05-*`
+- [x] typecheck / lint / test / build en verde

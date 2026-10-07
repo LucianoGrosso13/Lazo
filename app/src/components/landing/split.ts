@@ -1,6 +1,6 @@
 import type { Micro, ProtocolConfig, TierIndex } from "@/lib/cuotas";
 
-// Reparto de una compra para un escalón con fiador, a partir de la config.
+// Reparto de una compra para un tier con fiador, a partir de la config.
 // Es la misma cuenta que `quote()` sin los chequeos de la wallet (la landing
 // no necesita wallet). El checkout usa `quote()`.
 export interface Split {
@@ -36,6 +36,6 @@ export function splitPurchase(config: ProtocolConfig, price: Micro, tier: TierIn
   };
 }
 
-/** Comisión del comercio como % del precio en un escalón (7% de lo financiado). */
+/** Comisión del comercio como % del precio en un tier (7% de lo financiado). */
 export const merchantFeeOfPrice = (config: ProtocolConfig, tier: TierIndex) =>
   (config.feeBps * (10_000 - config.guaranteedTiers[tier].downPaymentBps)) / 10_000 / 100;
