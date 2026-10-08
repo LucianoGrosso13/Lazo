@@ -88,13 +88,13 @@ Borrador revisado por pedido de Luciano: capa de crédito antes de las condicion
 | Tiempo | Pantalla | Guion EN |
 |---|---|---|
 | 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “In Argentina, you can have a job, earn a living, and still have no way to pay in installments.” |
-| 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino | “We're Luciano and Ignacio, from Tucumán, Argentina. Lots of people here are paid off the books, or only have part of their income on record, and that makes it hard to get credit from a bank. Students hit the same wall, because they don't have a credit history yet.” |
+| 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino; pie de fuente “INDEC: 45% informal employment, 31 urban areas, Q2 2026, provisional” | “We're Luciano and Ignacio, from Tucumán, Argentina. Here, more than 40% of workers are in informal employment, and earning income without formal proof can make it harder to access bank credit. Students hit the same wall, because they don't have a credit history yet.” |
 | 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “That's why we're building Lazo: a credit layer that plugs into the fintech wallets these people already use.” |
-| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “You can split a purchase into three interest-free installments, or six with a small interest charge. Someone you trust backs your plan, and they only pay if you don't.” |
+| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “You can split a purchase into three interest-free installments, or six with a small interest charge. Someone you trust backs your plan.” |
 | 0:57–1:15 | Comercio y esquema simple del fondo | “For merchants, it's simple: they get paid upfront for a small fee, while the customer pays over time. The money comes from a shared credit pool, and every repayment fills it back up.” |
-| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “We want it to feel like any checkout you already know: pick your installments, confirm, and keep track of every payment.” |
-| 1:25–1:45 | Diseño del fondo y registro; “Prototype” | “We chose Solana because payments are fast, fees are low, and every plan and repayment leaves a record anyone can verify. What you're seeing runs on Solana devnet, a test network where the tokens have no real value.” |
-| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “We want to start right here in Tucumán, with a first pilot. What we're looking for is a fintech partner to test the integration, the funding and the economics with us, and then grow through the wallets people already use.” |
+| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “For buyers, it's just three steps: pick your plan, confirm, and you're done.” |
+| 1:25–1:45 | Diseño del fondo y registro; “Prototype”; rótulo visible “Running on Solana devnet” | “We chose Solana because payments are fast, fees are low, and every plan and repayment leaves a record anyone can verify.” |
+| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “We're starting at home, in Tucumán, and we're looking for a fintech partner to run the first pilot with us. Because in Argentina, earning a living should be enough to pay in installments.” |
 
 **Notas de esta revisión:**
 
