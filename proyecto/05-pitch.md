@@ -4,7 +4,7 @@ Actualizado **2026-10-07**, revisión del relato pedida por Luciano: trabajadore
 
 Fuente de condiciones: `06-decisiones-comerciales.md` y `10-tasa-6-cuotas-y-cobro-diferido.md`, que prevalecen sobre el spec y tablas históricas. Evidencia del nuevo relato: [hook, Solana y comisiones](research/i-hook-inclusion-solana-y-comisiones.md) y [distribución fintech](research/h-distribucion-fintech-y-billetera.md). El formulario `05-entrega-en.md` quedó de la versión anterior: el equipo debe revisar el nuevo enfoque con sus palabras antes de enviarlo.
 
-Lazo **corre en Solana devnet** (la red de prueba de Solana: la plata es de prueba y no vale nada). Nunca mainnet. Decirlo en los dos videos y en el formulario.
+Lazo **corre en Solana devnet** (la red de prueba de Solana: la plata es de prueba y no vale nada). Nunca mainnet.
 
 ## Fuentes de entrega y consejos de From the chapter
 
@@ -99,7 +99,7 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 **Notas de esta versión:**
 
 - **Solana:** la frase describe el programa de `programa/` (pool con `lp_deposit`/`lp_withdraw`, `open_plan`, `release_payout`, `pay_installment`, `crank_mark_late`, `keeper_guarantee`). La versión nueva todavía no está desplegada en devnet y la web corre en simulador: en pantalla, rótulo "Prototype" y nada de Explorer salvo una operación realmente observada en devnet. El programa tiene instrucciones de admin (`admin_config`, `admin_set_state`, `admin_apply_loss`): no decir "nobody can change the rules"; "rules anyone can check" sí es cierto. "Under a cent" se refiere a la comisión de red de Solana, no a la de Lazo.
-- **Devnet en voz alta:** `CLAUDE.md` del kit pide decir que corre en devnet al mostrar o entregar el proyecto; va en la última frase de Solana.
+- **Devnet en voz alta:** no es obligatorio (Luciano sacó esa regla del `CLAUDE.md` el 8/10); la frase final de Solana queda por elección del equipo.
 - **Fiador:** “A trusted person backs your plan” queda corta a propósito (decisión de Luciano). La demo explica tarjeta del fiador, cobertura y que solo paga ante impago.
 - **Riesgos aceptados por Luciano** (marcados en la revisión, preparar respuesta si los preguntan): "invisible to the banking system" (BCRA: casi todos tienen cuenta; lo que falta es crédito), "millions of workers and students" (no calculado con la fuente) y "We're launching our first pilot" (todavía no hay piloto ni socio: la respuesta honesta es que es el próximo paso).
 - “Small fee” e “interest charge” son posicionamiento provisional; tarifas en `06-decisiones-comerciales.md` y `10-tasa-6-cuotas-y-cobro-diferido.md`. No se promete rendimiento del pool ni fondeo conseguido.
