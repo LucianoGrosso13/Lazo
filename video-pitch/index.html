@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Lazo — video pitch</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #07060b;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #cam {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 42%;
+      }
+      #a-roll {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      [data-composition-id="main"] > div[data-composition-src] {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-9898" id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="114">
+      <!-- Founders' take: one continuous edit of 8 cuts (cut list in STORYBOARD.md). -->
+      <div data-hf-id="hf-ftaq" id="cam">
+        <video data-hf-id="hf-f8vz" id="a-roll" src="assets/footage/edit.mp4" data-start="0" data-duration="107.667" data-track-index="0" playsinline data-has-audio="true"></video>
+      </div>
+
+      <!-- Overlays per script block (proyecto/05-pitch.md § Guion video pitch — 2:00). -->
+      <div data-hf-id="hf-lc12" id="host-s01-hook" data-composition-id="s01-hook" data-composition-src="compositions/s01-hook.html" data-start="4.4" data-duration="3.75" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-7hga" id="host-s02-argentina" data-composition-id="s02-argentina" data-composition-src="compositions/s02-argentina.html" data-start="9.8" data-duration="17.3" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-cxdv" id="host-s03-lazo" data-composition-id="s03-lazo" data-composition-src="compositions/s03-lazo.html" data-start="27.7" data-duration="9.4" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-y4z7" id="host-s04-planes" data-composition-id="s04-planes" data-composition-src="compositions/s04-planes.html" data-start="38.5" data-duration="13.25" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-s0pc" id="host-s05-comprador" data-composition-id="s05-comprador" data-composition-src="compositions/s05-comprador.html" data-start="51.9" data-duration="7.3" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-ogeu" id="host-s06-comercio" data-composition-id="s06-comercio" data-composition-src="compositions/s06-comercio.html" data-start="61.9" data-duration="5.5" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-8rps" id="host-s06b-pool" data-composition-id="s06b-pool" data-composition-src="compositions/s06b-pool.html" data-start="67.0" data-duration="8.5" data-track-index="2" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-x0jy" id="host-s07-solana" data-composition-id="s07-solana" data-composition-src="compositions/s07-solana.html" data-start="75.2" data-duration="15.75" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-fyad" id="host-s08-pedido" data-composition-id="s08-pedido" data-composition-src="compositions/s08-pedido.html" data-start="92.0" data-duration="11.0" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-172i" id="host-s09-placa" data-composition-id="s09-placa" data-composition-src="compositions/s09-placa.html" data-start="107.38" data-duration="6.62" data-track-index="3" data-width="1920" data-height="1080"></div>
+    </div>
+
+    <script>
+      // Camera re-framing: a scale change at every take seam left uncovered, so each jump reads as a camera change.
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#cam", { scale: 1, xPercent: 0 }, { scale: 1.05, xPercent: 0, duration: 17.533, ease: "none" }, 0);
+      tl.set("#cam", { scale: 1.1, xPercent: -2.5 }, 17.533);
+      tl.set("#cam", { scale: 1, xPercent: 0 }, 27.167);
+      tl.set("#cam", { scale: 1.08, xPercent: 0 }, 37.267);
+      tl.set("#cam", { scale: 1, xPercent: 0 }, 59.267);
+      tl.set("#cam", { scale: 1.06, xPercent: 0 }, 72.633);
+      tl.set("#cam", { scale: 1.1, xPercent: -2.5 }, 91.033);
+      tl.to("#cam", { scale: 1.15, xPercent: -2.5, duration: 4.5, ease: "power1.inOut" }, 102.93);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

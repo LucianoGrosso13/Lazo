@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+                font-family: "Bricolage Grotesque";
+                src: url("assets/fonts/bricolage-latin.woff2") format("woff2");
+                font-weight: 200 800;
+                font-stretch: 75% 100%;
+              }
+        @font-face {
+                font-family: "Martian Mono";
+                src: url("assets/fonts/martian-mono-latin.woff2") format("woff2");
+                font-weight: 100 800;
+              }
+        #root {
+                --abyss: #07060b;
+                --abyss-2: #0d0a17;
+                --abyss-3: #141026;
+                --ink: #f4f1ff;
+                --ink-2: #b9b3d6;
+                --ink-3: #9a93bb;
+                --ghost: #6a6488;
+                --violet: #9945ff;
+                --cyan: #00c2ff;
+                --green: #19fb9b;
+                --crack: #ff5470;
+                --hair: rgb(244 241 255 / 0.16);
+                --display: "Bricolage Grotesque", sans-serif;
+                --mono: "Martian Mono", monospace;
+              }
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          color: var(--ink);
+          font-family: var(--display);
+        }
+        #root * {
+          box-sizing: border-box;
+        }
+        .abs {
+                position: absolute;
+              }
+        /* ---------- shared overlay vocabulary ---------- */
+              .chip {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-family: var(--mono);
+                font-size: 22px;
+                line-height: 1;
+                color: var(--ink);
+                background: rgb(13 10 23 / 0.86);
+                border: 2px solid var(--hair);
+                border-radius: 999px;
+                padding: 13px 22px;
+                white-space: nowrap;
+              }
+        .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--green);
+              }
+        /* ---------- 09 plate ---------- */
+              #plate-bg {
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(60% 70% at 50% 40%, #161130 0%, #0b0915 55%, #07060b 100%);
+              }
+        #plate-logo-wrap {
+                position: absolute;
+                left: 660px;
+                top: 130px;
+                width: 600px;
+                height: 400px;
+              }
+        .plate-logo {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+              }
+        #plate-stack {
+                left: 0;
+                right: 0;
+                top: 520px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 18px;
+              }
+        #plate-word {
+                font-size: 130px;
+                font-weight: 800;
+                letter-spacing: -0.045em;
+                line-height: 1;
+              }
+        #plate-line {
+                font-size: 42px;
+                color: var(--ink-2);
+              }
+        #plate-url {
+                font-family: var(--mono);
+                font-size: 28px;
+                margin-top: 30px;
+              }
+        #plate-chip {
+                left: 0;
+                right: 0;
+                top: 960px;
+                display: flex;
+                justify-content: center;
+              }
+        #plate-chip .chip {
+                position: relative;
+              }
+        #fade-black {
+                position: absolute;
+                inset: 0;
+                background: #000;
+                opacity: 0;
+              }
+      </style>
+      <div data-hf-id="hf-m03d" id="root" data-composition-id="s09-placa" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-euib" id="ov-plate" class="grp">
+        <div data-hf-id="hf-4z9a" id="pt-wrap" class="abs" style="inset: 0">
+          <div data-hf-id="hf-vu6l" id="plate-bg"></div>
+          <div data-hf-id="hf-dkyl" id="plate-stack" class="abs">
+            <div data-hf-id="hf-3vz8" id="plate-word">Lazo</div>
+            <div data-hf-id="hf-0idb" id="plate-line">Earning a living should be enough to get access to credit.</div>
+            <div data-hf-id="hf-e0mn" id="plate-url">lazo-cuotas.vercel.app</div>
+          </div>
+          <div data-hf-id="hf-czxp" id="plate-chip" class="abs"><span data-hf-id="hf-ts41" class="chip"><span data-hf-id="hf-9gry" class="dot"></span>Running on Solana devnet</span></div>
+        </div>
+      
+          <div data-hf-id="hf-mfki" id="plate-logo-wrap">
+            <video data-hf-id="hf-oury" id="plate-logo-a" class="plate-logo" src="assets/brand/logo-prisma-loop.webm" data-start="0.22" data-duration="4" data-media-start="0" data-track-index="1" muted playsinline></video>
+            <video data-hf-id="hf-z5wz" id="plate-logo-b" class="plate-logo" src="assets/brand/logo-prisma-loop.webm" data-start="4.22" data-duration="2.4" data-media-start="0" data-track-index="1" muted playsinline></video>
+          </div>
+          <div data-hf-id="hf-bmrh" id="fade-black"></div></div>
+      </div>
+      <script>
+
+      // Split every .type element into per-character spans (typewriter reveal).
+      document.querySelectorAll(".type").forEach((el) => {
+        const walk = (node) => {
+          [...node.childNodes].forEach((c) => {
+            if (c.nodeType === 3) {
+              const frag = document.createDocumentFragment();
+              [...c.textContent].forEach((ch) => {
+                const s = document.createElement("span");
+                s.className = "ch";
+                s.textContent = ch;
+                frag.appendChild(s);
+              });
+              c.replaceWith(frag);
+            } else if (c.nodeType === 1) walk(c);
+          });
+        };
+        walk(el);
+      });
+      // Prepare stroke-draw paths.
+      document.querySelectorAll("path.draw").forEach((p) => {
+        const len = Math.ceil(p.getTotalLength());
+        p.style.strokeDasharray = len;
+        p.dataset.len = len;
+      });
+
+      
+      const S = 107.38; // slot start in the main timeline; tweens below are written in main-timeline seconds
+      const tl = gsap.timeline({ paused: true });
+      const chars = (sel) => document.querySelectorAll(sel + " .ch");
+      const typeIn = (sel, at, per = 0.045) =>
+        tl.fromTo(chars(sel), { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: per, ease: "none" }, at - S);
+      const draw = (sel, at, dur = 0.45, ease = "power2.inOut") =>
+        document.querySelectorAll(sel).forEach((p) =>
+          tl.fromTo(p, { strokeDashoffset: p.dataset.len }, { strokeDashoffset: 0, duration: dur, ease }, at - S)
+        );
+      const fadeOut = (sel, at, dur = 0.3) => tl.to(sel, { opacity: 0, y: -12, duration: dur, ease: "power2.in" }, at - S);
+      const count = (el, from, to, at, dur, fmt) => {
+        const s = { v: from };
+        tl.fromTo(s, { v: from }, { v: to, duration: dur, ease: "power3.out", onUpdate: () => (el.textContent = fmt(s.v)) }, at - S);
+      };
+      const wipeIn = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 100%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.45, ease: "power3.inOut" }, at - S);
+      const wipeOut = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(0% 100% 0% 0%)", duration: 0.45, ease: "power3.inOut", immediateRender: false }, at - S);
+
+// ---------- 09 plate ----------
+      tl.fromTo("#pt-wrap", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 107.38 - S);
+      tl.fromTo("#plate-logo-wrap", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }, 107.6 - S);
+      tl.fromTo("#plate-word", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 108.1 - S);
+      tl.fromTo("#plate-line", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 108.5 - S);
+      tl.fromTo("#plate-url", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 109.0 - S);
+      tl.fromTo("#plate-chip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 109.3 - S);
+      tl.to("#fade-black", { opacity: 1, duration: 0.8, ease: "power1.in" }, 113.2 - S);
+
+      
+        window.__timelines["s09-placa"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

@@ -13,3 +13,15 @@ id.json
 .impeccable/questions/
 .impeccable/review/
 .scratch/**/*.log
+
+# video pitch: material crudo y renders
+video-pitch/_src/
+video-pitch/_ref/
+video-pitch/renders/
+video-pitch/snapshots/
+video-pitch/assets/footage/
+video-pitch/.hyperframes/
+video-pitch/.thumbnails/
+video-pitch/.transcode-cache/
+video-pitch/.waveform-cache/
+.scratch/vp/

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+                font-family: "Bricolage Grotesque";
+                src: url("assets/fonts/bricolage-latin.woff2") format("woff2");
+                font-weight: 200 800;
+                font-stretch: 75% 100%;
+              }
+        @font-face {
+                font-family: "Martian Mono";
+                src: url("assets/fonts/martian-mono-latin.woff2") format("woff2");
+                font-weight: 100 800;
+              }
+        #root {
+                --abyss: #07060b;
+                --abyss-2: #0d0a17;
+                --abyss-3: #141026;
+                --ink: #f4f1ff;
+                --ink-2: #b9b3d6;
+                --ink-3: #9a93bb;
+                --ghost: #6a6488;
+                --violet: #9945ff;
+                --cyan: #00c2ff;
+                --green: #19fb9b;
+                --crack: #ff5470;
+                --hair: rgb(244 241 255 / 0.16);
+                --display: "Bricolage Grotesque", sans-serif;
+                --mono: "Martian Mono", monospace;
+              }
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          color: var(--ink);
+          font-family: var(--display);
+        }
+        #root * {
+          box-sizing: border-box;
+        }
+        /* ---------- shared overlay vocabulary ---------- */
+              .chip {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-family: var(--mono);
+                font-size: 22px;
+                line-height: 1;
+                color: var(--ink);
+                background: rgb(13 10 23 / 0.86);
+                border: 2px solid var(--hair);
+                border-radius: 999px;
+                padding: 13px 22px;
+                white-space: nowrap;
+              }
+        .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--green);
+              }
+        .card {
+                position: absolute;
+                background: rgb(13 10 23 / 0.92);
+                border: 2px solid var(--hair);
+                border-radius: 28px;
+                padding: 32px 38px;
+                box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+              }
+        .card h4 {
+                font-family: var(--mono);
+                font-weight: 500;
+                font-size: 20px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--ink-3);
+                margin-bottom: 18px;
+              }
+        .row.first {
+                border-top: 0;
+              }
+        /* ---------- 05 steps ---------- */
+              .step {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 34px;
+                padding: 16px 0;
+                border-top: 2px solid var(--hair);
+                color: var(--ink-3);
+              }
+        .step.first {
+                border-top: 0;
+              }
+        .step b {
+                font-family: var(--mono);
+                font-weight: 500;
+                font-size: 24px;
+                margin-right: 18px;
+              }
+        #plate-chip .chip {
+                position: relative;
+              }
+      </style>
+      <div data-hf-id="hf-wdzh" id="root" data-composition-id="s05-comprador" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-5nvi" id="ov-steps" class="grp">
+        <div data-hf-id="hf-vusf" id="st-chip" class="chip" style="left: 1240px; top: 586px"><span data-hf-id="hf-9gry" class="dot"></span>Simulator</div>
+        <div data-hf-id="hf-rzfa" id="st-card" class="card" style="left: 1240px; top: 656px; width: 610px; padding: 26px 34px">
+          <h4 data-hf-id="hf-j6wa" style="margin-bottom: 8px">For buyers · 3 steps</h4>
+          <div data-hf-id="hf-2rsd" id="st-1" class="step first"><span data-hf-id="hf-4yjw"><b data-hf-id="hf-t4n0">1</b>Pick your product</span></div>
+          <div data-hf-id="hf-s4gw" id="st-2" class="step"><span data-hf-id="hf-jiiw"><b data-hf-id="hf-rxpx">2</b>Choose installments</span></div>
+          <div data-hf-id="hf-sw4p" id="st-3" class="step">
+            <span data-hf-id="hf-fwvn"><b data-hf-id="hf-sc0y">3</b>Confirm</span>
+            <svg data-hf-id="hf-snce" width="40" height="40" viewBox="0 0 40 40"><path data-hf-id="hf-uflq" id="st-check" class="draw" d="M7 21l9 9 18-19" stroke="#19fb9b" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </div>
+        </div>
+      </div>
+      </div>
+      <script>
+
+      // Split every .type element into per-character spans (typewriter reveal).
+      document.querySelectorAll(".type").forEach((el) => {
+        const walk = (node) => {
+          [...node.childNodes].forEach((c) => {
+            if (c.nodeType === 3) {
+              const frag = document.createDocumentFragment();
+              [...c.textContent].forEach((ch) => {
+                const s = document.createElement("span");
+                s.className = "ch";
+                s.textContent = ch;
+                frag.appendChild(s);
+              });
+              c.replaceWith(frag);
+            } else if (c.nodeType === 1) walk(c);
+          });
+        };
+        walk(el);
+      });
+      // Prepare stroke-draw paths.
+      document.querySelectorAll("path.draw").forEach((p) => {
+        const len = Math.ceil(p.getTotalLength());
+        p.style.strokeDasharray = len;
+        p.dataset.len = len;
+      });
+
+      
+      const S = 51.9; // slot start in the main timeline; tweens below are written in main-timeline seconds
+      const tl = gsap.timeline({ paused: true });
+      const chars = (sel) => document.querySelectorAll(sel + " .ch");
+      const typeIn = (sel, at, per = 0.045) =>
+        tl.fromTo(chars(sel), { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: per, ease: "none" }, at - S);
+      const draw = (sel, at, dur = 0.45, ease = "power2.inOut") =>
+        document.querySelectorAll(sel).forEach((p) =>
+          tl.fromTo(p, { strokeDashoffset: p.dataset.len }, { strokeDashoffset: 0, duration: dur, ease }, at - S)
+        );
+      const fadeOut = (sel, at, dur = 0.3) => tl.to(sel, { opacity: 0, y: -12, duration: dur, ease: "power2.in" }, at - S);
+      const count = (el, from, to, at, dur, fmt) => {
+        const s = { v: from };
+        tl.fromTo(s, { v: from }, { v: to, duration: dur, ease: "power3.out", onUpdate: () => (el.textContent = fmt(s.v)) }, at - S);
+      };
+      const wipeIn = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 100%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.45, ease: "power3.inOut" }, at - S);
+      const wipeOut = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(0% 100% 0% 0%)", duration: 0.45, ease: "power3.inOut", immediateRender: false }, at - S);
+
+// ---------- 05 buyer ----------
+      tl.fromTo("#st-chip", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 52.0 - S);
+      tl.fromTo("#st-card", { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 52.05 - S);
+      [["#st-1", 55.1], ["#st-2", 56.6], ["#st-3", 58.05]].forEach(([id, at], i, arr) => {
+        tl.fromTo(id, { color: "#9a93bb", x: 0 }, { color: i === 2 ? "#19fb9b" : "#f4f1ff", x: 8, duration: 0.25, ease: "power2.out" }, at - S);
+        if (i < 2) tl.to(id, { color: "#9a93bb", x: 0, duration: 0.25 }, arr[i + 1][1] - S);
+      });
+      draw("#st-check", 58.3, 0.35);
+      fadeOut("#st-chip, #st-card", 58.85, 0.28);
+
+      
+        window.__timelines["s05-comprador"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

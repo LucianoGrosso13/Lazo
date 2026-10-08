@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+                font-family: "Bricolage Grotesque";
+                src: url("assets/fonts/bricolage-latin.woff2") format("woff2");
+                font-weight: 200 800;
+                font-stretch: 75% 100%;
+              }
+        @font-face {
+                font-family: "Martian Mono";
+                src: url("assets/fonts/martian-mono-latin.woff2") format("woff2");
+                font-weight: 100 800;
+              }
+        #root {
+                --abyss: #07060b;
+                --abyss-2: #0d0a17;
+                --abyss-3: #141026;
+                --ink: #f4f1ff;
+                --ink-2: #b9b3d6;
+                --ink-3: #9a93bb;
+                --ghost: #6a6488;
+                --violet: #9945ff;
+                --cyan: #00c2ff;
+                --green: #19fb9b;
+                --crack: #ff5470;
+                --hair: rgb(244 241 255 / 0.16);
+                --display: "Bricolage Grotesque", sans-serif;
+                --mono: "Martian Mono", monospace;
+              }
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          color: var(--ink);
+          font-family: var(--display);
+        }
+        #root * {
+          box-sizing: border-box;
+        }
+        /* ---------- shared overlay vocabulary ---------- */
+              .chip {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-family: var(--mono);
+                font-size: 22px;
+                line-height: 1;
+                color: var(--ink);
+                background: rgb(13 10 23 / 0.86);
+                border: 2px solid var(--hair);
+                border-radius: 999px;
+                padding: 13px 22px;
+                white-space: nowrap;
+              }
+        .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--green);
+              }
+        .card {
+                position: absolute;
+                background: rgb(13 10 23 / 0.92);
+                border: 2px solid var(--hair);
+                border-radius: 28px;
+                padding: 32px 38px;
+                box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+              }
+        .card h4 {
+                font-family: var(--mono);
+                font-weight: 500;
+                font-size: 20px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--ink-3);
+                margin-bottom: 18px;
+              }
+        .row {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 30px;
+                font-size: 32px;
+                padding: 13px 0;
+                border-top: 2px solid var(--hair);
+              }
+        .row.first {
+                border-top: 0;
+              }
+        .num {
+                font-family: var(--mono);
+                font-size: 28px;
+                font-variant-numeric: tabular-nums;
+              }
+        .dim {
+                color: var(--ink-3);
+              }
+        .step.first {
+                border-top: 0;
+              }
+        #plate-chip .chip {
+                position: relative;
+              }
+      </style>
+      <div data-hf-id="hf-vjc6" id="root" data-composition-id="s08-pedido" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-6l4g" id="ov-ask" class="grp">
+        <div data-hf-id="hf-k37t" id="as-chip" class="chip" style="left: 80px; top: 80px; font-size: 28px; padding: 16px 28px"><span data-hf-id="hf-9gry" class="dot"></span>First pilot · Argentina</div>
+        <div data-hf-id="hf-4x0o" id="as-card" class="card" style="left: 80px; top: 640px; width: 540px">
+          <h4 data-hf-id="hf-zl49">Looking for</h4>
+          <div data-hf-id="hf-1znv" id="as-1" class="row first" style="font-size: 40px; font-weight: 700"><span data-hf-id="hf-u901">Fintech partners</span><span data-hf-id="hf-7owy" class="num dim">01</span></div>
+          <div data-hf-id="hf-p64q" id="as-2" class="row" style="font-size: 40px; font-weight: 700"><span data-hf-id="hf-fyvy">Investors</span><span data-hf-id="hf-837z" class="num dim">02</span></div>
+        </div>
+      </div>
+      </div>
+      <script>
+
+      // Split every .type element into per-character spans (typewriter reveal).
+      document.querySelectorAll(".type").forEach((el) => {
+        const walk = (node) => {
+          [...node.childNodes].forEach((c) => {
+            if (c.nodeType === 3) {
+              const frag = document.createDocumentFragment();
+              [...c.textContent].forEach((ch) => {
+                const s = document.createElement("span");
+                s.className = "ch";
+                s.textContent = ch;
+                frag.appendChild(s);
+              });
+              c.replaceWith(frag);
+            } else if (c.nodeType === 1) walk(c);
+          });
+        };
+        walk(el);
+      });
+      // Prepare stroke-draw paths.
+      document.querySelectorAll("path.draw").forEach((p) => {
+        const len = Math.ceil(p.getTotalLength());
+        p.style.strokeDasharray = len;
+        p.dataset.len = len;
+      });
+
+      
+      const S = 92.0; // slot start in the main timeline; tweens below are written in main-timeline seconds
+      const tl = gsap.timeline({ paused: true });
+      const chars = (sel) => document.querySelectorAll(sel + " .ch");
+      const typeIn = (sel, at, per = 0.045) =>
+        tl.fromTo(chars(sel), { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: per, ease: "none" }, at - S);
+      const draw = (sel, at, dur = 0.45, ease = "power2.inOut") =>
+        document.querySelectorAll(sel).forEach((p) =>
+          tl.fromTo(p, { strokeDashoffset: p.dataset.len }, { strokeDashoffset: 0, duration: dur, ease }, at - S)
+        );
+      const fadeOut = (sel, at, dur = 0.3) => tl.to(sel, { opacity: 0, y: -12, duration: dur, ease: "power2.in" }, at - S);
+      const count = (el, from, to, at, dur, fmt) => {
+        const s = { v: from };
+        tl.fromTo(s, { v: from }, { v: to, duration: dur, ease: "power3.out", onUpdate: () => (el.textContent = fmt(s.v)) }, at - S);
+      };
+      const wipeIn = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 100%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.45, ease: "power3.inOut" }, at - S);
+      const wipeOut = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(0% 100% 0% 0%)", duration: 0.45, ease: "power3.inOut", immediateRender: false }, at - S);
+
+// ---------- 08 ask ----------
+      tl.fromTo("#as-chip", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "back.out(1.6)" }, 92.2 - S);
+      tl.fromTo("#as-card", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 94.75 - S);
+      tl.fromTo("#as-1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 95.3 - S);
+      tl.fromTo("#as-2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 96.65 - S);
+      fadeOut("#as-chip, #as-card", 102.5, 0.3);
+
+      
+        window.__timelines["s08-pedido"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
