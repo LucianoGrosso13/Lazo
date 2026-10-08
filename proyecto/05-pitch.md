@@ -83,34 +83,32 @@ Esquema de contenido en inglés, no deck gráfico terminado. Una idea por slide;
 
 ## Guion video pitch — 2:00
 
-Borrador revisado por pedido de Luciano: capa de crédito antes de las condiciones, tres cuotas sin interés y seis con un interés pequeño, mención breve del pool y beneficio simple para el comercio. Duración estimada, **ensayo pendiente**. “Un mínimo” se interpreta como un interés pequeño, no como una nueva tasa ni un cambio del mínimo de compra. Los números de la demo siguen en la sección de condiciones y en configuración. **Pulido de inglés (7/10):** misma estructura, tiempos y contenido; solo se reescribieron las frases para que suenen pensadas en inglés.
+**Versión vigente (8/10), elegida por Luciano.** Apertura "Imagine…" y término "Buy Now, Pay Later"; pool del comercio que lleva a Solana; Solana explicado como programa auditable por quien fondea. Unas 260 palabras: ~1:55 a ritmo normal. **Ensayo con cronómetro pendiente.** Si se pasan de tiempo, lo primero que sale es la frase de las comisiones de red.
 
 | Tiempo | Pantalla | Guion EN |
 |---|---|---|
-| 0:00–0:10 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “In Argentina, you can have a job, earn a living, and still have no way to pay in installments.” |
-| 0:10–0:27 | Luciano e Ignacio por nombre; contexto argentino; pie de fuente “INDEC: 45% informal employment, 31 urban areas, Q2 2026, provisional” | “We're Luciano and Ignacio, from Tucumán, Argentina. Here, more than 40% of workers are in informal employment, and earning income without formal proof can make it harder to access bank credit. Students hit the same wall, because they don't have a credit history yet.” |
-| 0:27–0:41 | Esquema personas → Lazo → billetera; “Planned integration” | “That's why we're building Lazo: a credit layer that plugs into the fintech wallets these people already use.” |
-| 0:41–0:57 | Checkout disponible y respaldo del fiador; “Simulator” | “You can split a purchase into three interest-free installments, or six with a small interest charge. Someone you trust backs your plan.” |
-| 0:57–1:15 | Comercio y esquema simple del fondo | “For merchants, it's simple: they get paid upfront for a small fee, while the customer pays over time. The money comes from a shared credit pool, and every repayment fills it back up.” |
-| 1:15–1:25 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “For buyers, it's just three steps: pick your plan, confirm, and you're done.” |
-| 1:25–1:45 | Diseño del fondo y registro; “Prototype”; rótulo visible “Running on Solana devnet” | “We chose Solana because payments are fast, fees are low, and every plan and repayment leaves a record anyone can verify.” |
-| 1:45–2:00 | Producto y pedido concreto; sin logos de partners | “We're starting at home, in Tucumán, and we're looking for a fintech partner to run the first pilot with us. Because in Argentina, earning a living should be enough to pay in installments.” |
+| 0:00–0:08 | Equipo; sobreimpreso breve “Income ≠ access to credit” | “Imagine working hard every single day, earning a steady income, but remaining completely invisible to the banking system.” |
+| 0:08–0:27 | Contexto argentino; pie de fuente “INDEC: 45% informal employment, 31 urban areas, Q2 2026, provisional” | “In Argentina, over 40% of the workforce operates in the informal economy. Without a formal paystub or traditional credit history, millions of workers and students are locked out of basic financial tools like credit cards. They simply have no way to pay over time.” |
+| 0:27–0:37 | Luciano e Ignacio por nombre; esquema personas → Lazo → billetera; “Planned integration” | “We're Luciano and Ignacio, and we're building Lazo: a credit layer that plugs directly into the fintech wallets people already use every day.” |
+| 0:37–0:50 | Checkout disponible y respaldo del fiador; “Simulator” | “We enable a Buy Now, Pay Later model where users can split purchases into three interest-free monthly payments, or six with a small interest charge. A trusted person backs your plan.” |
+| 0:50–0:56 | Cliente elige cuotas y confirma en el checkout actual; “Simulator” | “For buyers, it's three steps: pick your product, choose your installments, and confirm.” |
+| 0:56–1:11 | Comercio y esquema simple del fondo | “For merchants, it's easy: they get paid upfront for a small fee, while the customer pays over time. The money comes from a shared credit pool, and every repayment fills it back up.” |
+| 1:11–1:38 | Fondo y registro; “Prototype”; rótulo visible “Running on Solana devnet” | “That pool lives on Solana. It runs as a program that pays merchants and collects installments automatically, by rules anyone can check. Every loan and repayment is recorded on chain, so a partner funding the pool can audit it in real time. And at under a cent per transaction, even small monthly payments make sense. Today, Lazo runs on Solana devnet.” |
+| 1:38–1:55 | Producto y pedido concreto; sin logos de partners | “We're launching our first pilot in Argentina, and we're looking for fintech partners and investors to join us in scaling credit access across Latin America. Because earning a living should be enough to get access to credit.” |
 
-**Notas de esta revisión:**
+**Notas de esta versión:**
 
-- La frase de capa de crédito aparece al presentar la solución. Es diseño/estrategia; la integración con una fintech o tarjeta aún no está demostrada.
-- Respaldo: frase aprobada por Luciano, mencionada una sola vez después de las cuotas: “A trusted person backs your plan and only pays if you don't.” La demo explica el requisito de tarjeta del fiador y el alcance de la garantía.
-- La escena de mostrador/QR sale del pitch breve para no fijar el mecanismo de una integración pendiente. Se muestra el checkout disponible con su rótulo verdadero de simulación. El guion de demo conserva el QR propio existente.
-- “Small fee” expresa el posicionamiento comercial provisional. La tarifa completa sigue pendiente de validación; no es una comparación demostrada con terceros. El comercio paga comisión por el servicio; no se le atribuye un rendimiento. Se consultó a Luciano si “leve interés” quería decir esa comisión; si propone rendimiento al comercio, hay que definirlo como una modalidad nueva antes de afirmarlo.
-- La mención del pool explica de dónde sale el adelanto. El rendimiento del capital sigue como modelo a validar; no se promete tasa ni fondeo de un partner ya conseguido.
+- **Solana:** la frase describe el programa de `programa/` (pool con `lp_deposit`/`lp_withdraw`, `open_plan`, `release_payout`, `pay_installment`, `crank_mark_late`, `keeper_guarantee`). La versión nueva todavía no está desplegada en devnet y la web corre en simulador: en pantalla, rótulo "Prototype" y nada de Explorer salvo una operación realmente observada en devnet. El programa tiene instrucciones de admin (`admin_config`, `admin_set_state`, `admin_apply_loss`): no decir "nobody can change the rules"; "rules anyone can check" sí es cierto. "Under a cent" se refiere a la comisión de red de Solana, no a la de Lazo.
+- **Devnet en voz alta:** `CLAUDE.md` del kit pide decir que corre en devnet al mostrar o entregar el proyecto; va en la última frase de Solana.
+- **Fiador:** “A trusted person backs your plan” queda corta a propósito (decisión de Luciano). La demo explica tarjeta del fiador, cobertura y que solo paga ante impago.
+- **Riesgos aceptados por Luciano** (marcados en la revisión, preparar respuesta si los preguntan): "invisible to the banking system" (BCRA: casi todos tienen cuenta; lo que falta es crédito), "millions of workers and students" (no calculado con la fuente) y "We're launching our first pilot" (todavía no hay piloto ni socio: la respuesta honesta es que es el próximo paso).
+- “Small fee” e “interest charge” son posicionamiento provisional; tarifas en `06-decisiones-comerciales.md` y `10-tasa-6-cuotas-y-cobro-diferido.md`. No se promete rendimiento del pool ni fondeo conseguido.
 
-### Apertura personal alternativa — pendiente de confirmar
+### Apertura personal — confirmada, no usada
 
-Si ambos confirman que trabajan y no tienen tarjeta propia, reemplazar la segunda fila por:
+Luciano confirmó que ambos trabajan y no tienen tarjeta propia, pero prefirió abrir con el dato del INDEC. Queda como alternativa o respuesta en preguntas:
 
-> “We're Luciano and Ignacio. We work, but we don't have our own credit cards to pay in installments. In Argentina, income paid off the books, or only partly recorded, can make access to bank credit harder. We started Lazo because we know that barrier.”
-
-No afirmar “we're unbanked” sin confirmar que no tienen cuentas. No inventar un rechazo de banco. Si el problema es límite insuficiente, adaptar la experiencia a ese dato. El guion general se puede seguir editando mientras falta la respuesta.
+> “We're Luciano and Ignacio. We work, but we don't have our own credit cards to pay in installments.”
 
 ### Cierre: dirección elegida y propuesta tras el handoff
 
