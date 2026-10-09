@@ -1,0 +1,14 @@
+# 07: Cuenta del comprador — Tier credencial y planes visuales
+
+**What to build:** en la cuenta del comprador, con acento violeta: (a) **tarjeta de Tier tipo credencial**, con el color del nivel, el nombre del Tier y los beneficios desbloqueados (anticipo y tope, desde los escalones de la config); (b) **barra de progreso al próximo Tier** con el texto de qué falta ("Te falta 1 plan saldado a tiempo de US$ X o más"), derivada de las reglas de la config, con una función pura testeada (en el Tier máximo dice "Tier máximo"); (c) **planes como tarjetas con anillo de progreso** de cuotas pagadas; (d) **"Ver planes" y "Ver comercios"** como tarjetas con ícono, no botones apagados. "Comprador nuevo" y "Comprador Tier 4" se ven claramente distintos. Sin escalera de 5 Tiers.
+
+**Blocked by:** 01, 03
+
+**Status:** ready-for-agent · **Asignado:** Devin
+
+**Archivos propios:** `components/cuenta/estudiante.tsx`, la sección `student` de `i18n/dictionaries/cuentas.ts`, archivos nuevos en `components/cuenta/comprador/`.
+
+- [ ] Tarjeta de Tier + progreso + beneficios para las dos personas
+- [ ] Test de Vitest del progreso (Tier 1, intermedio, máximo)
+- [ ] Planes con anillo; accesos como tarjetas
+- [ ] `checkout-first-payment.spec.ts` y `entry.spec.ts` en verde; capturas 390/1440 de las dos personas en `evidence/07-*`

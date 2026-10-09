@@ -7,3 +7,5 @@ Demo polish (2026-10-06): `.scratch/demo-polish/issues/` 01-08 — **tanda done 
 Demo happy path (2026-10-09): `.scratch/demo-happy-path/issues/01-compra-y-primera-cuota-devnet.md` — **ready-for-agent**, especificación completa de compra y primera cuota reales con Phantom en devnet. Consultar este ticket al implementar el recorrido acordado en Q1–Q7; antecedentes de entrevista en `proyecto/12-demo-happy-path.md`. La etiqueta no autoriza transacciones.
 
 Tickets ejecutables del happy path (2026-10-09): `.scratch/demo-happy-path-tickets/issues/` 01–03 — **ready-for-agent**. División aprobada con los antiguos 1/2/3 unidos: 01 compra/calendario/preparación → 02 primera cuota → 03 verificación para grabar. Para elegir trabajo, usar estos tickets; la spec padre permanece sin modificar. Firmar/enviar transacciones sigue requiriendo aprobación explícita por transacción.
+
+Rediseño UI (2026-10-09): `.scratch/rediseno-ui/issues/` 01–12 — **ready-for-agent**, spec `.scratch/rediseno-ui/spec.md`, reglas `.scratch/rediseno-ui/WORKER-RULES.md`, rama de integración `t4-rediseno-ui`. Workers Codex, Devin y Claude coordinador. Publicar en `main` solo con OK de Luciano.
