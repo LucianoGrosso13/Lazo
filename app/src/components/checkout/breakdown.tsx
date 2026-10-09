@@ -43,13 +43,6 @@ export interface BreakdownData {
   /** Interés total de la opción elegida, en bps sobre lo financiado. */
   interestTotalBps: Bps;
   total: Micro;
-  merchantReceives: Micro;
-  /** Lo que el comercio cobra al abrir (todo si la liquidación es inmediata). */
-  merchantAdvance: Micro;
-  /** Lo que el comercio cobra a `settlementDays` días (0 si es inmediata). */
-  merchantPending: Micro;
-  /** Días hasta el cobro diferido del comercio (0 = cobra hoy). */
-  settlementDays: number;
   /** Cuotas de la opción elegida (3 ó 6 en la demo). */
   installmentsCount: number;
   /** Campo de compatibilidad del cliente. */
@@ -79,7 +72,6 @@ export function Breakdown({
   config,
   walletStatus,
   onConfirm,
-  merchantName,
   planPicker,
 }: {
   data: BreakdownData;
@@ -90,7 +82,6 @@ export function Breakdown({
   config: ProtocolConfig | undefined;
   walletStatus: WalletStatus;
   onConfirm?: () => void;
-  merchantName: string;
   planPicker?: PlanPickerProps;
 }) {
   const t = useT(checkout);
@@ -180,17 +171,6 @@ export function Breakdown({
           )}
         </span>
       </div>
-      <p className={styles.merchant}>
-        {data.settlementDays === 0
-          ? t.merchantToday(merchantName, fmt(data.merchantReceives))
-          : t.merchantDeferred(
-              merchantName,
-              fmt(data.merchantAdvance),
-              fmt(data.merchantPending),
-              data.settlementDays,
-            )}
-      </p>
-
       {blocked ? (
         <BlockedReasons reasons={data.reasons} data={data} guarantee={guarantee} balance={balance} config={config} />
       ) : null}

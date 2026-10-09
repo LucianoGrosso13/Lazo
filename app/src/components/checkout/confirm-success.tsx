@@ -63,12 +63,6 @@ export function ConfirmSuccess({
       if (p) setPaidPlan(p);
     },
   });
-  const received = shown ? shown.price - shown.merchantFee : 0;
-  // Cobro diferido: hoy entra el anticipo y el resto a `settlementDays`;
-  // inmediato = todo al abrir (misma regla que `quote()`).
-  const settleDays = shown?.terms?.settlementDays ?? 0;
-  const advance = settleDays === 0 ? received : (shown?.downPayment ?? 0);
-  const pendingMerchant = received - advance;
   // Interés firmado = lo que se repaga menos lo financiado (datos del plan).
   const repaid = shown ? shown.installments.reduce((a, i) => a + i.amount, 0) : 0;
   const interest = shown ? Math.max(0, repaid - shown.financed) : 0;
@@ -83,7 +77,7 @@ export function ConfirmSuccess({
         viewBox="0 0 760 190"
         className={styles.successSvg}
         role="img"
-        aria-label={t.beamAria(fmt(advance))}
+        aria-label={t.beamAria}
       >
         <defs>
           <radialGradient id="succ-fill" cx="50%" cy="118%" r="95%">
@@ -135,11 +129,19 @@ export function ConfirmSuccess({
       </svg>
 
       <h2 ref={headingRef} tabIndex={-1} className={styles.successTitle}>{t.title}</h2>
-      <p className={styles.successLead}>
-        {t.merchantPaidLead(merchantName)}{" "}
-        <BigNumber amount={advance} size="lg" className={styles.savingsNum} />{" "}
-        {t.merchantPaidTail(settleDays)}
-      </p>
+      {shown ? (
+        <p className={styles.successLead}>
+          {shown.downPayment > 0 ? (
+            <>
+              {t.paidLead}{" "}
+              <BigNumber amount={shown.downPayment} size="lg" className={styles.savingsNum} />{" "}
+              {t.paidTail}
+            </>
+          ) : (
+            t.paidNoDown
+          )}
+        </p>
+      ) : null}
       <div className={styles.receiptRow}>
         {getCuotas().mode === "real" ? (
           <ExplorerLink signature={signature} />
@@ -159,11 +161,6 @@ export function ConfirmSuccess({
             </span>
           ) : null}
           {interest > 0 ? <span>{t.interestFact(fmt(interest))}</span> : null}
-          {pendingMerchant > 0 ? (
-            <span>
-              {t.merchantLaterFact(merchantName, fmt(pendingMerchant), settleDays)}
-            </span>
-          ) : null}
         </div>
       ) : null}
 

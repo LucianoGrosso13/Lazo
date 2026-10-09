@@ -45,7 +45,10 @@ test("a 90-day sale releases three guaranteed tranches while the buyer is late",
   await expect(page.getByTestId("comercio-plazos")).toBeVisible();
   await page.getByRole("radio", { name: /90 d[ií]as|90 days/ }).click();
   await page.goto(`/checkout/pc?demo=${DEMO_STUDENT_NEW}`);
-  await expect(page.getByText(/a 90 d[ií]as|in 90 days/i).first()).toBeVisible();
+  // El comprador ya no ve el plazo de cobro del comercio (rediseño UI, ticket
+  // 02): la elección queda en la cuenta del comercio y en el plan, no en la
+  // vista del comprador.
+  await expect(page.getByText(/a 90 d[ií]as|in 90 days/i)).toHaveCount(0);
   await page.getByRole("radio", { name: /6 cuotas|6 installments/ }).click();
   await page.getByRole("button", { name: /pagar anticipo y abrir plan|pay down/i }).click();
   await page.getByRole("button", { name: /firmar y abrir plan|sign & open/i }).click();
