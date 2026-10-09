@@ -1,0 +1,82 @@
+/* Panel del comercio: mini línea de tiempo de los tramos garantizados.
+   El riel y los puntos usan el acento del rol (cyan para comercio); cada
+   punto es un cobro con fecha comprometida por Lazo. */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timelineItem {
+  position: relative;
+  min-width: 0;
+  padding: 0.55rem 0 0.55rem 1.55rem;
+}
+
+/* El riel une los tramos: un filete de luz que baja por las fechas. */
+.timelineItem::before {
+  content: "";
+  position: absolute;
+  left: 0.43rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    var(--accent-border),
+    color-mix(in srgb, var(--accent) 18%, transparent)
+  );
+}
+.timelineItem:first-child::before {
+  top: 1.05rem;
+}
+.timelineItem:last-child::before {
+  bottom: calc(100% - 1.05rem);
+}
+
+.timelineDot {
+  position: absolute;
+  left: 0;
+  top: 0.72rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: var(--color-abyss);
+}
+.timelineDot::after {
+  content: "";
+  position: absolute;
+  inset: 0.1875rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* El tramo más próximo lleva el brillo: es el próximo cobro garantizado. */
+.timelineItem[data-next] .timelineDot {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Entrada: el calendario se vierte por el riel, una fecha por vez. */
+.timeline[data-entered] .timelineItem {
+  animation: tramoReveal 520ms var(--ease-beam) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+@keyframes tramoReveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline[data-entered] .timelineItem {
+    animation: none;
+  }
+}

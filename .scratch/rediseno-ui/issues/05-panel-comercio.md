@@ -4,11 +4,11 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Devin
+**Status:** done · **Asignado:** Devin
 
 **Archivos propios:** `components/cuenta/comercio.tsx`, `i18n/dictionaries/comercio-cuenta.ts`.
 
-- [ ] Orden: Cobrado + Garantizado → Mostrador → Ventas plegables → resto
-- [ ] Garantizado por cobrar con fechas y montos que cuadran con el calendario del mock; después de adelantar el reloj, el tramo pasa a cobrado (e2e)
-- [ ] Historial de ventas: 3 visibles y se expande (e2e)
-- [ ] `comercio-pool.spec.ts` y `counter-order.spec.ts` en verde; capturas 390/1440 en `evidence/05-*`
+- [x] Orden: Cobrado + Garantizado → Mostrador → Ventas plegables → resto
+- [x] Garantizado por cobrar con fechas y montos que cuadran con el calendario del mock; después de adelantar el reloj, el tramo pasa a cobrado (e2e)
+- [x] Historial de ventas: 3 visibles y se expande (e2e)
+- [x] `comercio-pool.spec.ts` y `counter-order.spec.ts` en verde; capturas 390/1440 en `evidence/05-*`
