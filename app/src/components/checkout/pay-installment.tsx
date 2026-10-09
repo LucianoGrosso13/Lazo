@@ -82,6 +82,11 @@ export function usePayInstallment({
   // avanza y el título del éxito debe seguir nombrando a la que se pagó.
   const [paidIdx, setPaidIdx] = useState<number | null>(null);
   const restoredIdxRef = useRef<number | null>(null);
+  // La cuota esperada queda congelada al firmar/restaurar: persistir el
+  // `nextUp` vivo reescribiría la entrada con otra cuota bajo la misma firma.
+  const expectedRef = useRef<{ index: number; openedAt?: UnixSeconds } | null>(
+    null,
+  );
 
   // Identidad que firma: snapshot por render; un cambio descarta resultados
   // tardíos (nunca se aplica a otra cuenta).
@@ -122,17 +127,19 @@ export function usePayInstallment({
         : Promise.resolve(null),
   });
 
-  const buildSnapshot = (sig: string): PendingPayOp | null =>
-    plan && student && nextUp
+  const buildSnapshot = (sig: string): PendingPayOp | null => {
+    const expected = expectedRef.current;
+    return plan && student && expected
       ? {
           operation: "pay_installment",
           student,
           planId: plan.id,
           signature: sig,
-          expectedInstallmentIndex: nextUp.index,
-          expectedOpenedAt: plan.openedAt,
+          expectedInstallmentIndex: expected.index,
+          expectedOpenedAt: expected.openedAt,
         }
       : null;
+  };
 
   // Persistencia del pago en duda por wallet+plan (sessionStorage). Se
   // limpia solo con veredicto: éxito o `failed` onchain.
@@ -157,6 +164,10 @@ export function usePayInstallment({
     const op = loadPendingPay(window.sessionStorage, student, plan.id);
     if (op) {
       restoredIdxRef.current = op.expectedInstallmentIndex;
+      expectedRef.current = {
+        index: op.expectedInstallmentIndex,
+        openedAt: op.expectedOpenedAt,
+      };
       runner.restore(
         buildRun(student, {
           index: op.expectedInstallmentIndex,
@@ -197,6 +208,8 @@ export function usePayInstallment({
 
   const sign = () => {
     if (!student || !plan || !nextUp) return;
+    restoredIdxRef.current = null;
+    expectedRef.current = { index: nextUp.index, openedAt: plan.openedAt };
     setPaidIdx(nextUp.index);
     // El runner ignora el arranque si hay una corrida viva o un `uncertain`:
     // doble clic y reintento a ciegas no producen otro pago. La cuota queda
@@ -218,19 +231,25 @@ export function usePayInstallment({
       </Button>
     ) : null;
 
+  // El panel existe aunque ya no quede cuota impaga: un `uncertain` sobre la
+  // última cuota (o un plan releído sin impagas) debe poder verificarse.
   const panel =
-    open && plan && student && nextUp ? (
+    open && plan && student && (nextUp !== null || flow.kind !== "idle") ? (
       <PayPanel
         plan={plan}
         student={student}
-        index={nextUp.index}
-        titleIndex={paidIdx ?? nextUp.index}
+        titleIndex={paidIdx ?? restoredIdxRef.current ?? nextUp?.index ?? 0}
         due={due}
         flow={flow}
         onClose={() => {
           // `uncertain` sigue en duda: cerrar NO lo resetea (un reenvío a
           // ciegas duplicaría el pago). Solo los demás estados vuelven a idle.
-          if (flow.kind !== "uncertain") runner.reset();
+          if (flow.kind !== "uncertain") {
+            runner.reset();
+            setPaidIdx(null);
+            restoredIdxRef.current = null;
+            expectedRef.current = null;
+          }
           setOpen(false);
         }}
         onSign={sign}
@@ -244,7 +263,6 @@ export function usePayInstallment({
 function PayPanel({
   plan,
   student,
-  index,
   titleIndex,
   due,
   flow,
@@ -254,9 +272,7 @@ function PayPanel({
 }: {
   plan: Plan;
   student: WalletAddress;
-  /** Índice 0-based de la cuota que se está pagando. */
-  index: number;
-  /** Índice congelado para el título de éxito (la primera impaga avanza). */
+  /** Índice congelado de la cuota pagada (la primera impaga avanza tras pagar). */
   titleIndex: number;
   /** Importe exacto a pagar (cuota + punitorio si hay). */
   due: Micro;
@@ -350,7 +366,7 @@ function PayPanel({
           <div className={styles.row}>
             <dt className={styles.rowKey}>{t.rows.plan}</dt>
             <dd className={styles.rowVal}>
-              {t.rows.installment(index + 1)}{" "}
+              {t.rows.installment(titleIndex + 1)}{" "}
               <span className={styles.due}>{short(plan.id)}</span>
             </dd>
           </div>
