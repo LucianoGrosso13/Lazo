@@ -1195,6 +1195,7 @@ async function addressHistory(rpc: RealRpc, addr: Address, limit: number): Promi
 
 /** Forma mínima del `jsonParsed` que nos interesa (el resto se ignora). */
 interface ParsedTx {
+  blockTime?: number | bigint | null;
   meta?: {
     err?: unknown;
     logMessages?: string[] | null;
@@ -2489,9 +2490,20 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         return mapPlan(planPda, raw, config, now, snapshot.signature);
       };
       if (snapshot.operation === "open_plan") {
+        // Una compra solo es éxito con el plan recuperado: la cuenta
+        // ausente (o réplica atrasada) sigue incierta. `plan: null` está
+        // reservado al pago saldado, cuyo evento propio prueba el cierre.
         if (raw === null) {
-          // Abrió y ya se cerró: efecto probado, sin cuenta legible.
-          return finish({ status: "confirmed", signature: snapshot.signature, plan: null });
+          return finish({ status: "pending", signature: snapshot.signature });
+        }
+        // La PDA se reutiliza al reabrir: el plan legible debe ser la
+        // generación que abrió ESTA firma. El programa fija
+        // `openedAt = Clock` del bloque de apertura; si difiere del
+        // blockTime del tx original, el plan actual es de otra compra —
+        // devolverlo sería éxito con un plan ajeno.
+        const txBlock = tx.blockTime == null ? null : Number(tx.blockTime);
+        if (txBlock === null || Number(raw.openedAt) !== txBlock) {
+          return finish({ status: "pending", signature: snapshot.signature });
         }
         const plan = await currentPlan().catch(() => null);
         if (!plan) return finish({ status: "pending", signature: snapshot.signature });

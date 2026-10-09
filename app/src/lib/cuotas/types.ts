@@ -462,8 +462,11 @@ export type OperationSnapshot =
  * ORIGINAL del snapshot, nunca a una reemisión:
  * - `confirmed`: la firma aterrizó y su evento corresponde a la operación
  *   y a la identidad del snapshot. `plan` trae el estado actualizado;
- *   `null` si la última cuota saldó y el programa cerró la cuenta (el
- *   efecto quedó verificado por el evento igual).
+ *   `null` SOLO en `pay_installment` cuando la última cuota saldó y el
+ *   programa cerró la cuenta (el evento propio ya probó el efecto).
+ *   `open_plan` exige el plan recuperado en la misma generación
+ *   (`openedAt` = blockTime de la firma): cuenta ausente u otra
+ *   generación reabierta queda `pending`, jamás éxito con plan ajeno.
  * - `failed`: la firma falló onchain (`err` definitivo): NO hizo efecto;
  *   es seguro reintentar armando una propuesta fresca.
  * - `pending`: sin veredicto todavía (firma no encontrada, sin
