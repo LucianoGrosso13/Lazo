@@ -93,7 +93,7 @@ test("renders English copy correctly", async ({ page }) => {
   await page.goto("/para-estudiantes");
 
   await expect(
-    page.getByRole("heading", { name: "Installments for your studies, backed by your family" }),
+    page.getByRole("heading", { name: "Buy in installments, backed by a guarantor" }),
   ).toBeVisible();
   await expect(page.getByText("What your plan looks like")).toBeVisible();
   await expect(page.getByRole("button", { name: /Pick the merchant and the product/ })).toBeVisible();
