@@ -7,6 +7,7 @@ import {
   waitForOperation,
   waitForPlan,
 } from "./reconcile";
+import { CuotasError } from "./types";
 import type {
   CuotasClient,
   OperationSnapshot,
@@ -192,5 +193,57 @@ describe("waitForOperation (veredicto de UNA firma)", () => {
       sleep: async () => {},
     });
     expect(res).toBeNull();
+  });
+
+  it("un error transitorio (unavailable / crudo de red) se reintenta", async () => {
+    let calls = 0;
+    const c: Pick<CuotasClient, "reconcileOperation"> = {
+      reconcileOperation: async () => {
+        calls++;
+        if (calls < 3) throw new CuotasError("unavailable", "RPC caído");
+        return { status: "failed", signature: "firma-original" };
+      },
+    };
+    const res = await waitForOperation(c, snapshot, {
+      intervalMs: 1,
+      sleep: async () => {},
+    });
+    expect(res?.status).toBe("failed");
+    expect(calls).toBe(3);
+  });
+
+  it("un CuotasError no transitorio se propaga (no se sondea en vano)", async () => {
+    let calls = 0;
+    const c: Pick<CuotasClient, "reconcileOperation"> = {
+      reconcileOperation: async () => {
+        calls++;
+        throw new CuotasError("wrong_cluster", "no es devnet");
+      },
+    };
+    await expect(
+      waitForOperation(c, snapshot, {
+        intervalMs: 1,
+        timeoutMs: 10_000,
+        sleep: async () => {},
+      }),
+    ).rejects.toMatchObject({ code: "wrong_cluster" });
+    expect(calls).toBe(1);
+  });
+});
+
+describe("reconcileUntil con isTransient", () => {
+  it("isTransient=false propaga el error en la primera falla", async () => {
+    let calls = 0;
+    await expect(
+      reconcileUntil(
+        async () => {
+          calls++;
+          throw new Error("fatal");
+        },
+        () => null,
+        { isTransient: () => false, sleep: async () => {} },
+      ),
+    ).rejects.toThrowError("fatal");
+    expect(calls).toBe(1);
   });
 });

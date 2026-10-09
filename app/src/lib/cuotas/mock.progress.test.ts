@@ -224,4 +224,50 @@ describe("reconcileOperation (espejo simulado)", () => {
       }),
     ).toMatchObject({ status: "pending" });
   });
+
+  it("expectedOpenedAt distinto (plan reabierto) → confirmed con plan null", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    const res = await c.payInstallment(W, plan.id);
+    // El pago está probado pero la generación esperada ya no coincide:
+    // espejo del real (cuenta reabierta → efecto probado, sin plan legible).
+    expect(
+      await c.reconcileOperation({
+        operation: "pay_installment",
+        student: W,
+        planId: plan.id,
+        signature: res.signature,
+        expectedInstallmentIndex: 0,
+        expectedOpenedAt: plan.openedAt + 999,
+      }),
+    ).toEqual({ status: "confirmed", signature: res.signature, plan: null });
+  });
+});
+
+describe("dedup de llamados concurrentes (espejo del real)", () => {
+  it("openPlan: dos llamados idénticos comparten la MISMA promesa (un solo plan)", async () => {
+    const p1 = c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(1000) });
+    const p2 = c.openPlan({ student: W, merchant: DEMO_MERCHANT, price: toMicro(1000) });
+    expect(p2).toBe(p1);
+    await p1;
+    const plans = await c.getPlans(W);
+    expect(plans).toHaveLength(1);
+  });
+
+  it("payInstallment: doble click no paga dos cuotas", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    const p1 = c.payInstallment(W, plan.id);
+    const p2 = c.payInstallment(W, plan.id);
+    expect(p2).toBe(p1);
+    const res = await p1;
+    expect(res.value.installments[0].status).toBe("Paid");
+    expect(res.value.installments[1].status).not.toBe("Paid");
+  });
 });

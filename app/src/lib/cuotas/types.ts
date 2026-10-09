@@ -445,6 +445,16 @@ export type OperationSnapshot =
       signature: string;
       /** Índice 0-based de la cuota que la firma debía dejar `Paid`. */
       expectedInstallmentIndex: number;
+      /**
+       * `Plan.openedAt` leído ANTES de firmar (opcional, recomendado). La
+       * PDA del plan se reutiliza al reabrir tras saldar: si la cuenta
+       * actual tiene otro `openedAt`, el pago probado pertenece a una
+       * generación ya cerrada → `confirmed` con `plan: null` en vez de
+       * quedar `pending` para siempre.
+       */
+      expectedOpenedAt?: UnixSeconds;
+      /** `generation` del plan al firmar (opcional; mismo criterio). */
+      expectedGeneration?: number;
     };
 
 /**
@@ -562,8 +572,11 @@ export type RealErrorCode =
   /**
    * La transacción quedó firmada/enviada pero su resultado no se verificó:
    * PUEDE haber aterrizado onchain. `CuotasError.signature` trae la firma.
-   * La UI NO reintenta a ciegas (riesgo de doble cargo): reconcilia con
-   * `waitForOpenedPlan`/`waitForPlan` (o el Explorer) hasta verificarla.
+   * La UI NO reintenta a ciegas (riesgo de doble cargo): reconcilia la
+   * firma ORIGINAL con `reconcileOperation`/`waitForOperation` (armando el
+   * `OperationSnapshot` correspondiente) o mira el Explorer.
+   * `waitForOpenedPlan`/`waitForPlan` son polling de estado genérico y NO
+   * prueban esta firma (un plan previo también los satisface).
    */
   | "uncertain"
   /** Fallo de red, RPC o confirmación: reintentar. No inventa datos. */

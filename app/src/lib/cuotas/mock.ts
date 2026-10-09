@@ -611,7 +611,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
   const fundsOf = (student: WalletAddress): Micro =>
     Math.max(0, (overrides.studentFunds ?? DEMO_STUDENT_FUNDS) - spentOf(student));
 
-  return {
+  const inner: CuotasClient = {
     mode: "mock",
 
     async getConfig() {
@@ -960,9 +960,17 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
           i.signature === snapshot.signature &&
           i.paidAt !== undefined,
       );
-      return inst
-        ? { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) }
-        : { status: "pending", signature: snapshot.signature };
+      if (!inst) return { status: "pending", signature: snapshot.signature };
+      // La firma quedó probada por el registro simulado. Si la identidad
+      // del plan difiere de la esperada (el plan se reabrió tras saldar),
+      // la generación que recibió el pago ya no está legible → null.
+      if (
+        snapshot.expectedOpenedAt !== undefined &&
+        plan.openedAt !== snapshot.expectedOpenedAt
+      ) {
+        return { status: "confirmed", signature: snapshot.signature, plan: null };
+      }
+      return { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) };
     },
 
     async registerGuarantee(args): Promise<TxResult<Guarantee>> {
@@ -1075,5 +1083,31 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+  };
+
+  // Paridad con el cliente real: llamados concurrentes idénticos
+  // comparten una sola operación simulada (la MISMA promesa, cero
+  // doble-cargo por doble click). El mock nunca va `uncertain`, así que la
+  // clave se libera siempre al resolver; tampoco hay fan-out de
+  // listeners: sus fases se emiten síncronas, un llamado tardío nunca se
+  // suma "a mitad de camino" (recibe el MISMO resultado ya resuelto).
+  const inFlight = new Map<string, Promise<unknown>>();
+  const dedup = <T>(key: string, run: () => Promise<T>): Promise<T> => {
+    const running = inFlight.get(key);
+    if (running) return running as Promise<T>;
+    const p = run().finally(() => {
+      if (inFlight.get(key) === p) inFlight.delete(key);
+    });
+    inFlight.set(key, p);
+    return p;
+  };
+  return {
+    ...inner,
+    openPlan: (args) =>
+      dedup(`open_plan:${args.student}`, () => inner.openPlan(args)),
+    payInstallment: (student, planId, options) =>
+      dedup(`pay_installment:${student}:${planId}`, () =>
+        inner.payInstallment(student, planId, options),
+      ),
   };
 }

@@ -124,6 +124,7 @@ import type {
   TierIndex,
   TxOperationOptions,
   TxPhase,
+  TxProgress,
   TxProgressListener,
   TxResult,
   UnixSeconds,
@@ -610,7 +611,7 @@ async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<voi
       // reenviar a ciegas.
       throw new CuotasError(
         "uncertain",
-        `Sin confirmación en 60s; la transacción puede haberse procesado. Reconciliá el estado (o ${explorerTxUrl(signature)}) antes de reintentar`,
+        `Sin confirmación en 60s; la transacción puede haberse procesado. Reconciliá la firma con reconcileOperation/waitForOperation (o ${explorerTxUrl(signature)}) antes de reintentar`,
         String(signature),
       );
     }
@@ -745,7 +746,7 @@ export async function sendReviewedProposal(
       // `uncertain` + firma → reconciliar, jamás reenviar a ciegas.
       throw new CuotasError(
         "uncertain",
-        `Sin respuesta del envío; la transacción puede haberse procesado. Reconciliá el estado (o ${explorerTxUrl(String(signature))}) antes de reintentar`,
+        `Sin respuesta del envío; la transacción puede haberse procesado. Reconciliá la firma con reconcileOperation/waitForOperation (o ${explorerTxUrl(String(signature))}) antes de reintentar`,
         String(signature),
       );
     });
@@ -1204,15 +1205,19 @@ interface ParsedTx {
 }
 
 async function fetchParsedTx(rpc: RealRpc, signature: string): Promise<ParsedTx | null> {
-  const tx = await rpc
-    .getTransaction(signature as Signature, {
-      commitment: "confirmed",
-      encoding: "jsonParsed",
-      maxSupportedTransactionVersion: 1,
-    })
-    .send()
-    .catch(() => null);
-  return tx as unknown as ParsedTx | null;
+  try {
+    const tx = await rpc
+      .getTransaction(signature as Signature, {
+        commitment: "confirmed",
+        encoding: "jsonParsed",
+        maxSupportedTransactionVersion: 1,
+      })
+      .send();
+    return tx as unknown as ParsedTx | null;
+  } catch {
+    // Red caída o método no soportado: la tx es ilegible, no inexistente.
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1695,9 +1700,28 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     const now = await chainNow(ctx.rpc);
     let signature = "";
     try {
+      // La PDA se reutiliza al saldar y reabrir: el comprobante de ESTA
+      // generación es la tx cuyo blockTime coincide con `plan.openedAt`
+      // (el programa fija openedAt = Clock del bloque) y que emite
+      // PlanOpened para esta PDA. La más vieja del historial sería el
+      // comprobante de la compra ANTERIOR — recibo equivocado.
       const history = await addressHistory(ctx.rpc, pda, 100);
-      const oldest = history.sort((a, b) => a.slot - b.slot)[0];
-      if (oldest) signature = oldest.signature;
+      const candidates = history
+        .filter((h) => h.blockTime === Number(data.openedAt))
+        .sort((a, b) => b.slot - a.slot);
+      for (const c of candidates) {
+        const tx = await fetchParsedTx(ctx.rpc, c.signature);
+        const hit = parseCuotasEventsFromLogs(
+          tx?.meta?.logMessages,
+          ctx.env.programId,
+        ).some(
+          (p) => p.name === "PlanOpened" && String(p.event.plan) === String(pda),
+        );
+        if (hit) {
+          signature = c.signature;
+          break;
+        }
+      }
     } catch {
       // Sin historial legible: firma vacía, plan real igual válido.
     }
@@ -1708,16 +1732,78 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
    * Una operación firmada por clave a la vez: si llega un segundo llamado
    * idéntico (doble click, re-render) mientras el primero sigue en curso,
    * devuelve LA MISMA promesa — misma transacción, cero envíos duplicados.
+   * Su `onProgress` se SUMA al fan-out (y recibe de inmediato la última
+   * fase emitida, así no arranca ciego).
+   *
+   * Si la operación termina `uncertain` la clave QUEDA TOMADA: un
+   * reintento a ciegas podría cobrar dos veces (la firma puede haber
+   * aterrizado — p.ej. pagando una cuota que ya se pagó, la siguiente se
+   * cobraría). Idénticos llamados reciben el MISMO rechazo con la firma;
+   * la clave se libera recién cuando `reconcileOperation` da un veredicto
+   * definitivo sobre esa firma (`confirmed` → la siguiente cuota es una
+   * operación nueva; `failed` → reintentar es seguro).
    */
-  const inFlight = new Map<string, Promise<unknown>>();
-  const dedup = <T>(key: string, run: () => Promise<T>): Promise<T> => {
+  interface InFlightEntry {
+    promise: Promise<unknown>;
+    listeners: Set<TxProgressListener>;
+    last?: TxProgress;
+    uncertainSignature?: string;
+  }
+  const inFlight = new Map<string, InFlightEntry>();
+  const opKey = (s: OperationSnapshot): string =>
+    s.operation === "open_plan"
+      ? `open_plan:${s.student}`
+      : `pay_installment:${s.student}:${s.planId}`;
+  const dedup = <T>(
+    key: string,
+    listener: TxProgressListener | undefined,
+    run: (onProgress: TxProgressListener) => Promise<T>,
+  ): Promise<T> => {
     const running = inFlight.get(key);
-    if (running) return running as Promise<T>;
-    const p = run().finally(() => {
-      if (inFlight.get(key) === p) inFlight.delete(key);
-    });
-    inFlight.set(key, p);
-    return p;
+    if (running) {
+      if (listener) {
+        running.listeners.add(listener);
+        if (running.last) {
+          emitProgress(listener, running.last.phase, running.last.signature);
+        }
+      }
+      return running.promise as Promise<T>;
+    }
+    const entry: InFlightEntry = { promise: null as never, listeners: new Set() };
+    if (listener) entry.listeners.add(listener);
+    const onProgress: TxProgressListener = (p) => {
+      entry.last = p;
+      for (const l of entry.listeners) emitProgress(l, p.phase, p.signature);
+    };
+    const promise = run(onProgress).then(
+      (value) => {
+        inFlight.delete(key);
+        return value;
+      },
+      (err: unknown) => {
+        if (err instanceof CuotasError && err.code === "uncertain") {
+          entry.uncertainSignature = err.signature;
+          // La cadena pudo cambiar: los suscriptores refrescan su estado.
+          notify();
+        } else {
+          inFlight.delete(key);
+        }
+        throw err;
+      },
+    );
+    entry.promise = promise;
+    inFlight.set(key, entry);
+    return promise;
+  };
+
+  /** Las operaciones no deduplicadas también refrescan suscriptores en `uncertain`. */
+  const notifyOnUncertain = async <T>(p: Promise<T>): Promise<T> => {
+    try {
+      return await p;
+    } catch (e) {
+      if (e instanceof CuotasError && e.code === "uncertain") notify();
+      throw e;
+    }
   };
 
   async function openPlanOnce(args: OpenPlanArgs): Promise<TxResult<Plan>> {
@@ -1864,7 +1950,8 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     }, { reviewer: overrides.reviewer, onProgress: progress });
     // Confirmada: el plan tiene que existir. Si la lectura falla o la cuenta
     // no aparece todavía, el resultado quedó incierto (NO reintentar: la
-    // compra pudo haber aterrizado; reconciliar con `waitForOpenedPlan`).
+    // compra pudo haber aterrizado; reconciliar la firma original con
+    // `reconcileOperation`/`waitForOperation`).
     emitProgress(progress, "syncing", signature);
     let created: GeneratedPlan | null;
     try {
@@ -1886,7 +1973,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     if (!created) {
       throw new CuotasError(
         "uncertain",
-        `El plan no aparece tras ${explorerTxUrl(signature)}; reconciliá con waitForOpenedPlan`,
+        `El plan no aparece tras ${explorerTxUrl(signature)}; reconciliá con waitForOperation (snapshot + firma original)`,
         signature,
       );
     }
@@ -1982,9 +2069,12 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         },
       ],
     }, { reviewer: overrides.reviewer, onProgress: progress });
-    // Confirmada: releer el plan. Falla la lectura → `uncertain` (el pago
-    // pudo aterrizar; reconciliar con `waitForPlan`/`reconcileUntil`, no
-    // reenviar — el programa rechaza dobles pagos, pero a costa de otra tx).
+    // Confirmada: releer el plan. Success SOLO si la cuota exacta quedó
+    // Paid en la MISMA generación/identidad que se firmó (una réplica
+    // atrasada devuelve el estado previo al pago → `uncertain`, jamás
+    // success sin verificar). Falla la lectura → `uncertain` igual: el
+    // pago pudo aterrizar; reconciliar con `waitForOperation`, no reenviar
+    // (el programa rechaza dobles pagos, pero a costa de otra tx).
     emitProgress(progress, "syncing", signature);
     let after: GeneratedPlan | null;
     try {
@@ -2003,19 +2093,50 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         signature,
       );
     }
-    notify();
-    if (after) return { value: mapPlan(planPda, after, config, now, signature), signature };
-    // Se saldó y el programa cerró la cuenta: imagen verificada (todo
-    // resuelto + cierre). El punitorio exacto sale del evento InstallmentPaid.
-    let penalty = due.penalty;
-    try {
-      const tx = await fetchParsedTx(ctx.rpc, signature);
-      for (const p of parseCuotasEventsFromLogs(tx?.meta?.logMessages, ctx.env.programId)) {
-        if (p.name === "InstallmentPaid") penalty = safeMicro(p.event.penalty, "paid.penalty");
+    if (
+      after !== null &&
+      after.openedAt === plan.openedAt &&
+      after.generation === plan.generation
+    ) {
+      const inst = after.installments[firstUnpaid];
+      if (inst?.paid) {
+        notify();
+        return { value: mapPlan(planPda, after, config, now, signature), signature };
       }
-    } catch {
-      // Sin evento legible: se conserva el punitorio pre-imagen.
+      // Misma generación pero la cuota sigue impaga: lectura atrasada, el
+      // efecto de ESTA firma no quedó verificado → incierto (no reenviar).
+      throw new CuotasError(
+        "uncertain",
+        `Confirmada ${explorerTxUrl(signature)} pero la cuota ${firstUnpaid + 1} aún figura impaga (réplica atrasada); reconciliá con waitForOperation`,
+        signature,
+      );
     }
+    // Cuenta cerrada (saldada) o reabierta: la generación que recibió el
+    // pago ya no existe. Success solo si el evento del PROPIO tx prueba el
+    // pago de esta cuota; sin evento legible → incierto, jamás success.
+    const tx = await fetchParsedTx(ctx.rpc, signature);
+    let proved = false;
+    let penalty = due.penalty;
+    for (const p of parseCuotasEventsFromLogs(tx?.meta?.logMessages, ctx.env.programId)) {
+      if (
+        p.name === "InstallmentPaid" &&
+        String(p.event.plan) === String(planPda) &&
+        String(p.event.student) === String(studentAddr) &&
+        Number(p.event.index) === firstUnpaid
+      ) {
+        proved = true;
+        penalty = safeMicro(p.event.penalty, "paid.penalty");
+        break;
+      }
+    }
+    if (!proved) {
+      throw new CuotasError(
+        "uncertain",
+        `Confirmada ${explorerTxUrl(signature)} pero no se pudo verificar el estado final del plan; reconciliá con waitForOperation (snapshot + firma original)`,
+        signature,
+      );
+    }
+    // Imagen verificada: la cuota pagó y la cuenta cerró (todo resuelto).
     const settled: Plan = {
       ...preImage,
       installments: preImage.installments.map((inst, idx) =>
@@ -2024,6 +2145,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       status: "Settled",
       signature,
     };
+    notify();
     return { value: settled, signature };
   }
 
@@ -2222,7 +2344,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         config: configAddr,
         reputation: reputationAddr,
       });
-      const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
+      const { signature } = await notifyOnUncertain(proposeAndSend(ctx.rpc, ctx.env, {
         label: "student_init_reputation",
         version: ctx.version,
         feePayer: studentAddr,
@@ -2234,7 +2356,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
             summary: `Crear reputación (escalón 0) de ${student}`,
           },
         ],
-      }, { reviewer: overrides.reviewer });
+      }, { reviewer: overrides.reviewer }));
       const created = await readProgramAccount(
         ctx.rpc,
         reputationAddr,
@@ -2244,6 +2366,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "Reputation",
       );
       if (!created) {
+        notify();
         throw new CuotasError(
           "uncertain",
           `La reputación no aparece tras ${explorerTxUrl(signature)}`,
@@ -2256,10 +2379,12 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
 
     openPlan(args): Promise<TxResult<Plan>> {
       // Un solo intento en curso por estudiante: un segundo llamado
-      // concurrente comparte la misma transacción (no se envía dos veces).
-      // Sin `async` a propósito: devuelve LA promesa en curso (misma
-      // identidad), no una envoltura nueva.
-      return dedup(`open_plan:${args.student}`, () => openPlanOnce(args));
+      // concurrente comparte la misma transacción (no se envía dos veces)
+      // y suma su onProgress al fan-out. Sin `async` a propósito: devuelve
+      // LA promesa en curso (misma identidad), no una envoltura nueva.
+      return dedup(`open_plan:${args.student}`, args.onProgress, (onProgress) =>
+        openPlanOnce({ ...args, onProgress }),
+      );
     },
 
     payInstallment(
@@ -2267,15 +2392,18 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       planId: string,
       options?: TxOperationOptions,
     ): Promise<TxResult<Plan>> {
-      return dedup(`pay_installment:${student}:${planId}`, () =>
-        payInstallmentOnce(student, planId, options),
+      return dedup(`pay_installment:${student}:${planId}`, options?.onProgress, (onProgress) =>
+        payInstallmentOnce(student, planId, { ...options, onProgress }),
       );
     },
 
     // Veredicto de UNA firma ya emitida, sin reenviar. Primero el estado
-    // real de la firma; solo si aterrizó, el evento del propio tx prueba
-    // el efecto correlacionado a la identidad del snapshot (un plan que
-    // ya existía o una cuota ya paga NO prueban nada).
+    // real de la firma (con búsqueda en el historial: una firma vieja ya
+    // no está en el cache reciente de status); solo si aterrizó, el evento
+    // del propio tx prueba el efecto correlacionado a la identidad del
+    // snapshot (un plan que ya existía o una cuota ya paga NO prueban
+    // nada). Tras `uncertain`, un veredicto definitivo además libera la
+    // clave de dedup — recién ahí un reintento es seguro.
     async reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome> {
       const ctx = await readCtx(overrides);
       const studentAddr = asAddress(snapshot.student, "estudiante");
@@ -2283,75 +2411,116 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         { student: studentAddr },
         { programAddress: ctx.env.programId },
       );
+      const finish = (outcome: ReconcileOutcome): ReconcileOutcome => {
+        if (outcome.status !== "pending") {
+          const key = opKey(snapshot);
+          const e = inFlight.get(key);
+          // Libera solo la clave que quedó tomada por ESTA firma incierta.
+          if (e && e.uncertainSignature === snapshot.signature) inFlight.delete(key);
+        }
+        return outcome;
+      };
       // Snapshot que no corresponde a la identidad: jamás confirma.
       if (snapshot.operation === "pay_installment" && snapshot.planId !== String(planPda)) {
-        return { status: "pending", signature: snapshot.signature };
+        return finish({ status: "pending", signature: snapshot.signature });
       }
       const sig = snapshot.signature as Signature;
       const statusRes = await ctx.rpc
-        .getSignatureStatuses([sig])
+        .getSignatureStatuses([sig], { searchTransactionHistory: true })
         .send()
         .catch(() => null);
       const st = statusRes?.value?.[0];
       if (st?.err) {
         // La firma original falló onchain: no hizo efecto. Reintentar con
         // una propuesta fresca es seguro (no hay duplicado).
-        return { status: "failed", signature: snapshot.signature };
+        return finish({ status: "failed", signature: snapshot.signature });
       }
-      if (
-        !st ||
-        (st.confirmationStatus !== "confirmed" && st.confirmationStatus !== "finalized")
-      ) {
-        return { status: "pending", signature: snapshot.signature };
+      if (st && st.confirmationStatus !== "confirmed" && st.confirmationStatus !== "finalized") {
+        // Vista por el nodo pero todavía sin confirmar.
+        return finish({ status: "pending", signature: snapshot.signature });
       }
-      // Confirmada: el efecto se prueba con el evento del PROPIO tx. Sin
-      // tx legible o sin evento correlacionado sigue incierto → pending.
+      // `st` confirmada/finalizada, o `null` (fuera del cache reciente:
+      // firmas viejas solo viven en el ledger). `getTransaction` consulta
+      // ese ledger — si la devuelve, aterrizó; su `meta.err` manda sobre
+      // el status (una réplica puede desactualizar el cache).
       const tx = await fetchParsedTx(ctx.rpc, snapshot.signature);
-      if (!tx || tx.meta?.err) {
-        return { status: "pending", signature: snapshot.signature };
+      if (!tx) return finish({ status: "pending", signature: snapshot.signature });
+      if (tx.meta?.err) {
+        return finish({ status: "failed", signature: snapshot.signature });
       }
+      // La firma aterrizó: el efecto se prueba con el evento del PROPIO
+      // tx correlacionado a la identidad del snapshot.
       const events = parseCuotasEventsFromLogs(tx.meta?.logMessages, ctx.env.programId);
-      if (snapshot.operation === "open_plan") {
-        const opened = events.some(
-          (p) =>
-            p.name === "PlanOpened" &&
-            String(p.event.plan) === String(planPda) &&
-            String(p.event.student) === String(studentAddr),
+      const eventProved =
+        snapshot.operation === "open_plan"
+          ? events.some(
+              (p) =>
+                p.name === "PlanOpened" &&
+                String(p.event.plan) === String(planPda) &&
+                String(p.event.student) === String(studentAddr),
+            )
+          : events.some(
+              (p) =>
+                p.name === "InstallmentPaid" &&
+                String(p.event.plan) === String(planPda) &&
+                String(p.event.student) === String(studentAddr) &&
+                Number(p.event.index) === snapshot.expectedInstallmentIndex,
+            );
+      if (!eventProved) return finish({ status: "pending", signature: snapshot.signature });
+      // Efecto probado: leer el estado resultante UNA vez. Una lectura
+      // caída ≠ cuenta cerrada → sigue incierto, nunca success a medias.
+      let raw: GeneratedPlan | null;
+      try {
+        raw = await readProgramAccount(
+          ctx.rpc,
+          planPda,
+          ctx.env.programId,
+          PLAN_DISCRIMINATOR,
+          getPlanDecoder(),
+          "Plan",
         );
-        if (!opened) return { status: "pending", signature: snapshot.signature };
-        // La compra está probada; recuperar el plan actualizado. Si la
-        // lectura falla o aún no indexa → la UI sigue en `syncing`.
-        const plans = await readPlans(ctx, snapshot.student).catch(() => null);
-        const plan = plans?.find((p) => p.id === String(planPda)) ?? null;
-        if (!plan) return { status: "pending", signature: snapshot.signature };
-        return { status: "confirmed", signature: snapshot.signature, plan };
+      } catch {
+        return finish({ status: "pending", signature: snapshot.signature });
       }
-      const paid = events.some(
-        (p) =>
-          p.name === "InstallmentPaid" &&
-          String(p.event.plan) === String(planPda) &&
-          String(p.event.student) === String(studentAddr) &&
-          Number(p.event.index) === snapshot.expectedInstallmentIndex,
-      );
-      if (!paid) return { status: "pending", signature: snapshot.signature };
-      const plans = await readPlans(ctx, snapshot.student).catch(() => null);
-      if (plans === null) {
-        // Lectura caída ≠ cuenta cerrada: sigue incierto, nunca success.
-        return { status: "pending", signature: snapshot.signature };
-      }
-      const plan = plans.find((p) => p.id === String(planPda)) ?? null;
-      if (plan) {
-        const inst = plan.installments[snapshot.expectedInstallmentIndex];
-        if (!inst || inst.status !== "Paid") {
-          // El evento prueba el pago pero la lectura todavía no lo
-          // refleja (lectura atrasada): sigue incierto, nunca success.
-          return { status: "pending", signature: snapshot.signature };
+      const currentPlan = async (): Promise<Plan | null> => {
+        if (raw === null) return null;
+        const config = await readConfig(ctx);
+        const now = await chainNow(ctx.rpc).catch(() => Math.floor(Date.now() / 1000));
+        return mapPlan(planPda, raw, config, now, snapshot.signature);
+      };
+      if (snapshot.operation === "open_plan") {
+        if (raw === null) {
+          // Abrió y ya se cerró: efecto probado, sin cuenta legible.
+          return finish({ status: "confirmed", signature: snapshot.signature, plan: null });
         }
-        return { status: "confirmed", signature: snapshot.signature, plan };
+        const plan = await currentPlan().catch(() => null);
+        if (!plan) return finish({ status: "pending", signature: snapshot.signature });
+        return finish({ status: "confirmed", signature: snapshot.signature, plan });
       }
-      // Última cuota: el programa cerró la cuenta al saldar. El evento ya
-      // verificó el efecto; `plan: null` y la UI refresca `getPlans`.
-      return { status: "confirmed", signature: snapshot.signature, plan: null };
+      if (raw === null) {
+        // Última cuota: el programa cerró la cuenta al saldar. El evento
+        // ya verificó el efecto; `plan: null` y la UI refresca `getPlans`.
+        return finish({ status: "confirmed", signature: snapshot.signature, plan: null });
+      }
+      const generationChanged =
+        (snapshot.expectedGeneration !== undefined &&
+          Number(raw.generation) !== snapshot.expectedGeneration) ||
+        (snapshot.expectedOpenedAt !== undefined &&
+          Number(raw.openedAt) !== snapshot.expectedOpenedAt);
+      if (generationChanged) {
+        // La PDA se reabrió tras saldar: la generación que recibió el pago
+        // ya cerró. El evento probó el efecto igual → confirmed sin plan.
+        return finish({ status: "confirmed", signature: snapshot.signature, plan: null });
+      }
+      const inst = raw.installments[snapshot.expectedInstallmentIndex];
+      if (!inst || !inst.paid) {
+        // El evento prueba el pago pero la lectura todavía no lo refleja
+        // (réplica atrasada): sigue incierto, nunca success.
+        return finish({ status: "pending", signature: snapshot.signature });
+      }
+      const plan = await currentPlan().catch(() => null);
+      if (!plan) return finish({ status: "pending", signature: snapshot.signature });
+      return finish({ status: "confirmed", signature: snapshot.signature, plan });
     },
 
     // Puente keeper: solo la wallet keeper conectada registra garantías (el
@@ -2398,7 +2567,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         coverageMax: args.coverageMax,
         mandateHash,
       });
-      const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
+      const { signature } = await notifyOnUncertain(proposeAndSend(ctx.rpc, ctx.env, {
         label: "keeper_register_guarantee",
         version: ctx.version,
         feePayer: keeperAddr,
@@ -2410,7 +2579,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
             summary: `Registrar fiador de ${args.student} (tope ${args.maxPurchase})`,
           },
         ],
-      }, { reviewer: overrides.reviewer });
+      }, { reviewer: overrides.reviewer }));
       const updated = await readProgramAccount(
         ctx.rpc,
         guaranteePda,
@@ -2420,6 +2589,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "Guarantee",
       );
       if (!updated) {
+        notify();
         throw new CuotasError(
           "uncertain",
           `La garantía no aparece tras ${explorerTxUrl(signature)}`,
@@ -2457,13 +2627,13 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         student: studentAddr,
         guarantee: guaranteePda,
       });
-      const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
+      const { signature } = await notifyOnUncertain(proposeAndSend(ctx.rpc, ctx.env, {
         label: "keeper_revoke_guarantee",
         version: ctx.version,
         feePayer: asAddress(config.keeper ?? "", "keeper"),
         signer: ctx.signer,
         instructions: [{ ix, name: "KeeperRevokeGuarantee", summary: `Revocar fiador de ${student}` }],
-      }, { reviewer: overrides.reviewer });
+      }, { reviewer: overrides.reviewer }));
       const updated = await readProgramAccount(
         ctx.rpc,
         guaranteePda,
@@ -2473,6 +2643,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "Guarantee",
       );
       if (!updated) {
+        notify();
         throw new CuotasError(
           "uncertain",
           `La garantía no aparece tras ${explorerTxUrl(signature)}`,
@@ -2529,13 +2700,13 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
             ? GeneratedProtocolState.Halted
             : GeneratedProtocolState.WithdrawsOnly;
       const ix = getAdminSetStateInstruction({ admin: ctx.signer, config: configAddr, state: stateArg });
-      await proposeAndSend(ctx.rpc, ctx.env, {
+      await notifyOnUncertain(proposeAndSend(ctx.rpc, ctx.env, {
         label: "admin_set_state",
         version: ctx.version,
         feePayer: asAddress(actor, "admin"),
         signer: ctx.signer,
         instructions: [{ ix, name: "AdminSetState", summary: `Cambiar estado a ${state}` }],
-      }, { reviewer: overrides.reviewer });
+      }, { reviewer: overrides.reviewer }));
       notify();
       return readConfig(ctx);
     },
@@ -2564,7 +2735,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         settlementAta: ata,
         merchant: merchantAddr,
       });
-      await proposeAndSend(ctx.rpc, ctx.env, {
+      await notifyOnUncertain(proposeAndSend(ctx.rpc, ctx.env, {
         label: "merchant_register",
         version: ctx.version,
         feePayer: asAddress(actor, "admin"),
@@ -2572,7 +2743,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         instructions: [
           { ix, name: "MerchantRegister", summary: `Registrar comercio ${args.owner}` },
         ],
-      }, { reviewer: overrides.reviewer });
+      }, { reviewer: overrides.reviewer }));
       notify();
       return this.getMerchant(args.owner);
     },
