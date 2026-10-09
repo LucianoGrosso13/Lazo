@@ -9,7 +9,7 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 - Luciano eligió la **placa normal**: se sacó la placa de drones y la frase repetida de `index.html`, que vuelve a durar 114 s (`s09b-drones.html` queda en el repo como alternativa, sin usar).
 - Panel del 45 % a pantalla completa 1 s más corto: sale a 19,7 s (antes 20,7 s); sigue tapando el empalme de 17,53 s.
 - Render sin música: `video-pitch/renders/lazo-pitch-v3-sin-musica.mp4` (fuera de git).
-- **Música:** Luciano instala el CLI de HeyGen; con eso se busca una cama tranqui en el catálogo y se mezcla (pasos en § v1).
+- **Música:** CLI de HeyGen instalado y logueado. Tres temas del catálogo (`.media/audio/bgm/bgm_003–005`) extendidos a 114 s con un salto alineado al pulso y el outro sobre la placa: `python3 scripts/build-music.py` → `assets/audio/bed-{a-piano,b-ambient,c-pulso}.wav` (−14 LUFS). Previews mezcladas con ffmpeg sobre la v3 (cama −13 dB bajo la voz, sube a −5 dB en la placa desde 107,4 s): `renders/lazo-pitch-v3-musica-*-720p.mp4`. **Falta que Luciano elija A, B o C**; después va como `<audio>` en `index.html` con ese nivel, `check` y render final.
 
 ### v2 (2026-10-09, tercera sesión)
 
