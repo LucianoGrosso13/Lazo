@@ -47,7 +47,7 @@ import {
   type RealRpc,
   type RealTransport,
 } from "./real";
-import { CuotasError, type CuotasClient, type ProtocolConfig } from "./types";
+import { CuotasError, type CuotasClient, type ProtocolConfig, type TxProgress } from "./types";
 
 const PROGRAM = CUOTAS_PROGRAM_ADDRESS;
 const MINT = "8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y";
@@ -984,8 +984,30 @@ describe("propuestas y envío", () => {
     expect(explorerTxUrl(signature)).toContain("cluster=devnet");
   });
 
-  it("rechazo en wallet → wallet_required", async () => {
-    const signer = mockSigner(student, new Error("user rejected"));
+  it("cancelación del usuario en wallet → user_rejected (≠ wallet ausente)", async () => {
+    const signer = mockSigner(student, new Error("User rejected the request"));
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+    });
+    await expect(
+      proposeAndSend(
+        rpc,
+        loadRealEnv(ENV),
+        {
+          label: "x",
+          version: 0,
+          feePayer: student,
+          signer,
+          instructions: [{ ix: await studentIx(signer), name: "X", summary: "x" }],
+        },
+        { reviewer: () => true },
+      ),
+    ).rejects.toMatchObject({ code: "user_rejected" });
+  });
+
+  it("wallet conectada pero falla al firmar (no cancelación) → wallet_required", async () => {
+    const signer = mockSigner(student, new Error("adapter blew up mid-sign"));
     const rpc = devnetRpc({
       getLatestBlockhash: () => ({ value: blockhash }),
       simulateTransaction: () => ({ value: { err: null, logs: [] } }),
@@ -1869,5 +1891,1599 @@ describe("bindRealTransport", () => {
     } finally {
       unbind();
     }
+  });
+});
+
+describe("progreso observable e incertidumbre (contrato ticket01)", () => {
+  const blockhash = {
+    blockhash: "EETubP5AKHgjPA9xUQYv5D4Vhb8v29TV8j6L4xQJ8G1aG" as never,
+    lastValidBlockHeight: BigInt(1000),
+  };
+
+  async function studentIx(signer: TransactionSigner) {
+    const { findConfigPda, findReputationPda } = await import("../../generated");
+    const [config] = await findConfigPda({ programAddress: address(PROGRAM) });
+    const [reputation] = await findReputationPda(
+      { student: signer.address },
+      { programAddress: address(PROGRAM) },
+    );
+    return getStudentInitReputationInstruction({ student: signer, config, reputation });
+  }
+
+  const propose = (rpc: RealRpc, signer: TransactionSigner, events: TxProgress[]) =>
+    studentIx(signer).then((ix) =>
+      proposeAndSend(
+        rpc,
+        loadRealEnv(ENV),
+        {
+          label: "x",
+          version: 0,
+          feePayer: student,
+          signer,
+          instructions: [{ ix, name: "X", summary: "x" }],
+        },
+        { reviewer: () => true, onProgress: (p) => events.push(p) },
+      ),
+    );
+
+  it("emite awaiting_approval → sending → confirming; firma desde sending", async () => {
+    const signer = mockSigner(student);
+    const sig = "5".repeat(87) as Signature;
+    const events: TxProgress[] = [];
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const res = await propose(rpc, signer, events);
+    expect(res.signature).toBe(sig);
+    expect(events.map((e) => e.phase)).toEqual(["awaiting_approval", "sending", "confirming"]);
+    // Desde `sending` la firma es conocida (se deriva localmente antes del RPC);
+    // la de `confirming` es la que devolvió el envío.
+    expect(events[1].signature).toBeTruthy();
+    expect(events[2].signature).toBe(sig);
+  });
+
+  it("cancelación en wallet → user_rejected tras awaiting_approval, sin envío", async () => {
+    const signer = mockSigner(student, new Error("User rejected the request"));
+    const events: TxProgress[] = [];
+    let sends = 0;
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        return "5".repeat(87);
+      },
+    });
+    await expect(propose(rpc, signer, events)).rejects.toMatchObject({
+      code: "user_rejected",
+    });
+    expect(sends).toBe(0);
+    expect(events.map((e) => e.phase)).toEqual(["awaiting_approval"]);
+  });
+
+  it("envío sin respuesta → uncertain CON firma (la tx pudo aterrizar)", async () => {
+    const events: TxProgress[] = [];
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        throw new Error("network timeout");
+      },
+    });
+    const err = await propose(rpc, mockSigner(student), events).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain" });
+    expect((err as CuotasError).signature).toBeTruthy();
+    // La fase `sending` ya emitió la misma firma que lleva el error.
+    expect(events.map((e) => e.phase)).toEqual(["awaiting_approval", "sending"]);
+    expect(events[1].signature).toBe((err as CuotasError).signature);
+  });
+
+  it("rechazo del preflight → unavailable definitivo (la tx nunca llegó)", async () => {
+    const events: TxProgress[] = [];
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        throw new Error("Transaction simulation failed: custom program error");
+      },
+    });
+    const err = await propose(rpc, mockSigner(student), events).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "unavailable" });
+    expect((err as CuotasError).signature).toBeUndefined();
+  });
+
+  it("confirmación agotada → uncertain con firma, sin reenviar", async () => {
+    let sends = 0;
+    const events: TxProgress[] = [];
+    const rpc = devnetRpc({
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        return "6".repeat(87);
+      },
+      getSignatureStatuses: () => ({ value: [null] }),
+    });
+    // Reloj adelantado: el deadline de confirmación vence en la primera
+    // encuesta (sin esperar 60 s reales ni depender de fake timers).
+    const t0 = Date.now();
+    let nowCalls = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => t0 + nowCalls++ * 120_000);
+    try {
+      const err = await propose(rpc, mockSigner(student), events).catch((e: unknown) => e);
+      expect(err).toMatchObject({ code: "uncertain", signature: "6".repeat(87) });
+      expect(sends).toBe(1);
+      expect(events.map((e) => e.phase)).toEqual(["awaiting_approval", "sending", "confirming"]);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});
+
+describe("openPlan/payInstallment: progreso, fondos y dedup", () => {
+  const blockhash = {
+    blockhash: "EETubP5AKHgjPA9xUQYv5D4Vhb8v29TV8j6L4xQJ8G1aG" as never,
+    lastValidBlockHeight: BigInt(1000),
+  };
+
+  async function pdas() {
+    const gen = await import("../../generated");
+    const token = await import("@solana-program/token");
+    const [configPda] = await gen.findConfigPda({ programAddress: address(PROGRAM) });
+    const [planPda] = await gen.findPlanPda({ student }, { programAddress: address(PROGRAM) });
+    const [repPda] = await gen.findReputationPda({ student }, { programAddress: address(PROGRAM) });
+    const [guaranteePda] = await gen.findGuaranteePda(
+      { student },
+      { programAddress: address(PROGRAM) },
+    );
+    const [merchantPda] = await gen.findMerchantPda(
+      { merchantWallet: merchantOwner },
+      { programAddress: address(PROGRAM) },
+    );
+    const [studentAta] = await token.findAssociatedTokenPda({
+      mint: address(MINT),
+      owner: student,
+      tokenProgram: token.TOKEN_PROGRAM_ADDRESS,
+    });
+    const [merchantAta] = await token.findAssociatedTokenPda({
+      mint: address(MINT),
+      owner: merchantOwner,
+      tokenProgram: token.TOKEN_PROGRAM_ADDRESS,
+    });
+    return { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta };
+  }
+
+  function reputationData(over: Record<string, unknown> = {}) {
+    return b64(
+      getReputationEncoder().encode({
+        tier: 0,
+        plansCompleted: 0,
+        lateCount: 0,
+        activeExposure: BigInt(0),
+        plansOpened: BigInt(1),
+        bump: 1,
+        ...over,
+      }),
+    );
+  }
+
+  function guaranteeData() {
+    return b64(
+      getGuaranteeEncoder().encode({
+        maxPurchase: BigInt(toMicro(1000)),
+        coverageMax: BigInt(toMicro(1000)),
+        mandateHash: new Uint8Array(32).fill(1),
+        active: true,
+        registeredAt: BigInt(OPENED_AT),
+        bump: 1,
+      }),
+    );
+  }
+
+  const merchantData = (settlementAta: Address) =>
+    accountInfo(
+      b64(
+        getMerchantEncoder().encode({
+          owner: merchantOwner,
+          settlementAta,
+          active: true,
+          plansCount: BigInt(0),
+          bump: 1,
+        }),
+      ),
+    );
+
+  it("openPlan emite las cinco fases en orden con la firma del envío", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    let plan: string | null = null;
+    const sig = "6".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) return merchantData(merchantAta);
+        if (s === String(planPda)) return plan ? accountInfo(plan) : { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        plan = planData({ openedAt: BigInt(OPENED_AT) });
+        return sig;
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const events: TxProgress[] = [];
+    const res = await c.openPlan({
+      student: String(student),
+      merchant: String(merchantOwner),
+      price: toMicro(1000),
+      onProgress: (p) => events.push(p),
+    });
+    expect(res.signature).toBe(sig);
+    expect(events.map((e) => e.phase)).toEqual([
+      "preparing",
+      "awaiting_approval",
+      "sending",
+      "confirming",
+      "syncing",
+    ]);
+    expect(events[0].signature).toBeUndefined();
+    expect(events[1].signature).toBeUndefined();
+    expect(events[3].signature).toBe(sig);
+    expect(events[4].signature).toBe(sig);
+  });
+
+  it("openPlan concurrente deduplica: misma promesa, un solo envío", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    let plan: string | null = null;
+    let sends = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) return merchantData(merchantAta);
+        if (s === String(planPda)) return plan ? accountInfo(plan) : { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        plan = planData({ openedAt: BigInt(OPENED_AT) });
+        return "6".repeat(87);
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const args = { student: String(student), merchant: String(merchantOwner), price: toMicro(1000) };
+    const p1 = c.openPlan(args);
+    const p2 = c.openPlan(args);
+    // El segundo llamado comparte la operación en curso: cero envíos dobles.
+    expect(p2).toBe(p1);
+    const res = await p1;
+    expect(sends).toBe(1);
+    expect(res.value.id).toBe(String(planPda));
+    // Terminada la operación, el siguiente llamado es una operación nueva.
+    const p3 = c.openPlan(args);
+    expect(p3).not.toBe(p1);
+    await expect(p3).rejects.toMatchObject({ code: "has_active_plan" });
+  });
+
+  it("openPlan sin saldo para el anticipo → insufficient_funds antes de firmar", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    let sends = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) return merchantData(merchantAta);
+        if (s === String(planPda)) return { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      // 100 devUSDC < anticipo 300: bloquea en preparación, no simula ni firma.
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(100)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        return "6".repeat(87);
+      },
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const events: TxProgress[] = [];
+    await expect(
+      c.openPlan({
+        student: String(student),
+        merchant: String(merchantOwner),
+        price: toMicro(1000),
+        onProgress: (p) => events.push(p),
+      }),
+    ).rejects.toMatchObject({ code: "insufficient_funds" });
+    expect(sends).toBe(0);
+    expect(events.map((e) => e.phase)).toEqual(["preparing"]);
+  });
+
+  it("quote reporta insufficient_funds con el saldo real del ATA", async () => {
+    const { configPda, planPda, repPda, guaranteePda, studentAta } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(planPda)) return { value: null };
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(100)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const q = await c.quote(toMicro(1000), String(student));
+    expect(q.eligible).toBe(false);
+    expect(q.reasons).toContain("insufficient_funds");
+  });
+
+  it("plan que no aparece tras confirmar → uncertain con firma", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    const sig = "6".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) return merchantData(merchantAta);
+        if (s === String(planPda)) return { value: null }; // nunca indexa
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const err = await c
+      .openPlan({ student: String(student), merchant: String(merchantOwner), price: toMicro(1000) })
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain", signature: sig });
+  });
+
+  it("lectura del plan caída tras confirmar → uncertain con firma", async () => {
+    const { configPda, planPda, repPda, guaranteePda, merchantPda, studentAta, merchantAta } =
+      await pdas();
+    const sig = "6".repeat(87) as Signature;
+    let planReads = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(repPda)) return accountInfo(reputationData());
+        if (s === String(guaranteePda)) return accountInfo(guaranteeData());
+        if (s === String(merchantPda)) return merchantData(merchantAta);
+        if (s === String(planPda)) {
+          planReads++;
+          // 1.ª lectura: elegibilidad (sin plan). 2.ª: sync post-confirmación → caída.
+          if (planReads >= 2) throw new Error("RPC caído");
+          return { value: null };
+        }
+        if (s === String(studentAta)) return accountInfo("eA==");
+        return { value: null };
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(500)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const events: TxProgress[] = [];
+    const err = await c
+      .openPlan({
+        student: String(student),
+        merchant: String(merchantOwner),
+        price: toMicro(1000),
+        onProgress: (p) => events.push(p),
+      })
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain", signature: sig });
+    // Llegó a `syncing`: la compra pudo haber aterrizado; la UI reconcilia.
+    expect(events.map((e) => e.phase)).toEqual([
+      "preparing",
+      "awaiting_approval",
+      "sending",
+      "confirming",
+      "syncing",
+    ]);
+  });
+
+  it("payInstallment emite la misma secuencia de fases", async () => {
+    const { configPda, planPda } = await pdas();
+    let paid0 = false;
+    const sig = "7".repeat(87) as Signature;
+    const current = () =>
+      planData({
+        installments: [
+          installmentFixture({ paid: paid0 }),
+          installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+          installmentFixture({ amount: BigInt(233_333_334), dueAt: BigInt(OPENED_AT + 90 * 86_400) }),
+        ],
+      });
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(current());
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        paid0 = true;
+        return sig;
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const events: TxProgress[] = [];
+    const res = await c.payInstallment(String(student), String(planPda), {
+      onProgress: (p) => events.push(p),
+    });
+    expect(res.value.installments[0].status).toBe("Paid");
+    expect(events.map((e) => e.phase)).toEqual([
+      "preparing",
+      "awaiting_approval",
+      "sending",
+      "confirming",
+      "syncing",
+    ]);
+    expect(events[3].signature).toBe(sig);
+    expect(events[4].signature).toBe(sig);
+  });
+
+  it("payInstallment sin saldo para la cuota → insufficient_funds antes de firmar", async () => {
+    const { configPda, planPda } = await pdas();
+    let sends = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(planData());
+        return accountInfo("eA==");
+      },
+      // 100 devUSDC < cuota 233,33: corta en preparación.
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(100)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        return "7".repeat(87);
+      },
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const events: TxProgress[] = [];
+    await expect(
+      c.payInstallment(String(student), String(planPda), { onProgress: (p) => events.push(p) }),
+    ).rejects.toMatchObject({ code: "insufficient_funds" });
+    expect(sends).toBe(0);
+    expect(events.map((e) => e.phase)).toEqual(["preparing"]);
+  });
+
+  it("payInstallment con lectura post-confirmación caída → uncertain con firma", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    let planReads = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          planReads++;
+          // 1.ª lectura: estado previo. 2.ª: sync post-confirmación → caída.
+          if (planReads >= 2) throw new Error("RPC caído");
+          return accountInfo(planData());
+        }
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const err = await c
+      .payInstallment(String(student), String(planPda))
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain", signature: sig });
+  });
+
+  // --- reconcileOperation: veredicto de UNA firma ya emitida ---
+
+  const logsWith = (payloadB64: string) => [
+    `Program ${PROGRAM} invoke [1]`,
+    `Program data: ${payloadB64}`,
+    `Program ${PROGRAM} success`,
+  ];
+  const openedEvent = (planPda: Address) =>
+    b64(
+      getPlanOpenedEventEncoder().encode({
+        plan: planPda,
+        student,
+        merchant: merchantOwner,
+        price: BigInt(toMicro(1000)),
+        downPayment: BigInt(toMicro(300)),
+        financed: BigInt(toMicro(700)),
+        interest: BigInt(0),
+        merchantFee: BigInt(toMicro(49)),
+        installments: [BigInt(233_333_333), BigInt(233_333_333), BigInt(233_333_334)],
+        tier: 0,
+        withGuarantee: true,
+        counts: true,
+      }),
+    );
+  const paidEvent = (planPda: Address, index: number) =>
+    b64(
+      getInstallmentPaidEventEncoder().encode({
+        plan: planPda,
+        student,
+        index,
+        amount: BigInt(233_333_333),
+        penalty: BigInt(0),
+      }),
+    );
+
+  it("firma pendiente + plan preexistente → pending (jamás success)", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(planData()); // plan PREVIO
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [null] }),
+      // getTransaction NO programado: el proxy lanza, fetchParsedTx lo
+      // captura → firma tampoco en el ledger → sigue pending.
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "5".repeat(87),
+    });
+    expect(out).toEqual({ status: "pending", signature: "5".repeat(87) });
+  });
+
+  it("firma fallida onchain + plan existente → failed (jamás success)", async () => {
+    const rpc = devnetRpc({
+      // Solo el estado de la firma: el plan existente no se mira ni prueba nada.
+      getSignatureStatuses: () => ({ value: [{ err: { InstructionError: [0, "Custom"] } }] }),
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "5".repeat(87),
+    });
+    expect(out).toEqual({ status: "failed", signature: "5".repeat(87) });
+  });
+
+  it("confirmada + PlanOpened correlacionado + plan legible → confirmed, cero envíos", async () => {
+    const { configPda, planPda } = await pdas();
+    let sends = 0;
+    const sig = "6".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(planData());
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({
+        blockTime: OPENED_AT,
+        meta: { err: null, logMessages: logsWith(openedEvent(planPda)) },
+      }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      sendTransaction: () => {
+        sends++;
+        return "0".repeat(87);
+      },
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: sig,
+    });
+    expect(out.status).toBe("confirmed");
+    if (out.status === "confirmed") {
+      expect(out.signature).toBe(sig);
+      expect(out.plan?.id).toBe(String(planPda));
+      expect(out.plan?.installments).toHaveLength(3);
+    }
+    // Reconciliar NO reenvía: cero sendTransaction en todo el flujo.
+    expect(sends).toBe(0);
+  });
+
+  it("confirmada pero el tx trae un PlanOpened de OTRO plan → pending", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return { value: null };
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      // La firma confirmó pero abrió OTRO plan (merchantOwner ≠ planPda del estudiante).
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(openedEvent(merchantOwner)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "6".repeat(87),
+    });
+    expect(out.status).toBe("pending");
+  });
+
+  it("confirmada + lectura del plan caída → pending (la UI queda syncing)", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) throw new Error("RPC caído");
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(openedEvent(planPda)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "6".repeat(87),
+    });
+    // El evento prueba la compra pero el plan no se pudo releer: sigue incierto.
+    expect(out.status).toBe("pending");
+  });
+
+  it("open_plan confirmada + cuenta aún ausente → pending (la compra exige el plan)", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        // Réplica atrasada: el evento ya probó la apertura pero la
+        // cuenta todavía no se lee. La compra sin plan no es éxito.
+        if (s === String(planPda)) return { value: null };
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({
+        blockTime: OPENED_AT,
+        meta: { err: null, logMessages: logsWith(openedEvent(planPda)) },
+      }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "6".repeat(87),
+    });
+    expect(out).toEqual({ status: "pending", signature: "6".repeat(87) });
+  });
+
+  it("open_plan firma vieja + PDA reabierta en otra generación → pending (jamás plan ajeno)", async () => {
+    const { configPda, planPda } = await pdas();
+    const REOPENED_AT = OPENED_AT + 120 * 86_400;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        // El plan legible es la generación SIGUIENTE (se saldó y reabrió
+        // la misma PDA en otro bloque): no es lo que abrió esta firma.
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({ openedAt: BigInt(REOPENED_AT), generation: BigInt(2) }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      // Fuera del cache reciente: solo el ledger la conoce.
+      getSignatureStatuses: () => ({ value: [null] }),
+      getTransaction: () => ({
+        blockTime: OPENED_AT,
+        meta: { err: null, logMessages: logsWith(openedEvent(planPda)) },
+      }),
+      getSlot: () => 1000,
+      getBlockTime: () => REOPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "8".repeat(87),
+    });
+    expect(out).toEqual({ status: "pending", signature: "8".repeat(87) });
+  });
+
+  it("pay: cuota pagada por ESA firma → confirmed + plan actualizado", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid: true }),
+                installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: sig,
+      expectedInstallmentIndex: 0,
+    });
+    expect(out.status).toBe("confirmed");
+    if (out.status === "confirmed") expect(out.plan?.installments[0].status).toBe("Paid");
+  });
+
+  it("pay: confirmada pero la cuota sigue impaga → pending (jamás success)", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(planData()); // inst0 sigue unpaid
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 0,
+    });
+    // Evento contradictorio con la lectura: nunca se declara pagada.
+    expect(out.status).toBe("pending");
+  });
+
+  it("pay: cuota esperada distinta de la que pagó la firma → pending", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid: true }),
+                installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      // El evento pagó la 1 pero el snapshot esperaba la 0: no es la cuota.
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 1)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 0,
+    });
+    expect(out.status).toBe("pending");
+  });
+
+  it("pay: lectura del plan caída ≠ cuenta cerrada → pending (jamás confirmed+null)", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) throw new Error("RPC caído");
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 0,
+    });
+    // El evento prueba el pago pero no se pudo releer: sigue incierto.
+    expect(out.status).toBe("pending");
+  });
+
+  it("pay: última cuota cerró el plan → confirmed con plan null", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return { value: null }; // cuenta cerrada al saldar
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 2)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 2,
+    });
+    // La cuenta se cerró pero el evento ya prueba el pago: verificado, sin plan.
+    expect(out).toEqual({ status: "confirmed", signature: "7".repeat(87), plan: null });
+  });
+
+  it("pay: snapshot de un plan que no es del estudiante → pending temprano", async () => {
+    const rpc = devnetRpc({
+      // getSignatureStatuses NO programado: el guard de identidad corta antes.
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: "PlanAjeno111111111111111111111111111111111",
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 0,
+    });
+    expect(out.status).toBe("pending");
+  });
+
+  // --- corrección review: firma antigua fuera del cache de status ---
+
+  it("firma vieja: status cache vacío → busca historial y getTransaction la resuelve", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "8".repeat(87) as Signature;
+    let statusConfig: unknown;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid: true }),
+                installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: (_sigs: unknown, config: unknown) => {
+        statusConfig = config;
+        // Fuera del cache reciente: solo el ledger la conoce.
+        return { value: [null] };
+      },
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: sig,
+      expectedInstallmentIndex: 0,
+    });
+    // El pedido de status pide explícitamente búsqueda en el historial.
+    expect(statusConfig).toEqual({ searchTransactionHistory: true });
+    expect(out.status).toBe("confirmed");
+    if (out.status === "confirmed") expect(out.plan?.installments[0].status).toBe("Paid");
+  });
+
+  it("firma vieja con error en el ledger → failed (reintento seguro)", async () => {
+    const { planPda } = await pdas();
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [null] }),
+      getTransaction: () => ({ meta: { err: { InstructionError: [1, "Custom"] }, logMessages: [] } }),
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "8".repeat(87),
+      expectedInstallmentIndex: 0,
+    });
+    expect(out).toEqual({ status: "failed", signature: "8".repeat(87) });
+  });
+
+  it("firma confirmada con meta.err en el ledger → failed (el ledger manda)", async () => {
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: { InstructionError: [0, "Custom"] }, logMessages: [] } }),
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "8".repeat(87),
+    });
+    expect(out.status).toBe("failed");
+  });
+
+  // --- corrección review: generación/identidad en la conciliación de pagos ---
+
+  it("pay: plan reabierto (otra generación) + expectedGeneration → confirmed con plan null", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          // Generación 2 reabierta: la que recibió el pago ya cerró.
+          return accountInfo(planData({ openedAt: BigInt(OPENED_AT + 500), generation: BigInt(2) }));
+        }
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 2)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT + 600,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 2,
+      expectedOpenedAt: OPENED_AT,
+      expectedGeneration: 1,
+    });
+    // Sin los campos de generación quedaría pending para siempre.
+    expect(out).toEqual({ status: "confirmed", signature: "7".repeat(87), plan: null });
+  });
+
+  it("pay: misma generación esperada → valida la cuota como siempre", async () => {
+    const { configPda, planPda } = await pdas();
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid: true }),
+                installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: "7".repeat(87),
+      expectedInstallmentIndex: 0,
+      expectedOpenedAt: OPENED_AT,
+      expectedGeneration: 1,
+    });
+    expect(out.status).toBe("confirmed");
+    if (out.status === "confirmed") expect(out.plan?.installments[0].status).toBe("Paid");
+  });
+
+  // --- corrección review: comprobante de apertura tras reabrir la PDA ---
+
+  it("getPlans: el comprobante es el PlanOpened de la generación vigente, no el más viejo", async () => {
+    const { configPda, planPda } = await pdas();
+    const REOPENED_AT = OPENED_AT + 900;
+    const oldSig = "1".repeat(87);
+    const newSig = "2".repeat(87);
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({ openedAt: BigInt(REOPENED_AT), generation: BigInt(2) }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSlot: () => 1000,
+      getBlockTime: () => REOPENED_AT + 100,
+      getSignaturesForAddress: () => [
+        // Nueva→vieja: pago posterior, reapertura vigente, apertura anterior.
+        { signature: "3".repeat(87), slot: 300, blockTime: REOPENED_AT + 50, err: null },
+        { signature: newSig, slot: 200, blockTime: REOPENED_AT, err: null },
+        { signature: oldSig, slot: 100, blockTime: OPENED_AT, err: null },
+      ],
+      getTransaction: (sig: string) =>
+        sig === newSig || sig === oldSig
+          ? { meta: { err: null, logMessages: logsWith(openedEvent(planPda)) } }
+          : { meta: { err: null, logMessages: [] } },
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const plans = await c.getPlans(String(student));
+    // La compra anterior quedaría como comprobante si se tomara la más vieja.
+    expect(plans[0]?.signature).toBe(newSig);
+  });
+
+  it("getPlans: sin apertura correlacionada a openedAt → firma vacía (no recibo ajeno)", async () => {
+    const { configPda, planPda } = await pdas();
+    const REOPENED_AT = OPENED_AT + 900;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({ openedAt: BigInt(REOPENED_AT), generation: BigInt(2) }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getSlot: () => 1000,
+      getBlockTime: () => REOPENED_AT + 100,
+      // La apertura de la generación vigente no está en el historial:
+      // solo queda la de la compra ANTERIOR (otro blockTime).
+      getSignaturesForAddress: () => [
+        { signature: "1".repeat(87), slot: 100, blockTime: OPENED_AT, err: null },
+      ],
+      getTransaction: () => ({
+        meta: { err: null, logMessages: logsWith(openedEvent(planPda)) },
+      }),
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const plans = await c.getPlans(String(student));
+    expect(plans[0]?.signature).toBe("");
+  });
+
+  // --- corrección review: payInstallment no declara success en lectura atrasada ---
+
+  it("payInstallment: réplica atrasada post-confirmación (cuota sigue impaga) → uncertain", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        // La lectura post-envío devuelve el estado PREVIO al pago.
+        if (s === String(planPda)) return accountInfo(planData());
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const err = await c
+      .payInstallment(String(student), String(planPda))
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain", signature: sig });
+  });
+
+  it("payInstallment: plan reabierto tras el pago → success solo con evento propio", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    let planReads = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          planReads++;
+          // 1.ª lectura: generación 1 (la que se firmó). 2.ª: generación 2 reabierta.
+          return accountInfo(
+            planReads >= 2
+              ? planData({ openedAt: BigInt(OPENED_AT + 500), generation: BigInt(2) })
+              : planData(),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const res = await c.payInstallment(String(student), String(planPda));
+    expect(res.signature).toBe(sig);
+    // El pago cayó en la generación 1 (ya cerrada): imagen settled verificada.
+    expect(res.value.status).toBe("Settled");
+    expect(res.value.installments[0].status).toBe("Paid");
+  });
+
+  it("payInstallment: cuenta reabierta SIN evento propio legible → uncertain (no success)", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    let planReads = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          planReads++;
+          return accountInfo(
+            planReads >= 2
+              ? planData({ openedAt: BigInt(OPENED_AT + 500), generation: BigInt(2) })
+              : planData(),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => sig,
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      // El tx no es legible: no se puede probar el pago → incierto.
+      getTransaction: () => null,
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const err = await c
+      .payInstallment(String(student), String(planPda))
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "uncertain", signature: sig });
+  });
+
+  // --- corrección review: dedup retiene la clave en uncertain ---
+
+  it("payInstallment incierto: idéntico reintento devuelve el MISMO rechazo (cero reenvíos)", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    let sends = 0;
+    const paid = [false, false, false];
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid: paid[0] }),
+                installmentFixture({ paid: paid[1], dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  paid: paid[2],
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        if (sends === 1) {
+          // El envío "se cortó" pero la tx aterrizó igual: el pago aplicó.
+          paid[0] = true;
+          throw new Error("timeout de red");
+        }
+        paid[1] = true;
+        return sig;
+      },
+      getSignatureStatuses: () => ({ value: [{ confirmationStatus: "confirmed", err: null }] }),
+      getTransaction: () => ({ meta: { err: null, logMessages: logsWith(paidEvent(planPda, 0)) } }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const p1 = c.payInstallment(String(student), String(planPda));
+    const p2 = c.payInstallment(String(student), String(planPda));
+    expect(p2).toBe(p1);
+    const e1 = await p1.catch((e: unknown) => e);
+    expect(e1).toMatchObject({ code: "uncertain", signature: expect.any(String) });
+    expect(sends).toBe(1);
+    // La clave quedó tomada: incluso resuelta, un llamado idéntico NO reenvía.
+    const p3 = c.payInstallment(String(student), String(planPda));
+    expect(p3).toBe(p1);
+    expect(sends).toBe(1);
+    // Veredicto confirmed libera la clave: la siguiente cuota es otra operación.
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: String((e1 as { signature?: string }).signature),
+      expectedInstallmentIndex: 0,
+    });
+    expect(out.status).toBe("confirmed");
+    const res = await c.payInstallment(String(student), String(planPda));
+    expect(sends).toBe(2);
+    expect(res.value.installments[1].status).toBe("Paid");
+  });
+
+  it("veredicto failed libera la clave: reintentar con propuesta fresca es seguro", async () => {
+    const { configPda, planPda } = await pdas();
+    let sends = 0;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) return accountInfo(planData());
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        sends++;
+        throw new Error("timeout de red"); // nunca aterrizó
+      },
+      getSignatureStatuses: () => ({ value: [{ err: { InstructionError: [0, "Custom"] } }] }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const e1 = await c
+      .payInstallment(String(student), String(planPda))
+      .catch((e: unknown) => e);
+    expect(e1).toMatchObject({ code: "uncertain" });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String(planPda),
+      signature: String((e1 as { signature?: string }).signature),
+      expectedInstallmentIndex: 0,
+    });
+    expect(out.status).toBe("failed");
+    // Liberada: el reintento corre la propuesta de nuevo y vuelve a enviar.
+    const e2 = await c
+      .payInstallment(String(student), String(planPda))
+      .catch((e: unknown) => e);
+    expect(e2).toMatchObject({ code: "uncertain" });
+    expect(sends).toBe(2);
+  });
+
+  it("dedup: el onProgress que se suma tarde recibe la última fase emitida", async () => {
+    const { configPda, planPda } = await pdas();
+    const sig = "7".repeat(87) as Signature;
+    let confirmed = false;
+    let paid = false;
+    const rpc = devnetRpc({
+      getAccountInfo: (addr: Address) => {
+        const s = String(addr);
+        if (s === String(configPda)) return accountInfo(configData());
+        if (s === String(planPda)) {
+          return accountInfo(
+            planData({
+              installments: [
+                installmentFixture({ paid }),
+                installmentFixture({ dueAt: BigInt(OPENED_AT + 60 * 86_400) }),
+                installmentFixture({
+                  amount: BigInt(233_333_334),
+                  dueAt: BigInt(OPENED_AT + 90 * 86_400),
+                }),
+              ],
+            }),
+          );
+        }
+        return accountInfo("eA==");
+      },
+      getTokenAccountBalance: () => ({ value: { amount: String(toMicro(1000)), decimals: 6 } }),
+      getSlot: () => 1000,
+      getBlockTime: () => OPENED_AT,
+      getSignaturesForAddress: () => [],
+      getLatestBlockhash: () => ({ value: blockhash }),
+      simulateTransaction: () => ({ value: { err: null, logs: [] } }),
+      sendTransaction: () => {
+        paid = true;
+        return sig;
+      },
+      // Se queda "processed" hasta que el test la confirma.
+      getSignatureStatuses: () => ({
+        value: [{ confirmationStatus: confirmed ? "confirmed" : "processed", err: null }],
+      }),
+    });
+    const c = createRealCuotas({
+      env: ENV,
+      transport: transportFor(rpc, mockSigner(student)),
+      reviewer: () => true,
+    });
+    const eventsA: TxProgress[] = [];
+    const p1 = c.payInstallment(String(student), String(planPda), {
+      onProgress: (p) => eventsA.push(p),
+    });
+    await vi.waitFor(
+      () => expect(eventsA.at(-1)?.phase).toBe("confirming"),
+      { timeout: 4_000, interval: 50 },
+    );
+    const eventsB: TxProgress[] = [];
+    const p2 = c.payInstallment(String(student), String(planPda), {
+      onProgress: (p) => eventsB.push(p),
+    });
+    expect(p2).toBe(p1);
+    // Replay inmediato de la última fase: no arranca ciego.
+    expect(eventsB).toEqual([{ phase: "confirming", signature: sig, lastValidBlockHeight: 1000 }]);
+    confirmed = true;
+    await p1;
+    expect(eventsB.at(-1)?.phase).toBe("syncing");
+  });
+
+  // --- expiración: firma firmada pero jamás broadcast (blockhash vencido) ---
+
+  it("firma ausente + validez vencida (altura finalized > lastValidBlockHeight) → failed tras reconfirmar", async () => {
+    let statusCalls = 0;
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => {
+        statusCalls++;
+        return { value: [null] };
+      },
+      // getTransaction sin programar: tampoco está en el ledger.
+      getBlockHeight: () => 2000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "d".repeat(87),
+      lastValidBlockHeight: 1000,
+    });
+    expect(out).toEqual({ status: "failed", signature: "d".repeat(87) });
+    // Ausencia reconfirmada DESPUÉS de leer la altura: consulta + rechequeo.
+    expect(statusCalls).toBe(2);
+  });
+
+  it("firma ausente pero validez vigente (altura ≤ lastValidBlockHeight) → pending", async () => {
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [null] }),
+      getBlockHeight: () => 1000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "e".repeat(87),
+      lastValidBlockHeight: 1000,
+    });
+    expect(out).toEqual({ status: "pending", signature: "e".repeat(87) });
+  });
+
+  it("firma ausente sin dato de validez → pending (la ausencia nunca prueba fracaso)", async () => {
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [null] }),
+      getBlockHeight: () => 99_999,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    // "g"*87 no fue emitida por ningún send del archivo: el mapa de sesión
+    // tampoco la conoce → sin evidencia de validez, jamás `failed`.
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "g".repeat(87),
+    });
+    expect(out).toEqual({ status: "pending", signature: "g".repeat(87) });
+  });
+
+  it("firma ausente + validez vencida pero reconfirmación la encuentra → pending", async () => {
+    let statusCalls = 0;
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => {
+        statusCalls++;
+        // El rechequeo (2.ª consulta) la ve procesada: el falso vacío no alcanza.
+        return { value: [statusCalls === 1 ? null : { confirmationStatus: "processed", err: null }] };
+      },
+      getBlockHeight: () => 2000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String((await pdas()).planPda),
+      signature: "f".repeat(87),
+      expectedInstallmentIndex: 0,
+      lastValidBlockHeight: 1000,
+    });
+    expect(out.status).toBe("pending");
   });
 });

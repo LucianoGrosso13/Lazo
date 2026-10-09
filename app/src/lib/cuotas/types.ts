@@ -140,6 +140,9 @@ export type QuoteBlockReason =
   | "blocked_after_default"
   | "has_active_plan"
   | "protocol_halted"
+  /** Saldo devUSDC del estudiante < anticipo requerido (o < cuota a pagar).
+   * La UI muestra el faltante y bloquea la compra antes de pedir firma. */
+  | "insufficient_funds"
   /** La opción de plan/cobro pedida no existe, está deshabilitada o no tiene
    * tarifa (el real la emite para todo lo que el programa no soporta). */
   | "option_unavailable";
@@ -352,7 +355,7 @@ export interface CreateCounterOrderArgs {
   description: string;
 }
 
-export interface OpenPlanArgs {
+export interface OpenPlanArgs extends TxOperationOptions {
   student: WalletAddress;
   merchant: WalletAddress;
   price: Micro;
@@ -383,6 +386,116 @@ export interface TxResult<T> {
   value: T;
   signature: string;
 }
+
+/**
+ * Fase observable de una operación que requiere firma del usuario. El orden
+ * normal es `preparing → awaiting_approval → sending → confirming → syncing`;
+ * un error puede lanzarse en cualquier punto (las fases emitidas dicen hasta
+ * dónde llegó). La firma aparece desde `sending` en adelante.
+ */
+export type TxPhase =
+  /** Lecturas + simulación previa; la wallet todavía no ve nada. */
+  | "preparing"
+  /** Revisión + firma pendientes (Phantom abierto). */
+  | "awaiting_approval"
+  /** Firmada y enviándose a la red (`signature` presente). */
+  | "sending"
+  /** Enviada; esperando confirmación onchain (`signature` presente). */
+  | "confirming"
+  /** Confirmada; leyendo el estado resultante (`signature` presente). */
+  | "syncing";
+
+/** Evento de progreso; `signature` solo desde `sending` en adelante. */
+export interface TxProgress {
+  phase: TxPhase;
+  signature?: string;
+  /**
+   * Altura hasta la que el blockhash firmado sigue siendo válido
+   * (`lastValidBlockHeight` de la propuesta). Presente desde `sending`:
+   * la UI la persiste con la firma — si la firma no aparece onchain y la
+   * altura finalized la supera, la transacción expiró sin aterrizar y
+   * jamás podrá hacerlo (veredicto `failed`, reintento seguro).
+   */
+  lastValidBlockHeight?: number;
+}
+
+export type TxProgressListener = (progress: TxProgress) => void;
+
+/**
+ * Opciones de operaciones firmadas: `onProgress` recibe cada fase en orden.
+ * El mock emite la misma secuencia al instante (queda declarado simulado);
+ * si el UI quiere un mínimo visible post-envío lo espacia por su cuenta.
+ * Un listener que lanza nunca rompe la operación.
+ */
+export interface TxOperationOptions {
+  onProgress?: TxProgressListener;
+}
+
+/**
+ * Identidad de una operación firmada que quedó incierta (`uncertain`) o
+ * que la UI quiere verificar tras reconectar. La UI la arma con datos que
+ * YA conoce (args + fases emitidas): estudiante, plan y la firma original
+ * — jamás una firma nueva ni una reescritura. `pay_installment` exige el
+ * índice de la cuota que debía quedar paga (la primera impaga al firmar).
+ */
+export type OperationSnapshot =
+  | {
+      operation: "open_plan";
+      student: WalletAddress;
+      /** Firma original emitida en `sending`/`confirming`/`uncertain`. */
+      signature: string;
+      /**
+       * `lastValidBlockHeight` del `TxProgress`/`CuotasError` original
+       * (opcional, recomendado persistirlo junto a la firma). Si la firma
+       * no está ni en el status histórico ni en el ledger Y la altura
+       * finalized la supera, la transacción expiró sin aterrizar →
+       * `failed` definitivo; sin el campo, sigue `pending`.
+       */
+      lastValidBlockHeight?: number;
+    }
+  | {
+      operation: "pay_installment";
+      student: WalletAddress;
+      /** PDA del plan (`Plan.id` de `getPlans`). */
+      planId: string;
+      signature: string;
+      /** Mismo criterio que en `open_plan` (ver su doc). */
+      lastValidBlockHeight?: number;
+      /** Índice 0-based de la cuota que la firma debía dejar `Paid`. */
+      expectedInstallmentIndex: number;
+      /**
+       * `Plan.openedAt` leído ANTES de firmar (opcional, recomendado). La
+       * PDA del plan se reutiliza al reabrir tras saldar: si la cuenta
+       * actual tiene otro `openedAt`, el pago probado pertenece a una
+       * generación ya cerrada → `confirmed` con `plan: null` en vez de
+       * quedar `pending` para siempre.
+       */
+      expectedOpenedAt?: UnixSeconds;
+      /** `generation` del plan al firmar (opcional; mismo criterio). */
+      expectedGeneration?: number;
+    };
+
+/**
+ * Veredicto de `reconcileOperation` — siempre referido a la firma
+ * ORIGINAL del snapshot, nunca a una reemisión:
+ * - `confirmed`: la firma aterrizó y su evento corresponde a la operación
+ *   y a la identidad del snapshot. `plan` trae el estado actualizado;
+ *   `null` SOLO en `pay_installment` cuando la última cuota saldó y el
+ *   programa cerró la cuenta (el evento propio ya probó el efecto).
+ *   `open_plan` exige el plan recuperado en la misma generación
+ *   (`openedAt` = blockTime de la firma): cuenta ausente u otra
+ *   generación reabierta queda `pending`, jamás éxito con plan ajeno.
+ * - `failed`: la firma falló onchain (`err` definitivo): NO hizo efecto;
+ *   es seguro reintentar armando una propuesta fresca.
+ * - `pending`: sin veredicto todavía (firma no encontrada, sin
+ *   confirmación, lectura incompleta o estado inconsistente). La
+ *   transacción puede aterrizar todavía: mantener el bloqueo y NO
+ *   reintentar — es exactamente la condición de `uncertain`.
+ */
+export type ReconcileOutcome =
+  | { status: "confirmed"; signature: string; plan: Plan | null }
+  | { status: "failed"; signature: string }
+  | { status: "pending"; signature: string };
 
 /**
  * Interfaz única hacia la cadena. La implementan el mock (memoria + localStorage,
@@ -421,7 +534,20 @@ export interface CuotasClient {
   /** `open_plan`: anticipo → comercio, pool → comercio (menos fee) y se crea el Plan. Si el estudiante todavía no tiene Reputation on-chain, la misma transacción la crea primero (`student_init_reputation` + `open_plan`, una firma). */
   openPlan(args: OpenPlanArgs): Promise<TxResult<Plan>>;
   /** `pay_installment`: paga la próxima cuota impaga (con punitorio si corresponde). */
-  payInstallment(student: WalletAddress, planId: string): Promise<TxResult<Plan>>;
+  payInstallment(
+    student: WalletAddress,
+    planId: string,
+    options?: TxOperationOptions,
+  ): Promise<TxResult<Plan>>;
+  /**
+   * Reconcilia UNA operación firmada por su firma original + snapshot de
+   * identidad, sin reenviarla jamás (lectura solamente). Verifica la
+   * firma real antes de mirar estado: un plan que ya existía o una cuota
+   * ya paga NO prueban que esta firma aterrizó. Usarla tras `uncertain`,
+   * tras un cierre/reconexión de la app, o ante la duda de si la
+   * transacción llegó. Para esperar un veredicto usar `waitForOperation`.
+   */
+  reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome>;
   /** `keeper_register_guarantee` (lo firma el keeper; en el mock, directo). */
   registerGuarantee(args: RegisterGuaranteeArgs): Promise<TxResult<Guarantee>>;
   /** `keeper_revoke_guarantee`. */
@@ -449,6 +575,11 @@ export interface CuotasClient {
 export type RealErrorCode =
   /** Sin wallet conectada para firmar. La UI pide conectar Phantom. */
   | "wallet_required"
+  /** La wallet estaba conectada pero el USUARIO canceló/rechazó la firma
+   * (ej. cerró Phantom). Nada se firmó ni envió: es seguro reintentar.
+   * Distinto de `wallet_required` (no hay wallet) y de `review_rejected`
+   * (la app rechazó la revisión, antes de llegar a la wallet). */
+  | "user_rejected"
   /** La wallet conectada no es la autoridad requerida (admin/keeper/estudiante). */
   | "unauthorized"
   /** El RPC no es devnet (verificación por hash de génesis). */
@@ -459,6 +590,16 @@ export type RealErrorCode =
   | "review_rejected"
   /** La wallet no firma la versión de transacción pedida. */
   | "unsupported_version"
+  /**
+   * La transacción quedó firmada/enviada pero su resultado no se verificó:
+   * PUEDE haber aterrizado onchain. `CuotasError.signature` trae la firma.
+   * La UI NO reintenta a ciegas (riesgo de doble cargo): reconcilia la
+   * firma ORIGINAL con `reconcileOperation`/`waitForOperation` (armando el
+   * `OperationSnapshot` correspondiente) o mira el Explorer.
+   * `waitForOpenedPlan`/`waitForPlan` son polling de estado genérico y NO
+   * prueban esta firma (un plan previo también los satisface).
+   */
+  | "uncertain"
   /** Fallo de red, RPC o confirmación: reintentar. No inventa datos. */
   | "unavailable";
 
@@ -473,6 +614,16 @@ export class CuotasError extends Error {
       | "order_unavailable"
       | RealErrorCode,
     message?: string,
+    /**
+     * Firma de la transacción asociada al error. Solo presente en
+     * `uncertain` (y errores post-envío): permite reconciliar sin reenviar.
+     */
+    public readonly signature?: string,
+    /**
+     * `lastValidBlockHeight` del blockhash firmado: con la firma ausente
+     * onchain y la altura finalized superándola, la tx expiró para siempre.
+     */
+    public readonly lastValidBlockHeight?: number,
   ) {
     super(message ?? code);
     this.name = "CuotasError";

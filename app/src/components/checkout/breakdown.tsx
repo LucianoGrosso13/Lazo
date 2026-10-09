@@ -74,6 +74,7 @@ const warming = (s: WalletStatus) => s !== "connected" && s !== "disconnected";
 export function Breakdown({
   data,
   guarantee,
+  balance,
   clock,
   config,
   walletStatus,
@@ -83,6 +84,8 @@ export function Breakdown({
 }: {
   data: BreakdownData;
   guarantee: Guarantee | null;
+  /** Saldo devUSDC disponible del estudiante (null = indeterminado). */
+  balance?: Micro | null;
   clock: DemoClock | undefined;
   config: ProtocolConfig | undefined;
   walletStatus: WalletStatus;
@@ -154,6 +157,16 @@ export function Breakdown({
             <dd className={styles.rowVal}>+US$ {fmt(data.interest)}</dd>
           </div>
         ) : null}
+        {connected ? (
+          <div className={styles.row}>
+            <dt className={styles.rowKey}>{t.balanceLabel}</dt>
+            <dd className={styles.rowVal}>
+              {balance === null || balance === undefined
+                ? t.balanceUnavailable
+                : `US$ ${fmt(balance)}`}
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       <div className={styles.totalRow}>
@@ -179,7 +192,7 @@ export function Breakdown({
       </p>
 
       {blocked ? (
-        <BlockedReasons reasons={data.reasons} data={data} guarantee={guarantee} config={config} />
+        <BlockedReasons reasons={data.reasons} data={data} guarantee={guarantee} balance={balance} config={config} />
       ) : null}
 
       {warming(walletStatus) ? (
@@ -209,11 +222,13 @@ function BlockedReasons({
   reasons,
   data,
   guarantee,
+  balance,
   config,
 }: {
   reasons: QuoteBlockReason[];
   data: BreakdownData;
   guarantee: Guarantee | null;
+  balance: Micro | null | undefined;
   config: ProtocolConfig | undefined;
 }) {
   const t = useT(checkout);
@@ -232,7 +247,7 @@ function BlockedReasons({
       <p className={styles.blockedTitle}>{t.blockedTitle}</p>
       <div className={styles.reasons}>
         {shown.map((r) => (
-          <Reason key={r} reason={r} data={data} guarantee={guarantee} config={config} />
+          <Reason key={r} reason={r} data={data} guarantee={guarantee} balance={balance} config={config} />
         ))}
       </div>
     </div>
@@ -294,11 +309,13 @@ function Reason({
   reason,
   data,
   guarantee,
+  balance,
   config,
 }: {
   reason: QuoteBlockReason;
   data: BreakdownData;
   guarantee: Guarantee | null;
+  balance: Micro | null | undefined;
   config: ProtocolConfig | undefined;
 }) {
   const b = useT(checkout).blocked;
@@ -384,6 +401,17 @@ function Reason({
       title = b.pool_liquidity.t;
       desc = b.pool_liquidity.d;
       break;
+    case "insufficient_funds": {
+      title = b.insufficient_funds.t;
+      // Faltante para el anticipo: solo si el saldo se pudo leer.
+      const missing =
+        balance === null || balance === undefined
+          ? null
+          : Math.max(0, data.downPayment - balance);
+      desc = b.insufficient_funds.d(missing === null ? null : fmt(missing));
+      cta = b.insufficient_funds.cta;
+      break;
+    }
     default:
       title = "No disponible";
       desc = null;

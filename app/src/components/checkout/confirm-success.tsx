@@ -1,12 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { formatUsdc, getCuotas, type Micro, type Plan } from "@/lib/cuotas";
+import {
+  formatUsdc,
+  getCuotas,
+  type Micro,
+  type Plan,
+  type ProtocolConfig,
+  type UnixSeconds,
+} from "@/lib/cuotas";
+import { useState } from "react";
 import { checkout } from "@/i18n/dictionaries/checkout";
 import { useLocale, useT } from "@/i18n/locale";
 import { BigNumber } from "@/components/ui/big-number";
+import { Chip } from "@/components/ui/chip";
 import { ExplorerLink } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
+import { PlanCalendar, pendingAmount, unpaidInstallments } from "./plan-calendar";
+import { usePayInstallment } from "./pay-installment";
 import styles from "./checkout.module.css";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -14,28 +25,55 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 /**
  * Éxito del plan: la luz del pago sale de la wallet, atraviesa el vidrio y
  * entra al comercio, que se llena por detrás (como la marca "refilled").
+ * Solo se declara tras la confirmación + lectura del plan; debajo va el
+ * calendario con las fechas reales del `Plan` (no del reloj de demo).
+ * `plan: null` es el borde `confirmed` sin cuenta legible: el comprobante
+ * queda y el panel del estudiante muestra el estado.
  */
 export function ConfirmSuccess({
   plan,
   signature,
+  reconciled,
   merchantName,
+  config,
+  now,
+  secondsPerDay,
 }: {
-  plan: Plan;
+  plan: Plan | null;
   signature: string;
+  /** true cuando el éxito se recuperó reconciliando la firma original. */
+  reconciled: boolean;
   merchantName: string;
+  config: ProtocolConfig | undefined;
+  now: UnixSeconds;
+  secondsPerDay: number;
 }) {
   const t = useT(checkout).confirm.success;
   const { locale } = useLocale();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
-  const received = plan.price - plan.merchantFee;
+  // El plan mostrado se actualiza si se paga una cuota desde acá (ticket 02):
+  // la cuota queda `Paid`, la siguiente pasa a ser la próxima y el saldo
+  // pendiente baja — mismas fechas, mismo plan.
+  const [paidPlan, setPaidPlan] = useState<Plan | null>(null);
+  const shown = paidPlan ?? plan;
+  const pay = usePayInstallment({
+    plan: shown,
+    student: shown?.student ?? null,
+    onPaid: (p) => {
+      if (p) setPaidPlan(p);
+    },
+  });
+  const received = shown ? shown.price - shown.merchantFee : 0;
   // Cobro diferido: hoy entra el anticipo y el resto a `settlementDays`;
   // inmediato = todo al abrir (misma regla que `quote()`).
-  const settleDays = plan.terms?.settlementDays ?? 0;
-  const advance = settleDays === 0 ? received : plan.downPayment;
-  const pending = received - advance;
+  const settleDays = shown?.terms?.settlementDays ?? 0;
+  const advance = settleDays === 0 ? received : (shown?.downPayment ?? 0);
+  const pendingMerchant = received - advance;
   // Interés firmado = lo que se repaga menos lo financiado (datos del plan).
-  const repaid = plan.installments.reduce((a, i) => a + i.amount, 0);
-  const interest = Math.max(0, repaid - plan.financed);
+  const repaid = shown ? shown.installments.reduce((a, i) => a + i.amount, 0) : 0;
+  const interest = shown ? Math.max(0, repaid - shown.financed) : 0;
+  const owed = shown ? pendingAmount(shown) : 0;
+  const unpaid = shown ? unpaidInstallments(shown) : [];
 
   return (
     <div className={styles.success}>
@@ -100,28 +138,58 @@ export function ConfirmSuccess({
         <BigNumber amount={advance} size="lg" className={styles.savingsNum} />{" "}
         {t.merchantPaidTail(settleDays)}
       </p>
-      {getCuotas().mode === "real" ? (
-        <ExplorerLink signature={signature} />
-      ) : (
-        <p className={styles.receipt}>{t.receipt(short(signature))}</p>
-      )}
-
-      <div className={styles.successFacts}>
-        <span>{t.youPaid(fmt(plan.downPayment))}</span>
-        <span>{t.installments(plan.installments.length, fmt(plan.installments[0]?.amount ?? 0))}</span>
-        {interest > 0 ? <span>{t.interestFact(fmt(interest))}</span> : null}
-        {pending > 0 ? (
-          <span>{t.merchantLaterFact(merchantName, fmt(pending), settleDays)}</span>
-        ) : null}
+      <div className={styles.receiptRow}>
+        {getCuotas().mode === "real" ? (
+          <ExplorerLink signature={signature} />
+        ) : (
+          <p className={styles.receipt}>{t.receipt(short(signature))}</p>
+        )}
+        {reconciled ? <Chip>{t.reconciled}</Chip> : null}
       </div>
+
+      {shown ? (
+        <div className={styles.successFacts}>
+          <span>{t.youPaid(fmt(shown.downPayment))}</span>
+          <span data-testid="pending-fact">{t.pendingFact(fmt(owed))}</span>
+          {unpaid.length ? (
+            <span>
+              {t.installments(unpaid.length, fmt(unpaid[0]?.amount ?? 0))}
+            </span>
+          ) : null}
+          {interest > 0 ? <span>{t.interestFact(fmt(interest))}</span> : null}
+          {pendingMerchant > 0 ? (
+            <span>
+              {t.merchantLaterFact(merchantName, fmt(pendingMerchant), settleDays)}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {shown ? (
+        <>
+          <PlanCalendar
+            plan={shown}
+            config={config}
+            now={now}
+            secondsPerDay={secondsPerDay}
+            nextAction={pay.cta}
+          />
+          {pay.panel}
+        </>
+      ) : null}
 
       <div className={styles.successCtas}>
         <Link href="/panel" className={buttonClasses("primary")}>
           {t.ctaPanel}
         </Link>
-        <Link href={`/comercio/${plan.merchant}`} className={buttonClasses("secondary")}>
-          {t.ctaStore}
-        </Link>
+        {shown ? (
+          <Link
+            href={`/comercio/${shown.merchant}`}
+            className={buttonClasses("secondary")}
+          >
+            {t.ctaStore}
+          </Link>
+        ) : null}
       </div>
     </div>
   );

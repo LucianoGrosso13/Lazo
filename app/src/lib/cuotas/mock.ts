@@ -4,6 +4,7 @@
 // `.scratch/lazo-front/spec.md`. Ningún número de negocio va hardcodeado:
 // todo sale de `state.config` (sembrado desde `demo-config.ts`).
 import { DEMO_CONFIG } from "./demo-config";
+import { DEMO_STUDENT_FUNDS } from "./accounts-types";
 import {
   PLAN_TERMS_VERSION,
   planOptionsOf,
@@ -20,6 +21,7 @@ import type {
   DemoClock,
   Guarantee,
   Micro,
+  OperationSnapshot,
   Plan,
   PlanTerms,
   Pool,
@@ -27,8 +29,11 @@ import type {
   Quote,
   QuoteBlockReason,
   QuoteOptions,
+  ReconcileOutcome,
   Reputation,
   SettlementId,
+  TxPhase,
+  TxProgressListener,
   TxResult,
   UnixSeconds,
   WalletAddress,
@@ -51,6 +56,22 @@ import {
 export interface MockOverrides {
   config?: Partial<ProtocolConfig>;
   pool?: Partial<Pool>;
+  /** Fondos devUSDC simulados por estudiante (default `DEMO_STUDENT_FUNDS`). */
+  studentFunds?: Micro;
+}
+
+/** Emite una fase de progreso; un listener que lanza nunca rompe la operación. */
+function emitProgress(
+  listener: TxProgressListener | undefined,
+  phase: TxPhase,
+  signature?: string,
+): void {
+  if (!listener) return;
+  try {
+    listener({ phase, signature });
+  } catch {
+    // El listener es observador: su error no puede abortar la operación.
+  }
 }
 
 const clone = <T>(value: T): T => structuredClone(value);
@@ -81,7 +102,9 @@ function computeQuote(
   state: MockState,
   price: Micro,
   student: WalletAddress,
-  options?: QuoteOptions,
+  options: QuoteOptions | undefined,
+  /** Saldo devUSDC simulado del estudiante (mismo criterio que `getBalance`). */
+  funds: Micro,
 ): Quote {
   const cfg = state.config;
   const rep = state.reputations[student];
@@ -186,6 +209,11 @@ function computeQuote(
     merchantPending;
   if (state.pool.available < requiredPoolLiquidity) {
     reasons.push("pool_liquidity");
+  }
+  // Va última: si hay otro bloqueo (fiador, escalón, liquidez) es más
+  // accionable que "te falta saldo".
+  if (funds < downPayment) {
+    reasons.push("insufficient_funds");
   }
 
   return {
@@ -561,7 +589,29 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     if (applyKeeper()) commit();
   };
 
-  return {
+  /**
+   * Fondos devUSDC simulados del estudiante: misma derivación que
+   * `getBalance` de cuentas (`DEMO_STUDENT_FUNDS` − lo ya gastado en
+   * anticipos y cuotas pagadas; lo cobrado al fiador no es gasto del
+   * estudiante). `overrides.studentFunds` baja el techo en tests.
+   */
+  const spentOf = (student: WalletAddress): Micro =>
+    state.plans
+      .filter((p) => p.student === student)
+      .reduce(
+        (sum, p) =>
+          sum +
+          p.downPayment +
+          p.installments.reduce(
+            (a, i) => a + (i.paidAt !== undefined ? i.amount + i.penalty : 0),
+            0,
+          ),
+        0,
+      );
+  const fundsOf = (student: WalletAddress): Micro =>
+    Math.max(0, (overrides.studentFunds ?? DEMO_STUDENT_FUNDS) - spentOf(student));
+
+  const inner: CuotasClient = {
     mode: "mock",
 
     async getConfig() {
@@ -597,7 +647,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       refresh();
       sync();
       if (ensureStudent(state, student)) commit();
-      return computeQuote(state, price, student, options);
+      return computeQuote(state, price, student, options, fundsOf(student));
     },
 
     async getPlans(student) {
@@ -664,6 +714,8 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
     },
 
     async openPlan(args): Promise<TxResult<Plan>> {
+      const progress = args.onProgress;
+      emitProgress(progress, "preparing");
       refresh();
       sync();
 
@@ -704,13 +756,17 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       const quote = computeQuote(state, args.price, args.student, {
         installments: args.installments,
         settlement: settlementReq,
-      });
+      }, fundsOf(args.student));
       if (!quote.eligible) {
         throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
       }
 
+      // Simulación declarada: emite la misma secuencia de fases que el real
+      // (aprobación → envío → confirmación → sync), todo instantáneo.
+      emitProgress(progress, "awaiting_approval");
       const at = now(state);
       const signature = fakeSignature();
+      emitProgress(progress, "sending", signature);
       const day = state.config.secondsPerDay;
       const rep = state.reputations[args.student];
       const tierParams = state.config.guaranteedTiers[rep.tier];
@@ -741,7 +797,9 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         installments: quote.installments.map((amount, index) => ({
           index,
           amount,
-          dueAt: at + (index + 1) * 30 * day,
+          dueAt:
+            at +
+            (index + 1) * (state.config.installmentIntervalDays ?? 30) * day,
           penalty: 0,
           status: "Upcoming",
         })),
@@ -816,10 +874,14 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         amount: args.price,
       });
       commit();
+      emitProgress(progress, "confirming", signature);
+      emitProgress(progress, "syncing", signature);
       return { value: toPublicPlan(plan), signature };
     },
 
-    async payInstallment(student, planId): Promise<TxResult<Plan>> {
+    async payInstallment(student, planId, options): Promise<TxResult<Plan>> {
+      const progress = options?.onProgress;
+      emitProgress(progress, "preparing");
       refresh();
       sync();
       const plan = state.plans.find(
@@ -830,11 +892,21 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       if (!inst) {
         throw new CuotasError("nothing_due", `plan ${planId} sin cuotas impagas`);
       }
+      // Sin fondos para la cuota (+punitorio) se corta antes de "aprobar",
+      // igual que el cliente real.
+      if (fundsOf(student) < inst.amount + inst.penalty) {
+        throw new CuotasError(
+          "insufficient_funds",
+          `Saldo insuficiente para la cuota ${inst.index + 1} (tenés ${fundsOf(student)}, necesitás ${inst.amount + inst.penalty})`,
+        );
+      }
 
+      emitProgress(progress, "awaiting_approval");
       const at = now(state);
       inst.paidAt = at;
       inst.status = "Paid";
       inst.signature = fakeSignature();
+      emitProgress(progress, "sending", inst.signature);
       const paid = inst.amount + inst.penalty;
 
       // El repago entra al vault: baja el crédito pendiente por el principal
@@ -863,7 +935,44 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       settleOrRefresh(plan);
 
       commit();
+      emitProgress(progress, "confirming", inst.signature);
+      emitProgress(progress, "syncing", inst.signature);
       return { value: toPublicPlan(plan), signature: inst.signature };
+    },
+
+    // Espejo del real: la firma registrada en el estado ES el comprobante
+    // simulado. Un plan/cuota con OTRA firma (previo o ajeno) no prueba
+    // esta operación — nunca declara éxito por "existe". El mock no tiene
+    // transacciones fallidas: una firma desconocida queda `pending`.
+    async reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome> {
+      refresh();
+      sync();
+      const plans = state.plans.filter((p) => p.student === snapshot.student);
+      if (snapshot.operation === "open_plan") {
+        const plan = plans.find((p) => p.signature === snapshot.signature);
+        return plan
+          ? { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) }
+          : { status: "pending", signature: snapshot.signature };
+      }
+      const plan = plans.find((p) => p.id === snapshot.planId);
+      if (!plan) return { status: "pending", signature: snapshot.signature };
+      const inst = plan.installments.find(
+        (i) =>
+          i.index === snapshot.expectedInstallmentIndex &&
+          i.signature === snapshot.signature &&
+          i.paidAt !== undefined,
+      );
+      if (!inst) return { status: "pending", signature: snapshot.signature };
+      // La firma quedó probada por el registro simulado. Si la identidad
+      // del plan difiere de la esperada (el plan se reabrió tras saldar),
+      // la generación que recibió el pago ya no está legible → null.
+      if (
+        snapshot.expectedOpenedAt !== undefined &&
+        plan.openedAt !== snapshot.expectedOpenedAt
+      ) {
+        return { status: "confirmed", signature: snapshot.signature, plan: null };
+      }
+      return { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) };
     },
 
     async registerGuarantee(args): Promise<TxResult<Guarantee>> {
@@ -976,5 +1085,31 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+  };
+
+  // Paridad con el cliente real: llamados concurrentes idénticos
+  // comparten una sola operación simulada (la MISMA promesa, cero
+  // doble-cargo por doble click). El mock nunca va `uncertain`, así que la
+  // clave se libera siempre al resolver; tampoco hay fan-out de
+  // listeners: sus fases se emiten síncronas, un llamado tardío nunca se
+  // suma "a mitad de camino" (recibe el MISMO resultado ya resuelto).
+  const inFlight = new Map<string, Promise<unknown>>();
+  const dedup = <T>(key: string, run: () => Promise<T>): Promise<T> => {
+    const running = inFlight.get(key);
+    if (running) return running as Promise<T>;
+    const p = run().finally(() => {
+      if (inFlight.get(key) === p) inFlight.delete(key);
+    });
+    inFlight.set(key, p);
+    return p;
+  };
+  return {
+    ...inner,
+    openPlan: (args) =>
+      dedup(`open_plan:${args.student}`, () => inner.openPlan(args)),
+    payInstallment: (student, planId, options) =>
+      dedup(`pay_installment:${student}:${planId}`, () =>
+        inner.payInstallment(student, planId, options),
+      ),
   };
 }
