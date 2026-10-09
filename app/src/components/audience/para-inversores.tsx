@@ -32,11 +32,13 @@ import {
 } from "@/lib/cuotas";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import {
-  AudienceHero,
+  Accordion,
+  AnimatedSteps,
   AudienceSection,
+  BigNumber,
   Callout,
-  Faq,
-  StepList,
+  ComparisonBars,
+  Gauge,
 } from "./primitives";
 
 /** Precio de ejemplo para calcular D8 desde la configuración del protocolo. */
@@ -54,7 +56,48 @@ const exampleTerms = (config: ProtocolConfig, installments?: 3 | 6) =>
 const numFmt = (locale: "es" | "en", opts: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", opts);
 
-/** Datos vivos del pool: NAV, reparto junior/senior, utilización y liquidez. */
+/** El capital entra al pool, adelanta compras y vuelve con cada cuota. */
+function HeroIllustration({ t }: { t: (typeof paraInversores)["es"]["heroGraphic"] }) {
+  return (
+    <figure className="min-w-0 rounded-2xl border border-accent bg-accent-soft p-5 sm:p-7" role="img" aria-label={t.title}>
+      <figcaption className="flex flex-wrap items-center justify-between gap-3 border-b border-accent pb-4 text-sm">
+        <span className="font-medium text-accent">{t.title}</span>
+        <span className="text-ink-2">{t.badge}</span>
+      </figcaption>
+      <div className="pt-5 text-center">
+        <p className="font-semibold text-beam">{t.inversores}</p>
+        <p className="mt-1 text-sm text-ink-2">{t.inversoresDesc}</p>
+      </div>
+      <svg aria-hidden="true" viewBox="0 0 24 38" className="mx-auto h-10 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M12 0v32m-5-5 5 5 5-5" />
+      </svg>
+      <div className="flex items-center justify-center gap-4 py-2">
+        <svg aria-hidden="true" viewBox="0 0 100 100" className="h-24 w-24 flex-none" fill="none" stroke="var(--accent-ink)" strokeWidth="1">
+          <path d="m50 4 42 24v46L50 98 8 74V28Z" fill="var(--accent-soft)" />
+          <path d="m50 4 0 46 42-22Z" fill="var(--color-green)" fillOpacity=".2" />
+          <path d="m50 50 42-22v46L50 98Z" fill="var(--color-cyan)" fillOpacity=".15" />
+          <path d="M50 4v46L8 28m42 22v48M8 74l42-24 42 24" />
+          <path d="M50 34 64 42v16L50 66 36 58V42Z" fill="var(--accent)" stroke="none" />
+        </svg>
+        <p className="max-w-40 text-2xl font-semibold leading-tight text-accent">{t.poolCore}</p>
+      </div>
+      <svg aria-hidden="true" viewBox="0 0 300 42" className="h-10 w-full" fill="none" strokeWidth="1.5">
+        <path d="M150 0v13H55v24m-5-5 5 5 5-5" stroke="var(--color-cyan)" />
+        <path d="M245 37V13h-80V0m75 5 5-5 5 5" stroke="var(--color-backlight)" />
+      </svg>
+      <div className="grid grid-cols-2 gap-4 text-center text-sm">
+        <div><p className="font-semibold text-cyan">{t.comercios}</p><p className="mt-1 text-ink-2">{t.comerciosDesc}</p></div>
+        <div><p className="font-semibold text-backlight">{t.compradores}</p><p className="mt-1 text-ink-2">{t.compradoresDesc}</p></div>
+      </div>
+      <div className="mt-6 grid grid-cols-2 gap-4 border-t border-accent pt-4 text-sm">
+        <div><p className="font-medium text-accent">{t.senior}</p><p className="mt-1 text-ink-2">{t.seniorDesc}</p></div>
+        <div><p className="font-medium text-backlight">{t.junior}</p><p className="mt-1 text-ink-2">{t.juniorDesc}</p></div>
+      </div>
+    </figure>
+  );
+}
+
+/** Datos vivos del pool: NAV, reparto junior/senior, utilización con Gauge y liquidez. */
 function PoolAhora({ pool }: { pool: Pool }) {
   const t = useT(paraInversores).pool;
   const { locale } = useLocale();
@@ -63,26 +106,28 @@ function PoolAhora({ pool }: { pool: Pool }) {
   const wJunior = capital > 0 ? (pool.juniorCapital / capital) * 100 : 0;
   const usd = (m: Micro) => formatUsdc(m, locale);
   return (
-    <div className="p-4 sm:p-5">
+    <div className="p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-num text-measure uppercase tracking-[0.14em] text-ink-3">
+        <p className="font-num text-measure uppercase tracking-[0.14em] text-accent">
           {t.liveTitle}
         </p>
         <Link
           href="/pool"
-          className="tap inline-flex items-center gap-1 text-sm font-medium text-cyan transition-colors hover:text-beam"
+          className="tap inline-flex items-center gap-1 text-sm font-medium text-accent transition-colors hover:text-beam"
         >
           {t.liveLink} →
         </Link>
       </div>
-      <p className="mt-3 font-num text-2xl tabular-nums text-beam sm:text-3xl">
-        {usd(pool.nav)}{" "}
-        <span className="font-num text-sm text-ink-ghost">devUSDC</span>
-      </p>
-      <p className="mt-1 text-xs text-ink-3">{t.nav}</p>
 
+      <div className="mt-3 flex flex-wrap items-baseline gap-3">
+        <BigNumber amount={pool.nav} currency="USDC" size="xl" countUp={true} className="text-accent!" />
+        <span className="font-num text-sm text-ink-3">devUSDC</span>
+      </div>
+      <p className="mt-1 text-sm text-ink-3">{t.nav}</p>
+
+      {/* Barra de reparto de capital */}
       <div
-        className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-beam/5"
+        className="mt-5 flex h-3 w-full overflow-hidden rounded-full bg-beam/5"
         role="img"
         aria-label={`${t.junior} ${usd(pool.juniorCapital)} · ${t.senior} ${usd(pool.seniorCapital)}`}
       >
@@ -92,6 +137,7 @@ function PoolAhora({ pool }: { pool: Pool }) {
           style={{ width: `${100 - wJunior}%` }}
         />
       </div>
+
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         <div>
           <p className="flex items-baseline gap-2 text-sm text-ink">
@@ -101,7 +147,7 @@ function PoolAhora({ pool }: { pool: Pool }) {
               {usd(pool.juniorCapital)}
             </span>
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-ink-ghost">{t.juniorHint}</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-3">{t.juniorHint}</p>
         </div>
         <div>
           <p className="flex items-baseline gap-2 text-sm text-ink">
@@ -114,28 +160,38 @@ function PoolAhora({ pool }: { pool: Pool }) {
               {usd(pool.seniorCapital)}
             </span>
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-ink-ghost">{t.seniorHint}</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-3">{t.seniorHint}</p>
         </div>
       </div>
 
-      <dl className="mt-4 space-y-1.5 border-t border-hairline pt-3">
-        {(
-          [
-            [t.uso, numFmt(locale, { style: "percent", maximumFractionDigits: 1 }).format(uso)],
-            [t.credito, usd(pool.outstandingCredit)],
-            [t.disponible, usd(pool.available)],
-          ] as [string, string][]
-        ).map(([k, v]) => (
-          <div key={k} className="flex items-baseline justify-between gap-4 text-sm">
-            <dt className="text-ink-3">{k}</dt>
-            <dd className="font-num tabular-nums text-ink">
-              {v}
-              {k === t.uso ? "" : <span className="text-xs text-ink-ghost"> devUSDC</span>}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-3 text-sm leading-relaxed text-ink-ghost">{t.liveHint}</p>
+      {/* Utilización con medidor Gauge */}
+      <div className="mt-6 border-t border-hairline pt-6 grid gap-6 md:grid-cols-[220px_1fr] items-center">
+        <Gauge
+          value={Math.round(uso * 100)}
+          max={100}
+          label={t.uso}
+          valueLabel={`${numFmt(locale, { maximumFractionDigits: 1 }).format(uso * 100)}%`}
+          note={`${t.disponible}: ${usd(pool.available)}`}
+        />
+        <dl className="space-y-2.5">
+          {(
+            [
+              [t.uso, numFmt(locale, { style: "percent", maximumFractionDigits: 1 }).format(uso)],
+              [t.credito, usd(pool.outstandingCredit)],
+              [t.disponible, usd(pool.available)],
+            ] as [string, string][]
+          ).map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-4 border-b border-hairline pb-2 text-sm">
+              <dt className="text-ink-3">{k}</dt>
+              <dd className="font-num tabular-nums text-ink">
+                {v}
+                {k === t.uso ? "" : <span className="text-sm text-ink-3"> devUSDC</span>}
+              </dd>
+            </div>
+          ))}
+          <p className="pt-2 text-sm leading-relaxed text-ink-3">{t.liveHint}</p>
+        </dl>
+      </div>
     </div>
   );
 }
@@ -181,7 +237,7 @@ function DesgloseD8({
           </div>
         ))}
       </dl>
-      <p className="mt-4 text-sm leading-relaxed text-ink-ghost">{t.nota}</p>
+      <p className="mt-4 text-sm leading-relaxed text-ink-3">{t.nota}</p>
     </GlassPanel>
   );
 }
@@ -197,8 +253,6 @@ export function ParaInversores() {
   const usd = (m: Micro) => formatUsdc(m, locale);
   const pct = (bps: number) =>
     `${numFmt(locale, { maximumFractionDigits: 2 }).format(bps / 100)}%`;
-  const refPct = (n: number) =>
-    `~${numFmt(locale, { maximumFractionDigits: 2 }).format(n)}%`;
   const assumptions = REFERENCE_FIGURES.modelAssumptions;
 
   const planOptions = config ? planOptionsOf(config) : [];
@@ -214,15 +268,26 @@ export function ParaInversores() {
     : undefined;
 
   return (
-    <div className="page-shell py-12 sm:py-16">
-      <AudienceHero eyebrow={page.eyebrow} title={page.title} lede={page.lede}>
-        <Link href="/pool" className={buttonClasses("primary")}>
-          {t.ctas.pool}
-        </Link>
-        <Link href="/para-comercios" className={buttonClasses("secondary")}>
-          {t.ctas.comercios}
-        </Link>
-      </AudienceHero>
+    <div data-role="investor" className="page-shell py-12 sm:py-16">
+      {/* Hero con ilustración / gráfico del flujo del pool */}
+      <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+        <header className="min-w-0">
+          <h1 className="max-w-xl text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.02em] text-beam sm:text-5xl lg:text-6xl">{page.title}</h1>
+          <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-ink-2 sm:text-lg">{page.lede}</p>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <Link href="/pool" className={`${buttonClasses("primary")} min-h-11`}>
+            {t.ctas.pool}
+          </Link>
+          <Link href="/para-comercios" className={`${buttonClasses("secondary")} min-h-11`}>
+            {t.ctas.comercios}
+          </Link>
+          <Link href="/para-estudiantes" className={`${buttonClasses("ghost")} min-h-11`}>
+            {t.ctas.estudiantes}
+          </Link>
+        </div>
+        </header>
+        <HeroIllustration t={t.heroGraphic} />
+      </div>
 
       {/* De dónde sale el rendimiento: pool, tramos y datos en vivo */}
       <AudienceSection title={t.pool.title} intro={t.pool.intro}>
@@ -237,7 +302,82 @@ export function ParaInversores() {
         </GlassPanel>
       </AudienceSection>
 
-      {/* Una compra, paso a paso: el reparto D8 */}
+      {/* Rendimiento: referencias declaradas, sin APY prometido (BigNumber + ComparisonBars) */}
+      <AudienceSection title={t.rendimiento.title} intro={t.rendimiento.intro}>
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr] lg:items-stretch">
+          <GlassPanel className="flex flex-col justify-between p-5 sm:p-6 border-accent/40 bg-accent-soft/20">
+            <div>
+              <p className="font-num text-measure uppercase tracking-[0.14em] text-accent">
+                {t.rendimiento.targetHeadline}
+              </p>
+              <div className="mt-4">
+                <BigNumber
+                  amount={toMicro(REFERENCE_FIGURES.lazoSeniorTargetYieldPct)}
+                  currency="none"
+                  suffix={t.rendimiento.annualSuffix}
+                  className="text-accent!"
+                  size="display"
+                  decimals={0}
+                  countUp={true}
+                />
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-ink-2">
+                {t.rendimiento.targetDisclaimer}
+              </p>
+            </div>
+            <div className="mt-6 border-t border-hairline pt-3 font-num text-sm text-ink-3">
+              {t.heroGraphic.inversoresDesc} · {t.heroGraphic.badge}
+            </div>
+          </GlassPanel>
+
+          <GlassPanel className="p-5 sm:p-6">
+            <ComparisonBars
+              className="[&>li:first-child>div:nth-child(2)>div]:bg-[var(--accent)]! [&>li:first-child_strong]:text-accent"
+              label={t.rendimiento.comparisonLabel}
+              items={[
+                {
+                  label: (
+                    <span>
+                      {t.rendimiento.lazoLabel}{" "}
+                      <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
+                    </span>
+                  ),
+                  value: REFERENCE_FIGURES.lazoSeniorTargetYieldPct,
+                  formattedValue: `~${numFmt(locale, { maximumFractionDigits: 1 }).format(REFERENCE_FIGURES.lazoSeniorTargetYieldPct)}%`,
+                  note: t.rendimiento.lazoNote,
+                },
+                {
+                  label: (
+                    <span>
+                      {t.rendimiento.kaminoLabel}{" "}
+                      <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
+                    </span>
+                  ),
+                  value: REFERENCE_FIGURES.kaminoYieldPct,
+                  formattedValue: `~${numFmt(locale, { maximumFractionDigits: 1 }).format(REFERENCE_FIGURES.kaminoYieldPct)}%`,
+                  note: t.rendimiento.kaminoNote,
+                },
+                {
+                  label: (
+                    <span>
+                      {t.rendimiento.jupiterLabel}{" "}
+                      <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
+                    </span>
+                  ),
+                  value: REFERENCE_FIGURES.jupiterYieldPct,
+                  formattedValue: `~${numFmt(locale, { maximumFractionDigits: 1 }).format(REFERENCE_FIGURES.jupiterYieldPct)}%`,
+                  note: t.rendimiento.jupiterNote,
+                },
+              ]}
+            />
+            <p className="mt-5 border-t border-hairline pt-3 text-sm leading-relaxed text-ink-3">
+              {t.rendimiento.nota}
+            </p>
+          </GlassPanel>
+        </div>
+      </AudienceSection>
+
+      {/* Una compra, paso a paso: el reparto D8 (AnimatedSteps) */}
       {config && quote && d8 && (
         <AudienceSection
           title={t.compra.title}
@@ -248,7 +388,9 @@ export function ParaInversores() {
             standardPlan?.installments ?? quote.installments.length,
           )}
         >
-          <StepList
+          <AnimatedSteps
+            className="xl:!grid-cols-4"
+            label={t.compra.stepsLabel}
             steps={[
               {
                 title: t.compra.steps.compra.title(usd(quote.price), usd(quote.downPayment)),
@@ -285,7 +427,7 @@ export function ParaInversores() {
       {/* Seis cuotas y cobro diferido */}
       {config && quote && (
         <AudienceSection title={t.seis.title} intro={t.seis.intro}>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid items-start gap-4 lg:grid-cols-2">
             <GlassPanel className="p-4 sm:p-5">
               <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-beam">
                 {t.seis.planesTitle(plan6?.installments ?? 0)}
@@ -309,8 +451,6 @@ export function ParaInversores() {
               </div>
               <dl className="divide-y divide-beam/8">
                 {settleOpts.map((o) => {
-                  // Comisión y neto por plazo con la misma cotización que
-                  // `quote()`: plazo sin tarifa o deshabilitado → "—".
                   const q = quoteTermsFor(config, quote.price, {
                     installments: standardPlan?.installments,
                     settlement: o.id,
@@ -405,45 +545,12 @@ export function ParaInversores() {
         </AudienceSection>
       )}
 
-      {/* Rendimiento: referencias declaradas, sin APY prometido */}
-      <AudienceSection title={t.rendimiento.title} intro={t.rendimiento.intro}>
-        <GlassPanel className="p-4 sm:p-5">
-          <ul className="space-y-3">
-            <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <span className="text-sm text-ink">
-                {t.rendimiento.lazo}
-              </span>
-              <span className="font-num text-sm tabular-nums text-green">
-                {refPct(REFERENCE_FIGURES.lazoSeniorTargetYieldPct)}
-              </span>
-            </li>
-            <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <span className="text-sm text-ink-3">
-                Kamino <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
-              </span>
-              <span className="font-num text-sm tabular-nums text-ink-3">
-                {refPct(REFERENCE_FIGURES.kaminoYieldPct)}
-              </span>
-            </li>
-            <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <span className="text-sm text-ink-3">
-                Jupiter Lend <ReferenceTag>{t.rendimiento.referenciaTag}</ReferenceTag>
-              </span>
-              <span className="font-num text-sm tabular-nums text-ink-3">
-                {refPct(REFERENCE_FIGURES.jupiterYieldPct)}
-              </span>
-            </li>
-          </ul>
-          <p className="mt-4 text-sm leading-relaxed text-ink-ghost">{t.rendimiento.nota}</p>
-        </GlassPanel>
-      </AudienceSection>
-
       {/* Transparencia onchain */}
       <AudienceSection title={t.transparencia.title} intro={t.transparencia.body}>
         <p>
           <Link
             href="/pool"
-            className="tap inline-flex items-center gap-1 text-sm font-medium text-cyan transition-colors hover:text-beam"
+            className="tap inline-flex items-center gap-1 text-sm font-medium text-accent transition-colors hover:text-beam"
           >
             {t.transparencia.link} →
           </Link>
@@ -462,20 +569,20 @@ export function ParaInversores() {
         </GlassPanel>
       </AudienceSection>
 
-      {/* FAQ */}
+      {/* FAQ (Accordion) */}
       <AudienceSection title={t.faq.title}>
-        <Faq items={t.faq.items} />
+        <Accordion items={t.faq.items} label={t.faq.title} />
       </AudienceSection>
 
       {/* CTAs finales */}
       <div className="mt-14 flex flex-wrap items-center gap-3 sm:mt-20">
-        <Link href="/pool" className={buttonClasses("primary")}>
+        <Link href="/pool" className={`${buttonClasses("primary")} min-h-11`}>
           {t.ctas.pool}
         </Link>
-        <Link href="/para-comercios" className={buttonClasses("secondary")}>
+        <Link href="/para-comercios" className={`${buttonClasses("secondary")} min-h-11`}>
           {t.ctas.comercios}
         </Link>
-        <Link href="/para-estudiantes" className={buttonClasses("ghost")}>
+        <Link href="/para-estudiantes" className={`${buttonClasses("ghost")} min-h-11`}>
           {t.ctas.estudiantes}
         </Link>
       </div>

@@ -10,5 +10,9 @@ export const metadata: Metadata = {
 // Página por audiencia: el contenido vive en components/audience/ y los
 // textos en i18n/dictionaries/para-inversores.ts.
 export default function ParaInversoresPage() {
-  return <ParaInversores />;
+  return (
+    <div data-role="investor">
+      <ParaInversores />
+    </div>
+  );
 }

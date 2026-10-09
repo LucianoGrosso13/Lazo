@@ -13,6 +13,21 @@ export const paraInversores = defineDict({
       comercios: "Cómo funciona para comercios",
       estudiantes: "Para compradores y garantes",
     },
+    heroGraphic: {
+      title: "Flujo de fondos del pool",
+      badge: "devnet · Solana",
+      inversores: "Inversores",
+      inversoresDesc: "Capital devUSDC",
+      senior: "Tramo senior",
+      seniorDesc: "Repago prioritario",
+      junior: "Tramo junior",
+      juniorDesc: "1ª pérdida · absorbe riesgo",
+      poolCore: "Pool de liquidez",
+      comercios: "Comercios",
+      comerciosDesc: "Adelanto financiado",
+      compradores: "Compradores y garantes",
+      compradoresDesc: "Repago en cuotas",
+    },
     pool: {
       title: "De dónde sale el rendimiento",
       intro:
@@ -41,6 +56,7 @@ export const paraInversores = defineDict({
     },
     compra: {
       title: "Una compra, paso a paso",
+      stepsLabel: "Flujo de fondos de una compra paso a paso",
       intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
         `Así se reparte una compra de ${precio} de un comprador en ${tier} con garante (${anticipoPct} de anticipo, ${cuotas} cuotas, cobro inmediato del comercio):`,
       steps: {
@@ -132,7 +148,17 @@ export const paraInversores = defineDict({
       title: "Rendimiento objetivo del tramo senior",
       intro:
         "Ninguna cifra de esta página es una promesa ni un rendimiento anual garantizado. Lo que comparte el equipo es un objetivo de modelo junto a referencias publicadas por otros protocolos DeFi:",
+      targetHeadline: "Objetivo de modelo senior",
+      annualSuffix: "% anual",
+      targetDisclaimer: "Supuesto de trabajo del tramo senior sobre devUSDC.",
+      comparisonLabel: "Comparativa de rendimientos en Solana",
       lazo: "Objetivo de modelo, no es una promesa",
+      lazoLabel: "Lazo · Senior (objetivo)",
+      lazoNote: "Modelo económico de la demo: tramo senior protegido por tramo junior.",
+      kaminoLabel: "Kamino Lend",
+      kaminoNote: "Tasa de referencia para USDC en protocolo de lending de Solana.",
+      jupiterLabel: "Jupiter Lend",
+      jupiterNote: "Tasa de referencia de liquidez en Jupiter.",
       referenciaTag: "referencia",
       nota: "El rendimiento real depende de la mora, el recupero y el costo del capital. Las cifras de terceros son referencias sin verificar en la fuente oficial.",
     },
@@ -186,6 +212,21 @@ export const paraInversores = defineDict({
       comercios: "How it works for merchants",
       estudiantes: "For buyers and guarantors",
     },
+    heroGraphic: {
+      title: "Pool fund flow",
+      badge: "devnet · Solana",
+      inversores: "Investors",
+      inversoresDesc: "devUSDC capital",
+      senior: "Senior tranche",
+      seniorDesc: "Priority repayment",
+      junior: "Junior tranche",
+      juniorDesc: "1st loss · absorbs risk",
+      poolCore: "Liquidity pool",
+      comercios: "Merchants",
+      comerciosDesc: "Financed advance",
+      compradores: "Buyers & guarantors",
+      compradoresDesc: "Installment repayment",
+    },
     pool: {
       title: "Where the yield comes from",
       intro:
@@ -214,6 +255,7 @@ export const paraInversores = defineDict({
     },
     compra: {
       title: "One purchase, step by step",
+      stepsLabel: "Step-by-step purchase fund flow",
       intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
         `This is how a ${precio} purchase by a ${tier} buyer with a guarantor is split (${anticipoPct} down payment, ${cuotas} installments, immediate merchant settlement):`,
       steps: {
@@ -305,7 +347,17 @@ export const paraInversores = defineDict({
       title: "Senior tranche target yield",
       intro:
         "No figure on this page is a promise or a guaranteed annual yield. What the team shares is a model target next to references published by other DeFi protocols:",
+      targetHeadline: "Senior model target",
+      annualSuffix: "% per year",
+      targetDisclaimer: "Working assumption for the senior tranche on devUSDC.",
+      comparisonLabel: "Yield comparison on Solana",
       lazo: "Model target, not a promise",
+      lazoLabel: "Lazo · Senior (target)",
+      lazoNote: "Demo economic model: senior tranche protected by junior tranche.",
+      kaminoLabel: "Kamino Lend",
+      kaminoNote: "Benchmark lending rate for USDC on Solana.",
+      jupiterLabel: "Jupiter Lend",
+      jupiterNote: "Benchmark liquidity rate on Jupiter.",
       referenciaTag: "reference",
       nota: "Real yield depends on delinquency, recovery and the cost of capital. Third-party figures are references unverified at the source.",
     },
