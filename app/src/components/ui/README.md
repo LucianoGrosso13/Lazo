@@ -44,3 +44,15 @@ Las animaciones de entrada son finitas y comienzan una vez al entrar en
 pantalla. `useReducedMotion` y CSS aseguran una variante estática. No hay loops.
 Las muestras de `/design` usan reglas del protocolo como datos de prueba,
 sin convertirlas en métricas de actividad.
+
+## Verificación
+
+La suite vive en `e2e/design-primitives.spec.ts` y usa la configuración estándar
+de Playwright. Con el servidor mock propio ya levantado, desde `app/`:
+
+```sh
+PW_BASE_URL=http://localhost:3203 npx playwright test e2e/design-primitives.spec.ts
+```
+
+Cubre ambas resoluciones, historial, teclado, toque, acordeón, pasos, targets,
+traducción, ausencia de overflow y count-up con reloj de Playwright.
