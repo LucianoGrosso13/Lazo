@@ -38,11 +38,16 @@ FIXES = {
     103.31: "Earning",
 }
 
-# Lower overlay cards sit left or right on the t-shirts; captions move to the
-# other side while a scene with a card is on screen. Windows = scene hosts in
-# index.html (main-timeline seconds).
-RIGHT = [(8.5, 27.3), (37.5, 51.75), (59.5, 67.4), (91.0, 103.2)]  # card on the left
-LEFT = [(51.9, 59.2), (75.2, 81.6)]  # card on the right
+# Captions always sit centred at the bottom. In the subtitled render only, the
+# lower cards are lifted so they end above the caption band (~y 955).
+LIFTS = {
+    "s02-argentina": {"#stat, #stat-chip": 60},
+    "s03-lazo": {"#ov-names .lt": 20, "#ov-layer .node, #ov-layer .arrow, #ly-chip": 50},
+    "s04-planes": {"#pl-card, #gu-card": 85},
+    "s05-comprador": {"#st-chip, #st-card": 20},
+    "s06-comercio": {"#se-card": 70},
+    "s08-pedido": {"#as-card": 120},
+}
 
 MAX_CHARS = 40
 GAP = 0.6
@@ -119,15 +124,6 @@ def group(words):
     return out
 
 
-def zone(cue):
-    mid = (cue["start"] + cue["end"]) / 2
-    if any(a <= mid < b for a, b in RIGHT):
-        return "right"
-    if any(a <= mid < b for a, b in LEFT):
-        return "left"
-    return "center"
-
-
 def srt_time(t):
     ms = round(t * 1000)
     h, ms = divmod(ms, 3600000)
@@ -147,7 +143,7 @@ def main():
     (ROOT / "lazo-pitch-subs-en.srt").write_text(srt)
 
     divs = "\n".join(
-        f'        <div id="cue-{i}" class="cue {zone(c)}"><span>{c["text"]}</span></div>'
+        f'        <div id="cue-{i}" class="cue"><span>{c["text"]}</span></div>'
         for i, c in enumerate(cues)
     )
     tweens = "\n".join(
@@ -179,21 +175,11 @@ def main():
         .cue {{
           position: absolute;
           bottom: 40px;
-          display: flex;
-          opacity: 0;
-        }}
-        .cue.center {{
           left: 0;
           right: 0;
+          display: flex;
           justify-content: center;
-        }}
-        .cue.right {{
-          right: 80px;
-          justify-content: flex-end;
-        }}
-        .cue.left {{
-          left: 80px;
-          justify-content: flex-start;
+          opacity: 0;
         }}
         .cue span {{
           font-family: "Bricolage Grotesque", sans-serif;
@@ -233,13 +219,24 @@ def main():
     shutil.rmtree(SUBS_PROJECT, ignore_errors=True)
     SUBS_PROJECT.mkdir(parents=True)
     shutil.copytree(ROOT / "compositions", SUBS_PROJECT / "compositions")
+    for comp, rules in LIFTS.items():
+        path = SUBS_PROJECT / "compositions" / f"{comp}.html"
+        # margins, not `translate`: GSAP folds `translate` into its own transform
+        # cache and drops it on elements it moves with y. Top-anchored boxes
+        # move with margin-top, bottom-anchored ones with margin-bottom.
+        css = "".join(
+            f"\n        {sel} {{ margin-top: -{px}px; margin-bottom: {px}px; }}" for sel, px in rules.items()
+        )
+        text = path.read_text()
+        assert "</style>" in text, comp
+        path.write_text(text.replace("</style>", css + "\n      </style>", 1))
     (SUBS_PROJECT / "assets").symlink_to(ROOT / "assets")
     for name in ("hyperframes.json", "meta.json", "package.json"):
         shutil.copy(ROOT / name, SUBS_PROJECT / name)
     (SUBS_PROJECT / "index.html").write_text(index.replace(anchor, host + anchor))
     print(f"{len(cues)} cues, last ends {end:.2f}s")
     for c in cues:
-        print(f"{c['start']:6.2f}-{c['end']:6.2f} {zone(c):6} {c['text']}")
+        print(f"{c['start']:6.2f}-{c['end']:6.2f} {c['text']}")
 
 
 if __name__ == "__main__":

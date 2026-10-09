@@ -125,6 +125,19 @@
         #lazo-mark img {
                 height: 190px;
               }
+        #lazo-url {
+                left: 0;
+                right: 0;
+                top: 680px;
+                display: flex;
+                justify-content: center;
+              }
+        #lazo-url .chip {
+                position: relative;
+                font-size: 30px;
+                padding: 16px 28px;
+                gap: 14px;
+              }
         #lazo-word {
                 font-weight: 800;
                 font-size: 200px;
@@ -164,6 +177,7 @@
           <img data-hf-id="hf-ujyp" id="lazo-logo" src="assets/brand/logo-prisma@2x.png" alt="">
           <span data-hf-id="hf-c9fg" id="lazo-word" class="type">Lazo</span>
         </div>
+        <div id="lazo-url" class="abs"><div class="chip"><span class="dot"></span>lazo-cuotas.vercel.app</div></div>
       </div>
         <div data-hf-id="hf-qecw" id="ov-layer" class="grp">
         <div data-hf-id="hf-lmk1" id="ly-scrim" class="abs" style="left: 0; right: 0; bottom: 0; height: 380px; background: linear-gradient(to top, rgb(7 6 11 / 0.8), rgb(7 6 11 / 0))"></div>
@@ -237,7 +251,8 @@
       tl.fromTo("#lazo-logo", { opacity: 0, scale: 0.8, rotation: -6 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.7)" }, 29.95 - S);
       typeIn("#lazo-word", 30.12, 0.07);
       tl.to("#lazo-mark", { scale: 1.04, duration: 1.6, ease: "none" }, 30.4 - S);
-      tl.to("#lazo-mark, #lazo-scrim", { opacity: 0, duration: 0.3, ease: "power2.in" }, 31.95 - S);
+      tl.fromTo("#lazo-url", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 30.45 - S);
+      tl.to("#lazo-mark, #lazo-scrim, #lazo-url", { opacity: 0, duration: 0.3, ease: "power2.in" }, 31.95 - S);
 
       tl.fromTo("#ly-scrim", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 32.0 - S);
       tl.fromTo("#ly-people", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 32.1 - S);
