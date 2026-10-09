@@ -13,7 +13,7 @@ Tracked in `docs/demo-happy-path-readiness.md` (read-only check):
 
 - The deployed program still runs the pre-credit artifact — `open_plan`/`pay_installment` are NOT on devnet yet. Upgrade + protocol init per `programa/UPGRADE_DEVNET.md` is required first.
 - Zero protocol accounts today; devUSDC mint exists with supply 0.
-- Needed before the take: protocol initialized, merchant registered, pool liquidity for the case, an eligible student wallet with a **real active guarantee** (the mock's preloaded guarantor does not count), devUSDC ≥ down payment + first installment (≈ 533.333334), and devnet SOL for fees/accounts.
+- Needed before the take: protocol initialized, merchant registered, pool liquidity for the case, an eligible student wallet with a **real active guarantee** (the mock's preloaded guarantor does not count), devUSDC ≥ down payment + first installment (exactly 533.333333: 300 + 233.333333), and devnet SOL for fees/accounts.
 - Every funding/init/upgrade transaction is proposed, simulated, and approved explicitly — never automatic.
 
 ## The take (reference case)
@@ -22,12 +22,12 @@ Tracked in `docs/demo-happy-path-readiness.md` (read-only check):
 2. Open checkout for the PC — reference case: price 1000 devUSDC, down payment 300, financed 700 in 3 interest-free installments. Review amount, token, destination and network.
 3. Approve the down payment in Phantom (first explicit approval). Watch "confirming" state until the transaction confirms on chain.
 4. Success screen: down payment paid (300), remaining balance (700), the three installments with real dates (≈30/60/90 days), first installment highlighted, lateness explainer, real devnet receipt link.
-5. Pay the first installment early: its own review and a separate Phantom approval. Expected result: "Cuota 1 pagada · Quedan 2", balance 466.666667, wallet balance updated, own receipt.
+5. Pay the first installment early: its own review and a separate Phantom approval. Expected result: "Installment 1 paid" · "2 installments left to pay", remaining balance exactly 466.666667, wallet balance updated, own receipt.
 6. Reload the page — plan, paid installment and balances persist (read from chain).
 
 ## Expected amounts (acceptance case)
 
-Down payment 300; financed 700; installments 233.333333 / 233.333333 / 233.333334 (the last absorbs rounding); after the first payment, remaining 466.666667. UI may abbreviate ≈233.33 / ≈466.67 — full precision stays accessible. All numbers come from `ProtocolConfig`/quote/plan, never hardcoded.
+Down payment 300; financed 700; installments 233.333333 / 233.333333 / 233.333334 (the last absorbs rounding); after the first payment, remaining 466.666667. UI may abbreviate as ≈233.33 / ≈466.67 (rounded display — full precision stays accessible). All numbers come from `ProtocolConfig`/quote/plan, never hardcoded.
 
 ## Repeating the take
 
