@@ -27,10 +27,6 @@ export const checkout = defineDict({
     },
     interestRow: "Interés del plan",
     interestChip: (pct: string) => `+${pct}%`,
-    merchantToday: (name: string, x: string) =>
-      `${name} cobra US$ ${x} hoy, sin esperar.`,
-    merchantDeferred: (name: string, today: string, rest: string, days: number) =>
-      `${name} cobra US$ ${today} hoy y US$ ${rest} a ${days} días.`,
     guarantorLabel: "Garante",
     guarantorLine: (card: string | null, max: string) =>
       `Garante${card ? ` · ${card}` : ""} · tope US$ ${max}`,
@@ -226,16 +222,12 @@ export const checkout = defineDict({
         payToday: "Pagás hoy",
         token: "Token",
         network: "Red",
-        merchant: "El comercio recibe",
         interest: "Interés",
         after: "Después",
       },
       merchantFallback: "comercio demo",
       tokenValue: "devUSDC · USDC de prueba",
       networkValue: "Solana devnet · plata de prueba",
-      instantly: "al instante",
-      merchantLater: (advance: string, rest: string, date: string) =>
-        `US$ ${advance} hoy · US$ ${rest} el ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} cuotas de US$ ${amt}`,
       mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
       progress: {
@@ -316,19 +308,16 @@ export const checkout = defineDict({
       },
       success: {
         title: "Listo, plan abierto",
-        merchantPaidLead: (name: string) => `${name} cobró`,
-        merchantPaidTail: (days: number) =>
-          days === 0 ? "al instante" : `el anticipo hoy`,
-        merchantLaterFact: (name: string, rest: string, days: number) =>
-          `${name} cobra el resto (US$ ${rest}) a ${days} días`,
+        paidLead: "Pagaste",
+        paidTail: "de anticipo",
+        paidNoDown: "Tu plan quedó abierto, sin anticipo.",
         youPaid: (x: string) => `Pagaste el anticipo: US$ ${x}`,
         pendingFact: (x: string) => `Te quedan por pagar US$ ${x}`,
         installments: (n: number, amt: string) => `Quedan ${n} cuotas de US$ ${amt}`,
         reconciled: "Verificada leyendo la cadena",
         interestFact: (x: string) => `Incluye US$ ${x} de interés`,
         beamYou: "tu wallet",
-        beamAria: (x: string) =>
-          `La luz de tu pago viaja hasta el comercio, que cobra US$ ${x} al instante.`,
+        beamAria: "La luz de tu pago viaja hasta el comercio.",
         receipt: (sig: string) => `Comprobante simulado · ${sig}`,
         ctaPanel: "Ir a mi plan",
         ctaStore: "Volver a la tienda",
@@ -360,10 +349,6 @@ export const checkout = defineDict({
     },
     interestRow: "Plan interest",
     interestChip: (pct: string) => `+${pct}%`,
-    merchantToday: (name: string, x: string) =>
-      `${name} gets US$ ${x} today, no waiting.`,
-    merchantDeferred: (name: string, today: string, rest: string, days: number) =>
-      `${name} gets US$ ${today} today and US$ ${rest} in ${days} days.`,
     guarantorLabel: "Guarantor",
     guarantorLine: (card: string | null, max: string) =>
       `Guarantor${card ? ` · ${card}` : ""} · up to US$ ${max}`,
@@ -559,16 +544,12 @@ export const checkout = defineDict({
         payToday: "You pay today",
         token: "Token",
         network: "Network",
-        merchant: "Merchant receives",
         interest: "Interest",
         after: "Then",
       },
       merchantFallback: "demo merchant",
       tokenValue: "devUSDC · test USDC",
       networkValue: "Solana devnet · test money",
-      instantly: "instantly",
-      merchantLater: (advance: string, rest: string, date: string) =>
-        `US$ ${advance} today · US$ ${rest} on ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} installments of US$ ${amt}`,
       mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
       progress: {
@@ -649,19 +630,16 @@ export const checkout = defineDict({
       },
       success: {
         title: "Done, plan opened",
-        merchantPaidLead: (name: string) => `${name} got`,
-        merchantPaidTail: (days: number) =>
-          days === 0 ? "instantly" : `today as down payment`,
-        merchantLaterFact: (name: string, rest: string, days: number) =>
-          `${name} gets the rest (US$ ${rest}) in ${days} days`,
+        paidLead: "You paid",
+        paidTail: "as a down payment",
+        paidNoDown: "Your plan is open — no down payment.",
         youPaid: (x: string) => `You paid the down payment: US$ ${x}`,
         pendingFact: (x: string) => `You have US$ ${x} left to pay`,
         installments: (n: number, amt: string) => `${n} installments of US$ ${amt} left`,
         reconciled: "Verified by reading the chain",
         interestFact: (x: string) => `Includes US$ ${x} of interest`,
         beamYou: "your wallet",
-        beamAria: (x: string) =>
-          `The light of your payment travels to the merchant, who gets US$ ${x} instantly.`,
+        beamAria: "The light of your payment travels to the merchant.",
         receipt: (sig: string) => `Simulated receipt · ${sig}`,
         ctaPanel: "Go to my plan",
         ctaStore: "Back to the store",

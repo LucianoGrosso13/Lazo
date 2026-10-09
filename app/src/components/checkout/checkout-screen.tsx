@@ -251,10 +251,6 @@ export function CheckoutScreen({
         interest: q.interest,
         interestTotalBps: q.interestTotalBps,
         total: q.total,
-        merchantReceives: q.merchantReceives,
-        merchantAdvance: q.merchantAdvance,
-        merchantPending: q.merchantPending,
-        settlementDays: q.settlementDays,
         installmentsCount: q.installmentsCount,
         provisional: q.provisional,
         eligible: q.eligible,
@@ -276,10 +272,6 @@ export function CheckoutScreen({
         interest: 0,
         interestTotalBps: 0,
         total: s.price,
-        merchantReceives: s.merchantReceives,
-        merchantAdvance: s.merchantReceives,
-        merchantPending: 0,
-        settlementDays: 0,
         installmentsCount: s.installments.length,
         provisional: false,
         eligible: s.withinTier,
@@ -550,7 +542,6 @@ export function CheckoutScreen({
                   clock={base?.clock}
                   config={config}
                   walletStatus={walletStatus}
-                  merchantName={merchantName}
                   planPicker={
                     options && options.length > 1
                       ? {

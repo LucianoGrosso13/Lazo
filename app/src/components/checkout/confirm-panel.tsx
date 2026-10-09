@@ -101,12 +101,6 @@ export function ConfirmPanel({
           intervalDays,
         ).map((d) => dateFmt.format(new Date(d * 1000)))
       : [];
-  const settleDate =
-    clock && quote.settlementDays > 0
-      ? dateFmt.format(
-          new Date((clock.now + quote.settlementDays * clock.secondsPerDay) * 1000),
-        )
-      : null;
 
   const busy = flow.kind === "running";
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -141,25 +135,6 @@ export function ConfirmPanel({
           <div className={styles.row}>
             <dt className={styles.rowKey}>{t.rows.network}</dt>
             <dd className={styles.rowVal}>{t.networkValue}</dd>
-          </div>
-          <div className={styles.row}>
-            <dt className={styles.rowKey}>{t.rows.merchant}</dt>
-            <dd className={styles.rowVal}>
-              {quote.settlementDays === 0 ? (
-                <>
-                  US$ {fmt(quote.merchantReceives)}{" "}
-                  <span className={styles.due}>{t.instantly}</span>
-                </>
-              ) : (
-                <>
-                  {t.merchantLater(
-                    fmt(quote.merchantAdvance),
-                    fmt(quote.merchantPending),
-                    settleDate ?? "…",
-                  )}
-                </>
-              )}
-            </dd>
           </div>
           <div className={styles.row}>
             <dt className={styles.rowKey}>{t.rows.after}</dt>
