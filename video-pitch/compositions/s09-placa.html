@@ -107,9 +107,18 @@
                 color: var(--ink-2);
               }
         #plate-url {
+                display: flex;
+                align-items: center;
+                gap: 14px;
                 font-family: var(--mono);
-                font-size: 28px;
-                margin-top: 30px;
+                font-size: 30px;
+                line-height: 1;
+                color: var(--ink);
+                background: rgb(13 10 23 / 0.86);
+                border: 2px solid var(--hair);
+                border-radius: 999px;
+                padding: 16px 28px;
+                margin-top: 26px;
               }
         #plate-chip {
                 left: 0;
@@ -135,6 +144,7 @@
           <div data-hf-id="hf-dkyl" id="plate-stack" class="abs">
             <div data-hf-id="hf-3vz8" id="plate-word">Lazo</div>
             <div data-hf-id="hf-0idb" id="plate-line">Earning a living should be enough to get access to credit.</div>
+            <div id="plate-url"><span class="dot"></span>lazo-cuotas.vercel.app</div>
           </div>
         </div>
       
@@ -194,6 +204,7 @@
       tl.fromTo("#plate-logo-wrap", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }, 107.6 - S);
       tl.fromTo("#plate-word", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 108.1 - S);
       tl.fromTo("#plate-line", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 108.5 - S);
+      tl.fromTo("#plate-url", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 109.1 - S);
       tl.to("#fade-black", { opacity: 1, duration: 0.8, ease: "power1.in" }, 113.2 - S);
 
       

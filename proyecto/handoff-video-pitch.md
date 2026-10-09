@@ -4,6 +4,12 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 
 ## Estado
 
+### Final con link y versión con subtítulos (2026-10-09, quinta sesión)
+
+- Luciano pidió poner el link de la página: la placa final muestra la píldora `lazo-cuotas.vercel.app` (entra en 109,1 s) bajo la frase. **Esta es la versión final:** `video-pitch/renders/lazo-pitch-final.mp4` (1:54, 1080p, sin música; reemplaza al final anterior, que sigue igual en `lazo-pitch-v3-sin-musica.mp4`).
+- Versión de prueba con **subtítulos en inglés quemados**: `video-pitch/renders/lazo-pitch-final-subs-en.mp4`. Los subtítulos salen de `transcript-parakeet.json` (Parakeet, más preciso que el `transcript.json` viejo) con los errores del reconocimiento corregidos a mano (`FIXES` en `scripts/build-subs.py`: paystub, fintech, "That pool lives on Solana"…). Van abajo; cuando hay una tarjeta a la izquierda se corren a la derecha y viceversa.
+- `python3 scripts/build-subs.py` regenera `compositions/s10-subs.html`, el `.srt` (`video-pitch/lazo-pitch-subs-en.srt`, para subir como subtítulo aparte en YouTube) y una copia para render en `/tmp/lazo-pitch-subs/` (index.html con la capa encima; no se deja en el repo porque dos index en la raíz rompen `check`). Render: `npx hyperframes@0.8.142 render /tmp/lazo-pitch-subs -o "$PWD/renders/lazo-pitch-final-subs-en.mp4" --workers 4 --low-memory-mode`.
+
 ### v3 (2026-10-09, cuarta sesión)
 
 - Luciano eligió la **placa normal**: se sacó la placa de drones y la frase repetida de `index.html`, que vuelve a durar 114 s (`s09b-drones.html` queda en el repo como alternativa, sin usar).
