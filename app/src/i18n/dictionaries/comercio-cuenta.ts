@@ -29,10 +29,16 @@ export const comercioCuenta = defineDict({
       "Esta dirección no tiene una cuenta de comercio en el protocolo (todavía).",
     saldoLabel: "Cobrado",
     saldoHint: "Saldo de cobros en devUSDC. La mora del comprador no lo toca.",
-    pendienteLabel: "Pendiente de cobro",
-    pendienteHint: "Se acredita en la fecha de cobro de cada venta.",
+    garantizadoLabel: "Garantizado por cobrar",
+    garantizadoHint:
+      "Lazo garantiza cada tramo en su fecha, aunque el comprador se atrase.",
+    garantizadoVacio:
+      "Sin cobros diferidos pendientes. Cuando vendas con plazo, cada tramo aparece acá con su fecha y su monto.",
+    garantizadoCobroUnico: "Cobro diferido",
     ventasTitle: "Ventas en cuotas",
     ventasCount: "{count} ventas",
+    ventasVerTodas: "Ver todas ({count})",
+    ventasVerMenos: "Ver menos",
     ventasVacia:
       "Todavía no hay ventas registradas. Cuando un comprador compra en cuotas, el cobro aparece acá al instante.",
     colFecha: "Fecha",
@@ -145,10 +151,16 @@ export const comercioCuenta = defineDict({
     noRegistradoBody: "This address has no merchant account in the protocol (yet).",
     saldoLabel: "Collected",
     saldoHint: "Payout balance in devUSDC. Buyer delinquency never touches it.",
-    pendienteLabel: "Pending payout",
-    pendienteHint: "It settles on each sale's payout date.",
+    garantizadoLabel: "Guaranteed payout",
+    garantizadoHint:
+      "Lazo guarantees each tranche on its date, even if the buyer falls behind.",
+    garantizadoVacio:
+      "No deferred payouts pending. When you sell on a term, each tranche shows up here with its date and amount.",
+    garantizadoCobroUnico: "Deferred payout",
     ventasTitle: "Installment sales",
     ventasCount: "{count} sales",
+    ventasVerTodas: "View all ({count})",
+    ventasVerMenos: "Show less",
     ventasVacia:
       "No sales recorded yet. When a buyer buys in installments, the payout shows up here instantly.",
     colFecha: "Date",

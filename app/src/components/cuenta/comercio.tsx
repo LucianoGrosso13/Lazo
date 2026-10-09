@@ -7,12 +7,14 @@
 import { isAddress } from "@solana/kit";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ReferenceTag } from "@/components/ui/badges";
-import { BigNumber } from "@/components/ui/big-number";
+import { BigNumber } from "@/components/ui/count-up-number";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { GlassPanel, GlassSlab } from "@/components/ui/glass";
+import { useInView } from "@/components/ui/use-in-view";
+import { CollapsibleHistory } from "@/components/ui/visual-primitives";
 import { comercioCuenta } from "@/i18n/dictionaries/comercio-cuenta";
 import { cuentas } from "@/i18n/dictionaries/cuentas";
 import { useLocale, useT } from "@/i18n/locale";
@@ -29,8 +31,10 @@ import {
   settlementOptionsOf,
   payoutSchedule,
   type Merchant,
+  type Micro,
   type ProtocolConfig,
   type Quote,
+  type Sale,
   type SettlementId,
   type SettlementOption,
   type UnixSeconds,
@@ -38,6 +42,8 @@ import {
 } from "@/lib/cuotas";
 import { REFERENCE_FIGURES } from "@/lib/cuotas/reference-figures";
 import { useCuotasQuery } from "@/lib/use-cuotas";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import styles from "./comercio.module.css";
 import { useAccount } from "./account-context";
 import { EvidenceMark, ModeBadge } from "./evidencia";
 import {
@@ -273,153 +279,286 @@ function AccesoMostrador() {
   );
 }
 
-function DatosComercio({ merchant }: { merchant: Merchant }) {
+/** Un cobro pendiente del calendario garantizado: tramo o pendiente legado. */
+interface CobroPendiente {
+  key: string;
+  releaseAt: UnixSeconds;
+  amount: Micro;
+  detalle: string;
+}
+
+/**
+ * "Garantizado por cobrar": el total diferido más una mini línea de tiempo
+ * con fecha y monto de cada tramo pendiente. El dato sale de los
+ * `payoutTranches`/`pendingSettlement` de cada venta; el cliente real no
+ * los expone todavía, así que en ese modo el bloque no se muestra.
+ */
+function GarantizadoCobro({ merchant }: { merchant: Merchant }) {
   const t = useT(comercioCuenta);
   const { locale } = useLocale();
-  const ventas = merchant.sales;
-  const pendienteTotal = merchant.pendingSettlement ?? 0;
+  const { ref, entered } = useInView<HTMLOListElement>();
+  const reduced = useReducedMotion();
+
+  const pendientes: CobroPendiente[] = merchant.sales.flatMap((s) => {
+    const tramos = s.payoutTranches ?? [];
+    if (tramos.length > 0) {
+      return tramos
+        .filter((tr) => !tr.released)
+        .map((tr) => ({
+          key: `${s.planId}-${tr.index}`,
+          releaseAt: tr.releaseAt,
+          amount: tr.amount,
+          detalle: t.tramoNumero
+            .replace("{index}", String(tr.index + 1))
+            .replace("{total}", String(tramos.length)),
+        }));
+    }
+    const pendiente = s.pendingSettlement ?? 0;
+    return pendiente > 0
+      ? [
+          {
+            key: `${s.planId}-total`,
+            releaseAt: s.settlementAt ?? s.at,
+            amount: pendiente,
+            detalle: t.garantizadoCobroUnico,
+          },
+        ]
+      : [];
+  });
+  pendientes.sort((a, b) => a.releaseAt - b.releaseAt || a.key.localeCompare(b.key));
+
+  if (merchant.pendingSettlement === undefined) return null;
+  const total = merchant.pendingSettlement;
+
+  return (
+    <GlassPanel
+      data-testid="comercio-garantizado"
+      className="relative flex flex-col overflow-hidden px-5 py-5"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_100%_0%,var(--accent-soft),transparent_62%)]"
+      />
+      <p className="font-num text-measure uppercase tracking-[0.14em] text-ink-ghost">
+        {t.garantizadoLabel}
+      </p>
+      <p className="mt-3">
+        <BigNumber amount={total} currency="US$" size="lg" />
+        <span className="ml-2 align-middle font-num text-xs text-ink-ghost">devUSDC</span>
+      </p>
+      <p className="mt-2 text-xs leading-relaxed text-ink-2">{t.garantizadoHint}</p>
+      {pendientes.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-accent px-4 py-3 text-sm leading-relaxed text-ink-2">
+          {t.garantizadoVacio}
+        </p>
+      ) : (
+        <ol
+          ref={ref}
+          data-entered={(entered && !reduced) || undefined}
+          aria-label={t.garantizadoLabel}
+          className={`${styles.timeline} mt-4`}
+        >
+          {pendientes.map((p, i) => (
+            <li
+              key={p.key}
+              data-testid="comercio-tramo"
+              data-next={i === 0 || undefined}
+              className={styles.timelineItem}
+              style={{ "--i": i } as CSSProperties}
+            >
+              <span aria-hidden className={styles.timelineDot} />
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="font-num text-sm tabular-nums text-accent">
+                    {fmtDia(p.releaseAt, locale)}
+                  </span>
+                  <span className="font-num text-sm tabular-nums text-beam">
+                    US$ {formatUsdc(p.amount, locale)}
+                  </span>
+                </span>
+                <span className="text-xs text-ink-ghost">{p.detalle}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </GlassPanel>
+  );
+}
+
+/** Una venta dentro del historial plegable. */
+function VentaItem({ s, locale }: { s: Sale; locale: "es" | "en" }) {
+  const t = useT(comercioCuenta);
+  const pendienteVenta = s.pendingSettlement ?? 0;
+  const settled = s.settled ?? true;
+  const days = s.settlementDays ?? 0;
+  const plazo = days === 0 ? t.plazoHoy : t.plazoDias.replace("{dias}", String(days));
+  const cobroAt = s.settlementAt ?? s.at;
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm text-ink-3">{fmtFecha(s.at, locale)}</span>
+        <span
+          className="font-num text-xs tabular-nums text-ink-ghost"
+          title={s.planId}
+        >
+          {t.colPrecio} {formatUsdc(s.price, locale)}
+        </span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+        <span className="font-num text-lg tabular-nums text-beam">
+          {formatUsdc(s.received - pendienteVenta, locale)}
+          <span className="ml-1.5 text-xs font-normal text-ink-ghost">{t.colCobrado}</span>
+        </span>
+        <span className="flex flex-wrap items-center gap-2 text-xs text-ink-3">
+          <Chip>{plazo}</Chip>
+          <Chip on={settled}>{settled ? t.estadoCobrada : t.estadoPendiente}</Chip>
+          <span className="font-num tabular-nums">
+            {t.colComision} {formatUsdc(s.fee, locale)}
+          </span>
+          <EvidenceMark evidence={{ kind: "signature", signature: s.signature }} />
+        </span>
+      </div>
+      {s.payoutTranches && s.payoutTranches.length > 0 ? (
+        <div className="mt-3 rounded-xl border border-beam/10 bg-beam/[0.02] p-3 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-beam/8 pb-2 text-ink-3">
+            <span className="font-medium text-ink-2">{t.calendarioTramosVenta}</span>
+            <span className="text-ink-ghost">
+              {t.anticipoCobrado}:{" "}
+              <span className="font-num tabular-nums text-beam">
+                US$ {formatUsdc(s.downPayment, locale)}
+              </span>
+            </span>
+          </div>
+          <ul className="mt-2 space-y-1.5">
+            {s.payoutTranches.map((tr) => (
+              <li
+                key={tr.index}
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-beam/[0.03] px-2.5 py-1.5"
+              >
+                <span className="flex items-center gap-2 text-ink">
+                  <span
+                    aria-hidden
+                    className={`size-2 shrink-0 rounded-full ${
+                      tr.released
+                        ? "bg-green"
+                        : "bg-cyan shadow-[0_0_6px_rgb(0_194_255/0.5)]"
+                    }`}
+                  />
+                  <span className="font-medium">
+                    {t.tramoNumero
+                      .replace("{index}", String(tr.index + 1))
+                      .replace("{total}", String(s.payoutTranches!.length))}
+                  </span>
+                  <span className="text-ink-ghost">· {fmtDia(tr.releaseAt, locale)}</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="font-num text-sm tabular-nums font-medium text-beam">
+                    US$ {formatUsdc(tr.amount, locale)}
+                  </span>
+                  <Chip on={tr.released}>
+                    {tr.released ? t.estadoLiberado : t.estadoPendiente}
+                  </Chip>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : days > 0 ? (
+        <p className="mt-1.5 text-xs leading-relaxed text-ink-ghost">
+          {settled
+            ? t.ventaCobradaDetalle.replace("{fecha}", fmtDia(cobroAt, locale))
+            : t.ventaPendienteDetalle
+                .replace("{monto}", `US$ ${formatUsdc(pendienteVenta, locale)}`)
+                .replace("{fecha}", fmtDia(cobroAt, locale))}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Lo primero que ve el comercio: lo cobrado (en grande) al lado de lo que
+ * Lazo garantiza cobrar en fecha; abajo la venta en mostrador y las ventas
+ * en cuotas como historial plegable.
+ */
+function DatosComercio({
+  merchant,
+  mostrador,
+}: {
+  merchant: Merchant;
+  mostrador: boolean;
+}) {
+  const t = useT(comercioCuenta);
+  const { locale } = useLocale();
+  // La lectura llega en orden cronológico; el historial muestra lo último.
+  const ventas = [...merchant.sales].reverse();
   const pendienteVentas = ventas.reduce((acc, s) => acc + (s.pendingSettlement ?? 0), 0);
   const cobrado = ventas.reduce((acc, s) => acc + s.received - (s.pendingSettlement ?? 0), 0);
   const comisiones = ventas.reduce((acc, s) => acc + s.fee, 0);
+  const conCalendario = merchant.pendingSettlement !== undefined;
 
   return (
     <div data-testid="comercio-datos" className="space-y-6">
-      <GlassSlab>
-        <div className="px-6 py-7 sm:px-8">
-          <p className="font-num text-measure uppercase tracking-[0.14em] text-ink-ghost">
-            {t.saldoLabel}
-          </p>
-          <p className="mt-3">
-            <BigNumber amount={merchant.settlementBalance} currency="US$" size="display" />
-            <span className="ml-2 align-middle font-num text-sm text-ink-ghost">devUSDC</span>
-          </p>
-          <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-            {t.saldoHint} {t.sinCargoDeMora}
-          </p>
-          <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-beam/8 pt-4">
-            <span className="text-sm text-ink-2">{t.pendienteLabel}</span>
-            <span className="font-num tabular-nums text-beam">
-              US$ {formatUsdc(pendienteTotal, locale)}
-            </span>
-            <span className="font-num text-xs text-ink-ghost">devUSDC</span>
-            <span className="text-xs leading-relaxed text-ink-ghost">{t.pendienteHint}</span>
-          </div>
-          {ventas.length > 0 && (
-            <div className="mt-6">
-              <SplitBanda
-                recibido={cobrado}
-                pendiente={pendienteVentas}
-                comision={comisiones}
-                locale={locale}
-                labelCobras={t.splitCobras}
-                labelPendiente={t.splitPendiente}
-                labelComision={t.splitComision}
+      <div
+        className={`grid items-stretch gap-5 ${
+          conCalendario ? "md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]" : ""
+        }`}
+      >
+        <GlassSlab className="h-full">
+          <div className="px-6 py-7 sm:px-8">
+            <p className="font-num text-measure uppercase tracking-[0.14em] text-ink-ghost">
+              {t.saldoLabel}
+            </p>
+            <p className="mt-3">
+              <BigNumber
+                amount={merchant.settlementBalance}
+                currency="US$"
+                size={conCalendario ? "xl" : "display"}
               />
-            </div>
-          )}
-        </div>
-      </GlassSlab>
+              <span className="ml-2 align-middle font-num text-sm text-ink-ghost">devUSDC</span>
+            </p>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
+              {t.saldoHint} {t.sinCargoDeMora}
+            </p>
+            {ventas.length > 0 && (
+              <div className="mt-6">
+                <SplitBanda
+                  recibido={cobrado}
+                  pendiente={pendienteVentas}
+                  comision={comisiones}
+                  locale={locale}
+                  labelCobras={t.splitCobras}
+                  labelPendiente={t.splitPendiente}
+                  labelComision={t.splitComision}
+                />
+              </div>
+            )}
+          </div>
+        </GlassSlab>
+        <GarantizadoCobro merchant={merchant} />
+      </div>
 
-      <GlassPanel className="px-5 py-5">
+      {mostrador && <AccesoMostrador />}
+
+      <GlassPanel data-testid="comercio-ventas" className="px-5 py-5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-base font-semibold text-beam">{t.ventasTitle}</h2>
           <span className="font-num text-xs tabular-nums text-ink-ghost">
             {t.ventasCount.replace("{count}", String(ventas.length))}
           </span>
         </div>
-        {ventas.length === 0 ? (
-          <p className="mt-4 text-sm leading-relaxed text-ink-2">{t.ventasVacia}</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-beam/8">
-            {ventas.map((s) => {
-              const pendienteVenta = s.pendingSettlement ?? 0;
-              const settled = s.settled ?? true;
-              const days = s.settlementDays ?? 0;
-              const plazo =
-                days === 0 ? t.plazoHoy : t.plazoDias.replace("{dias}", String(days));
-              const cobroAt = s.settlementAt ?? s.at;
-              return (
-                <li key={s.planId} className="py-3 first:pt-2 last:pb-1">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-ink-3">{fmtFecha(s.at, locale)}</span>
-                    <span className="font-num text-xs tabular-nums text-ink-ghost" title={s.planId}>
-                      {t.colPrecio} {formatUsdc(s.price, locale)}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-                    <span className="font-num text-lg tabular-nums text-beam">
-                      {formatUsdc(s.received - pendienteVenta, locale)}
-                      <span className="ml-1.5 text-xs font-normal text-ink-ghost">
-                        {t.colCobrado}
-                      </span>
-                    </span>
-                    <span className="flex flex-wrap items-center gap-2 text-xs text-ink-3">
-                      <Chip>{plazo}</Chip>
-                      <Chip on={settled}>
-                        {settled ? t.estadoCobrada : t.estadoPendiente}
-                      </Chip>
-                      <span className="font-num tabular-nums">
-                        {t.colComision} {formatUsdc(s.fee, locale)}
-                      </span>
-                      <EvidenceMark evidence={{ kind: "signature", signature: s.signature }} />
-                    </span>
-                  </div>
-                  {s.payoutTranches && s.payoutTranches.length > 0 ? (
-                    <div className="mt-3 rounded-xl border border-beam/10 bg-beam/[0.02] p-3 text-xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-beam/8 pb-2 text-ink-3">
-                        <span className="font-medium text-ink-2">{t.calendarioTramosVenta}</span>
-                        <span className="text-ink-ghost">
-                          {t.anticipoCobrado}: <span className="font-num tabular-nums text-beam">US$ {formatUsdc(s.downPayment, locale)}</span>
-                        </span>
-                      </div>
-                      <ul className="mt-2 space-y-1.5">
-                        {s.payoutTranches.map((tr) => (
-                          <li
-                            key={tr.index}
-                            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-beam/[0.03] px-2.5 py-1.5"
-                          >
-                            <span className="flex items-center gap-2 text-ink">
-                              <span
-                                aria-hidden
-                                className={`size-2 shrink-0 rounded-full ${
-                                  tr.released
-                                    ? "bg-green"
-                                    : "bg-cyan shadow-[0_0_6px_rgb(0_194_255/0.5)]"
-                                }`}
-                              />
-                              <span className="font-medium">
-                                {t.tramoNumero
-                                  .replace("{index}", String(tr.index + 1))
-                                  .replace("{total}", String(s.payoutTranches!.length))}
-                              </span>
-                              <span className="text-ink-ghost">· {fmtDia(tr.releaseAt, locale)}</span>
-                            </span>
-                            <span className="flex items-center gap-2">
-                              <span className="font-num text-sm tabular-nums text-beam font-medium">
-                                US$ {formatUsdc(tr.amount, locale)}
-                              </span>
-                              <Chip on={tr.released}>
-                                {tr.released ? t.estadoLiberado : t.estadoPendiente}
-                              </Chip>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : days > 0 ? (
-                    <p className="mt-1.5 text-xs leading-relaxed text-ink-ghost">
-                      {settled
-                        ? t.ventaCobradaDetalle.replace("{fecha}", fmtDia(cobroAt, locale))
-                        : t.ventaPendienteDetalle
-                            .replace("{monto}", `US$ ${formatUsdc(pendienteVenta, locale)}`)
-                            .replace("{fecha}", fmtDia(cobroAt, locale))}
-                    </p>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <CollapsibleHistory
+          className="mt-1"
+          items={ventas.map((s) => (
+            <VentaItem key={s.planId} s={s} locale={locale} />
+          ))}
+          label={t.ventasTitle}
+          visibleCount={3}
+          expandLabel={t.ventasVerTodas.replace("{count}", String(ventas.length))}
+          collapseLabel={t.ventasVerMenos}
+          empty={<p className="py-1 text-sm leading-relaxed text-ink-2">{t.ventasVacia}</p>}
+        />
       </GlassPanel>
     </div>
   );
@@ -743,7 +882,11 @@ export function ComercioView({
   const nombre = merchant.data?.name;
 
   return (
-    <div data-testid="comercio-panel" className="mx-auto w-full max-w-3xl space-y-6">
+    <div
+      data-testid="comercio-panel"
+      data-role="merchant"
+      className="mx-auto w-full max-w-3xl space-y-6"
+    >
       <header>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight text-beam sm:text-3xl">
@@ -779,9 +922,8 @@ export function ComercioView({
       >
         {(m) => (
           <div className="space-y-6">
-            <DatosComercio merchant={m} />
+            <DatosComercio merchant={m} mostrador={variante === "cuenta"} />
             <PlazosCobro owner={address} merchant={m} editable={variante === "cuenta"} />
-            {variante === "cuenta" && <AccesoMostrador />}
             {variante === "cuenta" && <HistorialLiberaciones owner={address} />}
           </div>
         )}
