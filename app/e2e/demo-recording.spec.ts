@@ -75,13 +75,17 @@ test("restored uncertain payment opens its original review and never resends", a
   await page.getByRole("button", { name: /pagar anticipo|pay down/i }).click();
   await page.getByRole("button", { name: /firmar y abrir|sign & open/i }).click();
   await expect(page.getByTestId("plan-calendar")).toBeVisible();
-  await page.evaluate((student) => {
+  // Install the controlled observation before the next document loads:
+  // the previous page's live mock store must not overwrite the fixture.
+  await page.addInitScript((student) => {
     const state = JSON.parse(localStorage.getItem("lazo.mock.v3")!);
     const plan = state.plans.find((p: { student: string }) => p.student === student);
     // Controlled late observation: installment 2 looks paid, but an
     // unrelated/unknown signature is not proof of this payment.
     plan.installments[0].status = "Paid";
     plan.installments[1].status = "Paid";
+    plan.installments[0].paidAt = plan.openedAt + 1;
+    plan.installments[1].paidAt = plan.openedAt + 2;
     localStorage.setItem("lazo.mock.v3", JSON.stringify(state));
     sessionStorage.setItem(`lazo.pay.pending.${student}.${plan.id}`, JSON.stringify({
       operation: "pay_installment", student, planId: plan.id,

@@ -247,7 +247,7 @@ export function usePayInstallment({
         data-testid="pay-installment-cta"
         disabled={flow.kind === "running"}
       >
-        {t.cta(nextUp.index + 1, formatUsdc(due, locale))}
+        {t.cta(nextUp.index + 1, formatUsdc(dueOf(nextUp), locale))}
       </Button>
     ) : null;
 
