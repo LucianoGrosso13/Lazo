@@ -1,6 +1,6 @@
 # Demo happy path — devnet purchase + first installment
 
-Status tracker for the `integration/demo-happy-path` branch. Local Markdown tickets — no GitHub issue IDs; reference paths below.
+Status tracker: tickets 01/02 merged into `main` through PR #6; ticket 03 fixes and evidence live on `t3-verificar-recorrido`. Local Markdown tickets — no GitHub issue IDs; reference paths below.
 
 ## Scope
 
@@ -12,7 +12,7 @@ Executable tickets, sequential DAG 01 → 02 → 03:
 2. `.scratch/demo-happy-path-tickets/issues/02-pagar-primera-cuota.md` — early payment of installment 1, updated plan/balance, real receipt, persistence across reload.
 3. `.scratch/demo-happy-path-tickets/issues/03-verificar-recorrido-para-grabar.md` — full-journey verification and short EN recording runbook.
 
-Background: `proyecto/12-demo-happy-path.md` (interview + done criteria), `proyecto/handoff-demo-devnet.md` (chain state: devnet still runs the pre-credit artifact; upgrade runbook in `programa/UPGRADE_DEVNET.md`), local tracker `docs/agents/issue-tracker.md`. Devnet environment readiness is tracked separately in `docs/demo-happy-path-readiness.md` (different owner — do not edit here). Client/UI contract: `~/.agents/work-notes/lazo-demo-happy-path/client-contract.md`.
+Background: `proyecto/12-demo-happy-path.md` (interview + done criteria), `proyecto/handoff-demo-devnet.md` (chain state: devnet still runs the pre-credit artifact; upgrade runbook in `programa/UPGRADE_DEVNET.md`), local tracker `docs/agents/issue-tracker.md`. Devnet environment readiness and the unsigned first preparation proposal are tracked in `docs/demo-happy-path-readiness.md`. Client/UI contract: `~/.agents/work-notes/lazo-demo-happy-path/client-contract.md`.
 
 ## Status
 
@@ -21,6 +21,17 @@ Background: `proyecto/12-demo-happy-path.md` (interview + done criteria), `proye
 - **Ticket 03 — verification: partially covered.** EN recording runbook added (`docs/demo-happy-path-runbook.md`); the observed real run remains blocked as below.
 - **Expiry metadata: integrated end to end** (`0187d22` client + `0e8a4ab` UI bridge). Optional `lastValidBlockHeight` flows from `TxProgress`/`CuotasError`/`OperationSnapshot` through `OpenFlowState` (running/uncertain), `pending-op`/`pending-pay` save+load, and the restore/reconcile snapshots for purchase and payment — expiry is only actionable via finalized height + absence on reverify, never a clock timer.
 - **Real Phantom/devnet validation: BLOCKED.** Readiness check (`docs/demo-happy-path-readiness.md`) shows the deployed program still runs the pre-credit artifact with zero protocol accounts and devUSDC supply 0; it also requires prepared accounts/funds and explicit per-transaction approval — signing, sending, funding and deploying are never automatic. Ticket 03 cannot be done without observed Phantom receipts.
-- **Known limit:** the UI worker's broader suite run was interrupted at 52 files (15 pass, 1 fail: "admin registrar comercio") — uninvestigated; tracked as an open limitation, not assumed preexisting.
-- Verification on this branch so far: `npm run typecheck` clean, `npx vitest run` 30 files / 362 tests green.
+- **Admin registration check:** the previously reported failure did not reproduce; all five admin e2e cases passed in the ticket 03 verification run. No admin mutation behavior was changed.
+- Ticket 03 verification: typecheck, lint (zero warnings), production build and 33 Vitest files / 380 tests passed. The rebuilt local program passed 36 host tests and 142 LiteSVM acceptance tests, and `generate:check` confirmed Codama matches the fresh IDL. Full browser results are recorded in `docs/demo-happy-path-verification.md`.
 - Constraints: devnet only, test tokens only; every real transaction needs explicit approval and prior simulation; no secrets in repo or chat; business numbers come only from `ProtocolConfig`/quote/plan — the 1000/300/700 case is an acceptance expectation, not a constant.
+
+## Ticket 03 corrections
+
+- Removed render-time ref reads/writes, keeping the restored installment index in React state via the runner subscription. The subscription is installed before restoration, so an uncertain payment opens its verification panel after reload. Its review retains the original installment amount even if a later plan read advances the next unpaid installment.
+- Prevented late results from a reset runner generation from clearing a newer run; covered success, error and reconciliation results with regression tests.
+- Focus moves to review/success headings for keyboard navigation. Added EN desktop/mobile Tab/Enter rehearsals, precise amount/date/persistence checks, and a controlled uncertain-payment restore that cannot resend.
+- Fixed reduced-motion landing hydration: initial server/browser markup agrees, starting with a static brand before enhancing when motion is permitted. An e2e test failed on the original hydration error and passed after the fix.
+- Updated the stale calendar assertion to expect the ticket 02 payment CTA, removed unused variables, and made the Vitest config explicitly ESM (`.mts`). Tests require Node 24.13+ as documented in the README.
+- The upgrade runbook now uses normal 30/60/90-day dates for this take and records the newly rebuilt artifact rather than treating the historical hash as current.
+
+**Not done:** observed Phantom/devnet purchase and installment receipts. No actual preparation or payment transaction was signed or sent; the first buffer-close proposal was only simulated.

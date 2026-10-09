@@ -8,6 +8,29 @@
 
 **The devnet environment is NOT ready for the purchase take, as observed today.** The program on-chain is the old artifact without the credit lifecycle, and no protocol state accounts currently exist (no `ProtocolConfig`, `Pool`, `Merchant`, `Guarantee`, or `Plan` is visible on-chain now). The devUSDC mint exists with supply 0. No real purchase can be observed today; all preparation items below remain future operations requiring explicit per-transaction approval.
 
+## Ticket 03 recheck — 2026-10-09, 21:23–21:38 UTC
+
+Independent finalized RPC reads confirm the blocker: zero protocol-owned accounts, devUSDC supply `0`, deployer balance `0.22040056 SOL`, and deployed bytecode SHA-256 `8d05b07fd749c950d87d32396470402c5ae28749e53ab3e7079710269b7b2476` (ProgramData 469,869 bytes, slot 509,313,188).
+
+`NO_DNA=1 anchor build --arch v1 --ignore-keys` rebuilt the current source locally without deployment. The concrete new artifact is **668,592 bytes**, SHA-256 **`ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19`**. The toolchain differs from the historical build; the older 741,992-byte/hash reference below is historical and must not be treated as the output of this rebuild. Neither artifact has been deployed by this work.
+
+Fresh rent quote at 21:38:48 UTC (slot 509,317,151):
+
+| Preparation item | devnet SOL |
+|---|---:|
+| Stranded buffer recoverable balance | 2.38758476 |
+| Deployer balance after closing that buffer, before fees | 2.60798532 |
+| New 668,629-byte buffer rent | 3.39728556 |
+| New 668,637-byte ProgramData rent | 3.39732620 |
+| Additional ProgramData funding | 1.00974144 |
+| Funding shortfall before transaction fees | 1.79904168 |
+
+These are test funds, not a spending authorization. Refresh account balances/rent/fees before execution.
+
+**First concrete preparation transaction — simulated, not sent:** close only the stranded buffer `DUgcg4Y2FTujLeV1X4CQPVAogPyrgsHopZgnxP56ddNW`, returning its 2.38758476 devnet SOL to deployer `BY6ZB2WD76wLLTNoWg2sM14RbXsgivcwkgLK4dZWMehf`. Fee payer and required authority: that deployer. Loader: `BPFLoaderUpgradeab1e11111111111111111111111`. This closes the buffer, not the executable program. The unsigned proposal was built through `proposeTransaction`, after `assertDevnetRpc`, using zero-filled simulation signatures; simulation succeeded (`ok: true`, 2,370 compute units; loader log: “Closed Buffer”). No private key was accessed, no real signature obtained and no transaction sent. Local proposal: `/tmp/lazo-ticket03-close-buffer-proposal.json`; its blockhash will expire, so rebuild and simulate again immediately before an explicitly approved send. CLI key environment `CUOTAS_KEYS` is not configured in this session.
+
+The student public address and every actual preparation/purchase/payment approval remain pending. A mock rehearsal cannot fill the real-run receipt fields.
+
 ## Verified on-chain state (2026-10-09, finalized commitment)
 
 Queried via `https://api.devnet.solana.com` JSON-RPC (`getVersion`, `getEpochInfo`, `getAccountInfo`, `getBalance`, `getProgramAccounts`, `getSignaturesForAddress`) and `solana program dump`. RPC reported `solana-core 4.4.0-beta.0`; query slots ≈ 509,199,437–509,199,561, epoch 1178. Raw responses in the appendix.
