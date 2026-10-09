@@ -340,7 +340,6 @@ export function CheckoutScreen({
   if (prevWallet !== wallet) {
     setPrevWallet(wallet);
     runner.reset();
-    openExpiryRef.current = undefined;
     setStep("review");
   }
 

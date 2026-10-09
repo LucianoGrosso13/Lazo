@@ -81,6 +81,9 @@ export function usePayInstallment({
   // La cuota pagada queda congelada: al releer el plan la primera impaga
   // avanza y el título del éxito debe seguir nombrando a la que se pagó.
   const [paidIdx, setPaidIdx] = useState<number | null>(null);
+  // Índice restaurado de la cuota en duda: solo lo lee el callback de
+  // `runner.subscribe` (los refs no se leen durante render), que lo vuelca
+  // en `paidIdx` cuando la operación restaurada pasa a `uncertain`.
   const restoredIdxRef = useRef<number | null>(null);
   // La cuota esperada queda congelada al firmar/restaurar: persistir el
   // `nextUp` vivo reescribiría la entrada con otra cuota bajo la misma firma.
@@ -168,6 +171,21 @@ export function usePayInstallment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow, student, plan]);
 
+  // Una operación en duda (restaurada o recién lanzada) abre el panel de
+  // verificación sola: el usuario siempre ve el estado pendiente. Si la
+  // cuota pagada no se congeló con `sign`, venía de un restore. Va ANTES
+  // del efecto de restore: el callback tiene que estar instalado cuando
+  // `runner.restore` dispare `uncertain` para volcar el índice persistido
+  // en `paidIdx` (el título del panel lee `paidIdx`, no el ref).
+  useEffect(() => {
+    return runner.subscribe(() => {
+      if (runner.state().kind === "uncertain") {
+        setOpen(true);
+        setPaidIdx((i) => i ?? restoredIdxRef.current);
+      }
+    });
+  }, [runner]);
+
   // Restaurar un pago pendiente de ESTA wallet+plan: vuelve como `uncertain`
   // para reconciliar la firma original — nunca como un envío nuevo.
   useEffect(() => {
@@ -194,18 +212,6 @@ export function usePayInstallment({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [student, plan?.id, flow.kind, runner]);
-
-  // Una operación en duda (restaurada o recién lanzada) abre el panel de
-  // verificación sola: el usuario siempre ve el estado pendiente. Si la
-  // cuota pagada no se congeló con `sign`, venía de un restore.
-  useEffect(() => {
-    return runner.subscribe(() => {
-      if (runner.state().kind === "uncertain") {
-        setOpen(true);
-        setPaidIdx((i) => i ?? restoredIdxRef.current);
-      }
-    });
-  }, [runner]);
 
   // Avisar al padre del veredicto (una vez por firma) + refrescar saldos.
   const notifiedRef = useRef<string | null>(null);
@@ -257,7 +263,7 @@ export function usePayInstallment({
       <PayPanel
         plan={plan}
         student={student}
-        titleIndex={paidIdx ?? restoredIdxRef.current ?? nextUp?.index ?? 0}
+        titleIndex={paidIdx ?? nextUp?.index ?? 0}
         due={due}
         flow={flow}
         onClose={() => {
