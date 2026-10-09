@@ -9,6 +9,12 @@ mode: autonomous
 
 # Lazo — video pitch 2:00 · v1
 
+## v3 — feedback de Luciano (9/10, tarde)
+
+- Final elegido: **placa normal** (`s09-placa`). Sin drones; `index.html` dura 114 s.
+- Panel INDEC a pantalla completa: 13,9–19,7 s (1 s menos).
+- Música tranqui pendiente del CLI de HeyGen.
+
 ## v2 — feedback de Luciano (9/10), prevalece sobre los frames de abajo
 
 - **Toma:** grade natural "C" (algo de calidez, contraste y color de piel) y fundido de 10 cuadros en cada empalme de tomas, ambos horneados en `edit.mp4` por `scripts/build-edit.py`. Sin saltos de escala ni zoom final; solo un push 1→1,03 en el hook.

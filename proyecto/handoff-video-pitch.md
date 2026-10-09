@@ -4,6 +4,13 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 
 ## Estado
 
+### v3 (2026-10-09, cuarta sesión)
+
+- Luciano eligió la **placa normal**: se sacó la placa de drones y la frase repetida de `index.html`, que vuelve a durar 114 s (`s09b-drones.html` queda en el repo como alternativa, sin usar).
+- Panel del 45 % a pantalla completa 1 s más corto: sale a 19,7 s (antes 20,7 s); sigue tapando el empalme de 17,53 s.
+- Render sin música: `video-pitch/renders/lazo-pitch-v3-sin-musica.mp4` (fuera de git).
+- **Música:** Luciano instala el CLI de HeyGen; con eso se busca una cama tranqui en el catálogo y se mezcla (pasos en § v1).
+
 ### v2 (2026-10-09, tercera sesión)
 
 - Feedback de Luciano implementado (detalle en `video-pitch/STORYBOARD.md` § v2): grade natural, fundidos en los cortes, checklist en el hook, 45 % y tarjetas sobre las remeras, comercio sin resta, pool a pantalla completa con reglas, mapa de Argentina con comercios, placa sin URL ni devnet, y placa alternativa con show de drones.
