@@ -49,21 +49,86 @@ for (const locale of ["en", "es"] as const) {
   });
 }
 
+const timeline = "section[aria-labelledby='guarantor-title']";
+
 test("guarantor timeline markers are keyboard buttons with selected state", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
-  const markers = page.locator("section[aria-labelledby='guarantor-title'] button[data-kind]");
+  const markers = page.locator(`${timeline} button[data-kind]`);
   await expect(markers).toHaveCount(6);
-  await expect(markers.nth(1)).toHaveAttribute("aria-pressed", "true");
-  await markers.nth(0).focus();
+  await markers.nth(2).focus();
   await page.keyboard.press("Enter");
+  await expect(markers.nth(2)).toHaveAttribute("aria-pressed", "true");
+  // Un solo hito activo a la vez, declarado con data-active.
+  await expect(markers.nth(2)).toHaveAttribute("data-active", "true");
+  await expect(page.locator(`${timeline} button[data-active='true']`)).toHaveCount(1);
+});
+
+test("the late-payment timeline advances on its own and stops when a milestone is tapped", async ({ page }) => {
+  // fastForward salta el reloj sin dibujar cada frame del prisma 3D.
+  test.setTimeout(90_000);
+  await page.clock.install();
+  await page.goto("/", { waitUntil: "networkidle" });
+  const markers = page.locator(`${timeline} button[data-kind]`);
+  // scrollIntoView directo: el reloj falso congela la espera de estabilidad.
+  await markers.nth(0).evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await page.mouse.move(0, 0);
   await expect(markers.nth(0)).toHaveAttribute("aria-pressed", "true");
-  // El estado seleccionado se declara con data-active (las primitivas
-  // animate-ui/Highlight se retiraron en el checkpoint UX/UI): un solo
-  // marcador queda activo a la vez.
-  await expect(markers.nth(0)).toHaveAttribute("data-active", "true");
-  await expect(
-    page.locator(
-      "section[aria-labelledby='guarantor-title'] button[data-active='true']",
-    ),
-  ).toHaveCount(1);
+  await page.clock.fastForward(2600);
+  await expect(markers.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await page.clock.fastForward(2600);
+  await expect(markers.nth(2)).toHaveAttribute("aria-pressed", "true");
+  // Tocar un hito lo selecciona y detiene la línea.
+  await markers.nth(4).click({ force: true });
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(2600);
+  await page.clock.fastForward(2600);
+  await page.clock.fastForward(2600);
+  await expect(markers.nth(4)).toHaveAttribute("aria-pressed", "true");
+  // Reproducir la retoma.
+  await page.getByRole("button", { name: /reproducir la línea|play the late-payment/i }).click({ force: true });
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(2600);
+  await expect(markers.nth(5)).toHaveAttribute("aria-pressed", "true");
+});
+
+test.describe("late-payment timeline with reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("stays still with every milestone visible", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/", { waitUntil: "networkidle" });
+    const markers = page.locator(`${timeline} button[data-kind]`);
+    await markers.nth(0).evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await expect(markers.nth(0)).toHaveAttribute("aria-pressed", "true");
+    await page.clock.fastForward(2600);
+    await page.clock.fastForward(2600);
+    await page.clock.fastForward(2600);
+    await expect(markers.nth(0)).toHaveAttribute("aria-pressed", "true");
+    for (let i = 0; i < 6; i++) await expect(markers.nth(i)).toBeVisible();
+  });
+});
+
+test("cost comparison shows big rates and total-cost bars with the reference label", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("lazo.locale", "es"));
+  await page.goto("/", { waitUntil: "networkidle" });
+  const section = page.locator("section[aria-labelledby='comparison-title']");
+  const bars = section.getByRole("list", { name: "Costo total en US$ de la compra de referencia" });
+  await bars.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await expect(bars.getByRole("listitem")).toHaveCount(4);
+  await expect(bars).toContainText("US$ 1.000");
+  await expect(bars).toContainText(/CFTEA 76%/);
+  await expect(section.getByText("referencia").first()).toBeVisible();
+  await expect(section.getByText(/Fuente:/)).toBeVisible();
+});
+
+test("Lazo numbers compare merchant fees and pool yield in bars", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("lazo.locale", "es"));
+  await page.goto("/", { waitUntil: "networkidle" });
+  const section = page.locator("section[aria-labelledby='benefits-title']");
+  const fees = section.getByRole("list", { name: "Comisión del comercio sobre lo financiado" });
+  await fees.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await expect(fees.getByRole("listitem")).toHaveCount(6);
+  await expect(fees).toContainText("Billeteras");
+  const pool = section.getByRole("list", { name: /Rendimiento anual del pool/ });
+  await expect(pool).toContainText("Kamino");
+  await expect(pool).toContainText("Jupiter");
 });
