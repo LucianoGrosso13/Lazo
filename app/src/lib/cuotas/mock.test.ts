@@ -78,7 +78,7 @@ describe("reputación y fiador", () => {
     expect(g!.active).toBe(true);
     expect(g!.maxPurchase).toBe(toMicro(1000));
     expect(g!.coverageMax).toBe(toMicro(1000));
-    expect(g!.display?.guarantorName).toBe("Fiador de ejemplo");
+    expect(g!.display?.guarantorName).toBe("Garante de ejemplo");
     expect(g!.display?.cardLabel).toBe("Visa •••• 4242");
   });
 

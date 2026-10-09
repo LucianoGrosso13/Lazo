@@ -11,15 +11,15 @@ export const cuentas = defineDict({
       demoSelectorLabel: "Ver como (demo)",
       demoHint: "Selector de ejemplo: solo recorre, no autoriza operaciones reales.",
       demoOptions: {
-        "student-new": "Estudiante nuevo",
-        "student-tier3": "Estudiante · Tier 4 · Full",
+        "student-new": "Comprador nuevo",
+        "student-tier3": "Comprador · Tier 4 · Full",
         merchant: "Comercio",
         admin: "Admin",
         guarantor: "Garante (por invitación)",
       },
     },
     roles: {
-      student: "Estudiante",
+      student: "Comprador",
       merchant: "Comercio",
       admin: "Administrador",
       guarantor: "Garante",
@@ -27,7 +27,7 @@ export const cuentas = defineDict({
     entry: {
       title: "Entrá a tu cuenta",
       subtitle:
-        "Una sola entrada detecta si sos estudiante, comercio o administrador por tu wallet. El fiador entra por su enlace, sin wallet.",
+        "Una sola entrada detecta si sos comprador, comercio o administrador por tu wallet. El garante entra por su enlace, sin wallet.",
       walletExplainer:
         "Una wallet es tu identidad en Solana: conectás Phantom y listo, sin contraseña ni datos personales.",
       devnetExplainer:
@@ -38,7 +38,7 @@ export const cuentas = defineDict({
       errorRetry: "Reintentar",
       roleDetectedAdmin: "Sos la autoridad administradora configurada",
       roleDetectedMerchant: "Tenés una cuenta de comercio registrada",
-      roleDetectedStudent: "Entrás como estudiante",
+      roleDetectedStudent: "Entrás como comprador",
       roleEvidenceFixture: "cuenta de ejemplo simulada",
       enter: "Ir a mi cuenta",
       reputationMissing:
@@ -57,10 +57,10 @@ export const cuentas = defineDict({
         "Elegí una cuenta simulada para ver cada rol. Los datos son de prueba: no son direcciones devnet reales ni autorizan operaciones.",
       guarantorTitle: "Garante",
       guarantorBlurb:
-        "El fiador no usa wallet: entra por un enlace que le manda el estudiante. Este botón genera una invitación simulada para el estudiante que venís recorriendo.",
+        "El garante no usa wallet: entra por un enlace que le manda el comprador. Este botón genera una invitación simulada para el comprador que venís recorriendo.",
       guarantorSameBrowser:
         "La invitación vive en este navegador: abrila acá mismo. Es demo, sin backend entre dispositivos.",
-      guarantorStudent: "Para el estudiante",
+      guarantorStudent: "Para el comprador",
       guarantorInvite: "Abrir invitación de prueba",
       guarantorCreating: "Generando invitación…",
       guarantorError: "No se pudo generar la invitación simulada.",
@@ -69,7 +69,7 @@ export const cuentas = defineDict({
     },
     student: {
       title: "Mi cuenta",
-      subtitle: "Tu saldo, tu Tier, tus planes y tu fiador. Datos simulados de la demo.",
+      subtitle: "Tu saldo, tu Tier, tus planes y tu garante.",
       pickTitle: "Elegí con qué identidad mirar la demo",
       pickBlurb:
         "Cada identidad muestra su propia cuenta. Son ejemplos simulados: recorren, no autorizan nada real.",
@@ -77,15 +77,15 @@ export const cuentas = defineDict({
       pickWallet: "O conectá tu wallet",
       personas: {
         "student-new": "Sin planes todavía: ideal para probar la primera compra.",
-        "student-tier3": "Tres planes pagados, Tier 4 · Full y fianza con tope.",
+        "student-tier3": "Tres planes pagados, Tier 4 · Full y garantía con tope.",
         merchant: "Cobra al instante y mira sus ventas.",
         admin: "Config del protocolo y vista del pool.",
         guarantor: "Entra por invitación, sin wallet.",
       },
       noIdentity: "Elegí una identidad (wallet o cuenta de ejemplo) en la entrada para ver tu cuenta.",
       goEntry: "Ir a la entrada",
-      notStudentTitle: "Esta no es una cuenta de estudiante",
-      notStudentBody: "La identidad actual resolvió como {rol}. Esta pantalla es solo para estudiantes.",
+      notStudentTitle: "Esta no es una cuenta de comprador",
+      notStudentBody: "La identidad actual resolvió como {rol}. Esta pantalla es solo para compradores.",
       balance: "Saldo devUSDC",
       balanceUnavailable: "Saldo no disponible todavía.",
       tier: "Tier",
@@ -96,12 +96,12 @@ export const cuentas = defineDict({
       plansTitle: "Mis planes",
       plansEmpty: "Todavía no tenés planes: abrí uno desde un comercio.",
       plansCta: "Ver comercios",
-      guaranteeTitle: "Mi fiador",
-      guaranteeEmpty: "Todavía no tenés fianza: invitá a tu fiador para habilitar compras.",
+      guaranteeTitle: "Mi garante",
+      guaranteeEmpty: "Todavía no tenés garantía: invitá a tu garante para habilitar compras.",
       details: "Detalles",
       coverageToBuy: "Cobertura para comprar hasta el tope",
-      maxCoverage: "Cobertura máxima de la fianza",
-      maxPurchase: "Tope de compra del fiador",
+      maxCoverage: "Cobertura máxima de la garantía",
+      maxPurchase: "Tope de compra del garante",
     },
     evidence: {
       simulated: "Simulada · modo demo",
@@ -121,15 +121,15 @@ export const cuentas = defineDict({
       demoSelectorLabel: "View as (demo)",
       demoHint: "Example selector: browse only, it does not grant real permissions.",
       demoOptions: {
-        "student-new": "New student",
-        "student-tier3": "Student · Tier 4 · Full",
+        "student-new": "New buyer",
+        "student-tier3": "Buyer · Tier 4 · Full",
         merchant: "Merchant",
         admin: "Admin",
         guarantor: "Guarantor (by invitation)",
       },
     },
     roles: {
-      student: "Student",
+      student: "Buyer",
       merchant: "Merchant",
       admin: "Admin",
       guarantor: "Guarantor",
@@ -137,7 +137,7 @@ export const cuentas = defineDict({
     entry: {
       title: "Sign in to your account",
       subtitle:
-        "One entry detects whether you are a student, merchant or admin from your wallet. The guarantor comes in through their link, no wallet needed.",
+        "One entry detects whether you are a buyer, merchant or admin from your wallet. The guarantor comes in through their link, no wallet needed.",
       walletExplainer:
         "A wallet is your Solana identity: connect Phantom and you are in — no password, no personal data.",
       devnetExplainer:
@@ -148,7 +148,7 @@ export const cuentas = defineDict({
       errorRetry: "Try again",
       roleDetectedAdmin: "You are the configured admin authority",
       roleDetectedMerchant: "You have a registered merchant account",
-      roleDetectedStudent: "You are entering as a student",
+      roleDetectedStudent: "You are entering as a buyer",
       roleEvidenceFixture: "simulated example account",
       enter: "Go to my account",
       reputationMissing:
@@ -167,10 +167,10 @@ export const cuentas = defineDict({
         "Pick a simulated account to see each role. These are test fixtures: not real devnet addresses, and they grant no real permissions.",
       guarantorTitle: "Guarantor",
       guarantorBlurb:
-        "The guarantor uses no wallet: they enter through a link the student sends them. This button generates a simulated invitation for the student you were browsing as.",
+        "The guarantor uses no wallet: they enter through a link the buyer sends them. This button generates a simulated invitation for the buyer you were browsing as.",
       guarantorSameBrowser:
         "The invitation lives in this browser: open it right here. It's a demo, with no backend across devices.",
-      guarantorStudent: "For the student",
+      guarantorStudent: "For the buyer",
       guarantorInvite: "Open test invitation",
       guarantorCreating: "Creating invitation…",
       guarantorError: "Could not create the simulated invitation.",
@@ -179,7 +179,7 @@ export const cuentas = defineDict({
     },
     student: {
       title: "My account",
-      subtitle: "Your balance, tier, plans and guarantor. Simulated demo data.",
+      subtitle: "Your balance, tier, plans and guarantor.",
       pickTitle: "Pick an identity to browse the demo",
       pickBlurb:
         "Each identity shows its own account. These are simulated examples: they browse, they grant nothing real.",
@@ -194,8 +194,8 @@ export const cuentas = defineDict({
       },
       noIdentity: "Pick an identity (wallet or example account) at the entry to see your account.",
       goEntry: "Go to the entry",
-      notStudentTitle: "This is not a student account",
-      notStudentBody: "The current identity resolved as {rol}. This screen is for students only.",
+      notStudentTitle: "This is not a buyer account",
+      notStudentBody: "The current identity resolved as {rol}. This screen is for buyers only.",
       balance: "devUSDC balance",
       balanceUnavailable: "Balance unavailable for now.",
       tier: "Tier",

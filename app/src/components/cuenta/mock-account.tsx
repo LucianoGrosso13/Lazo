@@ -304,7 +304,6 @@ export function MockAccount() {
           <ModeBadge />
         </div>
         <p className="mt-3 text-ink-2">{t.subtitle}</p>
-        <p className="mt-2 text-xs text-ink-3">{t.mockTag}</p>
       </header>
 
       {student && <ResumenCuenta student={student} />}

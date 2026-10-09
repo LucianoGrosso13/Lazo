@@ -28,7 +28,7 @@ export const poolCuenta = defineDict({
       Deposit: "Depósito",
       Advance: "Adelanto al comercio",
       Repayment: "Pago de cuota",
-      Recovery: "Recupero por fiador",
+      Recovery: "Recupero por garante",
       Loss: "Pérdida",
     },
     plan: "plan",
@@ -43,7 +43,7 @@ export const poolCuenta = defineDict({
     refJupiter: "Jupiter Lend",
     referenciaTag: "referencia",
     garantiaLinea:
-      "Cada adelanto está respaldado por un fiador con tarjeta: si el estudiante no paga, se cobra al fiador y el recupero se registra acá.",
+      "Cada adelanto está respaldado por un garante con tarjeta: si el comprador no paga, se cobra al garante y el recupero se registra acá.",
     leerTitle: "Lectura pendiente",
     leerBody:
       "La lectura del pool todavía no está conectada en este modo. Los datos aparecen acá cuando el cliente compartido los publique.",
@@ -94,7 +94,7 @@ export const poolCuenta = defineDict({
     refJupiter: "Jupiter Lend",
     referenciaTag: "reference",
     garantiaLinea:
-      "Every advance is backed by a card-bearing guarantor: if the student doesn't pay, the guarantor is charged and the recovery is recorded here.",
+      "Every advance is backed by a card-bearing guarantor: if the buyer doesn't pay, the guarantor is charged and the recovery is recorded here.",
     leerTitle: "Read pending",
     leerBody:
       "Pool reads aren't wired in this mode yet. Data shows up here once the shared client publishes it.",

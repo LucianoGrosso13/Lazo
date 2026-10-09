@@ -345,11 +345,6 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-beam">{t.titulo}</h1>
           <ModeBadge />
-          {mode === "mock" && (
-            <span className="ref-tag" title={t.datosSimuladosHint}>
-              {t.datosSimulados}
-            </span>
-          )}
         </div>
         <p className="mt-3 text-ink-2">{t.subtitulo}</p>
         <div className="mt-4 flex flex-wrap items-center gap-2">

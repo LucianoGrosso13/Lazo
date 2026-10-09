@@ -17,7 +17,8 @@ test("/pool es público: muestra el panel sin exigir wallet", async ({ page }) =
   // Estructura del pool visible: tramos y movimientos (mock sembrado).
   await expect(page.getByTestId("pool-panel")).toBeVisible();
   await expect(page.getByTestId("pool-datos")).toBeVisible();
-  await expect(page.getByTestId("mode-badge")).toBeVisible();
+  // En la demo no hay rótulo "Mock" (el aviso de devnet vive en el footer).
+  await expect(page.getByTestId("mode-badge")).toHaveCount(0);
   // Nunca se pide conectar wallet para leer el pool.
   await expect(page.getByText(/conect(á|a|ar) (tu )?wallet para/i)).toHaveCount(0);
 });

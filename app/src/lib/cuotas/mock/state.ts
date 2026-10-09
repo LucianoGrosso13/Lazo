@@ -91,7 +91,7 @@ function exampleGuarantee(
     mandateHash: fakeReceiptHash(),
     active: true,
     registeredAt: at,
-    display: { guarantorName: "Fiador de ejemplo", cardLabel: "Visa •••• 4242" },
+    display: { guarantorName: "Garante de ejemplo", cardLabel: "Visa •••• 4242" },
   };
 }
 

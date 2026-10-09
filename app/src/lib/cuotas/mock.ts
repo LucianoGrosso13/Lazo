@@ -999,7 +999,7 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       refresh();
       sync();
       const guarantee = state.guarantees[student];
-      if (!guarantee) throw new CuotasError("not_found", `fiador de ${student}`);
+      if (!guarantee) throw new CuotasError("not_found", `garante de ${student}`);
       if (guarantee.active) {
         guarantee.active = false;
         activity({ kind: "GuaranteeRevoked", student });

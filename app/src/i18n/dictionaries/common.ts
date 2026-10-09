@@ -17,7 +17,7 @@ export const common = defineDict({
       legend: "Solana devnet · Red de prueba: los fondos no tienen valor monetario",
     },
     devnet: "Demo · devnet previsto",
-    devnetHint: "Esta interfaz usa datos simulados. Solana devnet es la red de prueba prevista; sus fondos no tienen valor monetario.",
+    devnetHint: "Corre sobre Solana devnet, la red de prueba: los fondos no tienen valor monetario.",
     wallet: {
       connect: "Conectar wallet",
       connectWith: "Conectar con",
@@ -43,7 +43,7 @@ export const common = defineDict({
       legend: "Solana devnet · Test network: funds have no monetary value",
     },
     devnet: "Demo · devnet planned",
-    devnetHint: "This interface uses simulated data. Solana devnet is the planned test network; its funds have no monetary value.",
+    devnetHint: "Runs on Solana devnet, the test network: funds have no monetary value.",
     wallet: {
       connect: "Connect wallet",
       connectWith: "Connect with",

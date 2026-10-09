@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent · **Asignado:** Claude (coordinador)
+**Status:** done · **Asignado:** Claude (coordinador)
 
 **Archivos propios:** todos los diccionarios de `app/src/i18n/dictionaries/` (solo valores de texto, salvo `landing-equipo.ts`, que no se toca), los usos de los rótulos de simulación en `components/cuenta/*` (solo borrar el rótulo) y los e2e que buscan esos textos. Rutas, claves, componentes y tipos no cambian.
 
-- [ ] Ningún "estudiante" ni "fiador" en texto visible en español (grep en los diccionarios y en el HTML de cada ruta)
-- [ ] Menú y título de la página: "Compradores y garantes"
-- [ ] Sin "Datos simulados", "Simulated data" ni "Mock" en las cuentas; se mantienen la sección honesta de la landing, el footer de devnet y "de ejemplo" del marketplace
-- [ ] e2e actualizados y en verde; typecheck, lint, test y build en verde
+- [x] Ningún "estudiante" ni "fiador" en texto visible en español (grep en los diccionarios y en el HTML de cada ruta)
+- [x] Menú y título de la página: "Compradores y garantes"
+- [x] Sin "Datos simulados", "Simulated data" ni "Mock" en las cuentas; se mantienen la sección honesta de la landing, el footer de devnet y "de ejemplo" del marketplace
+- [x] e2e actualizados y en verde; typecheck, lint, test y build en verde

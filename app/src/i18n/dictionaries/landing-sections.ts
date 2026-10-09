@@ -38,11 +38,11 @@ export const landingSections = defineDict({
     },
     tiers: {
       title: "Tiers y reglas de crecimiento",
-      lede: "Comenzás en Tier 1 · Starter. Al saldar tus compras a tiempo, tu anticipo baja y tu tope de compra sube. La cobertura del fiador siempre se mantiene en el 100% de lo que falta pagar.",
+      lede: "Comenzás en Tier 1 · Starter. Al saldar tus compras a tiempo, tu anticipo baja y tu tope de compra sube. La cobertura del garante siempre se mantiene en el 100% de lo que falta pagar.",
       tier: (i: number) => tierLabel(i),
       down: "anticipo",
       cap: "tope",
-      coverage: "cobertura del fiador",
+      coverage: "cobertura del garante",
       coverageValue: (pct: string) => `${pct} de lo que falta pagar`,
       start: "Arrancás acá",
       top: "Sin anticipo",
@@ -59,11 +59,11 @@ export const landingSections = defineDict({
       },
       ruleDown: {
         title: "Bajás 1 Tier",
-        desc: (charge: number) => `Si no pagás y se ejecuta el cobro al fiador en el día ${charge}.`,
+        desc: (charge: number) => `Si no pagás y se ejecuta el cobro al garante en el día ${charge}.`,
       },
       ruleGuarantor: {
-        title: "Sin fiador no hay plan",
-        desc: "El respaldo del fiador con tarjeta de crédito es obligatorio en todos los tiers.",
+        title: "Sin garante no hay plan",
+        desc: "El respaldo del garante con tarjeta de crédito es obligatorio en todos los tiers.",
       },
     },
     guarantor: {
@@ -71,9 +71,9 @@ export const landingSections = defineDict({
       lede: (chargeDay: number) =>
         `Cubre el 100% de lo que falta pagar (capital e interés) en todos los tiers y solo paga ante impago. Registra una tarjeta: si una cuota se atrasa, primero recibe un aviso preventivo; recién al día ${chargeDay} se ejecuta el cobro.`,
       steps: [
-        { t: "Recibe una invitación", d: "El estudiante invita a un familiar y este valida su identidad." },
+        { t: "Recibe una invitación", d: "El comprador invita a un familiar y este valida su identidad." },
         { t: "Define un tope", d: "Acuerda el monto máximo de compra a respaldar antes de aceptar." },
-        { t: "Solo paga si hay mora", d: "Si el estudiante paga sus cuotas a tiempo, la tarjeta del fiador nunca recibe ningún cargo." },
+        { t: "Solo paga si hay mora", d: "Si el comprador paga sus cuotas a tiempo, la tarjeta del garante nunca recibe ningún cargo." },
       ],
       rulerTitle: "Qué pasa si una cuota no se paga",
       rulerSubtitle: "Línea de mora paso a paso: qué ocurre y quién se entera en cada hito.",
@@ -82,33 +82,33 @@ export const landingSections = defineDict({
       marks: {
         day0: {
           label: "Día 0 · Compra",
-          what: "Arranca el plan. El estudiante abona el anticipo y el comercio recibe la confirmación.",
-          who: "Se enteran el estudiante, el comercio y el fiador.",
+          what: "Arranca el plan. El comprador abona el anticipo y el comercio recibe la confirmación.",
+          who: "Se enteran el comprador, el comercio y el garante.",
         },
         due: {
           label: "Vencimiento (día 0 de mora)",
           what: "Vence la cuota mensual pendiente.",
-          who: "Se notifica al estudiante sobre el pago pendiente.",
+          who: "Se notifica al comprador sobre el pago pendiente.",
         },
         grace: {
           label: (days: number) => `Días 1–${days} · Gracia sin recargo`,
           what: "Período de gracia sin punitorio ni costo extra.",
-          who: "El estudiante puede pagar sin consecuencias; no se contacta al fiador.",
+          who: "El comprador puede pagar sin consecuencias; no se contacta al garante.",
         },
         notice: {
-          label: (day: number) => `Día ${day} · Aviso al fiador`,
-          what: "Notificación preventiva al fiador antes de cualquier cargo.",
-          who: "Se entera el fiador para coordinar con el estudiante.",
+          label: (day: number) => `Día ${day} · Aviso al garante`,
+          what: "Notificación preventiva al garante antes de cualquier cargo.",
+          who: "Se entera el garante para coordinar con el comprador.",
         },
         penalty: {
           label: (fromDay: number, pct: string) => `Día ${fromDay} · Recargo del ${pct}`,
           what: (pct: string) => `Se aplica un recargo punitorio del ${pct} sobre la cuota vencida.`,
-          who: "Se notifica al estudiante del recargo aplicado.",
+          who: "Se notifica al comprador del recargo aplicado.",
         },
         charge: {
-          label: (day: number) => `Día ${day} · Cobro al fiador y −1 Tier`,
-          what: "Se ejecuta el cobro automático a la tarjeta del fiador y el estudiante desciende 1 Tier.",
-          who: "Se enteran el fiador y el estudiante.",
+          label: (day: number) => `Día ${day} · Cobro al garante y −1 Tier`,
+          what: "Se ejecuta el cobro automático a la tarjeta del garante y el comprador desciende 1 Tier.",
+          who: "Se enteran el garante y el comprador.",
         },
       },
     },
@@ -156,7 +156,7 @@ export const landingSections = defineDict({
         who: "Pool de liquidez",
         label: "rendimiento objetivo del tramo senior",
         target: (pct: number) => `~${pct}% anual`,
-        detail: "Rendimiento objetivo para el tramo senior, respaldado por el flujo de cuotas y la fianza.",
+        detail: "Rendimiento objetivo para el tramo senior, respaldado por el flujo de cuotas y la garantía.",
         vs: (k: number, j: number) => `Benchmarks DeFi: Kamino ~${k}% · Jupiter ~${j}%`,
       },
       assumptionsTitle: "Supuestos del modelo económico",
@@ -173,9 +173,9 @@ export const landingSections = defineDict({
           desc: "Porcentaje estimado de planes que incurren en mora.",
         },
         recoveryRate: {
-          label: "Tasa de recupero vía fiador",
+          label: "Tasa de recupero vía garante",
           value: (pct: number) => `${pct}%`,
-          desc: "Efectividad proyectada de cobro automático a la tarjeta del fiador.",
+          desc: "Efectividad proyectada de cobro automático a la tarjeta del garante.",
         },
         capitalCost: {
           label: "Costo de capital senior",
@@ -204,7 +204,7 @@ export const landingSections = defineDict({
       realTitle: "Programa para Solana devnet",
       real: [
         "Código Anchor probado localmente con planes de 3 y 6 cuotas",
-        "Fiador obligatorio con cobertura del 100% de capital e interés",
+        "Garante obligatorio con cobertura del 100% de capital e interés",
         "Pool de liquidez con tramo senior y cuentas verificables",
         "Calendario de tramos del comercio (PayoutSchedule) y control de liquidez del pool",
         "La actualización del programa en devnet está pendiente; la web pública usa el simulador",
@@ -212,7 +212,7 @@ export const landingSections = defineDict({
       simTitle: "En el simulador",
       sim: [
         "Reloj acelerado para avanzar los días y seguir el estado de mora",
-        "Cobro simulado a la tarjeta del fiador ante impago",
+        "Cobro simulado a la tarjeta del garante ante impago",
         "Verificación de identidad digital simulada",
         "Venta en mostrador por QR y enlace",
         "Comercios y catálogo de productos de ejemplo",
@@ -295,9 +295,9 @@ export const landingSections = defineDict({
       lede: (chargeDay: number) =>
         `Covers 100% of the outstanding balance (capital and interest) across all tiers and only pays on default. They register a credit card: if an installment is late, they receive a warning first; charges execute on day ${chargeDay}.`,
       steps: [
-        { t: "Receives an invite", d: "The student invites a family member who validates their identity." },
+        { t: "Receives an invite", d: "The buyer invites a family member who validates their identity." },
         { t: "Sets a limit", d: "Agrees on the maximum purchase amount to back before confirming." },
-        { t: "Only pays on default", d: "If the student pays on time, the guarantor's card is never charged." },
+        { t: "Only pays on default", d: "If the buyer pays on time, the guarantor's card is never charged." },
       ],
       rulerTitle: "What happens if an installment goes unpaid",
       rulerSubtitle: "Late-payment timeline step by step: what happens and who gets notified at each milestone.",
@@ -306,33 +306,33 @@ export const landingSections = defineDict({
       marks: {
         day0: {
           label: "Day 0 · Purchase",
-          what: "The plan starts. The student pays the down payment and the merchant receives confirmation.",
-          who: "The student, merchant, and guarantor are notified.",
+          what: "The plan starts. The buyer pays the down payment and the merchant receives confirmation.",
+          who: "The buyer, merchant, and guarantor are notified.",
         },
         due: {
           label: "Due date (day 0 of delinquency)",
           what: "The monthly installment falls due.",
-          who: "The student is notified of the pending payment.",
+          who: "The buyer is notified of the pending payment.",
         },
         grace: {
           label: (days: number) => `Days 1–${days} · Grace period, no fee`,
           what: "Grace period with no late fee or penalty.",
-          who: "The student can pay with no penalty; guarantor is not contacted.",
+          who: "The buyer can pay with no penalty; guarantor is not contacted.",
         },
         notice: {
           label: (day: number) => `Day ${day} · Guarantor is warned`,
           what: "Preventive notice sent to the guarantor prior to any charge.",
-          who: "Guarantor is notified to coordinate with the student.",
+          who: "Guarantor is notified to coordinate with the buyer.",
         },
         penalty: {
           label: (fromDay: number, pct: string) => `Day ${fromDay} · ${pct} late fee`,
           what: (pct: string) => `A late fee of ${pct} applies to the overdue installment.`,
-          who: "The student is notified of the applied fee.",
+          who: "The buyer is notified of the applied fee.",
         },
         charge: {
           label: (day: number) => `Day ${day} · Guarantor charged & drop 1 Tier`,
-          what: "An automatic charge executes against the guarantor's card and the student drops 1 Tier.",
-          who: "Both guarantor and student are notified.",
+          what: "An automatic charge executes against the guarantor's card and the buyer drops 1 Tier.",
+          who: "Both guarantor and buyer are notified.",
         },
       },
     },

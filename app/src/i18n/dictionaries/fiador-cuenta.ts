@@ -11,7 +11,7 @@ export const garanteCuenta = defineDict({
     },
     invalid: {
       title: "Este enlace no funciona",
-      body: "La invitación es inválida, ya se usó o venció. Pedile al estudiante que te mande un enlace nuevo.",
+      body: "La invitación es inválida, ya se usó o venció. Pedile al comprador que te mande un enlace nuevo.",
       cta: "Ir a la entrada",
     },
     pending: {
@@ -27,7 +27,7 @@ export const garanteCuenta = defineDict({
     alta: {
       title: "Alta de garante",
       subtitle: "Repasá cada paso antes de aceptar. Todo es simulado: corre en devnet con plata de prueba.",
-      studentLabel: "Respaldás al estudiante",
+      studentLabel: "Respaldás al comprador",
       steps: {
         resumen: "Resumen",
         identidad: "Identidad",
@@ -40,7 +40,7 @@ export const garanteCuenta = defineDict({
       // Resumen
       resumenTitle: "Qué significa ser garante",
       resumenBody:
-        "Si el estudiante no paga una cuota, después del aviso el cargo llega a tu tarjeta. Solo pagás si él no paga, y nunca más que el máximo que elijas acá.",
+        "Si el comprador no paga una cuota, después del aviso el cargo llega a tu tarjeta. Solo pagás si él no paga, y nunca más que el máximo que elijas acá.",
       topeLabel: "Tope de compras que respaldás",
       topeHint: "Sale de la configuración del protocolo: son los topes por compra de cada Tier.",
       topeOption: "Compras de hasta",
@@ -48,9 +48,9 @@ export const garanteCuenta = defineDict({
       coberturaRequerida:
         "Cobertura exigida por compra: lo que falta pagar del plan, capital + interés.",
       coberturaMaxima:
-        "Máximo de la fianza: lo más que podés llegar a pagar en total por una compra en el tope elegido.",
-      coberturaAlcanceTodos: "Tu fianza cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
-      coberturaAlcanceTier: "Tu fianza cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
+        "Máximo de la garantía: lo más que podés llegar a pagar en total por una compra en el tope elegido.",
+      coberturaAlcanceTodos: "Tu garantía cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
+      coberturaAlcanceTier: "Tu garantía cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
       coberturaFuera: "El punitorio por mora queda afuera.",
       timelineTitle: "Qué pasa si una cuota no se paga",
       timelineGrace: "Días de gracia",
@@ -62,12 +62,12 @@ export const garanteCuenta = defineDict({
       kycTitle: "Verificación de identidad",
       kycSimulated:
         "Simulada: en producción la haría un proveedor (Didit). Acá no se verifica nada ni se piden documentos reales.",
-      kycNameLabel: "Tu nombre como aparecería en la fianza",
+      kycNameLabel: "Tu nombre como aparecería en la garantía",
       kycNamePlaceholder: "Garante de ejemplo",
       // Documento
-      docTitle: "Documento de fianza",
+      docTitle: "Documento de garantía",
       docBody:
-        "Este es el texto de la fianza de demostración con tus datos y topes. Podés descargarlo; su hash queda registrado como referencia del documento.",
+        "Este es el texto de la garantía de demostración con tus datos y topes. Podés descargarlo; su hash queda registrado como referencia del documento.",
       docDownload: "Descargar documento (texto)",
       docHashLabel: "Hash del documento (SHA-256)",
       docSimulated:
@@ -80,48 +80,48 @@ export const garanteCuenta = defineDict({
       cardSimulated: "Selección simulada — ningún cobro ni dato de tarjeta real.",
       // Confirmar
       confirmTitle: "Revisá y aceptá",
-      confirmStudent: "Estudiante",
+      confirmStudent: "Comprador",
       confirmTope: "Tope por compra",
-      confirmMax: "Máximo de la fianza",
+      confirmMax: "Máximo de la garantía",
       confirmCoverage: "Cobertura sobre el capital pendiente",
       confirmName: "Nombre",
       confirmCard: "Tarjeta",
       confirmDoc: "Documento",
       confirmLegal:
-        "Al aceptar registrás la fianza en la demo: queda asociada a tu enlace y podés volver a verla cuando quieras.",
-      confirmCta: "Aceptar y registrar la fianza",
+        "Al aceptar registrás la garantía en la demo: queda asociada a tu enlace y podés volver a verla cuando quieras.",
+      confirmCta: "Aceptar y registrar la garantía",
       confirmWorking: "Registrando…",
-      confirmError: "No se pudo registrar la fianza. Probá de nuevo.",
+      confirmError: "No se pudo registrar la garantía. Probá de nuevo.",
     },
     panel: {
       title: "Tu respaldo",
-      subtitle: "Seguimiento de la fianza que aceptaste por este enlace.",
+      subtitle: "Seguimiento de la garantía que aceptaste por este enlace.",
       sameLink: "Este mismo enlace te trae de vuelta acá, sin wallet.",
-      guaranteeTitle: "Fianza registrada",
+      guaranteeTitle: "Garantía registrada",
       guarantorName: "Garante",
       card: "Tarjeta",
       tope: "Tope por compra",
-      maxCoverage: "Máximo de la fianza",
+      maxCoverage: "Máximo de la garantía",
       registeredAt: "Aceptada el",
       docHash: "Hash del documento",
-      studentTitle: "Estado del estudiante",
+      studentTitle: "Estado del comprador",
       studentTier: "Tier",
       studentBlocked: "Compras nuevas bloqueadas tras un cobro",
-      debtTitle: "Deuda pendiente del estudiante",
+      debtTitle: "Deuda pendiente del comprador",
       debtBody:
-        "Cuotas impagas del plan: capital + interés contractual pendiente, más el punitorio ya devengado. La fianza cubre el saldo del plan; el punitorio queda afuera.",
+        "Cuotas impagas del plan: capital + interés contractual pendiente, más el punitorio ya devengado. La garantía cubre el saldo del plan; el punitorio queda afuera.",
       chargedTitle: "Ya cargado a tu tarjeta",
       coverageTitle: "Cobertura",
       coverageRequired: "Cobertura exigida por la compra actual",
-      coverageMax: "Máximo de tu fianza",
-      coverageAllTiers: "Tu fianza cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
-      coverageThisTier: "Tu fianza cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
+      coverageMax: "Máximo de tu garantía",
+      coverageAllTiers: "Tu garantía cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
+      coverageThisTier: "Tu garantía cubre el {pct}% de lo que falta pagar del plan (capital + interés).",
       coverageScope: "El punitorio por mora queda afuera.",
       noticesTitle: "Avisos y cargos",
       noticesEmpty: "Todavía no hay avisos ni cargos para este respaldo.",
       receiptSimulated: "comprobante simulado",
       kinds: {
-        GuaranteeRegistered: "Fianza registrada",
+        GuaranteeRegistered: "Garantía registrada",
         GuarantorNotified: "Aviso al garante",
         MarkedLate: "Cuota marcada en mora",
         GuarantorCharged: "Cargo al garante",
@@ -130,10 +130,10 @@ export const garanteCuenta = defineDict({
         InstallmentPaid: "Cuota pagada",
         TierUp: "Subió de Tier",
         TierDown: "Bajó de Tier",
-        GuaranteeRevoked: "Fianza revocada",
+        GuaranteeRevoked: "Garantía revocada",
       },
-      plansEmpty: "El estudiante todavía no tiene planes con esta fianza.",
-      nextChargeHint: "Si el estudiante no paga, el cargo llega a tu tarjeta el día",
+      plansEmpty: "El comprador todavía no tiene planes con esta garantía.",
+      nextChargeHint: "Si el comprador no paga, el cargo llega a tu tarjeta el día",
     },
   },
   en: {
@@ -144,7 +144,7 @@ export const garanteCuenta = defineDict({
     },
     invalid: {
       title: "This link doesn't work",
-      body: "The invitation is invalid, was already used or expired. Ask the student to send you a new link.",
+      body: "The invitation is invalid, was already used or expired. Ask the buyer to send you a new link.",
       cta: "Go to the entry",
     },
     pending: {
@@ -160,7 +160,7 @@ export const garanteCuenta = defineDict({
     alta: {
       title: "Guarantor signup",
       subtitle: "Review each step before accepting. Everything is simulated: it runs on devnet with test money.",
-      studentLabel: "You're backing the student",
+      studentLabel: "You're backing the buyer",
       steps: {
         resumen: "Summary",
         identidad: "Identity",
@@ -172,7 +172,7 @@ export const garanteCuenta = defineDict({
       back: "Back",
       resumenTitle: "What being a guarantor means",
       resumenBody:
-        "If the student misses an installment, after the notice the charge lands on your card. You only pay if they don't, and never more than the maximum you pick here.",
+        "If the buyer misses an installment, after the notice the charge lands on your card. You only pay if they don't, and never more than the maximum you pick here.",
       topeLabel: "Purchase cap you're backing",
       topeHint: "Taken from the protocol config: the per-purchase caps of each tier.",
       topeOption: "Purchases up to",
@@ -208,7 +208,7 @@ export const garanteCuenta = defineDict({
       cardOptionLabel: "Sample card",
       cardSimulated: "Simulated selection — no real charge or card data.",
       confirmTitle: "Review and accept",
-      confirmStudent: "Student",
+      confirmStudent: "Buyer",
       confirmTope: "Per-purchase cap",
       confirmMax: "Guarantee maximum",
       confirmCoverage: "Coverage of outstanding principal",
@@ -232,10 +232,10 @@ export const garanteCuenta = defineDict({
       maxCoverage: "Guarantee maximum",
       registeredAt: "Accepted on",
       docHash: "Document hash",
-      studentTitle: "Student status",
+      studentTitle: "Buyer status",
       studentTier: "Tier",
       studentBlocked: "New purchases blocked after a charge",
-      debtTitle: "Student's pending debt",
+      debtTitle: "Buyer's pending debt",
       debtBody:
         "Unpaid plan installments: outstanding principal + contractual interest, plus accrued late fees. The guarantee covers the plan balance; late fees are excluded.",
       chargedTitle: "Already charged to your card",
@@ -260,8 +260,8 @@ export const garanteCuenta = defineDict({
         TierDown: "Tier down",
         GuaranteeRevoked: "Guarantee revoked",
       },
-      plansEmpty: "The student has no plans with this guarantee yet.",
-      nextChargeHint: "If the student doesn't pay, the charge lands on your card on day",
+      plansEmpty: "The buyer has no plans with this guarantee yet.",
+      nextChargeHint: "If the buyer doesn't pay, the charge lands on your card on day",
     },
   },
 });

@@ -36,7 +36,6 @@ export function EvidenceMark({ evidence }: { evidence: Evidence }) {
           <ExplorerIcon className="h-3 w-3 text-ink-ghost" />
           {short(evidence.hash)}
           <span className="ref-tag">{t.receipt}</span>
-          {getCuotas().mode === "mock" && <span className="ref-tag">{d.simulated}</span>}
         </span>
       );
   }
@@ -49,5 +48,7 @@ export function EvidenceMark({ evidence }: { evidence: Evidence }) {
 export function ModeBadge() {
   const t = useT(cuentas).evidence;
   const mode = getCuotas().mode;
-  return <Chip data-testid="mode-badge">{mode === "mock" ? t.modeMock : t.modeReal}</Chip>;
+  // En la demo no se rotula "Mock": el aviso de devnet vive en el footer.
+  if (mode === "mock") return null;
+  return <Chip data-testid="mode-badge">{t.modeReal}</Chip>;
 }

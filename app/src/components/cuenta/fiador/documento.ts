@@ -44,7 +44,7 @@ export function textoMandato(m: MandatoDemo): string {
       "====================================================",
       "",
       `Issued: ${fecha}`,
-      `Student (Solana address): ${m.student}`,
+      `Buyer (Solana address): ${m.student}`,
       `Guarantor: ${m.guarantorName}`,
       "Charge method: credit card registered at the payment processor (sandbox, simulated).",
       "",
@@ -56,7 +56,7 @@ export function textoMandato(m: MandatoDemo): string {
       m.coverageMax != null
         ? `3. The maximum the guarantor can be charged in total per purchase is ${usd(m.coverageMax)}.`
         : `3. The total maximum the guarantor accepts is ${usd(m.coverageMax ?? m.maxPurchase)} per purchase.`,
-      "4. The guarantor is only charged if the student misses an installment after the notice and grace period configured in the protocol.",
+      "4. The guarantor is only charged if the buyer misses an installment after the notice and grace period configured in the protocol.",
       "",
       "DISCLAIMER",
       "Demonstration document for the Lazo devnet demo. It is not a certified",
@@ -64,23 +64,23 @@ export function textoMandato(m: MandatoDemo): string {
     ].join("\n");
   }
   return [
-    "LAZO — FIANZA DE DEMOSTRACIÓN (devnet, plata de prueba)",
+    "LAZO — GARANTÍA DE DEMOSTRACIÓN (devnet, plata de prueba)",
     "======================================================",
     "",
     `Emitida: ${fecha}`,
-    `Estudiante (dirección Solana): ${m.student}`,
-      `Fiador: ${m.guarantorName}`,
+    `Comprador (dirección Solana): ${m.student}`,
+      `Garante: ${m.guarantorName}`,
     "Medio de cargo: tarjeta de crédito registrada en el procesador (sandbox, simulada).",
     "",
     "CONDICIONES",
-    `1. El fiador respalda compras de hasta ${usd(m.maxPurchase)} cada una.`,
+    `1. El garante respalda compras de hasta ${usd(m.maxPurchase)} cada una.`,
     pct != null
-      ? `2. La fianza cubre el ${pct}% de lo que falta pagar del plan (capital + interés contractual); el punitorio por mora queda afuera.`
-      : "2. La fianza cubre el 100% de lo que falta pagar del plan: capital pendiente más interés contractual. El punitorio por mora queda afuera.",
+      ? `2. La garantía cubre el ${pct}% de lo que falta pagar del plan (capital + interés contractual); el punitorio por mora queda afuera.`
+      : "2. La garantía cubre el 100% de lo que falta pagar del plan: capital pendiente más interés contractual. El punitorio por mora queda afuera.",
     m.coverageMax != null
-      ? `3. Lo máximo que el fiador puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
-        : `3. El máximo total que el fiador acepta es ${usd(m.coverageMax ?? m.maxPurchase)} por compra.`,
-    "4. El fiador solo paga si el estudiante no paga una cuota después del aviso y la gracia configurados en el protocolo.",
+      ? `3. Lo máximo que el garante puede llegar a pagar en total por compra es ${usd(m.coverageMax)}.`
+        : `3. El máximo total que el garante acepta es ${usd(m.coverageMax ?? m.maxPurchase)} por compra.`,
+    "4. El garante solo paga si el comprador no paga una cuota después del aviso y la gracia configurados en el protocolo.",
     "",
     "ALCANCE",
     "Documento de demostración de la demo devnet de Lazo. No es una firma",

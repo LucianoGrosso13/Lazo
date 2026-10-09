@@ -22,7 +22,7 @@ export const paraComercios = defineDict({
     cuotasNoteBase: "{lista} cuotas sin interés.",
     respaldoLabel: "del saldo financiado, respaldado",
     respaldoNote:
-      "Cada venta lleva un fiador con tarjeta de crédito que cubre el 100% pendiente (capital más interés).",
+      "Cada venta lleva un garante con tarjeta de crédito que cubre el 100% pendiente (capital más interés).",
     cobroValue: "vos elegís",
     cobroLabel: "cuándo y cómo cobrar lo financiado",
     cobroNote: "Hoy o en tramos a {dias} días: a más espera, menos comisión.",
@@ -56,7 +56,7 @@ export const paraComercios = defineDict({
     operarTitle: "Cómo se vende en el día a día",
     operarMostradorTitle: "En mostrador: orden con código QR",
     operarMostradorBody:
-      "Cargás el importe y el concepto desde la terminal de mostrador y se genera un QR en pantalla. El estudiante lo escanea con la cámara de su celular, elige 3 o 6 cuotas y confirma con su fianza activa. La venta se acredita en tiempo real en tu pantalla.",
+      "Cargás el importe y el concepto desde la terminal de mostrador y se genera un QR en pantalla. El comprador lo escanea con la cámara de su celular, elige 3 o 6 cuotas y confirma con su garantía activa. La venta se acredita en tiempo real en tu pantalla.",
     operarMostradorCta: "Abrir terminal de mostrador",
     operarOnlineTitle: "Online: links de checkout y tienda",
     operarOnlineBody:
@@ -78,9 +78,9 @@ export const paraComercios = defineDict({
     comparacionNote:
       "Comparación orientativa con cifras de referencia: cada alternativa posee condiciones de elegibilidad, plazos e impuestos particulares.",
 
-    marketplaceTitle: "Aparecé donde te buscan los estudiantes",
+    marketplaceTitle: "Aparecé donde te buscan los compradores",
     marketplaceBody:
-      "El marketplace de Lazo conecta a estudiantes y familias con comercios que ofrecen cuotas respaldadas. Los clientes descubren comercios por rubro y compran tanto en mostrador como online.",
+      "El marketplace de Lazo conecta a compradores y garantes con comercios que ofrecen cuotas respaldadas. Los clientes descubren comercios por rubro y compran tanto en mostrador como online.",
     marketplaceExampleNote:
       "El directorio lista comercios y productos de ejemplo para mostrar la experiencia de compra y venta.",
     marketplaceCta: "Explorar comercios en el marketplace",
@@ -89,9 +89,9 @@ export const paraComercios = defineDict({
     riesgoCompromisoTitle: "Compromiso registrado en la cadena",
     riesgoCompromisoBody:
       "Al confirmarse cada venta se registra una cuenta pública en Solana con el calendario exacto de tramos a favor del comercio. Los fondos quedan comprometidos en el pool y se liberan automáticamente en su fecha: Lazo garantiza cada tramo aunque el comprador se atrase.",
-    riesgoFiadorTitle: "El respaldo del fiador y la absorción de riesgo",
+    riesgoFiadorTitle: "El respaldo del garante y la absorción de riesgo",
     riesgoFiadorBody:
-      "El fiador cubre el 100% de lo que falta pagar (capital más interés). Que el fiador deba es una obligación contractual; ante la posibilidad de que la tarjeta emisora rechace un débito en mora, ese riesgo operativo lo absorbe Lazo y nunca afecta los tramos pactados de tu comercio.",
+      "El garante cubre el 100% de lo que falta pagar (capital más interés). Que el garante deba es una obligación contractual; ante la posibilidad de que la tarjeta emisora rechace un débito en mora, ese riesgo operativo lo absorbe Lazo y nunca afecta los tramos pactados de tu comercio.",
     riesgoLiquidezTitle: "Liquidez asegurada antes de cada compra",
     riesgoLiquidezBody:
       "Para garantizar el cumplimiento de cada compromiso, el protocolo solo permite abrir compras si el pool cuenta con liquidez disponible suficiente para cubrir el desembolso inicial y todos los tramos diferidos futuros.",
@@ -104,7 +104,7 @@ export const paraComercios = defineDict({
       },
       {
         q: "¿Qué pasa si el cliente no paga?",
-        a: "Un familiar con tarjeta de crédito respalda el 100% de lo que falta pagar (capital e interés). Lazo opera la cobranza y garantiza cada tramo del comercio en su fecha comprometida en la cadena, pague o no el estudiante. Aunque la tarjeta del fiador rechace el cargo, el riesgo lo absorbe el protocolo, no tu comercio.",
+        a: "Un familiar con tarjeta de crédito respalda el 100% de lo que falta pagar (capital e interés). Lazo opera la cobranza y garantiza cada tramo del comercio en su fecha comprometida en la cadena, pague o no el comprador. Aunque la tarjeta del garante rechace el cargo, el riesgo lo absorbe el protocolo, no tu comercio.",
       },
       {
         q: "¿La comisión es sobre el precio de venta?",
@@ -116,7 +116,7 @@ export const paraComercios = defineDict({
       },
       {
         q: "¿Qué pasa con una devolución?",
-        a: "Todavía es una política en definición, y la cerramos con los primeros comercios. La propuesta: si los tramos todavía no se liberaron, se cancela la orden; si ya se liberaron, el neto se recupera con un mecanismo acordado. Nunca se le devuelve todo al cliente mientras al fiador le queda un cargo.",
+        a: "Todavía es una política en definición, y la cerramos con los primeros comercios. La propuesta: si los tramos todavía no se liberaron, se cancela la orden; si ya se liberaron, el neto se recupera con un mecanismo acordado. Nunca se le devuelve todo al cliente mientras al garante le queda un cargo.",
       },
       {
         q: "¿Cómo empiezo a vender con Lazo?",
@@ -124,13 +124,13 @@ export const paraComercios = defineDict({
       },
       {
         q: "El QR de mostrador, ¿es un QR de pagos?",
-        a: "No es un QR bancario ni interoperable de transferencias: es un enlace dinámico a la orden de compra de Lazo. El cliente lo abre con la cámara estándar de cualquier teléfono o su navegador, revisa las cuotas disponibles y confirma con su fianza activa en segundos. Ya está disponible para probar en el mostrador.",
+        a: "No es un QR bancario ni interoperable de transferencias: es un enlace dinámico a la orden de compra de Lazo. El cliente lo abre con la cámara estándar de cualquier teléfono o su navegador, revisa las cuotas disponibles y confirma con su garantía activa en segundos. Ya está disponible para probar en el mostrador.",
       },
     ],
 
     cierreTitle: "Empezá a vender en cuotas con Lazo",
     cierreBody:
-      "Probá la terminal de mostrador, explorá el panel de control del comercio o descubrí cómo te encuentran los estudiantes en el marketplace.",
+      "Probá la terminal de mostrador, explorá el panel de control del comercio o descubrí cómo te encuentran los compradores en el marketplace.",
     devnetCallout:
       "Esta plataforma opera en Solana devnet (red de pruebas): los fondos en devUSDC son para validación y no representan dinero real.",
   },
@@ -183,7 +183,7 @@ export const paraComercios = defineDict({
     operarTitle: "How selling works day to day",
     operarMostradorTitle: "At the counter: QR order terminal",
     operarMostradorBody:
-      "Enter the amount and description in your counter terminal to generate an on-screen QR. The student scans it with their phone camera, selects 3 or 6 installments, and confirms with their active guarantee. The sale updates in real time on your screen.",
+      "Enter the amount and description in your counter terminal to generate an on-screen QR. The buyer scans it with their phone camera, selects 3 or 6 installments, and confirms with their active guarantee. The sale updates in real time on your screen.",
     operarMostradorCta: "Open counter terminal",
     operarOnlineTitle: "Online: checkout links & store",
     operarOnlineBody:
@@ -205,9 +205,9 @@ export const paraComercios = defineDict({
     comparacionNote:
       "Guidance comparison with reference figures: each alternative has distinct eligibility rules, terms, and tax treatments.",
 
-    marketplaceTitle: "Show up where students shop",
+    marketplaceTitle: "Show up where buyers shop",
     marketplaceBody:
-      "The Lazo marketplace connects students and families with merchants offering backed installments. Customers discover stores by category and shop both in-store and online.",
+      "The Lazo marketplace connects buyers and guarantors with merchants offering backed installments. Customers discover stores by category and shop both in-store and online.",
     marketplaceExampleNote:
       "The directory lists example merchants and products to show the buying and selling flow.",
     marketplaceCta: "Explore merchants in marketplace",
@@ -231,7 +231,7 @@ export const paraComercios = defineDict({
       },
       {
         q: "What happens if the customer doesn't pay?",
-        a: "A relative with a credit card backs 100% of the outstanding balance (principal and interest). Lazo manages collections and guarantees each merchant tranche on its committed onchain date, whether the student pays or not. Even if the guarantor's card declines the charge, the protocol absorbs the risk, not your store.",
+        a: "A relative with a credit card backs 100% of the outstanding balance (principal and interest). Lazo manages collections and guarantees each merchant tranche on its committed onchain date, whether the buyer pays or not. Even if the guarantor's card declines the charge, the protocol absorbs the risk, not your store.",
       },
       {
         q: "Is the fee on the sale price?",
@@ -257,7 +257,7 @@ export const paraComercios = defineDict({
 
     cierreTitle: "Start selling in installments with Lazo",
     cierreBody:
-      "Try the counter terminal, explore the merchant dashboard, or discover how students find you in the marketplace.",
+      "Try the counter terminal, explore the merchant dashboard, or discover how buyers find you in the marketplace.",
     devnetCallout:
       "This platform operates on Solana devnet (test network): devUSDC funds are for testing and do not represent real money.",
   },

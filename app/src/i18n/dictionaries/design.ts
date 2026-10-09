@@ -61,7 +61,7 @@ export const design = defineDict({
       lit: "Por vencer",
       etched: "Pagada",
       cracked: "Vencida",
-      refilled: "La cubrió el fiador",
+      refilled: "La cubrió el garante",
       noColor: "Sin color",
     },
     numbers: {
@@ -92,7 +92,7 @@ export const design = defineDict({
       demoNote: "Mové el precio o el Tier: el haz se vuelve a refractar. Montos calculados desde la configuración del protocolo.",
       stateDemo: "La mora, en luz",
       cracked: "Se raja al vencer",
-      refilled: "La luz de atrás la llena: paga el fiador",
+      refilled: "La luz de atrás la llena: paga el garante",
       etched: "Pagada: queda grabada",
       marks: {
         none: "Al día",

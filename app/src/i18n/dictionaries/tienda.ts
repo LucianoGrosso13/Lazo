@@ -34,7 +34,7 @@ export const tienda = defineDict({
       exceeds_guarantor_max_purchase: (max: string) => `Supera el tope de tu garante (US$ ${max})`,
       exceeds_guarantee_coverage: "Tu garante no llega a cubrirlo",
       no_guarantee: "Necesitás un garante para comprar",
-      guarantor_required: "Para abrir un plan necesitás un fiador. Invitalo en 2 minutos",
+      guarantor_required: "Para abrir un plan necesitás un garante. Invitalo en 2 minutos",
       below_option_min: "6 cuotas desde el mínimo configurado",
       pool_liquidity: "En este momento no hay cupo para planes nuevos. Probá más tarde",
       blocked_after_default: "Bloqueado por una mora anterior",

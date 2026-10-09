@@ -79,7 +79,6 @@ export function ExplorerLink({
       >
         <ExplorerIcon className="h-3 w-3 text-ink-ghost" />
         {label}
-        <ReferenceTag>{t.chrome.simulated}</ReferenceTag>
       </span>
     );
   }

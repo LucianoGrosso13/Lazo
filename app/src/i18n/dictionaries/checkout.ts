@@ -22,7 +22,7 @@ export const checkout = defineDict({
       each: (amt: string) => `US$ ${amt} cada una`,
       unavailable: "Esta opción no está disponible en la demo.",
       belowMin: (n: number, min: string) => `${n} cuotas desde US$ ${min}`,
-      guarantorRequired: "Necesitás un fiador activo para abrir un plan.",
+      guarantorRequired: "Necesitás un garante activo para abrir un plan.",
       noCapacity: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
     },
     interestRow: "Interés del plan",
@@ -31,9 +31,9 @@ export const checkout = defineDict({
       `${name} cobra US$ ${x} hoy, sin esperar.`,
     merchantDeferred: (name: string, today: string, rest: string, days: number) =>
       `${name} cobra US$ ${today} hoy y US$ ${rest} a ${days} días.`,
-    guarantorLabel: "Fiador",
+    guarantorLabel: "Garante",
     guarantorLine: (card: string | null, max: string) =>
-      `Fiador${card ? ` · ${card}` : ""} · tope US$ ${max}`,
+      `Garante${card ? ` · ${card}` : ""} · tope US$ ${max}`,
     checking: "Buscando tu wallet…",
     connectTitle: "Conectá tu wallet para comprar",
     connectBody:
@@ -60,9 +60,9 @@ export const checkout = defineDict({
         cta: { label: "Ir a mi plan", href: "/panel" },
       },
       no_guarantee: {
-        t: "Necesitás un fiador",
-        d: "Para abrir un plan necesitás un fiador. Invitalo en 2 minutos.",
-        cta: { label: "Invitar a mi fiador", href: "/app/estudiante#invite-guarantor" },
+        t: "Necesitás un garante",
+        d: "Para abrir un plan necesitás un garante. Invitalo en 2 minutos.",
+        cta: { label: "Invitar a mi garante", href: "/app/estudiante#invite-guarantor" },
       },
       exceeds_tier_max: {
         t: "Supera el tope de tu Tier",
@@ -135,7 +135,7 @@ export const checkout = defineDict({
         Grace: "en gracia",
         Late: "atrasada",
         Paid: "pagada",
-        ChargedToGuarantor: "cobrada al fiador",
+        ChargedToGuarantor: "cobrada al garante",
       },
       exactToggle: "Ver montos exactos",
       exactTotal: "Total financiado exacto",
@@ -146,11 +146,11 @@ export const checkout = defineDict({
         grace: (d: number) =>
           `Tenés ${d} días de gracia después de cada vencimiento: pagando dentro de ese plazo no hay recargo.`,
         notice: (d: number) =>
-          `Al día ${d} de atraso está previsto avisarle a tu fiador: es un aviso, todavía no un cobro.`,
+          `Al día ${d} de atraso está previsto avisarle a tu garante: es un aviso, todavía no un cobro.`,
         penalty: (pct: string) =>
-          `Pasada la gracia se suma un recargo único del ${pct}% sobre la cuota vencida. Lo pagás vos: tu fiador no lo cubre.`,
+          `Pasada la gracia se suma un recargo único del ${pct}% sobre la cuota vencida. Lo pagás vos: tu garante no lo cubre.`,
         charge: (d: number) =>
-          `Al día ${d} de atraso se solicita el cobro a tu fiador por el capital y el interés que falten (sin el recargo).`,
+          `Al día ${d} de atraso se solicita el cobro a tu garante por el capital y el interés que falten (sin el recargo).`,
         recovery:
           "Si ese cobro se registra, tu plan deja de contar, bajás de escalón y no podés abrir planes nuevos.",
       },
@@ -274,7 +274,7 @@ export const checkout = defineDict({
         exceeds_guarantor_max_purchase: "Supera el tope de tu garante.",
         exceeds_guarantee_coverage: "Tu garante no llega a cubrir esta compra.",
         no_guarantee: "Necesitás un garante activo para comprar.",
-        guarantor_required: "Para abrir un plan necesitás un fiador. Invitalo en 2 minutos.",
+        guarantor_required: "Para abrir un plan necesitás un garante. Invitalo en 2 minutos.",
         below_option_min: "La compra no alcanza el mínimo configurado para esa opción.",
         pool_liquidity: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
         blocked_after_default: "Tu cuenta está bloqueada para planes nuevos.",

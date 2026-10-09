@@ -208,7 +208,6 @@ function DatosPool({ pool }: { pool: Pool }) {
 export function PoolView() {
   const t = useT(poolCuenta);
   const pool = useCuotasQuery(["pool"], (c) => c.getPool());
-  const esMock = getCuotas().mode === "mock";
 
   return (
     <div data-testid="pool-panel" className="mx-auto w-full max-w-3xl space-y-6">
@@ -220,7 +219,6 @@ export function PoolView() {
           <ModeBadge />
         </div>
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">{t.subtitulo}</p>
-        {esMock && <p className="mt-2 text-xs leading-relaxed text-ink-ghost">{t.datosSimuladosHint}</p>}
       </header>
 
       <Consulta

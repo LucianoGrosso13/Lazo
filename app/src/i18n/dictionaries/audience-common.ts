@@ -10,9 +10,9 @@ export const audienceCommon = defineDict({
     navLabel: "Cómo funciona",
     pages: {
       estudiantes: {
-        nav: "Estudiantes y familias",
-        eyebrow: "Estudiantes y familias",
-        title: "Cómo funciona Lazo para estudiantes y familias",
+        nav: "Compradores y garantes",
+        eyebrow: "Compradores y garantes",
+        title: "Cómo funciona Lazo para compradores y garantes",
         lede: "Cuotas con respaldo familiar, un anticipo que baja con tu historial y reglas claras si te atrasás.",
       },
       comercios: {
@@ -37,9 +37,9 @@ export const audienceCommon = defineDict({
     navLabel: "How it works",
     pages: {
       estudiantes: {
-        nav: "Students and families",
-        eyebrow: "Students and families",
-        title: "How Lazo works for students and families",
+        nav: "Buyers and guarantors",
+        eyebrow: "Buyers and guarantors",
+        title: "How Lazo works for buyers and guarantors",
         lede: "Installments backed by your family, a down payment that drops with your track record, and clear rules if you fall behind.",
       },
       comercios: {

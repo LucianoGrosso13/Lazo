@@ -55,16 +55,16 @@ export const adminCuenta = defineDict({
       "Solo lectura: salen de la configuración vigente del protocolo, no de esta pantalla.",
     colTier: "Tier",
     colAnticipo: "Anticipo",
-    colCobertura: "Cobertura del fiador",
+    colCobertura: "Cobertura del garante",
     colTope: "Tope de compra",
     colInteres: "Interés",
     reglasTitulo: "Reglas de mora y cargos",
     reglaGracia: "Días de gracia",
-    reglaAviso: "Aviso al fiador",
+    reglaAviso: "Aviso al garante",
     reglaPunitorio: "Punitorio",
-    reglaCargo: "Primer cargo al fiador",
+    reglaCargo: "Primer cargo al garante",
     reglaCargoNota:
-      "Al día {dia} el keeper cobra la cuota vencida al fiador; un segundo cargo acelera todo el saldo impago del plan.",
+      "Al día {dia} el keeper cobra la cuota vencida al garante; un segundo cargo acelera todo el saldo impago del plan.",
     reglaCuotas: "Cuotas por compra",
     reglaComision: "Comisión del comercio",
     reglaMinimo: "Mínimo que cuenta para subir",
@@ -93,7 +93,7 @@ export const adminCuenta = defineDict({
       Deposit: "Depósito",
       Advance: "Adelanto al comercio",
       Repayment: "Pago de cuota",
-      Recovery: "Recupero por fiador",
+      Recovery: "Recupero por garante",
       Loss: "Pérdida",
     },
     reciboHash: "recibo",
@@ -105,17 +105,17 @@ export const adminCuenta = defineDict({
     moraPasoGrace: "Gracia",
     moraPasoGraceBody: "Días 1 a {grace}: la cuota está vencida sin punitorio.",
     moraPasoAviso: "Aviso",
-    moraPasoAvisoBody: "Día {notice}: se avisa al fiador que puede venir un cargo.",
+    moraPasoAvisoBody: "Día {notice}: se avisa al garante que puede venir un cargo.",
     moraPasoPunitorio: "Punitorio",
     moraPasoPunitorioBody:
       "Desde el día {day}: {pct}% sobre la cuota vencida.",
-    moraPasoCargo: "Cargo al fiador",
+    moraPasoCargo: "Cargo al garante",
     moraPasoCargoBody:
-      "Día {charge}: se cobra al fiador, el estudiante baja un Tier y queda bloqueado. Una segunda cuota al día {charge} acelera todo el saldo.",
+      "Día {charge}: se cobra al garante, el comprador baja un Tier y queda bloqueado. Una segunda cuota al día {charge} acelera todo el saldo.",
     moraEventosTitle: "Eventos de mora",
     moraVacio:
       "Sin eventos de mora todavía. Cuando una cuota venza y el reloj avance, el aviso, el punitorio y los cargos aparecen acá.",
-    moraCargoN: { primero: "Primer cargo al fiador", segundo: "Segundo cargo (saldo acelerado)" },
+    moraCargoN: { primero: "Primer cargo al garante", segundo: "Segundo cargo (saldo acelerado)" },
 
     bitacoraTitle: "Bitácora del keeper",
     bitacoraHint:
@@ -124,14 +124,14 @@ export const adminCuenta = defineDict({
     actividad: {
       PlanOpened: "Plan abierto",
       InstallmentPaid: "Cuota pagada",
-      GuarantorNotified: "Aviso al fiador",
+      GuarantorNotified: "Aviso al garante",
       MarkedLate: "Cuota marcada en mora",
-      GuarantorCharged: "Cargo al fiador",
+      GuarantorCharged: "Cargo al garante",
       RecoveryRegistered: "Recupero registrado",
       TierUp: "Sube de Tier",
       TierDown: "Baja de Tier",
-      GuaranteeRegistered: "Fianza registrada",
-      GuaranteeRevoked: "Fianza revocada",
+      GuaranteeRegistered: "Garantía registrada",
+      GuaranteeRevoked: "Garantía revocada",
       PayoutReleased: "Liquidación liberada",
     },
 
@@ -152,7 +152,7 @@ export const adminCuenta = defineDict({
 
     relojTitle: "Reloj de la demo",
     relojHint:
-      "Solo en modo demo: adelanta el tiempo para mostrar gracia, aviso, punitorio y cobro sin esperar días reales. Usa el mismo estado compartido que checkout, estudiante y pool.",
+      "Solo en modo demo: adelanta el tiempo para mostrar gracia, aviso, punitorio y cobro sin esperar días reales. Usa el mismo estado compartido que checkout, comprador y pool.",
     relojDia: "Día {n} de la demo",
     relojFecha: "Hora del protocolo",
     relojAvanzar: "Avanzar {n} días",
@@ -283,7 +283,7 @@ export const adminCuenta = defineDict({
     moraPasoPunitorioBody: "From day {day}: {pct}% on the overdue installment.",
     moraPasoCargo: "Guarantor charge",
     moraPasoCargoBody:
-      "Day {charge}: the guarantor is charged, the student drops a tier and gets blocked. A second installment hitting day {charge} accelerates the whole balance.",
+      "Day {charge}: the guarantor is charged, the buyer drops a tier and gets blocked. A second installment hitting day {charge} accelerates the whole balance.",
     moraEventosTitle: "Delinquency events",
     moraVacio:
       "No delinquency events yet. Once an installment lapses and the clock moves forward, the notice, late fee and charges show up here.",
@@ -324,7 +324,7 @@ export const adminCuenta = defineDict({
 
     relojTitle: "Demo clock",
     relojHint:
-      "Demo mode only: moves time forward to show grace, notice, late fee and charge without waiting real days. It uses the same shared state as checkout, student and pool.",
+      "Demo mode only: moves time forward to show grace, notice, late fee and charge without waiting real days. It uses the same shared state as checkout, buyer and pool.",
     relojDia: "Demo day {n}",
     relojFecha: "Protocol time",
     relojAvanzar: "Advance {n} days",

@@ -51,7 +51,7 @@ export const landingEquipo = defineDict({
         {
           num: "02",
           title: "Checkout con 6 cuotas",
-          desc: "Elegí 6 cuotas y mirá el interés total, el anticipo de tu Tier y lo que cubre el fiador.",
+          desc: "Elegí 6 cuotas y mirá el interés total, el anticipo de tu Tier y lo que cubre el garante.",
           href: "/tienda",
           linkText: "Ver checkout",
         },

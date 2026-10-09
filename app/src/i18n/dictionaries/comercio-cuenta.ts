@@ -28,13 +28,13 @@ export const comercioCuenta = defineDict({
     noRegistradoBody:
       "Esta dirección no tiene una cuenta de comercio en el protocolo (todavía).",
     saldoLabel: "Cobrado",
-    saldoHint: "Saldo de cobros en devUSDC. La mora del estudiante no lo toca.",
+    saldoHint: "Saldo de cobros en devUSDC. La mora del comprador no lo toca.",
     pendienteLabel: "Pendiente de cobro",
     pendienteHint: "Se acredita en la fecha de cobro de cada venta.",
     ventasTitle: "Ventas en cuotas",
     ventasCount: "{count} ventas",
     ventasVacia:
-      "Todavía no hay ventas registradas. Cuando un estudiante compra en cuotas, el cobro aparece acá al instante.",
+      "Todavía no hay ventas registradas. Cuando un comprador compra en cuotas, el cobro aparece acá al instante.",
     colFecha: "Fecha",
     colPrecio: "Precio",
     colCobrado: "Cobrado",
@@ -51,7 +51,7 @@ export const comercioCuenta = defineDict({
     mostradorCardTitle: "Venta en mostrador",
     mostradorCardBadge: "Presencial",
     mostradorCardDesc:
-      "Cobrá en el local generando una orden con QR o link directo para que el estudiante confirme en su celular.",
+      "Cobrá en el local generando una orden con QR o link directo para que el comprador confirme en su celular.",
     mostradorCardBoton: "Abrir mostrador",
     calendarioTramosVenta: "Tramos de cobro garantizados",
     anticipoCobrado: "Anticipo cobrado al instante",
@@ -117,7 +117,7 @@ export const comercioCuenta = defineDict({
     buscarInvalido: "Esa dirección no es válida.",
     demoSoloMock:
       "El comercio de ejemplo solo existe en modo demo. En devnet real, consultá la dirección de un comercio registrado.",
-    sinCargoDeMora: "Sin riesgo de mora: si el estudiante no paga, el fiador cubre.",
+    sinCargoDeMora: "Sin riesgo de mora: si el comprador no paga, el garante cubre.",
     comprobanteSimulado: "comprobante simulado",
     verEnExplorer: "Ver en Explorer",
   },
@@ -144,13 +144,13 @@ export const comercioCuenta = defineDict({
     noRegistradoTitle: "Merchant not registered",
     noRegistradoBody: "This address has no merchant account in the protocol (yet).",
     saldoLabel: "Collected",
-    saldoHint: "Payout balance in devUSDC. Student delinquency never touches it.",
+    saldoHint: "Payout balance in devUSDC. Buyer delinquency never touches it.",
     pendienteLabel: "Pending payout",
     pendienteHint: "It settles on each sale's payout date.",
     ventasTitle: "Installment sales",
     ventasCount: "{count} sales",
     ventasVacia:
-      "No sales recorded yet. When a student buys in installments, the payout shows up here instantly.",
+      "No sales recorded yet. When a buyer buys in installments, the payout shows up here instantly.",
     colFecha: "Date",
     colPrecio: "Price",
     colCobrado: "Received",
@@ -167,7 +167,7 @@ export const comercioCuenta = defineDict({
     mostradorCardTitle: "In-store point of sale",
     mostradorCardBadge: "In-person",
     mostradorCardDesc:
-      "Sell in person by generating an order with a QR code or direct link for students to confirm on their phone.",
+      "Sell in person by generating an order with a QR code or direct link for buyers to confirm on their phone.",
     mostradorCardBoton: "Open point of sale",
     calendarioTramosVenta: "Guaranteed payout tranches",
     anticipoCobrado: "Down payment collected instantly",
@@ -233,7 +233,7 @@ export const comercioCuenta = defineDict({
     buscarInvalido: "That address isn't valid.",
     demoSoloMock:
       "The demo merchant only exists in demo mode. On real devnet, look up a registered merchant address.",
-    sinCargoDeMora: "No delinquency risk: if the student doesn't pay, the guarantor covers.",
+    sinCargoDeMora: "No delinquency risk: if the buyer doesn't pay, the guarantor covers.",
     comprobanteSimulado: "simulated receipt",
     verEnExplorer: "View on Explorer",
   },

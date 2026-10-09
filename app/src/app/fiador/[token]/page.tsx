@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { FiadorEntry } from "@/components/cuenta/fiador/fiador";
 
 export const metadata: Metadata = {
-  title: "Fiador · Lazo",
+  title: "Garante · Lazo",
   description:
-    "Alta y seguimiento del fiador de Lazo por invitación. Demo en Solana devnet: la plata es de prueba.",
+    "Alta y seguimiento del garante de Lazo por invitación. Demo en Solana devnet: la plata es de prueba.",
 };
 
 // Entrada del fiador por enlace de invitación: el token ES la credencial, no

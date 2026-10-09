@@ -396,7 +396,7 @@ export function createAccountCuotas(base: CuotasClient): AccountCuotasClient {
       // En real el alta la completa el fiador en su enlace (KYC + tarjeta en
       // el backend) y la registra la wallet keeper: este atajo con mandato
       // local no existe fuera del mock.
-      if (mode === "real") return notYet("alta del fiador (completala en el enlace del fiador)");
+      if (mode === "real") return notYet("alta del garante (completala en el enlace del garante)");
       const store = loadStore();
       const invitation = store.invitations.find((i) => i.token === token);
       if (!invitation || invitation.completedAt) {

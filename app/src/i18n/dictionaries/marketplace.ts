@@ -41,7 +41,7 @@ export const marketplace = defineDict({
     settlementIn: (days: number) => `Cobra a ${days} días de la compra`,
     productsTitle: "Productos",
     tierNote:
-      "Precios partidos con la cotización de una cuenta nueva con fiador; con tu historial el anticipo puede bajar.",
+      "Precios partidos con la cotización de una cuenta nueva con garante; con tu historial el anticipo puede bajar.",
     buy: "Comprar en cuotas",
     productAria: (name: string, price: string) => `${name}, US$ ${price}`,
     foot: "Marketplace simulado en devnet.",

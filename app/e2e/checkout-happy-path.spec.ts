@@ -26,7 +26,7 @@ test("compra feliz: revisión → progreso → éxito con calendario y comproban
   ).toBeVisible();
   await expect(page.getByText(/Solana devnet/i).first()).toBeVisible();
   await expect(
-    page.getByText(/fiador|guarantor/i).first(),
+    page.getByText(/garante|guarantor/i).first(),
   ).toBeVisible();
   await page.getByRole("button", { name: SIGN_CTA }).click();
 

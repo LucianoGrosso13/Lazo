@@ -20,7 +20,7 @@ export const mostrador = defineDict({
     paso2Desc: "El cliente escanea el código con la cámara de su celular o le compartís el link.",
     paso3Numero: "3",
     paso3Titulo: "El cliente confirma",
-    paso3Desc: "Elige 3 o 6 cuotas con su fianza y la venta se acredita al instante en tu panel.",
+    paso3Desc: "Elige 3 o 6 cuotas con su garantía y la venta se acredita al instante en tu panel.",
 
     // Formulario de creación
     nuevaOrdenTitulo: "Nueva orden de cobro",

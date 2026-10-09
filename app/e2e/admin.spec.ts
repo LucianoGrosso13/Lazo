@@ -67,8 +67,8 @@ test("la identidad admin ve el panel: estado, Tiers, pool, mora, bitácora y com
     // Bitácora del keeper y comercios.
     await expect(page.getByTestId("admin-bitacora")).toBeVisible();
     await expect(page.getByTestId("admin-comercios")).toBeVisible();
-    // Todo mock queda declarado; jamás un link a Explorer con firmas falsas.
-    await expect(page.getByText(/simulad/i).first()).toBeVisible();
+    // Sin rótulos de simulación en la cuenta; jamás un link a Explorer con firmas falsas.
+    await expect(page.locator("main").getByText(/datos simulados|simulated data/i).filter({ visible: true })).toHaveCount(0);
     await expect(page.locator(`main ${EXPLORER_LINKS}`)).toHaveCount(0);
   });
 

@@ -1845,7 +1845,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     if (String(ctx.signer.address) !== String(studentAddr)) {
       throw new CuotasError(
         "wallet_required",
-        `Conectá la wallet del estudiante (${args.student}) para comprar`,
+        `Conectá la wallet del comprador (${args.student}) para comprar`,
       );
     }
     const config = await readConfig(ctx);
@@ -2027,7 +2027,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     if (String(ctx.signer.address) !== String(studentAddr)) {
       throw new CuotasError(
         "wallet_required",
-        `Conectá la wallet del estudiante (${student}) para pagar`,
+        `Conectá la wallet del comprador (${student}) para pagar`,
       );
     }
     const [planPda] = await findPlanPda(
@@ -2346,7 +2346,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       if (String(ctx.signer.address) !== String(studentAddr)) {
         throw new CuotasError(
           "wallet_required",
-          `Conectá la wallet del estudiante (${student}) para crear su reputación`,
+          `Conectá la wallet del comprador (${student}) para crear su reputación`,
         );
       }
       const [configAddr] = await findConfigPda({ programAddress: ctx.env.programId });
@@ -2653,7 +2653,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
           {
             ix,
             name: "KeeperRegisterGuarantee",
-            summary: `Registrar fiador de ${args.student} (tope ${args.maxPurchase})`,
+            summary: `Registrar garante de ${args.student} (tope ${args.maxPurchase})`,
           },
         ],
       }, { reviewer: overrides.reviewer }));
@@ -2698,7 +2698,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         getGuaranteeDecoder(),
         "Guarantee",
       );
-      if (!existing) throw new CuotasError("not_found", `fiador de ${student}`);
+      if (!existing) throw new CuotasError("not_found", `garante de ${student}`);
       const ix = getKeeperRevokeGuaranteeInstruction({
         keeper: ctx.signer,
         config: configPda,
@@ -2710,7 +2710,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         version: ctx.version,
         feePayer: asAddress(config.keeper ?? "", "keeper"),
         signer: ctx.signer,
-        instructions: [{ ix, name: "KeeperRevokeGuarantee", summary: `Revocar fiador de ${student}` }],
+        instructions: [{ ix, name: "KeeperRevokeGuarantee", summary: `Revocar garante de ${student}` }],
       }, { reviewer: overrides.reviewer }));
       const updated = await readProgramAccount(
         ctx.rpc,

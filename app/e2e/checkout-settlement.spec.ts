@@ -33,8 +33,8 @@ test("checkout requires an active guarantor and offers an invite", async ({ page
     window.localStorage.setItem("lazo.mock.v3", JSON.stringify(state));
   }, DEMO_STUDENT_NEW);
   await page.reload();
-  await expect(page.getByText(/necesitás un fiador|need a guarantor/i).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: /invitar a mi fiador|invite my guarantor/i })).toBeVisible();
+  await expect(page.getByText(/necesitás un garante|need a guarantor/i).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /invitar a mi garante|invite my guarantor/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /pagar anticipo y abrir plan|pay down/i })).toBeDisabled();
 });
 

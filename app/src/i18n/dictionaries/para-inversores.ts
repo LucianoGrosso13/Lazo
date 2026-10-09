@@ -11,7 +11,7 @@ export const paraInversores = defineDict({
     ctas: {
       pool: "Ver el pool en vivo",
       comercios: "Cómo funciona para comercios",
-      estudiantes: "Para estudiantes y familias",
+      estudiantes: "Para compradores y garantes",
     },
     pool: {
       title: "De dónde sale el rendimiento",
@@ -42,12 +42,12 @@ export const paraInversores = defineDict({
     compra: {
       title: "Una compra, paso a paso",
       intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
-        `Así se reparte una compra de ${precio} de un estudiante en ${tier} con fiador (${anticipoPct} de anticipo, ${cuotas} cuotas, cobro inmediato del comercio):`,
+        `Así se reparte una compra de ${precio} de un comprador en ${tier} con garante (${anticipoPct} de anticipo, ${cuotas} cuotas, cobro inmediato del comercio):`,
       steps: {
         compra: {
           title: (precio: string, anticipo: string) =>
-            `Compra de ${precio}: el estudiante paga ${anticipo} de anticipo`,
-          body: "El anticipo va directo al comercio. El resto queda financiado con el respaldo del fiador.",
+            `Compra de ${precio}: el comprador paga ${anticipo} de anticipo`,
+          body: "El anticipo va directo al comercio. El resto queda financiado con el respaldo del garante.",
         },
         adelanto: {
           title: (adelanto: string, originacion: string) =>
@@ -98,8 +98,8 @@ export const paraInversores = defineDict({
       cobroDias: (d: number) => `a ${d} días`,
       comisionCol: "comisión",
       netoCol: "neto del comercio",
-      nota: "Estas opciones viven solo en el mock de la demo: el programa en la cadena sigue con 3 cuotas y cobro inmediato.",
-      compromiso: "En el mock, al abrir cada plan se registra el calendario de cobro del comercio. El dinero sigue en el pool y cada tramo se libera en su fecha, incluso si el estudiante se atrasa. No se firma ni se envía ninguna transacción.",
+      nota: "Estas opciones viven solo en el simulador de la demo: el programa en la cadena sigue con 3 cuotas y cobro inmediato.",
+      compromiso: "En el simulador, al abrir cada plan se registra el calendario de cobro del comercio. El dinero sigue en el pool y cada tramo se libera en su fecha, incluso si el comprador se atrasa. No se firma ni se envía ninguna transacción.",
       calendario: (days: number) => `Calendario de ${days} días`,
       tramo: (index: number, total: number) => `Tramo ${index} de ${total}`,
       dia: (day: number) => `día ${day}`,
@@ -107,15 +107,15 @@ export const paraInversores = defineDict({
     riesgos: {
       title: "Riesgos, dicho claro",
       intro:
-        "El fiador y el tramo junior absorben golpes, pero ninguno vuelve el crédito libre de riesgo.",
+        "El garante y el tramo junior absorben golpes, pero ninguno vuelve el crédito libre de riesgo.",
       mora: {
         title: "Mora",
         body: (grace: number, notice: number, charge: number, penalty: string) =>
-          `Si una cuota vence hay ${grace} días de gracia (el día ${notice} se avisa al fiador), después corre un punitorio del ${penalty} sobre la cuota y al día ${charge} se cobra al fiador. Todo queda registrado: la mora, el cobro y el recupero.`,
+          `Si una cuota vence hay ${grace} días de gracia (el día ${notice} se avisa al garante), después corre un punitorio del ${penalty} sobre la cuota y al día ${charge} se cobra al garante. Todo queda registrado: la mora, el cobro y el recupero.`,
       },
       cobertura: {
         title: "Cobertura no es recupero garantizado",
-        body: "El fiador cubre el capital pendiente en todos los tiers, pero el cobro a su tarjeta puede fallar: rechazo del emisor o contracargo. Lo que no se recupera es una pérdida del pool y la absorbe primero el tramo junior.",
+        body: "El garante cubre el capital pendiente en todos los tiers, pero el cobro a su tarjeta puede fallar: rechazo del emisor o contracargo. Lo que no se recupera es una pérdida del pool y la absorbe primero el tramo junior.",
       },
       liquidez: {
         title: "Liquidez y plazo",
@@ -158,12 +158,12 @@ export const paraInversores = defineDict({
           a: "El junior absorbe la primera pérdida de cada crédito: asume más riesgo y espera más retorno. El senior se repone primero cuando vuelve la plata: menos riesgo y menor retorno esperado.",
         },
         {
-          q: "Si el fiador respalda el saldo, ¿el pool no puede perder?",
-          a: "Sí puede. La cobertura es una obligación contractual del fiador, pero el cobro a su tarjeta puede ser rechazado o revertido por contracargo. Lo que no se recupera se registra como pérdida del pool.",
+          q: "Si el garante respalda el saldo, ¿el pool no puede perder?",
+          a: "Sí puede. La cobertura es una obligación contractual del garante, pero el cobro a su tarjeta puede ser rechazado o revertido por contracargo. Lo que no se recupera se registra como pérdida del pool.",
         },
         {
-          q: "¿Qué pasa cuando el estudiante no paga?",
-          a: "Hay días de gracia, después un punitorio sobre la cuota y finalmente el cobro al fiador. El recupero entra al pool y queda registrado como movimiento verificable, igual que la pérdida si no se logra cobrar.",
+          q: "¿Qué pasa cuando el comprador no paga?",
+          a: "Hay días de gracia, después un punitorio sobre la cuota y finalmente el cobro al garante. El recupero entra al pool y queda registrado como movimiento verificable, igual que la pérdida si no se logra cobrar.",
         },
         {
           q: "¿Puedo verificar cada movimiento?",
@@ -184,7 +184,7 @@ export const paraInversores = defineDict({
     ctas: {
       pool: "See the live pool",
       comercios: "How it works for merchants",
-      estudiantes: "For students and families",
+      estudiantes: "For buyers and guarantors",
     },
     pool: {
       title: "Where the yield comes from",
@@ -215,11 +215,11 @@ export const paraInversores = defineDict({
     compra: {
       title: "One purchase, step by step",
       intro: (tier: string, precio: string, anticipoPct: string, cuotas: number) =>
-        `This is how a ${precio} purchase by a ${tier} student with a guarantor is split (${anticipoPct} down payment, ${cuotas} installments, immediate merchant settlement):`,
+        `This is how a ${precio} purchase by a ${tier} buyer with a guarantor is split (${anticipoPct} down payment, ${cuotas} installments, immediate merchant settlement):`,
       steps: {
         compra: {
           title: (precio: string, anticipo: string) =>
-            `${precio} purchase: the student pays ${anticipo} up front`,
+            `${precio} purchase: the buyer pays ${anticipo} up front`,
           body: "The down payment goes straight to the merchant. The rest is financed, backed by the guarantor.",
         },
         adelanto: {
@@ -271,8 +271,8 @@ export const paraInversores = defineDict({
       cobroDias: (d: number) => `in ${d} days`,
       comisionCol: "fee",
       netoCol: "merchant net",
-      nota: "These options only exist in the demo mock: the on-chain program still runs 3 installments and immediate settlement.",
-      compromiso: "In the mock, the merchant collection calendar is recorded when a plan opens. Funds stay in the pool and each tranche is released on its due date, even if the student is late. No transaction is signed or sent.",
+      nota: "These options only exist in the demo simulator: the on-chain program still runs 3 installments and immediate settlement.",
+      compromiso: "In the simulator, the merchant collection calendar is recorded when a plan opens. Funds stay in the pool and each tranche is released on its due date, even if the buyer is late. No transaction is signed or sent.",
       calendario: (days: number) => `${days}-day schedule`,
       tramo: (index: number, total: number) => `Tranche ${index} of ${total}`,
       dia: (day: number) => `day ${day}`,
@@ -335,7 +335,7 @@ export const paraInversores = defineDict({
           a: "Yes. Coverage is a contractual obligation of the guarantor, but the charge to their card can be declined or reversed by a chargeback. Whatever is not recovered is recorded as a pool loss.",
         },
         {
-          q: "What happens when the student doesn't pay?",
+          q: "What happens when the buyer doesn't pay?",
           a: "There is a grace period, then a penalty on the installment, and finally a charge to the guarantor. The recovery flows into the pool and is recorded as a verifiable movement, just like the loss if it can't be collected.",
         },
         {

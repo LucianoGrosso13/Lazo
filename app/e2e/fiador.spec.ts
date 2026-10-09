@@ -52,7 +52,7 @@ test("el alta registra una fianza simulada con cobertura de capital e interés",
   await continuar.click(); // tarjeta → confirmar
 
   // La cobertura y el tope salen de la configuración del protocolo.
-  const registrar = page.getByRole("button", { name: /aceptar y registrar la fianza/i });
+  const registrar = page.getByRole("button", { name: /aceptar y registrar la garantía/i });
   await expect(registrar).toBeEnabled();
   await expect(page.getByText(/Cobertura sobre el capital pendiente|Coverage of outstanding balance/i)).toBeVisible();
   await expect(page.getByText(/100%/).first()).toBeVisible();
