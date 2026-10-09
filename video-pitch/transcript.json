@@ -1,0 +1,1496 @@
+[
+  {
+    "id": "w0",
+    "text": "Imagine",
+    "start": 0.24,
+    "end": 0.88
+  },
+  {
+    "id": "w1",
+    "text": "working",
+    "start": 0.88,
+    "end": 1.28
+  },
+  {
+    "id": "w2",
+    "text": "hard",
+    "start": 1.28,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "every",
+    "start": 1.6,
+    "end": 1.84
+  },
+  {
+    "id": "w4",
+    "text": "single",
+    "start": 1.84,
+    "end": 2.24
+  },
+  {
+    "id": "w5",
+    "text": "day,",
+    "start": 2.24,
+    "end": 2.64
+  },
+  {
+    "id": "w6",
+    "text": "earning",
+    "start": 2.64,
+    "end": 3.2
+  },
+  {
+    "id": "w7",
+    "text": "a",
+    "start": 3.2,
+    "end": 3.36
+  },
+  {
+    "id": "w8",
+    "text": "steady",
+    "start": 3.36,
+    "end": 3.84
+  },
+  {
+    "id": "w9",
+    "text": "income",
+    "start": 3.84,
+    "end": 4.32
+  },
+  {
+    "id": "w10",
+    "text": "and",
+    "start": 4.4,
+    "end": 4.64
+  },
+  {
+    "id": "w11",
+    "text": "remaining",
+    "start": 4.64,
+    "end": 5.36
+  },
+  {
+    "id": "w12",
+    "text": "completely",
+    "start": 5.36,
+    "end": 5.76
+  },
+  {
+    "id": "w13",
+    "text": "invisible",
+    "start": 5.76,
+    "end": 6.4
+  },
+  {
+    "id": "w14",
+    "text": "to",
+    "start": 6.4,
+    "end": 6.56
+  },
+  {
+    "id": "w15",
+    "text": "the",
+    "start": 6.56,
+    "end": 6.64
+  },
+  {
+    "id": "w16",
+    "text": "banking",
+    "start": 6.64,
+    "end": 7.28
+  },
+  {
+    "id": "w17",
+    "text": "system.",
+    "start": 7.28,
+    "end": 8.4
+  },
+  {
+    "id": "w18",
+    "text": "Argentina",
+    "start": 8.64,
+    "end": 9.28
+  },
+  {
+    "id": "w19",
+    "text": "over",
+    "start": 9.6,
+    "end": 9.76
+  },
+  {
+    "id": "w20",
+    "text": "40%",
+    "start": 9.92,
+    "end": 10.48
+  },
+  {
+    "id": "w21",
+    "text": "of",
+    "start": 10.64,
+    "end": 10.8
+  },
+  {
+    "id": "w22",
+    "text": "the",
+    "start": 10.8,
+    "end": 10.96
+  },
+  {
+    "id": "w23",
+    "text": "workforce",
+    "start": 10.96,
+    "end": 11.84
+  },
+  {
+    "id": "w24",
+    "text": "operates",
+    "start": 11.84,
+    "end": 12.32
+  },
+  {
+    "id": "w25",
+    "text": "in",
+    "start": 12.4,
+    "end": 12.56
+  },
+  {
+    "id": "w26",
+    "text": "the",
+    "start": 12.56,
+    "end": 12.72
+  },
+  {
+    "id": "w27",
+    "text": "informal",
+    "start": 12.72,
+    "end": 13.2
+  },
+  {
+    "id": "w28",
+    "text": "economy.",
+    "start": 13.2,
+    "end": 13.92
+  },
+  {
+    "id": "w29",
+    "text": "Without",
+    "start": 13.92,
+    "end": 14.4
+  },
+  {
+    "id": "w30",
+    "text": "a",
+    "start": 14.4,
+    "end": 14.56
+  },
+  {
+    "id": "w31",
+    "text": "formal",
+    "start": 14.56,
+    "end": 14.88
+  },
+  {
+    "id": "w32",
+    "text": "pay",
+    "start": 14.88,
+    "end": 15.2
+  },
+  {
+    "id": "w33",
+    "text": "start",
+    "start": 15.2,
+    "end": 15.52
+  },
+  {
+    "id": "w34",
+    "text": "or",
+    "start": 15.68,
+    "end": 15.84
+  },
+  {
+    "id": "w35",
+    "text": "traditional",
+    "start": 15.84,
+    "end": 16.32
+  },
+  {
+    "id": "w36",
+    "text": "credit",
+    "start": 16.32,
+    "end": 16.72
+  },
+  {
+    "id": "w37",
+    "text": "history,",
+    "start": 16.72,
+    "end": 17.6
+  },
+  {
+    "id": "w38",
+    "text": "millions",
+    "start": 17.6,
+    "end": 18.08
+  },
+  {
+    "id": "w39",
+    "text": "of",
+    "start": 18.16,
+    "end": 18.32
+  },
+  {
+    "id": "w40",
+    "text": "workers",
+    "start": 18.32,
+    "end": 18.8
+  },
+  {
+    "id": "w41",
+    "text": "and",
+    "start": 18.88,
+    "end": 19.12
+  },
+  {
+    "id": "w42",
+    "text": "students",
+    "start": 19.12,
+    "end": 19.76
+  },
+  {
+    "id": "w43",
+    "text": "are",
+    "start": 19.76,
+    "end": 20.08
+  },
+  {
+    "id": "w44",
+    "text": "locked",
+    "start": 20.08,
+    "end": 20.64
+  },
+  {
+    "id": "w45",
+    "text": "out",
+    "start": 20.64,
+    "end": 20.96
+  },
+  {
+    "id": "w46",
+    "text": "of",
+    "start": 20.96,
+    "end": 21.28
+  },
+  {
+    "id": "w47",
+    "text": "basic",
+    "start": 21.28,
+    "end": 21.76
+  },
+  {
+    "id": "w48",
+    "text": "financial",
+    "start": 21.76,
+    "end": 22.24
+  },
+  {
+    "id": "w49",
+    "text": "tools",
+    "start": 22.24,
+    "end": 22.64
+  },
+  {
+    "id": "w50",
+    "text": "like",
+    "start": 22.8,
+    "end": 23.04
+  },
+  {
+    "id": "w51",
+    "text": "credit",
+    "start": 23.04,
+    "end": 23.36
+  },
+  {
+    "id": "w52",
+    "text": "cards.",
+    "start": 23.36,
+    "end": 24.16
+  },
+  {
+    "id": "w53",
+    "text": "They",
+    "start": 24.16,
+    "end": 24.48
+  },
+  {
+    "id": "w54",
+    "text": "simply",
+    "start": 24.48,
+    "end": 24.8
+  },
+  {
+    "id": "w55",
+    "text": "have",
+    "start": 24.96,
+    "end": 25.12
+  },
+  {
+    "id": "w56",
+    "text": "no",
+    "start": 25.12,
+    "end": 25.36
+  },
+  {
+    "id": "w57",
+    "text": "way",
+    "start": 25.36,
+    "end": 25.6
+  },
+  {
+    "id": "w58",
+    "text": "to",
+    "start": 25.6,
+    "end": 25.76
+  },
+  {
+    "id": "w59",
+    "text": "pay",
+    "start": 25.76,
+    "end": 26.24
+  },
+  {
+    "id": "w60",
+    "text": "over",
+    "start": 26.24,
+    "end": 26.56
+  },
+  {
+    "id": "w61",
+    "text": "time.",
+    "start": 26.56,
+    "end": 27.44
+  },
+  {
+    "id": "w62",
+    "text": "We",
+    "start": 27.44,
+    "end": 27.68
+  },
+  {
+    "id": "w63",
+    "text": "are",
+    "start": 27.68,
+    "end": 27.84
+  },
+  {
+    "id": "w64",
+    "text": "Luciano",
+    "start": 27.84,
+    "end": 28.4
+  },
+  {
+    "id": "w65",
+    "text": "and",
+    "start": 28.4,
+    "end": 28.56
+  },
+  {
+    "id": "w66",
+    "text": "Ignacio,",
+    "start": 28.56,
+    "end": 29.28
+  },
+  {
+    "id": "w67",
+    "text": "and",
+    "start": 29.28,
+    "end": 29.44
+  },
+  {
+    "id": "w68",
+    "text": "we",
+    "start": 29.44,
+    "end": 29.6
+  },
+  {
+    "id": "w69",
+    "text": "are",
+    "start": 29.6,
+    "end": 29.76
+  },
+  {
+    "id": "w70",
+    "text": "building",
+    "start": 29.76,
+    "end": 30.08
+  },
+  {
+    "id": "w71",
+    "text": "Lazo,",
+    "start": 30.08,
+    "end": 30.88
+  },
+  {
+    "id": "w72",
+    "text": "a",
+    "start": 30.88,
+    "end": 31.04
+  },
+  {
+    "id": "w73",
+    "text": "credit",
+    "start": 31.04,
+    "end": 31.44
+  },
+  {
+    "id": "w74",
+    "text": "layer",
+    "start": 31.44,
+    "end": 31.84
+  },
+  {
+    "id": "w75",
+    "text": "that",
+    "start": 31.84,
+    "end": 32.08
+  },
+  {
+    "id": "w76",
+    "text": "plugs",
+    "start": 32.08,
+    "end": 32.48
+  },
+  {
+    "id": "w77",
+    "text": "in",
+    "start": 32.56,
+    "end": 32.8
+  },
+  {
+    "id": "w78",
+    "text": "directly",
+    "start": 32.8,
+    "end": 33.28
+  },
+  {
+    "id": "w79",
+    "text": "into",
+    "start": 33.28,
+    "end": 33.52
+  },
+  {
+    "id": "w80",
+    "text": "the",
+    "start": 33.52,
+    "end": 33.6
+  },
+  {
+    "id": "w81",
+    "text": "fintech",
+    "start": 33.6,
+    "end": 34.16
+  },
+  {
+    "id": "w82",
+    "text": "wallet",
+    "start": 34.4,
+    "end": 34.88
+  },
+  {
+    "id": "w83",
+    "text": "that",
+    "start": 34.88,
+    "end": 35.2
+  },
+  {
+    "id": "w84",
+    "text": "people",
+    "start": 35.2,
+    "end": 35.52
+  },
+  {
+    "id": "w85",
+    "text": "already",
+    "start": 35.6,
+    "end": 36
+  },
+  {
+    "id": "w86",
+    "text": "use",
+    "start": 36,
+    "end": 36.32
+  },
+  {
+    "id": "w87",
+    "text": "every",
+    "start": 36.32,
+    "end": 36.64
+  },
+  {
+    "id": "w88",
+    "text": "single",
+    "start": 36.64,
+    "end": 36.96
+  },
+  {
+    "id": "w89",
+    "text": "day.",
+    "start": 36.96,
+    "end": 37.6
+  },
+  {
+    "id": "w90",
+    "text": "We",
+    "start": 37.6,
+    "end": 37.84
+  },
+  {
+    "id": "w91",
+    "text": "enable",
+    "start": 37.84,
+    "end": 38.4
+  },
+  {
+    "id": "w92",
+    "text": "a",
+    "start": 38.48,
+    "end": 38.64
+  },
+  {
+    "id": "w93",
+    "text": "pay",
+    "start": 38.64,
+    "end": 38.96
+  },
+  {
+    "id": "w94",
+    "text": "now",
+    "start": 39.04,
+    "end": 39.2
+  },
+  {
+    "id": "w95",
+    "text": "pay",
+    "start": 39.52,
+    "end": 39.84
+  },
+  {
+    "id": "w96",
+    "text": "later",
+    "start": 39.84,
+    "end": 40.24
+  },
+  {
+    "id": "w97",
+    "text": "model",
+    "start": 40.24,
+    "end": 40.48
+  },
+  {
+    "id": "w98",
+    "text": "where",
+    "start": 40.8,
+    "end": 41.04
+  },
+  {
+    "id": "w99",
+    "text": "users",
+    "start": 41.12,
+    "end": 41.52
+  },
+  {
+    "id": "w100",
+    "text": "can",
+    "start": 41.6,
+    "end": 41.84
+  },
+  {
+    "id": "w101",
+    "text": "split",
+    "start": 41.84,
+    "end": 42.24
+  },
+  {
+    "id": "w102",
+    "text": "purchase",
+    "start": 42.24,
+    "end": 42.8
+  },
+  {
+    "id": "w103",
+    "text": "into",
+    "start": 42.8,
+    "end": 43.04
+  },
+  {
+    "id": "w104",
+    "text": "three",
+    "start": 43.04,
+    "end": 43.36
+  },
+  {
+    "id": "w105",
+    "text": "interest",
+    "start": 43.36,
+    "end": 43.76
+  },
+  {
+    "id": "w106",
+    "text": "free",
+    "start": 43.84,
+    "end": 44.24
+  },
+  {
+    "id": "w107",
+    "text": "monthly",
+    "start": 44.4,
+    "end": 44.88
+  },
+  {
+    "id": "w108",
+    "text": "payments",
+    "start": 44.88,
+    "end": 45.52
+  },
+  {
+    "id": "w109",
+    "text": "or",
+    "start": 45.68,
+    "end": 46
+  },
+  {
+    "id": "w110",
+    "text": "six",
+    "start": 46,
+    "end": 46.4
+  },
+  {
+    "id": "w111",
+    "text": "with",
+    "start": 46.48,
+    "end": 46.72
+  },
+  {
+    "id": "w112",
+    "text": "a",
+    "start": 46.72,
+    "end": 46.88
+  },
+  {
+    "id": "w113",
+    "text": "small",
+    "start": 46.88,
+    "end": 47.2
+  },
+  {
+    "id": "w114",
+    "text": "interest",
+    "start": 47.44,
+    "end": 47.84
+  },
+  {
+    "id": "w115",
+    "text": "charge.",
+    "start": 47.84,
+    "end": 48.56
+  },
+  {
+    "id": "w116",
+    "text": "For",
+    "start": 51.84,
+    "end": 52.16
+  },
+  {
+    "id": "w117",
+    "text": "buyers,",
+    "start": 52.16,
+    "end": 52.8
+  },
+  {
+    "id": "w118",
+    "text": "there",
+    "start": 52.8,
+    "end": 53.04
+  },
+  {
+    "id": "w119",
+    "text": "are",
+    "start": 53.04,
+    "end": 53.2
+  },
+  {
+    "id": "w120",
+    "text": "three",
+    "start": 53.2,
+    "end": 53.52
+  },
+  {
+    "id": "w121",
+    "text": "simple",
+    "start": 53.52,
+    "end": 54
+  },
+  {
+    "id": "w122",
+    "text": "steps.",
+    "start": 54,
+    "end": 55.12
+  },
+  {
+    "id": "w123",
+    "text": "Pick",
+    "start": 55.12,
+    "end": 55.44
+  },
+  {
+    "id": "w124",
+    "text": "up",
+    "start": 55.6,
+    "end": 55.76
+  },
+  {
+    "id": "w125",
+    "text": "your",
+    "start": 55.76,
+    "end": 56
+  },
+  {
+    "id": "w126",
+    "text": "product,",
+    "start": 56,
+    "end": 56.64
+  },
+  {
+    "id": "w127",
+    "text": "choose",
+    "start": 56.64,
+    "end": 57.04
+  },
+  {
+    "id": "w128",
+    "text": "the",
+    "start": 57.04,
+    "end": 57.28
+  },
+  {
+    "id": "w129",
+    "text": "installments,",
+    "start": 57.28,
+    "end": 57.92
+  },
+  {
+    "id": "w130",
+    "text": "and",
+    "start": 57.92,
+    "end": 58.08
+  },
+  {
+    "id": "w131",
+    "text": "confirm",
+    "start": 58.08,
+    "end": 58.4
+  },
+  {
+    "id": "w132",
+    "text": "your",
+    "start": 58.56,
+    "end": 58.72
+  },
+  {
+    "id": "w133",
+    "text": "purchase.",
+    "start": 58.72,
+    "end": 59.36
+  },
+  {
+    "id": "w134",
+    "text": "For",
+    "start": 59.61,
+    "end": 59.93
+  },
+  {
+    "id": "w135",
+    "text": "merchants",
+    "start": 59.93,
+    "end": 60.57
+  },
+  {
+    "id": "w136",
+    "text": "it's",
+    "start": 60.65,
+    "end": 60.97
+  },
+  {
+    "id": "w137",
+    "text": "easy.",
+    "start": 60.97,
+    "end": 61.53
+  },
+  {
+    "id": "w138",
+    "text": "They",
+    "start": 61.53,
+    "end": 61.77
+  },
+  {
+    "id": "w139",
+    "text": "get",
+    "start": 61.77,
+    "end": 61.93
+  },
+  {
+    "id": "w140",
+    "text": "paid",
+    "start": 62.01,
+    "end": 62.41
+  },
+  {
+    "id": "w141",
+    "text": "upfront",
+    "start": 62.41,
+    "end": 63.13
+  },
+  {
+    "id": "w142",
+    "text": "for",
+    "start": 63.13,
+    "end": 63.37
+  },
+  {
+    "id": "w143",
+    "text": "a",
+    "start": 63.37,
+    "end": 63.45
+  },
+  {
+    "id": "w144",
+    "text": "small",
+    "start": 63.45,
+    "end": 63.85
+  },
+  {
+    "id": "w145",
+    "text": "fee,",
+    "start": 63.85,
+    "end": 64.41
+  },
+  {
+    "id": "w146",
+    "text": "while",
+    "start": 64.41,
+    "end": 64.73
+  },
+  {
+    "id": "w147",
+    "text": "the",
+    "start": 64.73,
+    "end": 64.89
+  },
+  {
+    "id": "w148",
+    "text": "customer",
+    "start": 64.89,
+    "end": 65.61
+  },
+  {
+    "id": "w149",
+    "text": "pays",
+    "start": 65.61,
+    "end": 66.09
+  },
+  {
+    "id": "w150",
+    "text": "over",
+    "start": 66.09,
+    "end": 66.25
+  },
+  {
+    "id": "w151",
+    "text": "time.",
+    "start": 66.41,
+    "end": 67.13
+  },
+  {
+    "id": "w152",
+    "text": "The",
+    "start": 67.13,
+    "end": 67.37
+  },
+  {
+    "id": "w153",
+    "text": "money",
+    "start": 67.37,
+    "end": 67.85
+  },
+  {
+    "id": "w154",
+    "text": "from",
+    "start": 68.01,
+    "end": 68.17
+  },
+  {
+    "id": "w155",
+    "text": "a",
+    "start": 68.17,
+    "end": 68.25
+  },
+  {
+    "id": "w156",
+    "text": "shared",
+    "start": 68.25,
+    "end": 68.65
+  },
+  {
+    "id": "w157",
+    "text": "credit",
+    "start": 68.73,
+    "end": 69.13
+  },
+  {
+    "id": "w158",
+    "text": "pool",
+    "start": 69.13,
+    "end": 69.53
+  },
+  {
+    "id": "w159",
+    "text": "and",
+    "start": 69.61,
+    "end": 69.85
+  },
+  {
+    "id": "w160",
+    "text": "every",
+    "start": 69.85,
+    "end": 70.17
+  },
+  {
+    "id": "w161",
+    "text": "repayment",
+    "start": 70.17,
+    "end": 70.81
+  },
+  {
+    "id": "w162",
+    "text": "fills",
+    "start": 71.05,
+    "end": 71.61
+  },
+  {
+    "id": "w163",
+    "text": "it",
+    "start": 71.61,
+    "end": 71.77
+  },
+  {
+    "id": "w164",
+    "text": "back",
+    "start": 71.77,
+    "end": 72.01
+  },
+  {
+    "id": "w165",
+    "text": "up.",
+    "start": 72.01,
+    "end": 72.57
+  },
+  {
+    "id": "w166",
+    "text": "That",
+    "start": 72.65,
+    "end": 72.81
+  },
+  {
+    "id": "w167",
+    "text": "pools",
+    "start": 72.97,
+    "end": 73.29
+  },
+  {
+    "id": "w168",
+    "text": "listen.",
+    "start": 73.37,
+    "end": 74.73
+  },
+  {
+    "id": "w169",
+    "text": "It",
+    "start": 74.73,
+    "end": 74.97
+  },
+  {
+    "id": "w170",
+    "text": "runs",
+    "start": 74.97,
+    "end": 75.29
+  },
+  {
+    "id": "w171",
+    "text": "as",
+    "start": 75.29,
+    "end": 75.53
+  },
+  {
+    "id": "w172",
+    "text": "a",
+    "start": 75.53,
+    "end": 75.69
+  },
+  {
+    "id": "w173",
+    "text": "program",
+    "start": 75.69,
+    "end": 76.01
+  },
+  {
+    "id": "w174",
+    "text": "that",
+    "start": 76.17,
+    "end": 76.41
+  },
+  {
+    "id": "w175",
+    "text": "pays",
+    "start": 76.41,
+    "end": 76.89
+  },
+  {
+    "id": "w176",
+    "text": "merchants",
+    "start": 76.89,
+    "end": 77.37
+  },
+  {
+    "id": "w177",
+    "text": "and",
+    "start": 77.37,
+    "end": 77.53
+  },
+  {
+    "id": "w178",
+    "text": "collect",
+    "start": 77.53,
+    "end": 78.01
+  },
+  {
+    "id": "w179",
+    "text": "installments",
+    "start": 78.09,
+    "end": 78.73
+  },
+  {
+    "id": "w180",
+    "text": "automatically",
+    "start": 78.73,
+    "end": 79.45
+  },
+  {
+    "id": "w181",
+    "text": "by",
+    "start": 79.61,
+    "end": 79.85
+  },
+  {
+    "id": "w182",
+    "text": "rules",
+    "start": 79.85,
+    "end": 80.25
+  },
+  {
+    "id": "w183",
+    "text": "anyone",
+    "start": 80.41,
+    "end": 80.81
+  },
+  {
+    "id": "w184",
+    "text": "can",
+    "start": 80.81,
+    "end": 81.05
+  },
+  {
+    "id": "w185",
+    "text": "check.",
+    "start": 81.05,
+    "end": 81.85
+  },
+  {
+    "id": "w186",
+    "text": "Every",
+    "start": 81.85,
+    "end": 82.25
+  },
+  {
+    "id": "w187",
+    "text": "loan",
+    "start": 82.25,
+    "end": 82.65
+  },
+  {
+    "id": "w188",
+    "text": "and",
+    "start": 82.65,
+    "end": 82.89
+  },
+  {
+    "id": "w189",
+    "text": "repayment",
+    "start": 82.89,
+    "end": 84.01
+  },
+  {
+    "id": "w190",
+    "text": "is",
+    "start": 84.17,
+    "end": 84.49
+  },
+  {
+    "id": "w191",
+    "text": "recorded",
+    "start": 84.49,
+    "end": 85.21
+  },
+  {
+    "id": "w192",
+    "text": "on",
+    "start": 85.21,
+    "end": 85.45
+  },
+  {
+    "id": "w193",
+    "text": "chain,",
+    "start": 85.45,
+    "end": 85.93
+  },
+  {
+    "id": "w194",
+    "text": "and",
+    "start": 85.93,
+    "end": 86.17
+  },
+  {
+    "id": "w195",
+    "text": "each",
+    "start": 86.17,
+    "end": 86.49
+  },
+  {
+    "id": "w196",
+    "text": "payment",
+    "start": 86.49,
+    "end": 86.89
+  },
+  {
+    "id": "w197",
+    "text": "flows",
+    "start": 86.89,
+    "end": 87.37
+  },
+  {
+    "id": "w198",
+    "text": "back",
+    "start": 87.37,
+    "end": 87.53
+  },
+  {
+    "id": "w199",
+    "text": "into",
+    "start": 87.53,
+    "end": 87.77
+  },
+  {
+    "id": "w200",
+    "text": "the",
+    "start": 87.77,
+    "end": 87.93
+  },
+  {
+    "id": "w201",
+    "text": "pool",
+    "start": 87.93,
+    "end": 88.25
+  },
+  {
+    "id": "w202",
+    "text": "in",
+    "start": 88.41,
+    "end": 88.57
+  },
+  {
+    "id": "w203",
+    "text": "seconds,",
+    "start": 88.57,
+    "end": 89.21
+  },
+  {
+    "id": "w204",
+    "text": "ready",
+    "start": 89.21,
+    "end": 89.61
+  },
+  {
+    "id": "w205",
+    "text": "to",
+    "start": 89.61,
+    "end": 89.85
+  },
+  {
+    "id": "w206",
+    "text": "fund",
+    "start": 89.85,
+    "end": 90.09
+  },
+  {
+    "id": "w207",
+    "text": "the",
+    "start": 90.25,
+    "end": 90.33
+  },
+  {
+    "id": "w208",
+    "text": "next",
+    "start": 90.33,
+    "end": 90.65
+  },
+  {
+    "id": "w209",
+    "text": "purchase.",
+    "start": 90.65,
+    "end": 91.37
+  },
+  {
+    "id": "w210",
+    "text": "are",
+    "start": 91.49,
+    "end": 91.65
+  },
+  {
+    "id": "w211",
+    "text": "launching",
+    "start": 91.65,
+    "end": 92.21
+  },
+  {
+    "id": "w212",
+    "text": "our",
+    "start": 92.21,
+    "end": 92.45
+  },
+  {
+    "id": "w213",
+    "text": "first",
+    "start": 92.45,
+    "end": 92.69
+  },
+  {
+    "id": "w214",
+    "text": "pilot",
+    "start": 92.69,
+    "end": 93.25
+  },
+  {
+    "id": "w215",
+    "text": "in",
+    "start": 93.25,
+    "end": 93.41
+  },
+  {
+    "id": "w216",
+    "text": "Argentina",
+    "start": 93.41,
+    "end": 94.13
+  },
+  {
+    "id": "w217",
+    "text": "and",
+    "start": 94.29,
+    "end": 94.45
+  },
+  {
+    "id": "w218",
+    "text": "we",
+    "start": 94.45,
+    "end": 94.61
+  },
+  {
+    "id": "w219",
+    "text": "are",
+    "start": 94.61,
+    "end": 94.77
+  },
+  {
+    "id": "w220",
+    "text": "looking",
+    "start": 94.77,
+    "end": 95.09
+  },
+  {
+    "id": "w221",
+    "text": "for",
+    "start": 95.09,
+    "end": 95.33
+  },
+  {
+    "id": "w222",
+    "text": "vintage",
+    "start": 95.33,
+    "end": 95.97
+  },
+  {
+    "id": "w223",
+    "text": "partners",
+    "start": 95.97,
+    "end": 96.45
+  },
+  {
+    "id": "w224",
+    "text": "and",
+    "start": 96.45,
+    "end": 96.69
+  },
+  {
+    "id": "w225",
+    "text": "investors",
+    "start": 96.69,
+    "end": 97.33
+  },
+  {
+    "id": "w226",
+    "text": "to",
+    "start": 97.41,
+    "end": 97.65
+  },
+  {
+    "id": "w227",
+    "text": "join",
+    "start": 97.65,
+    "end": 98.13
+  },
+  {
+    "id": "w228",
+    "text": "us",
+    "start": 98.13,
+    "end": 98.29
+  },
+  {
+    "id": "w229",
+    "text": "in",
+    "start": 98.29,
+    "end": 98.61
+  },
+  {
+    "id": "w230",
+    "text": "scaling",
+    "start": 98.61,
+    "end": 99.25
+  },
+  {
+    "id": "w231",
+    "text": "credit",
+    "start": 99.25,
+    "end": 99.65
+  },
+  {
+    "id": "w232",
+    "text": "access",
+    "start": 99.97,
+    "end": 100.61
+  },
+  {
+    "id": "w233",
+    "text": "across",
+    "start": 100.77,
+    "end": 101.33
+  },
+  {
+    "id": "w234",
+    "text": "all",
+    "start": 101.33,
+    "end": 101.65
+  },
+  {
+    "id": "w235",
+    "text": "the",
+    "start": 101.65,
+    "end": 101.89
+  },
+  {
+    "id": "w236",
+    "text": "country,",
+    "start": 101.89,
+    "end": 102.93
+  },
+  {
+    "id": "w237",
+    "text": "because",
+    "start": 102.93,
+    "end": 103.17
+  },
+  {
+    "id": "w238",
+    "text": "earning",
+    "start": 103.41,
+    "end": 103.97
+  },
+  {
+    "id": "w239",
+    "text": "a",
+    "start": 103.97,
+    "end": 104.13
+  },
+  {
+    "id": "w240",
+    "text": "living",
+    "start": 104.13,
+    "end": 104.69
+  },
+  {
+    "id": "w241",
+    "text": "should",
+    "start": 104.69,
+    "end": 105.17
+  },
+  {
+    "id": "w242",
+    "text": "be",
+    "start": 105.17,
+    "end": 105.33
+  },
+  {
+    "id": "w243",
+    "text": "enough",
+    "start": 105.33,
+    "end": 105.73
+  },
+  {
+    "id": "w244",
+    "text": "to",
+    "start": 105.73,
+    "end": 105.97
+  },
+  {
+    "id": "w245",
+    "text": "get",
+    "start": 105.97,
+    "end": 106.29
+  },
+  {
+    "id": "w246",
+    "text": "access",
+    "start": 106.29,
+    "end": 106.69
+  },
+  {
+    "id": "w247",
+    "text": "to",
+    "start": 106.69,
+    "end": 106.93
+  },
+  {
+    "id": "w248",
+    "text": "credit.",
+    "start": 106.93,
+    "end": 107.49
+  }
+]

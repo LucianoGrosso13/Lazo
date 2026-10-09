@@ -46,33 +46,41 @@
         .abs {
                 position: absolute;
               }
-        /* ---------- 01 hook ---------- */
-              #hook-line {
-                left: 70px;
-                top: 60px;
+        /* ---------- 01 hook: checklist over Luciano's t-shirt ---------- */
+              #hook-list {
+                left: 120px;
+                top: 745px;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+              }
+        .hk {
                 display: flex;
                 align-items: center;
-                gap: 22px;
-                padding: 20px 34px 24px;
-                border-radius: 24px;
-                background: rgb(7 6 11 / 0.66);
-                font-weight: 800;
-                font-size: 70px;
-                letter-spacing: -0.02em;
+                gap: 20px;
+                font-weight: 700;
+                font-size: 50px;
+                letter-spacing: -0.015em;
+                line-height: 1.15;
+                padding: 14px 30px 16px 18px;
+                border-radius: 22px;
+                background: rgb(7 6 11 / 0.74);
+                border: 2px solid var(--hair);
               }
-        #hook-b {
-                color: var(--ink-2);
+        .hk svg {
+                flex: none;
+              }
+        #hk-3 {
+                color: var(--crack);
               }
       </style>
       <div data-hf-id="hf-hwjl" id="root" data-composition-id="s01-hook" data-width="1920" data-height="1080">
-        <div data-hf-id="hf-5pw0" id="ov-hook" class="grp">
-        <div data-hf-id="hf-7jni" id="hook-line" class="abs">
-          <span data-hf-id="hf-vnaf" id="hook-a" class="type">Income</span>
-          <svg data-hf-id="hf-pb8u" id="hook-neq" width="58" height="58" viewBox="0 0 58 58">
-            <path data-hf-id="hf-s6vj" class="draw" d="M8 21h42M8 37h42" stroke="#19fb9b" stroke-width="6" stroke-linecap="round" fill="none" />
-            <path data-hf-id="hf-twet" class="draw" d="M40 6 18 52" stroke="#19fb9b" stroke-width="6" stroke-linecap="round" fill="none" />
-          </svg>
-          <span data-hf-id="hf-n14b" id="hook-b" class="type">access to credit</span>
+        <div id="ov-hook" class="grp">
+        <div id="hook-list" class="abs">
+          <div id="hk-1" class="hk"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="rgb(25 251 155 / 0.14)" stroke="#19fb9b" stroke-width="3" /><path class="draw" d="M13 23.5l6.5 6.5 13-14" stroke="#19fb9b" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg><span>Works every day</span></div>
+          <div id="hk-2" class="hk"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="rgb(25 251 155 / 0.14)" stroke="#19fb9b" stroke-width="3" /><path class="draw" d="M13 23.5l6.5 6.5 13-14" stroke="#19fb9b" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg><span>Steady income</span></div>
+          <div id="hk-3" class="hk"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="rgb(255 84 112 / 0.16)" stroke="#ff5470" stroke-width="3" /><path class="draw" d="M15 15l16 16" stroke="#ff5470" stroke-width="4.5" fill="none" stroke-linecap="round" /><path class="draw" d="M31 15 15 31" stroke="#ff5470" stroke-width="4.5" fill="none" stroke-linecap="round" /></svg><span>Credit card</span></div>
         </div>
       </div>
       </div>
@@ -104,7 +112,7 @@
       });
 
       
-      const S = 4.4; // slot start in the main timeline; tweens below are written in main-timeline seconds
+      const S = 0.8; // slot start in the main timeline; tweens below are written in main-timeline seconds
       const tl = gsap.timeline({ paused: true });
       const chars = (sel) => document.querySelectorAll(sel + " .ch");
       const typeIn = (sel, at, per = 0.045) =>
@@ -122,11 +130,13 @@
       const wipeOut = (sel, at) => tl.fromTo(sel, { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(0% 100% 0% 0%)", duration: 0.45, ease: "power3.inOut", immediateRender: false }, at - S);
 
 // ---------- 01 hook ----------
-      tl.fromTo("#hook-line", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 4.42 - S);
-      typeIn("#hook-a", 4.5);
-      draw("#hook-neq path", 4.85, 0.35);
-      typeIn("#hook-b", 5.15, 0.04);
-      fadeOut("#hook-line", 7.8);
+      // Checklist lands on the words: "working hard every single day" · "steady income" · "invisible".
+      [["#hk-1", 1.05], ["#hk-2", 3.45], ["#hk-3", 5.8]].forEach(([sel, at]) => {
+        tl.fromTo(sel, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, at - S);
+        draw(sel + " path", at + 0.15, 0.35);
+      });
+      tl.fromTo("#hk-3", { scale: 1 }, { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out", transformOrigin: "0% 50%" }, 6.4 - S);
+      fadeOut("#hook-list", 7.85);
 
       
         window.__timelines["s01-hook"] = tl;

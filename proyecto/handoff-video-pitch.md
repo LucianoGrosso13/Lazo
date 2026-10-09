@@ -4,6 +4,15 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 
 ## Estado
 
+### v2 (2026-10-09, tercera sesión)
+
+- Feedback de Luciano implementado (detalle en `video-pitch/STORYBOARD.md` § v2): grade natural, fundidos en los cortes, checklist en el hook, 45 % y tarjetas sobre las remeras, comercio sin resta, pool a pantalla completa con reglas, mapa de Argentina con comercios, placa sin URL ni devnet, y placa alternativa con show de drones.
+- **Render de comparación:** `video-pitch/renders/lazo-pitch-v2-comparacion-finales.mp4` (fuera de git, ~2:06, sin música). **Falta que Luciano elija final** (normal o drones); después se borra el otro en `index.html`, `data-duration` vuelve a 114 y se renderiza el final (<2:00).
+- Música: sigue pendiente (CLI de HeyGen no instalado).
+- `edit.mp4` se regenera con `python3 scripts/build-edit.py` (≈8 min, ya trae grade y fundidos). La captura original del estadio está en `_src/estadio-sancor-original.webp`.
+
+### v1
+
 - **Composición HyperFrames armada y chequeada** en `video-pitch/` (`npx hyperframes check` pasa: 0 errores; contraste AA 116/116). Commit `fdedfee`.
 - **Render v1 sin música:** `video-pitch/renders/lazo-pitch-v1-sin-musica.mp4` (fuera de git). Duración 1:54.
 - **Falta la música.** Luciano eligió el catálogo de HeyGen (sesión OAuth iniciada), pero `media-use resolve --type bgm` necesita el **CLI de HeyGen**, que tiene que instalar él (`curl -fsSL https://static.heygen.ai/cli/install.sh | bash` y `heygen auth login --oauth`). Después: `npx hyperframes media-use resolve --type bgm --intent "soft warm instrumental startup pitch…" --project video-pitch`, sumar `<audio id="music-bed">` en `index.html` con lane de volumen (~0,15 bajo la voz, sube en la placa desde 107,4 s, fade-out al final), correr `hyperframes-audio/scripts/carve.mjs --comp index.html`, `check` y re-render.

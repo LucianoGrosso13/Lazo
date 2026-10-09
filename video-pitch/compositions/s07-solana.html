@@ -140,16 +140,7 @@
           <div data-hf-id="hf-aw91" class="type"><span data-hf-id="hf-c00d" class="p">›</span> crank_mark_late()</div>
         </div>
       </div>
-        <div data-hf-id="hf-wve2" id="ov-ledger" class="grp">
-        <div data-hf-id="hf-cid9" id="lg-card" class="card" style="left: 1530px; top: 50px; width: 340px; padding: 22px 26px">
-          <h4 data-hf-id="hf-sto3" style="margin-bottom: 6px; font-size: 18px">On-chain record</h4>
-          <div data-hf-id="hf-b355" class="row first lg-r" style="font-size: 26px"><span data-hf-id="hf-p8zj">loan</span><span data-hf-id="hf-siuu" class="num" style="font-size: 24px; color: var(--green)">−700</span></div>
-          <div data-hf-id="hf-fen3" class="row lg-r" style="font-size: 26px"><span data-hf-id="hf-mfpm">repayment</span><span data-hf-id="hf-dosc" class="num" style="font-size: 24px; color: var(--cyan)">+233.33</span></div>
-          <div data-hf-id="hf-4ajj" class="row lg-r" style="font-size: 26px"><span data-hf-id="hf-ywge">repayment</span><span data-hf-id="hf-6khg" class="num" style="font-size: 24px; color: var(--cyan)">+233.33</span></div>
         </div>
-        <div data-hf-id="hf-8zrl" id="lg-devnet" class="chip" style="left: 80px; top: 970px"><span data-hf-id="hf-9gry" class="dot"></span>Running on Solana devnet</div>
-      </div>
-      </div>
       <script>
 
       // Split every .type element into per-character spans (typewriter reveal).
@@ -202,12 +193,7 @@
       [75.55, 75.95, 76.4, 77.6, 78.8].forEach((at, i) =>
         tl.fromTo(termLines[i].querySelectorAll(".ch"), { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.022, ease: "none" }, at - S)
       );
-      tl.fromTo("#lg-card", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 81.8 - S);
-      [82.3, 83.0, 86.9].forEach((at, i) =>
-        tl.fromTo(document.querySelectorAll(".lg-r")[i], { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, at - S)
-      );
-      tl.fromTo("#lg-devnet", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "back.out(1.6)" }, 84.4 - S);
-      fadeOut("#te-chip, #term, #lg-card, #lg-devnet", 90.55, 0.3);
+      fadeOut("#te-chip, #term", 81.2, 0.3);
 
       
         window.__timelines["s07-solana"] = tl;

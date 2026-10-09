@@ -9,6 +9,20 @@ mode: autonomous
 
 # Lazo — video pitch 2:00 · v1
 
+## v2 — feedback de Luciano (9/10), prevalece sobre los frames de abajo
+
+- **Toma:** grade natural "C" (algo de calidez, contraste y color de piel) y fundido de 10 cuadros en cada empalme de tomas, ambos horneados en `edit.mp4` por `scripts/build-edit.py`. Sin saltos de escala ni zoom final; solo un push 1→1,03 en el hook.
+- **01 Hook:** sale "Income ≠ access to credit". Checklist sobre la remera de Luciano: "✓ Works every day" (1,05 s) → "✓ Steady income" (3,45 s) → "✗ Credit card" en "invisible" (5,8 s).
+- **02 Argentina:** "45%" + chip INDEC sobre la remera de Luciano. En el panel, "No credit card" entra a 17,3 s (antes 19,9 s).
+- **04 Planes:** cuotas en una tarjeta horizontal y garante al lado, misma altura y misma base (836–1032 px), caras libres.
+- **06 Comercio:** sin resta. "Merchant · US$ 1,000 sale" → "✓ Paid today" + chip "small fee"; carril del comprador Month 1/2/3.
+- **07 Solana:** queda solo el bloque de código (75,3–81,5 s). Sin "Running on Solana devnet".
+- **07b Pool + reglas (nuevo, `s07b-ledger`):** pantalla completa 81,6–91,75 s en "Every loan and repayment…": monedas pool→comercio y comprador→pool, reglas (Merchant paid upfront · Installment due every month · Every repayment refills the pool) y registro on-chain. Tapa el empalme de 91,03 s.
+- **08 Pedido:** chip "First pilot · Argentina" arriba a la izquierda, mapa de Argentina con Malvinas (Natural Earth 1:50m, `scripts/build-map.py`) sobre la pared, 19 puntos de comercios en ciudades reales en "across the country"; "Looking for" sobre la remera.
+- **09 Placa:** prisma + "Lazo" + frase. Sin URL ni chip de devnet.
+- **09b Placa alternativa (`s09b-drones`):** show de drones sobre el estadio (captura de Luciano con el logo de Sancor borrado, `assets/plate/`, fuera de git). Drones despegan sobre la ciudad y forman el prisma + "LAZO" (`scripts/build-drones.py`).
+- **Render de comparación:** `index.html` dura 125,62 s: placa normal hasta 114 s, la frase de cierre repetida (114,3–119,27 s) y la placa de drones (119–125,62 s). Para el corte final se borra un final y se vuelve a 114 s.
+
 ## Decisions
 
 - **Message:** having an income should be enough to get access to credit; Lazo is the credit layer that makes it happen.
