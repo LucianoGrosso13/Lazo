@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { DEMO_STUDENT_NEW } from "../src/lib/cuotas/accounts-types";
 
 // Ticket 05 · cuenta admin y mora con reloj demo.
 // Frontera: rutas públicas en navegador contra el harness del coordinador
@@ -179,5 +180,46 @@ test("la identidad admin ve el panel: estado, Tiers, pool, mora, bitácora y com
     await page.getByTestId("demo-option-admin").click();
     await expect(page.getByTestId("admin-panel")).toBeVisible();
     await expect(dia).toContainText(/d[ií]a 0\b/i);
+  });
+
+  test("el resumen refleja los planes: al abrir uno y adelantar el reloj hasta la mora, KPIs y gráfico cambian", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    // Sin planes: KPIs en cero y el gráfico lo declara.
+    await page.goto("/app");
+    await page.getByTestId("demo-option-admin").click();
+    await expect(page.getByTestId("admin-resumen")).toBeVisible();
+    await expect(page.getByTestId("admin-kpis").locator("li")).toHaveCount(4);
+    await expect(page.getByTestId("admin-estados-vacio")).toBeVisible();
+    await expect(page.getByTestId("admin-atencion")).toContainText(/nada pendiente/i);
+
+    // Un comprador abre un plan de 6 cuotas: queda al día.
+    await page.goto(`/checkout/pc?demo=${DEMO_STUDENT_NEW}`);
+    await page.getByRole("radio", { name: /6 cuotas|6 installments/ }).click();
+    await page.getByRole("button", { name: /pagar anticipo y abrir plan|pay down/i }).click();
+    await page.getByRole("button", { name: /firmar y abrir plan|sign & open/i }).click();
+    await expect(page.getByRole("heading", { name: /listo, plan abierto|done/i })).toBeVisible();
+
+    await page.evaluate(() => window.localStorage.setItem("lazo.cuenta.demo.v1", "admin"));
+    await page.goto("/app/admin");
+    await expect(page.getByTestId("admin-estado-ok")).toHaveAttribute("data-count", "1");
+    await expect(page.getByTestId("admin-estado-late")).toHaveAttribute("data-count", "0");
+    await expect(page.getByTestId("admin-kpi-planes")).toContainText("1");
+    await expect(page.getByTestId("admin-kpi-mora")).toContainText(/0\s?%/);
+    await expect(page.getByTestId("admin-atencion-item")).toHaveCount(0);
+
+    // Pasa la gracia: el plan sale de "al día", sube la mora y aparece en atención.
+    for (const day of [15, 15, 15]) {
+      await page.getByTestId(`admin-reloj-avanzar-${day}`).click();
+      await page.getByTestId("admin-confirmar").click();
+      await expect(page.getByTestId("admin-resultado")).toBeVisible();
+    }
+    await expect(page.getByTestId("admin-estado-ok")).toHaveAttribute("data-count", "0");
+    await expect(page.getByTestId("admin-kpi-mora")).toContainText(/100\s?%/);
+    await expect(page.getByTestId("admin-atencion-item").first()).toBeVisible();
+    const late = Number(await page.getByTestId("admin-estado-late").getAttribute("data-count"));
+    const charged = Number(await page.getByTestId("admin-estado-charged").getAttribute("data-count"));
+    expect(late + charged).toBe(1);
   });
 });
