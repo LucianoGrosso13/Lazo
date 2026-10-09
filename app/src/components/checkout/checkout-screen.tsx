@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useClient } from "@solana/react";
 import { useWalletStatus } from "@solana/kit-plugin-wallet/react";
 import type { AppClient } from "@/app/providers";
 import {
   CuotasError,
   formatUsdc,
+  getAccountCuotas,
   getCuotas,
   planOptionsOf,
+  waitForOperation,
   type DemoClock,
   type Guarantee,
   type InstallmentsOption,
@@ -38,6 +40,16 @@ import { ReferenceTag } from "@/components/ui/badges";
 import { Breakdown, type BreakdownData, type WalletStatus } from "./breakdown";
 import { ConfirmPanel } from "./confirm-panel";
 import { ConfirmSuccess } from "./confirm-success";
+import {
+  createOpenPlanRunner,
+  type OpenPlanRun,
+  type OpenPlanRunner,
+} from "./open-plan-flow";
+import {
+  clearPendingOpen,
+  loadPendingOpen,
+  savePendingOpen,
+} from "./pending-op";
 import { bandColor } from "./band-color";
 import { pctOfBps } from "./format";
 import styles from "./checkout.module.css";
@@ -69,6 +81,8 @@ interface WalletSlice {
   guarantee: Guarantee | null;
   reputation: Reputation | null;
   plans: Plan[];
+  /** Saldo devUSDC disponible (null = no se pudo determinar). */
+  balance: Micro | null;
 }
 
 export interface GenericCheckoutItem {
@@ -181,7 +195,7 @@ export function CheckoutScreen({
       if (!wallet) throw new CuotasError("not_found", "sin wallet");
       // Estudiante sin Reputation on-chain: primera compra. No es error de
       // la query — openPlan la crea en la misma transacción.
-      const [quotes, guarantee, reputation, plans] = await Promise.all([
+      const [quotes, guarantee, reputation, plans, balance] = await Promise.all([
         Promise.all(
           enabledOptions.map((o) =>
             c.quote(currentItem.price, wallet, {
@@ -196,8 +210,14 @@ export function CheckoutScreen({
           throw e;
         }),
         c.getPlans(wallet),
+        // Saldo devUSDC (ATA del estudiante); null = indeterminado, la UI lo
+        // declara y la elegibilidad manda igual (`quote` trae el motivo).
+        getAccountCuotas()
+          .getBalance(wallet)
+          .then((b) => b.available)
+          .catch(() => null),
       ]);
-      return { quotes, guarantee, reputation, plans };
+      return { quotes, guarantee, reputation, plans, balance };
     },
   );
 
@@ -292,28 +312,39 @@ export function CheckoutScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, t, locale]);
 
-  // Flujo del panel: desglose → confirmación → éxito.
+  // Flujo del panel: desglose → confirmación → éxito. La apertura corre por
+  // un runner propio: fases monótonas, un envío a la vez, resultado ligado
+  // a la wallet que firmó y `uncertain` que reconcilia la firma ORIGINAL
+  // (jamás reenvía a ciegas).
   const [step, setStep] = useState<"review" | "confirm" | "success">("review");
-  const [opening, setOpening] = useState(false);
-  const [signError, setSignError] = useState<CuotasError | null>(null);
-  const [opened, setOpened] = useState<{ plan: Plan; signature: string } | null>(null);
+  const [runner] = useState<OpenPlanRunner>(() => createOpenPlanRunner());
+  const flow = useSyncExternalStore(
+    (cb) => runner.subscribe(cb),
+    () => runner.state(),
+    () => runner.state(),
+  );
+  // La identidad que firmó: el snapshot es la wallet del momento del envío;
+  // si cambia, el resultado tardío se descarta (nunca se muestra en otra
+  // cuenta). `walletRef` refleja la wallet vigente tras cada commit.
+  const walletRef = useRef(wallet);
+  useEffect(() => {
+    walletRef.current = wallet;
+  }, [wallet]);
 
   // Si cambia la wallet, el flujo vuelve al desglose.
   const [prevWallet, setPrevWallet] = useState(wallet);
   if (prevWallet !== wallet) {
     setPrevWallet(wallet);
+    runner.reset();
     setStep("review");
-    setOpened(null);
-    setSignError(null);
   }
 
-  const sign = async () => {
-    if (!wallet || opening) return;
-    setOpening(true);
-    setSignError(null);
-    try {
-      const res = await getCuotas().openPlan({
-        student: wallet,
+  /** La corrida de apertura para una wallet dada: misma función para `sign`
+   * y para restaurar una operación pendiente tras reload/navegación. */
+  const buildRun = (student: WalletAddress): OpenPlanRun => ({
+    call: (onProgress) =>
+      getCuotas().openPlan({
+        student,
         merchant: currentItem.merchant,
         price: currentItem.price,
         productId: product?.id,
@@ -321,14 +352,58 @@ export function CheckoutScreen({
         // Mismo plazo que la cotización mostrada: lo cotizado es lo abierto.
         installments,
         settlement,
-      });
-      setOpened({ plan: res.value, signature: res.signature });
-      setStep("success");
-    } catch (e) {
-      setSignError(e instanceof CuotasError ? e : new CuotasError("not_found"));
-    } finally {
-      setOpening(false);
+        onProgress,
+      }),
+    isCurrent: () => walletRef.current === student,
+    reconcile: (signature) =>
+      signature
+        ? waitForOperation(
+            getCuotas(),
+            { operation: "open_plan", student, signature },
+            // Verificación manual acotada: algunas lecturas por si la tx
+            // aterrizó tarde; `null` = sigue incierta, NO se reenvía.
+            { intervalMs: 1_500, timeoutMs: 8_000 },
+          )
+        : Promise.resolve(null),
+  });
+
+  const sign = () => {
+    if (!wallet) return;
+    // El runner ignora el arranque si hay una corrida viva o un `uncertain`:
+    // doble clic y reintento a ciegas no producen otra transacción.
+    runner.start(buildRun(wallet));
+  };
+
+  // Persistencia de la firma pendiente por wallet (sessionStorage): un
+  // reload o ir y volver al panel no pierde la operación en duda. Se limpia
+  // solo cuando hay veredicto: éxito o `failed` onchain.
+  useEffect(() => {
+    if (!wallet || typeof window === "undefined") return;
+    const s = window.sessionStorage;
+    if ((flow.kind === "running" || flow.kind === "uncertain") && flow.signature) {
+      savePendingOpen(s, wallet, flow.signature);
+    } else if (flow.kind === "success" || flow.kind === "failed_onchain") {
+      clearPendingOpen(s, wallet);
     }
+  }, [flow, wallet]);
+
+  // Restaurar la operación pendiente de esta wallet (firma original):
+  // vuelve como `uncertain` para reconciliar — nunca como un envío nuevo.
+  useEffect(() => {
+    if (!wallet || flow.kind !== "idle" || typeof window === "undefined") {
+      return;
+    }
+    const pending = loadPendingOpen(window.sessionStorage, wallet);
+    if (pending) runner.restore(buildRun(wallet), pending.signature);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet, flow.kind, runner]);
+
+  const abandonFlow = () => {
+    // `uncertain` sigue en duda: NO se resetea (un reenvío a ciegas podría
+    // duplicar el cargo). Volver al desglose deja la operación bloqueada;
+    // reingresar muestra el mismo estado pendiente hasta el veredicto.
+    if (flow.kind !== "uncertain") runner.reset();
+    setStep("review");
   };
 
   const quoteSel = quotes?.find((x) => x.installmentsCount === installments);
@@ -369,12 +444,16 @@ export function CheckoutScreen({
           </div>
         </header>
 
-        {step === "success" && opened ? (
+        {flow.kind === "success" ? (
           <div className={styles.enter}>
             <ConfirmSuccess
-              plan={opened.plan}
-              signature={opened.signature}
+              plan={flow.plan}
+              signature={flow.signature}
+              reconciled={flow.reconciled}
               merchantName={merchantName}
+              config={config}
+              now={base?.clock.now ?? flow.completedAt}
+              secondsPerDay={base?.clock.secondsPerDay ?? 86_400}
             />
           </div>
         ) : (
@@ -428,19 +507,20 @@ export function CheckoutScreen({
                     quote={quoteSel}
                     merchant={base?.merchant}
                     clock={base?.clock}
-                    opening={opening}
-                    error={signError}
-                    onBack={() => {
-                      setStep("review");
-                      setSignError(null);
-                    }}
+                    guarantee={mine.guarantee}
+                    balance={mine.balance}
+                    flow={flow}
+                    onBack={abandonFlow}
                     onSign={sign}
+                    onVerify={() => runner.recheck()}
+                    onAbandon={abandonFlow}
                   />
                 </div>
               ) : data ? (
                 <Breakdown
                   data={data}
                   guarantee={mine?.guarantee ?? null}
+                  balance={mine?.balance}
                   clock={base?.clock}
                   config={config}
                   walletStatus={walletStatus}
