@@ -26,3 +26,6 @@ video-pitch/.thumbnails/
 video-pitch/.transcode-cache/
 video-pitch/.waveform-cache/
 .scratch/vp/
+
+# proyecto del video pitch: queda solo local
+video-pitch/
