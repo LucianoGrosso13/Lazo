@@ -7,7 +7,7 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 ### v2 (2026-10-09, tercera sesión)
 
 - Feedback de Luciano implementado (detalle en `video-pitch/STORYBOARD.md` § v2): grade natural, fundidos en los cortes, checklist en el hook, 45 % y tarjetas sobre las remeras, comercio sin resta, pool a pantalla completa con reglas, mapa de Argentina con comercios, placa sin URL ni devnet, y placa alternativa con show de drones.
-- **Render de comparación:** `video-pitch/renders/lazo-pitch-v2-comparacion-finales.mp4` (fuera de git, ~2:06, sin música). **Falta que Luciano elija final** (normal o drones); después se borra el otro en `index.html`, `data-duration` vuelve a 114 y se renderiza el final (<2:00).
+- **Render de comparación:** `video-pitch/renders/lazo-pitch-v2-comparacion-finales.mp4` (fuera de git, ~2:06, sin música). **Falta que Luciano elija final** (normal o drones); después se borra el otro en `index.html`, `data-duration` vuelve a 114 y se renderiza el final (<2:00). Renderizar con `--workers 4 --low-memory-mode`: con 1 worker la captura se cuelga en el cuadro ~1991.
 - Música: sigue pendiente (CLI de HeyGen no instalado).
 - `edit.mp4` se regenera con `python3 scripts/build-edit.py` (≈8 min, ya trae grade y fundidos). La captura original del estadio está en `_src/estadio-sancor-original.webp`.
 

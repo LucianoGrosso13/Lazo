@@ -20,7 +20,7 @@ mode: autonomous
 - **07b Pool + reglas (nuevo, `s07b-ledger`):** pantalla completa 81,6–91,75 s en "Every loan and repayment…": monedas pool→comercio y comprador→pool, reglas (Merchant paid upfront · Installment due every month · Every repayment refills the pool) y registro on-chain. Tapa el empalme de 91,03 s.
 - **08 Pedido:** chip "First pilot · Argentina" arriba a la izquierda, mapa de Argentina con Malvinas (Natural Earth 1:50m, `scripts/build-map.py`) sobre la pared, 19 puntos de comercios en ciudades reales en "across the country"; "Looking for" sobre la remera.
 - **09 Placa:** prisma + "Lazo" + frase. Sin URL ni chip de devnet.
-- **09b Placa alternativa (`s09b-drones`):** show de drones sobre el estadio (captura de Luciano con el logo de Sancor borrado, `assets/plate/`, fuera de git). Drones despegan sobre la ciudad y forman el prisma + "LAZO" (`scripts/build-drones.py`).
+- **09b Placa alternativa (`s09b-drones`):** show de drones sobre el estadio (captura de Luciano con el logo de Sancor borrado, `assets/plate/`, fuera de git). Drones v2: despegan del estadio, grilla, forman el prisma + "LAZO" con el degradé Prisma, pulso de luz por el haz y destello en las letras (`scripts/build-drones.py`).
 - **Render de comparación:** `index.html` dura 125,62 s: placa normal hasta 114 s, la frase de cierre repetida (114,3–119,27 s) y la placa de drones (119–125,62 s). Para el corte final se borra un final y se vuelve a 114 s.
 
 ## Decisions
