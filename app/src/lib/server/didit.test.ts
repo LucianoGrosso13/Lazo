@@ -79,7 +79,8 @@ describe("didit webhook verification", () => {
   });
 
   it("builds a stable replay key without event_id", () => {
-    const { event_id: _drop, ...body } = envelope(NOW);
+    const body: Record<string, unknown> = { ...envelope(NOW) };
+    delete body.event_id;
     const w = verifyDiditWebhook(
       JSON.stringify(body),
       { signatureV2: signV2(body), timestamp: String(NOW) },

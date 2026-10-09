@@ -1,5 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+test.describe("reduced motion hydration", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("landing hydrates without page errors and shows the static brand", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expect(page.locator("#lazo-price")).toBeVisible();
+    await expect(page.locator("footer img[src*='logo-prisma']").first()).toBeVisible();
+    await expect(page.locator("footer video")).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+});
+
 for (const locale of ["en", "es"] as const) {
   test(`rapid slider updates one exact visible amount (${locale})`, async ({ page }) => {
     await page.addInitScript((value) => localStorage.setItem("lazo.locale", value), locale);

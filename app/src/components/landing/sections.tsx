@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import {
   DEMO_STUDENT_NEW,
   formatUsdc,

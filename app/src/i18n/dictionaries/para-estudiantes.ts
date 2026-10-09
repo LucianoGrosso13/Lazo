@@ -72,7 +72,7 @@ export const paraEstudiantes = defineDict({
         },
         {
           title: "Subir de tier",
-          body: (minFinanced: string, graceDays: number, _chargeDay: number) =>
+          body: (minFinanced: string, graceDays: number) =>
             `Saldar un plan con al menos US$ ${minFinanced} financiados y sin pagos después de los ${graceDays} días de gracia te sube 1 Tier: menos anticipo y más tope. Los atrasos resueltos antes del cobro al fiador no suman ni bajan.`,
         },
         {
@@ -261,7 +261,7 @@ export const paraEstudiantes = defineDict({
         },
         {
           title: "Moving up a tier",
-          body: (minFinanced: string, graceDays: number, _chargeDay: number) =>
+          body: (minFinanced: string, graceDays: number) =>
             `Paying off a plan with at least US$ ${minFinanced} financed and no payments after the ${graceDays}-day grace period moves you up 1 Tier: lower down payment and higher cap. Late payments resolved before the guarantor is charged neither add nor subtract a tier.`,
         },
         {

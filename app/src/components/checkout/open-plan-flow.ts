@@ -167,6 +167,7 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
       void (async () => {
         try {
           const res = await run.call(onProgress);
+          if (gen !== my) return;
           if (stale(my, run)) {
             set({ kind: "idle" });
             return;
@@ -184,6 +185,7 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
             lastValidBlockHeight,
           });
           if (remaining > 0) await deps.sleep(remaining);
+          if (gen !== my) return;
           if (stale(my, run)) {
             set({ kind: "idle" });
             return;
@@ -196,6 +198,7 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
             completedAt: Math.floor(deps.now() / 1000),
           });
         } catch (e) {
+          if (gen !== my) return;
           if (stale(my, run)) {
             set({ kind: "idle" });
             return;
@@ -231,6 +234,7 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
       });
       void (async () => {
         const out = await run.reconcile!(signature).catch(() => null);
+        if (gen !== my) return;
         if (stale(my, run)) {
           set({ kind: "idle" });
           return;

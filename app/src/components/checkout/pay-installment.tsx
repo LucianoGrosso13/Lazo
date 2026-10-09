@@ -81,7 +81,6 @@ export function usePayInstallment({
   // La cuota pagada queda congelada: al releer el plan la primera impaga
   // avanza y el título del éxito debe seguir nombrando a la que se pagó.
   const [paidIdx, setPaidIdx] = useState<number | null>(null);
-  const restoredIdxRef = useRef<number | null>(null);
   // La cuota esperada queda congelada al firmar/restaurar: persistir el
   // `nextUp` vivo reescribiría la entrada con otra cuota bajo la misma firma.
   const expectedRef = useRef<{ index: number; openedAt?: UnixSeconds } | null>(
@@ -100,7 +99,12 @@ export function usePayInstallment({
 
   const pending = plan ? unpaidInstallments(plan) : [];
   const nextUp = pending[0] ?? null;
-  const due = nextUp ? dueOf(nextUp) : 0;
+  // El plan puede avanzar mientras se verifica la firma original. La
+  // revisión sigue mostrando ESA cuota, no el importe de la siguiente.
+  const reviewed = paidIdx === null
+    ? nextUp
+    : plan?.installments.find((i) => i.index === paidIdx);
+  const due = reviewed ? dueOf(reviewed) : 0;
 
   // `expected` es la cuota tal como se firmó (o como quedó persistida):
   // reconciliar con el `nextUp` de ESTE render marcaría otra cuota si el
@@ -168,6 +172,17 @@ export function usePayInstallment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow, student, plan]);
 
+  // Suscribir antes de restaurar: el cambio del runner también abre el
+  // panel tras reload y congela el índice original en estado de React.
+  useEffect(() => {
+    return runner.subscribe(() => {
+      if (runner.state().kind === "uncertain") {
+        setOpen(true);
+        setPaidIdx((i) => i ?? expectedRef.current?.index ?? null);
+      }
+    });
+  }, [runner]);
+
   // Restaurar un pago pendiente de ESTA wallet+plan: vuelve como `uncertain`
   // para reconciliar la firma original — nunca como un envío nuevo.
   useEffect(() => {
@@ -176,7 +191,6 @@ export function usePayInstallment({
     }
     const op = loadPendingPay(window.sessionStorage, student, plan.id);
     if (op) {
-      restoredIdxRef.current = op.expectedInstallmentIndex;
       expectedRef.current = {
         index: op.expectedInstallmentIndex,
         openedAt: op.expectedOpenedAt,
@@ -195,18 +209,6 @@ export function usePayInstallment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [student, plan?.id, flow.kind, runner]);
 
-  // Una operación en duda (restaurada o recién lanzada) abre el panel de
-  // verificación sola: el usuario siempre ve el estado pendiente. Si la
-  // cuota pagada no se congeló con `sign`, venía de un restore.
-  useEffect(() => {
-    return runner.subscribe(() => {
-      if (runner.state().kind === "uncertain") {
-        setOpen(true);
-        setPaidIdx((i) => i ?? restoredIdxRef.current);
-      }
-    });
-  }, [runner]);
-
   // Avisar al padre del veredicto (una vez por firma) + refrescar saldos.
   const notifiedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -224,7 +226,6 @@ export function usePayInstallment({
 
   const sign = () => {
     if (!student || !plan || !nextUp) return;
-    restoredIdxRef.current = null;
     expectedRef.current = { index: nextUp.index, openedAt: plan.openedAt };
     // Firma nueva: la altura vieja (de otra operación o de un restore
     // fallido) no se arrastra — el cliente emitirá la de ESTA propuesta.
@@ -257,7 +258,7 @@ export function usePayInstallment({
       <PayPanel
         plan={plan}
         student={student}
-        titleIndex={paidIdx ?? restoredIdxRef.current ?? nextUp?.index ?? 0}
+        titleIndex={paidIdx ?? nextUp?.index ?? 0}
         due={due}
         flow={flow}
         onClose={() => {
@@ -266,7 +267,6 @@ export function usePayInstallment({
           if (flow.kind !== "uncertain") {
             runner.reset();
             setPaidIdx(null);
-            restoredIdxRef.current = null;
             expectedRef.current = null;
             payExpiryRef.current = undefined;
           }
@@ -310,6 +310,9 @@ function PayPanel({
   const fmt = (m: Micro, dd = 2) => formatUsdc(m, locale, dd);
   const mock = getCuotas().mode === "mock";
   const busy = flow.kind === "running";
+  const success = flow.kind === "success";
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus(); }, [success]);
 
   // Saldo vivo tras el pago confirmado (se consulta, no se estima).
   const [balance, setBalance] = useState<Micro | null>(null);
@@ -335,7 +338,7 @@ function PayPanel({
   return (
     <GlassPanel className={styles.panel} data-testid="pay-panel">
       <div className={styles.panelHead}>
-        <h2 className={styles.panelTitle}>
+        <h2 ref={headingRef} tabIndex={-1} className={styles.panelTitle}>
           {flow.kind === "success" ? t.successTitle(titleIndex + 1) : t.title}
         </h2>
         {mock ? <ReferenceTag>{d.chrome.simulated}</ReferenceTag> : null}
