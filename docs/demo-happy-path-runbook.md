@@ -11,7 +11,7 @@ Short guide to run and repeat the agreed take: connect Phantom, buy the demo PC 
 
 Tracked in `docs/demo-happy-path-readiness.md` (read-only check):
 
-- The deployed program still runs the pre-credit artifact — `open_plan`/`pay_installment` are NOT on devnet yet. Upgrade + protocol init per `programa/UPGRADE_DEVNET.md` is required first.
+- The deployed devnet artifact does not match the current program source/client (pre-credit build). Upgrade + protocol init per `programa/UPGRADE_DEVNET.md` is required first.
 - Zero protocol accounts today; devUSDC mint exists with supply 0.
 - Needed before the take: protocol initialized, merchant registered, pool liquidity for the case, an eligible student wallet with a **real active guarantee** (the mock's preloaded guarantor does not count), devUSDC ≥ down payment + first installment (exactly 533.333333: 300 + 233.333333), and devnet SOL for fees/accounts.
 - Every funding/init/upgrade transaction is proposed, simulated, and approved explicitly — never automatic.
