@@ -14,6 +14,21 @@ export const paraEstudiantes = defineDict({
 
       ctaMerchants: "Ver comercios",
       ctaCheckout: "Probar un checkout",
+      graphic: {
+        tag: "Así se ve tu plan",
+        purchase: (price: string, tier: string) => `Compra de US$ ${price} · ${tier}`,
+        scheduleLabel: "Calendario de pagos de la compra de ejemplo",
+        today: "Hoy",
+        month: (n: number) => `Mes ${n}`,
+        down: "Anticipo",
+        installment: "Cuota",
+        buyerTitle: "Vos pagás",
+        buyerSub: "Anticipo y cuotas en USDC, desde tu wallet. Sin tarjeta.",
+        guarantorTitle: "Tu garante respalda",
+        guarantorSub: (pct: string) =>
+          `El ${pct} de lo que falta pagar. Su tarjeta solo se cobra si una cuota queda impaga.`,
+        guarantorBadge: "Tarjeta de crédito",
+      },
     },
     what: {
       title: "Qué es Lazo",
@@ -23,6 +38,7 @@ export const paraEstudiantes = defineDict({
     },
     how: {
       title: "Cómo comprar",
+      stepsLabel: "Pasos para comprar en cuotas",
       steps: [
         {
           t: "Elegí el comercio y el producto",
@@ -43,6 +59,8 @@ export const paraEstudiantes = defineDict({
         },
       ],
       example: {
+        tag: "Simulador de cuotas",
+        purchaseLabel: "Compra de ejemplo",
         title: (price: string, tierName: string) =>
           `Ejemplo con la config del protocolo: compra de US$ ${price} en ${tierName}`,
         option: (n: number) => `${n} cuotas`,
@@ -58,6 +76,11 @@ export const paraEstudiantes = defineDict({
     },
     ladder: {
       title: "Tiers y reglas de progresión",
+      comparisonTitle: "Anticipo requerido por Tier",
+      comparisonIntro: "A medida que saldás planes a tiempo subís de nivel: menor anticipo y mayor tope de compra.",
+      comparisonWinner: "Menor anticipo",
+      coverageTitle: "Cobertura de la garantía familiar",
+      coverageEyebrow: "Lo que cubre tu garante",
       intro: (tier: string, minFinanced: string, graceDays: number, chargeDay: number) =>
         `Arrancás en ${tier}. Sin garante activo no se puede abrir ningún plan. Subís 1 Tier al saldar un plan con al menos US$ ${minFinanced} financiados sin pagos después de los ${graceDays} días de gracia. Si pagás con atraso pero antes del día ${chargeDay}, no sumás ni bajás. Bajás 1 Tier si una cuota llega al día ${chargeDay} impaga y se cobra al garante.`,
       tier: (n: number) => `Tier ${n + 1}`,
@@ -115,6 +138,9 @@ export const paraEstudiantes = defineDict({
     },
     family: {
       title: "Para la familia: ser garante",
+      calloutTitle: "Garantía obligatoria con tarjeta",
+      calloutBody: (pct: string, chargeDay: number) =>
+        `Sin garante no hay plan: la tarjeta del familiar respalda el ${pct} del saldo restante (capital e interés) y solo se debita si una cuota llega impaga al día ${chargeDay}.`,
       intro:
         "En Lazo la garantía es obligatoria: sin garante no hay plan. Si un comprador te invita a respaldarlo, estas son las condiciones claras:",
       items: [
@@ -203,6 +229,21 @@ export const paraEstudiantes = defineDict({
 
       ctaMerchants: "Browse merchants",
       ctaCheckout: "Try a checkout",
+      graphic: {
+        tag: "What your plan looks like",
+        purchase: (price: string, tier: string) => `US$ ${price} purchase · ${tier}`,
+        scheduleLabel: "Payment schedule for the sample purchase",
+        today: "Today",
+        month: (n: number) => `Month ${n}`,
+        down: "Down payment",
+        installment: "Installment",
+        buyerTitle: "You pay",
+        buyerSub: "Down payment and installments in USDC, from your wallet. No card.",
+        guarantorTitle: "Your guarantor backs",
+        guarantorSub: (pct: string) =>
+          `${pct} of what is left to pay. Their card is only charged if an installment goes unpaid.`,
+        guarantorBadge: "Credit card",
+      },
     },
     what: {
       title: "What Lazo is",
@@ -212,6 +253,7 @@ export const paraEstudiantes = defineDict({
     },
     how: {
       title: "How to buy",
+      stepsLabel: "Steps to buy in installments",
       steps: [
         {
           t: "Pick the merchant and the product",
@@ -232,6 +274,8 @@ export const paraEstudiantes = defineDict({
         },
       ],
       example: {
+        tag: "Installment simulation",
+        purchaseLabel: "Sample purchase",
         title: (price: string, tierName: string) =>
           `Example from the protocol config: a US$ ${price} purchase on ${tierName}`,
         option: (n: number) => `${n} installments`,
@@ -247,6 +291,11 @@ export const paraEstudiantes = defineDict({
     },
     ladder: {
       title: "Tiers and progression rules",
+      comparisonTitle: "Down payment required per Tier",
+      comparisonIntro: "As you complete plans on time you move up a Tier: lower down payment and higher purchase cap.",
+      comparisonWinner: "Lowest down payment",
+      coverageTitle: "Family guarantee coverage",
+      coverageEyebrow: "What your guarantor covers",
       intro: (tier: string, minFinanced: string, graceDays: number, chargeDay: number) =>
         `You start on ${tier}. Without an active guarantor no plan can be opened. You move up 1 Tier when finishing a plan financing at least US$ ${minFinanced} with no payments past the ${graceDays}-day grace period. If you pay late within grace or with late fee before day ${chargeDay}, you neither gain nor lose a tier. You drop 1 Tier if an installment reaches day ${chargeDay} unpaid and is charged to the guarantor.`,
       tier: (n: number) => `Tier ${n + 1}`,
@@ -304,6 +353,9 @@ export const paraEstudiantes = defineDict({
     },
     family: {
       title: "For the family: being a guarantor",
+      calloutTitle: "Mandatory card guarantee",
+      calloutBody: (pct: string, chargeDay: number) =>
+        `Without a guarantor there is no plan: the family member's card backs ${pct} of the remaining balance (capital and interest) and is only charged if an installment is still unpaid on day ${chargeDay}.`,
       intro:
         "In Lazo a guarantee is mandatory: without a guarantor there is no plan. If a buyer invites you to back them, these are the clear conditions:",
       items: [
