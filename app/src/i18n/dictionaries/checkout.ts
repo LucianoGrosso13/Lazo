@@ -102,12 +102,113 @@ export const checkout = defineDict({
         t: "Sin cupo disponible",
         d: "En este momento no hay cupo para planes nuevos. Probá más tarde.",
       },
+      insufficient_funds: {
+        t: "No te alcanza el saldo devUSDC",
+        d: (missing: string | null) =>
+          missing
+            ? `Te faltan US$ ${missing} para el anticipo. En la demo podés pedir fondos de prueba.`
+            : "Tu saldo devUSDC no llega al anticipo. En la demo podés pedir fondos de prueba.",
+        cta: null,
+      },
     },
     margin: {
       label: "Margen en uso",
       used: (used: string, limit: string) => `US$ ${used} / US$ ${limit}`,
       needed: (needed: string) => `Esta compra suma US$ ${needed}`,
       frees: "Pagando cuotas liberás margen, como una tarjeta.",
+    },
+    balanceLabel: "Tu saldo devUSDC",
+    balanceUnavailable: "no disponible",
+    calendar: {
+      title: "Tu calendario de cuotas",
+      count: (n: number) => `${n} cuotas`,
+      installment: (i: number) => `Cuota ${i}`,
+      nextUp: "Próxima cuota",
+      nextTag: "próxima",
+      dueOn: (date: string) => `vence ${date}`,
+      inDays: (n: number) => `en ${n} ${n === 1 ? "día" : "días"}`,
+      dueToday: "vence hoy",
+      overdueDays: (n: number) => `venció hace ${n} ${n === 1 ? "día" : "días"}`,
+      status: {
+        Upcoming: "a tiempo",
+        Due: "vence hoy",
+        Grace: "en gracia",
+        Late: "atrasada",
+        Paid: "pagada",
+        ChargedToGuarantor: "cobrada al fiador",
+      },
+      exactToggle: "Ver montos exactos",
+      exactTotal: "Total financiado exacto",
+      approxNote:
+        "Las cuotas se guardan con 6 decimales; arriba se muestran redondeadas.",
+      late: {
+        title: "¿Qué pasa si me atraso?",
+        grace: (d: number) =>
+          `Tenés ${d} días de gracia después de cada vencimiento: pagando dentro de ese plazo no hay recargo.`,
+        notice: (d: number) =>
+          `Al día ${d} de atraso está previsto avisarle a tu fiador: es un aviso, todavía no un cobro.`,
+        penalty: (pct: string) =>
+          `Pasada la gracia se suma un recargo único del ${pct}% sobre la cuota vencida. Lo pagás vos: tu fiador no lo cubre.`,
+        charge: (d: number) =>
+          `Al día ${d} de atraso se solicita el cobro a tu fiador por el capital y el interés que falten (sin el recargo).`,
+        recovery:
+          "Si ese cobro se registra, tu plan deja de contar, bajás de escalón y no podés abrir planes nuevos.",
+      },
+    },
+    pay: {
+      cta: (n: number, amt: string) => `Pagar la cuota ${n} · US$ ${amt}`,
+      title: "Revisá tu pago",
+      rows: {
+        dest: "Destino",
+        destValue: "Pool de liquidez Lazo",
+        amount: "Importe exacto",
+        token: "Token",
+        tokenValue: "devUSDC · USDC de prueba",
+        network: "Red",
+        networkValue: "Solana devnet · plata de prueba",
+        wallet: "Firmás con",
+        plan: "Plan",
+        installment: (n: number) => `Cuota ${n}`,
+        remaining: (n: number) =>
+          `Después del pago quedan ${n} ${n === 1 ? "cuota" : "cuotas"}`,
+      },
+      approvalNote:
+        "Phantom te pide una aprobación nueva: la firma del anticipo no autoriza esta cuota.",
+      sign: "Aprobar y pagar",
+      back: "Volver",
+      mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
+      errorTitle: "No se pudo pagar la cuota",
+      successTitle: (n: number) => `Cuota ${n} pagada`,
+      remainingLabel: (n: number) =>
+        `Quedan ${n} ${n === 1 ? "cuota" : "cuotas"} por pagar`,
+      balanceLabel: "Tu saldo devUSDC ahora",
+      done: "Listo",
+      progress: {
+        title: "Estado de tu pago",
+        aria: "Progreso del pago",
+        steps: {
+          preparing: {
+            t: "Armando tu pago",
+            d: "Armamos la operación en tu máquina. Todavía no se envió nada.",
+          },
+          awaiting_approval: {
+            t: "Aprobá en tu billetera",
+            d: "Phantom te muestra el pago: revisalo y aprobalo. Todavía no salió de tu máquina.",
+          },
+          sending: {
+            t: "Enviando",
+            d: "El pago ya salió con tu firma hacia devnet.",
+          },
+          confirming: {
+            t: "Confirmando en devnet",
+            d: "Devnet está confirmando el pago. La verdad la da la cadena, no un contador.",
+          },
+          syncing: {
+            t: "Casi listo",
+            d: "Confirmado: leyendo tu plan para actualizar el calendario.",
+          },
+        },
+      },
     },
     compareTitle: "Lo mismo, pagando en cuotas",
     lazoPlan: (n: number) => `Lazo · ${n} cuotas`,
@@ -137,6 +238,32 @@ export const checkout = defineDict({
         `US$ ${advance} hoy · US$ ${rest} el ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} cuotas de US$ ${amt}`,
       mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
+      progress: {
+        title: "Estado de tu compra",
+        aria: "Progreso de la compra",
+        steps: {
+          preparing: {
+            t: "Armando tu plan",
+            d: "Armamos la operación en tu máquina. Todavía no se envió nada.",
+          },
+          awaiting_approval: {
+            t: "Aprobá en tu billetera",
+            d: "Phantom te muestra la operación: revisala y aprobala. Todavía no salió de tu máquina.",
+          },
+          sending: {
+            t: "Enviando",
+            d: "La operación ya salió con tu firma hacia devnet.",
+          },
+          confirming: {
+            t: "Confirmando en devnet",
+            d: "Devnet está confirmando la operación. La verdad la da la cadena, no un contador.",
+          },
+          syncing: {
+            t: "Casi listo",
+            d: "Confirmada: leyendo tu plan para armar tu calendario.",
+          },
+        },
+      },
       sign: "Firmar y abrir plan",
       opening: "Abriendo el plan…",
       back: "Volver",
@@ -156,6 +283,36 @@ export const checkout = defineDict({
         option_unavailable: "Esa opción de cuotas o de cobro no está disponible en la demo.",
         not_found: "No encontramos el comercio o tu cuenta. Recargá la página.",
         generic: "Algo falló del otro lado. Probá de nuevo.",
+        user_rejected:
+          "Cancelaste la firma en tu billetera. No se envió nada.",
+        wallet_required: "Necesitás una billetera conectada para firmar.",
+        unauthorized: "Este perfil no está autorizado para esta operación.",
+        wrong_cluster:
+          "La billetera no está en devnet. Cambiá la red e intentá de nuevo.",
+        insufficient_funds:
+          "No alcanza tu saldo devUSDC para el anticipo.",
+        simulation_failed:
+          "La operación no pasó la simulación de devnet. Nada quedó registrado.",
+        review_rejected: "El plan no pasó las reglas vigentes.",
+        unsupported_version: "La billetera no soporta esta operación.",
+        unavailable: "No pudimos hablar con devnet. Probá de nuevo.",
+        demo_only: "Esta operación está disponible solo en devnet.",
+        not_implemented: "Esta parte todavía no está implementada.",
+        order_unavailable: "La orden ya no está disponible.",
+        nothing_due: "Esa cuota ya no está pendiente.",
+      },
+      uncertain: {
+        t: "No sabemos si la operación quedó registrada",
+        d: "Perdimos la conexión después de enviarla. No la volvemos a mandar a ciegas: la verificamos leyendo la cadena.",
+        sigLabel: "Firma de la operación",
+        verifyCta: "Verificar en la cadena",
+        verifying: "verificando…",
+        stillPending:
+          "Todavía no la vemos confirmada en la cadena. Podés volver a verificar; mientras tanto la compra queda bloqueada para no duplicar el pago.",
+        failedOnchain:
+          "La operación llegó a devnet y falló: tu plan no se abrió y tu devUSDC no se movió. Podés reintentar con una operación nueva.",
+        backCta: "Volver a la compra",
+        panelCta: "Ver mi panel",
       },
       success: {
         title: "Listo, plan abierto",
@@ -165,7 +322,9 @@ export const checkout = defineDict({
         merchantLaterFact: (name: string, rest: string, days: number) =>
           `${name} cobra el resto (US$ ${rest}) a ${days} días`,
         youPaid: (x: string) => `Pagaste el anticipo: US$ ${x}`,
+        pendingFact: (x: string) => `Te quedan por pagar US$ ${x}`,
         installments: (n: number, amt: string) => `Quedan ${n} cuotas de US$ ${amt}`,
+        reconciled: "Verificada leyendo la cadena",
         interestFact: (x: string) => `Incluye US$ ${x} de interés`,
         beamYou: "tu wallet",
         beamAria: (x: string) =>
@@ -276,12 +435,113 @@ export const checkout = defineDict({
         t: "No capacity available",
         d: "There is no capacity for new plans right now. Try again later.",
       },
+      insufficient_funds: {
+        t: "Not enough devUSDC balance",
+        d: (missing: string | null) =>
+          missing
+            ? `You're US$ ${missing} short for the down payment. In the demo you can request test funds.`
+            : "Your devUSDC balance doesn't cover the down payment. In the demo you can request test funds.",
+        cta: null,
+      },
     },
     margin: {
       label: "Margin in use",
       used: (used: string, limit: string) => `US$ ${used} / US$ ${limit}`,
       needed: (needed: string) => `This purchase adds US$ ${needed}`,
       frees: "Paying installments frees up margin, like a card.",
+    },
+    balanceLabel: "Your devUSDC balance",
+    balanceUnavailable: "unavailable",
+    calendar: {
+      title: "Your installment schedule",
+      count: (n: number) => `${n} installments`,
+      installment: (i: number) => `Installment ${i}`,
+      nextUp: "Next installment",
+      nextTag: "next",
+      dueOn: (date: string) => `due ${date}`,
+      inDays: (n: number) => `in ${n} ${n === 1 ? "day" : "days"}`,
+      dueToday: "due today",
+      overdueDays: (n: number) => `${n} ${n === 1 ? "day" : "days"} overdue`,
+      status: {
+        Upcoming: "on time",
+        Due: "due today",
+        Grace: "in grace period",
+        Late: "late",
+        Paid: "paid",
+        ChargedToGuarantor: "charged to guarantor",
+      },
+      exactToggle: "See exact amounts",
+      exactTotal: "Exact financed total",
+      approxNote:
+        "Installments are stored with 6 decimals; above they're shown rounded.",
+      late: {
+        title: "What happens if I'm late?",
+        grace: (d: number) =>
+          `You have a ${d}-day grace period after each due date: paying within it carries no surcharge.`,
+        notice: (d: number) =>
+          `On day ${d} of delay your guarantor is due to be notified: a notice, not a charge.`,
+        penalty: (pct: string) =>
+          `After grace, a one-time ${pct}% surcharge is added on the overdue installment. You pay it: your guarantor does not cover it.`,
+        charge: (d: number) =>
+          `On day ${d} of delay a charge to your guarantor is requested for the outstanding principal and interest (excluding the surcharge).`,
+        recovery:
+          "If that charge is registered, your plan stops counting, you drop a tier and you can't open new plans.",
+      },
+    },
+    pay: {
+      cta: (n: number, amt: string) => `Pay installment ${n} · US$ ${amt}`,
+      title: "Review your payment",
+      rows: {
+        dest: "Destination",
+        destValue: "Lazo liquidity pool",
+        amount: "Exact amount",
+        token: "Token",
+        tokenValue: "devUSDC · test USDC",
+        network: "Network",
+        networkValue: "Solana devnet · test money",
+        wallet: "Signing with",
+        plan: "Plan",
+        installment: (n: number) => `Installment ${n}`,
+        remaining: (n: number) =>
+          `After this payment ${n} ${n === 1 ? "installment" : "installments"} remain`,
+      },
+      approvalNote:
+        "Phantom asks for a fresh approval: the down payment signature does not authorize this installment.",
+      sign: "Approve & pay",
+      back: "Back",
+      mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
+      errorTitle: "The installment couldn't be paid",
+      successTitle: (n: number) => `Installment ${n} paid`,
+      remainingLabel: (n: number) =>
+        `${n} ${n === 1 ? "installment" : "installments"} left to pay`,
+      balanceLabel: "Your devUSDC balance now",
+      done: "Done",
+      progress: {
+        title: "Your payment status",
+        aria: "Payment progress",
+        steps: {
+          preparing: {
+            t: "Preparing your payment",
+            d: "We're building the operation on your machine. Nothing was sent yet.",
+          },
+          awaiting_approval: {
+            t: "Approve in your wallet",
+            d: "Phantom shows the payment: review and approve it. It hasn't left your machine yet.",
+          },
+          sending: {
+            t: "Sending",
+            d: "The payment left with your signature towards devnet.",
+          },
+          confirming: {
+            t: "Confirming on devnet",
+            d: "Devnet is confirming the payment. The chain tells the truth, not a counter.",
+          },
+          syncing: {
+            t: "Almost there",
+            d: "Confirmed: reading your plan to update the calendar.",
+          },
+        },
+      },
     },
     compareTitle: "The same purchase, in installments",
     lazoPlan: (n: number) => `Lazo · ${n} installments`,
@@ -311,6 +571,32 @@ export const checkout = defineDict({
         `US$ ${advance} today · US$ ${rest} on ${date}`,
       installmentsLine: (n: number, amt: string) => `${n} installments of US$ ${amt}`,
       mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
+      progress: {
+        title: "Your purchase status",
+        aria: "Purchase progress",
+        steps: {
+          preparing: {
+            t: "Setting up your plan",
+            d: "We're building the operation on your machine. Nothing was sent yet.",
+          },
+          awaiting_approval: {
+            t: "Approve in your wallet",
+            d: "Phantom is showing you the operation: review it and approve. It hasn't left your machine yet.",
+          },
+          sending: {
+            t: "Sending",
+            d: "The operation left with your signature towards devnet.",
+          },
+          confirming: {
+            t: "Confirming on devnet",
+            d: "Devnet is confirming the operation. Truth comes from the chain, not from a timer.",
+          },
+          syncing: {
+            t: "Almost there",
+            d: "Confirmed: reading your plan to build your schedule.",
+          },
+        },
+      },
       sign: "Sign & open plan",
       opening: "Opening the plan…",
       back: "Back",
@@ -330,6 +616,36 @@ export const checkout = defineDict({
         option_unavailable: "That installment or settlement option isn't available in the demo.",
         not_found: "We couldn't find the merchant or your account. Reload the page.",
         generic: "Something failed on the other side. Try again.",
+        user_rejected:
+          "You cancelled the signature in your wallet. Nothing was sent.",
+        wallet_required: "You need a connected wallet to sign.",
+        unauthorized: "This profile isn't authorized for this operation.",
+        wrong_cluster:
+          "The wallet isn't on devnet. Switch networks and try again.",
+        insufficient_funds:
+          "Your devUSDC balance doesn't cover the down payment.",
+        simulation_failed:
+          "The operation didn't pass devnet simulation. Nothing was recorded.",
+        review_rejected: "The plan didn't pass the current rules.",
+        unsupported_version: "The wallet doesn't support this operation.",
+        unavailable: "We couldn't reach devnet. Try again.",
+        demo_only: "This operation is only available on devnet.",
+        not_implemented: "This part isn't implemented yet.",
+        order_unavailable: "The order is no longer available.",
+        nothing_due: "That installment is no longer pending.",
+      },
+      uncertain: {
+        t: "We don't know if the operation was recorded",
+        d: "We lost the connection after sending it. We won't blindly resend it: we verify it by reading the chain.",
+        sigLabel: "Operation signature",
+        verifyCta: "Verify on chain",
+        verifying: "verifying…",
+        stillPending:
+          "We still can't see it confirmed on chain. You can verify again; meanwhile the purchase stays blocked so nothing gets charged twice.",
+        failedOnchain:
+          "The operation reached devnet and failed: your plan wasn't opened and your devUSDC didn't move. You can retry with a fresh operation.",
+        backCta: "Back to the purchase",
+        panelCta: "See my panel",
       },
       success: {
         title: "Done, plan opened",
@@ -339,7 +655,9 @@ export const checkout = defineDict({
         merchantLaterFact: (name: string, rest: string, days: number) =>
           `${name} gets the rest (US$ ${rest}) in ${days} days`,
         youPaid: (x: string) => `You paid the down payment: US$ ${x}`,
+        pendingFact: (x: string) => `You have US$ ${x} left to pay`,
         installments: (n: number, amt: string) => `${n} installments of US$ ${amt} left`,
+        reconciled: "Verified by reading the chain",
         interestFact: (x: string) => `Includes US$ ${x} of interest`,
         beamYou: "your wallet",
         beamAria: (x: string) =>

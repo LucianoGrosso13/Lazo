@@ -9,6 +9,7 @@ import type { CuotasClient } from "./cuotas/types";
 export * from "./cuotas/types";
 export * from "./cuotas/accounts-types";
 export * from "./cuotas/terms";
+export * from "./cuotas/reconcile";
 export { formatUsdc, toMicro, fromMicro, DEMO_MERCHANT, DEMO_STUDENT_TIER3 } from "./cuotas/format";
 export { REFERENCE_FIGURES } from "./cuotas/reference-figures";
 
