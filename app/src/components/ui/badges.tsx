@@ -69,7 +69,6 @@ export function ExplorerLink({
   signature: string;
   className?: string;
 }) {
-  const t = useT(design);
   const mode = getCuotas().mode;
   const label = short(signature);
   if (mode === "mock") {

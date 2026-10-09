@@ -12,7 +12,6 @@ import {
   defaultPlanOption,
   formatUsdc,
   getCuotas,
-  settlementOptionOf,
   type Guarantee,
   type Micro,
   type ProtocolConfig,
@@ -273,12 +272,7 @@ export function MerchantStore({ merchant: m }: { merchant: DemoMerchant }) {
         )
       : t.lede;
 
-  // Plazo de cobro elegido por el comercio (el mock siembra "immediate"); sin
-  // cuenta en el modo activo el chip simplemente no sale.
-  const settlement =
-    config && merchantQ.data
-      ? settlementOptionOf(config, merchantQ.data.settlementId ?? "immediate")
-      : undefined;
+  // El plazo de cobro del comercio no se muestra: el comprador ve solo lo suyo.
 
   return (
     <div className={styles.page} data-testid="merchant-profile">
@@ -318,13 +312,6 @@ export function MerchantStore({ merchant: m }: { merchant: DemoMerchant }) {
             <div className={styles.merchantChips}>
               {category ? <Chip>{category.label[locale]}</Chip> : null}
               <Chip>{m.city}</Chip>
-              {settlement ? (
-                <Chip>
-                  {settlement.days === 0
-                    ? tm.settlementNow
-                    : tm.settlementIn(settlement.days)}
-                </Chip>
-              ) : null}
               {m.featured ? <Chip>{tm.featuredTag}</Chip> : null}
             </div>
             <p className={styles.merchantDesc}>{m.description[locale]}</p>

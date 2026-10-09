@@ -6,7 +6,6 @@
 import { ExplorerIcon, ExplorerLink } from "@/components/ui/badges";
 import { Chip } from "@/components/ui/chip";
 import { cuentas } from "@/i18n/dictionaries/cuentas";
-import { design } from "@/i18n/dictionaries/design";
 import { useT } from "@/i18n/locale";
 import { getCuotas } from "@/lib/cuotas";
 
@@ -24,7 +23,6 @@ const short = (v: string) => `${v.slice(0, 6)}…${v.slice(-4)}`;
  */
 export function EvidenceMark({ evidence }: { evidence: Evidence }) {
   const t = useT(cuentas).evidence;
-  const d = useT(design).chrome;
   switch (evidence.kind) {
     case "none":
       return <Chip data-testid="evidence-none">{t.noEvidence}</Chip>;

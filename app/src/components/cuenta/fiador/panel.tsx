@@ -91,7 +91,9 @@ export function PanelFiador({ invitation }: { invitation: Invitation }) {
     (a) => KINDS_CON_FEE.has(a.kind) && (!a.student || a.student === student),
   );
   const poolEvents = (poolQ.data?.events ?? []).filter(
-    (e): e is PoolEvent & { planId: string } => !!e.planId && planIds.has(e.planId),
+    // Sin "Advance": es el cobro del comercio, no le corresponde al garante.
+    (e): e is PoolEvent & { planId: string } =>
+      !!e.planId && planIds.has(e.planId) && e.kind !== "Advance",
   );
   const hayPendiente = plans.some((p) => p.status === "Active" || p.status === "Late");
 
