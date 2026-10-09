@@ -13,6 +13,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { GlassPanel } from "@/components/ui/glass";
 import { StateMark, installmentMark } from "@/components/ui/state-mark";
+import { usePayInstallment } from "@/components/checkout/pay-installment";
 import { account } from "@/i18n/dictionaries/account";
 import { tierLabel } from "@/i18n/dictionaries/tiers";
 import { useLocale, useT } from "@/i18n/locale";
@@ -213,6 +214,10 @@ function PlanMerchant({ address }: { address: WalletAddress }) {
 export function PlanCard({ plan }: { plan: Plan }) {
   const t = useT(account);
   const { locale } = useLocale();
+  // Pago de la próxima cuota impaga (ticket 02): el CTA solo aparece si hay
+  // cuota pendiente; tras el veredicto el plan se relee solo (SWR +
+  // subscribe del cliente) y la cuota figura `Paid`.
+  const pay = usePayInstallment({ plan, student: plan.student });
   // Planes anteriores a `plan.terms`: se leen como su lista efectiva de
   // cuotas sin interés propio (el mock ya los normaliza igual al cargar).
   const terms: PlanTerms | undefined = plan.terms;
@@ -257,6 +262,8 @@ export function PlanCard({ plan }: { plan: Plan }) {
         ))}
       </ol>
       <p className="mt-3 text-xs text-ink-2">{plan.counts ? t.counts : t.countsNo}</p>
+      {pay.cta ? <div className="mt-4">{pay.cta}</div> : null}
+      {pay.panel ? <div className="mt-4">{pay.panel}</div> : null}
     </GlassPanel>
   );
 }

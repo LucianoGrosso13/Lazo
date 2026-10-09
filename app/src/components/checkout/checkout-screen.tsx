@@ -507,6 +507,7 @@ export function CheckoutScreen({
                     quote={quoteSel}
                     merchant={base?.merchant}
                     clock={base?.clock}
+                    config={config}
                     guarantee={mine.guarantee}
                     balance={mine.balance}
                     flow={flow}

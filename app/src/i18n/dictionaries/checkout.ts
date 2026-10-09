@@ -155,6 +155,61 @@ export const checkout = defineDict({
           "Si ese cobro se registra, tu plan deja de contar, bajás de escalón y no podés abrir planes nuevos.",
       },
     },
+    pay: {
+      cta: (n: number, amt: string) => `Pagar la cuota ${n} · US$ ${amt}`,
+      title: "Revisá tu pago",
+      rows: {
+        dest: "Destino",
+        destValue: "Pool de liquidez Lazo",
+        amount: "Importe exacto",
+        token: "Token",
+        tokenValue: "devUSDC · USDC de prueba",
+        network: "Red",
+        networkValue: "Solana devnet · plata de prueba",
+        wallet: "Firmás con",
+        plan: "Plan",
+        installment: (n: number) => `Cuota ${n}`,
+        remaining: (n: number) =>
+          `Después del pago quedan ${n} ${n === 1 ? "cuota" : "cuotas"}`,
+      },
+      approvalNote:
+        "Phantom te pide una aprobación nueva: la firma del anticipo no autoriza esta cuota.",
+      sign: "Aprobar y pagar",
+      back: "Volver",
+      mockNote: "Firma simulada en modo demo: Phantom no te pide nada.",
+      errorTitle: "No se pudo pagar la cuota",
+      successTitle: (n: number) => `Cuota ${n} pagada`,
+      remainingLabel: (n: number) =>
+        `Quedan ${n} ${n === 1 ? "cuota" : "cuotas"} por pagar`,
+      balanceLabel: "Tu saldo devUSDC ahora",
+      done: "Listo",
+      progress: {
+        title: "Estado de tu pago",
+        aria: "Progreso del pago",
+        steps: {
+          preparing: {
+            t: "Armando tu pago",
+            d: "Armamos la operación en tu máquina. Todavía no se envió nada.",
+          },
+          awaiting_approval: {
+            t: "Aprobá en tu billetera",
+            d: "Phantom te muestra el pago: revisalo y aprobalo. Todavía no salió de tu máquina.",
+          },
+          sending: {
+            t: "Enviando",
+            d: "El pago ya salió con tu firma hacia devnet.",
+          },
+          confirming: {
+            t: "Confirmando en devnet",
+            d: "Devnet está confirmando el pago. La verdad la da la cadena, no un contador.",
+          },
+          syncing: {
+            t: "Casi listo",
+            d: "Confirmado: leyendo tu plan para actualizar el calendario.",
+          },
+        },
+      },
+    },
     compareTitle: "Lo mismo, pagando en cuotas",
     lazoPlan: (n: number) => `Lazo · ${n} cuotas`,
     mp: "La competencia · cuotas sin tarjeta",
@@ -431,6 +486,61 @@ export const checkout = defineDict({
           `On day ${d} of delay a charge to your guarantor is requested for the outstanding principal and interest (excluding the surcharge).`,
         recovery:
           "If that charge is registered, your plan stops counting, you drop a tier and you can't open new plans.",
+      },
+    },
+    pay: {
+      cta: (n: number, amt: string) => `Pay installment ${n} · US$ ${amt}`,
+      title: "Review your payment",
+      rows: {
+        dest: "Destination",
+        destValue: "Lazo liquidity pool",
+        amount: "Exact amount",
+        token: "Token",
+        tokenValue: "devUSDC · test USDC",
+        network: "Network",
+        networkValue: "Solana devnet · test money",
+        wallet: "Signing with",
+        plan: "Plan",
+        installment: (n: number) => `Installment ${n}`,
+        remaining: (n: number) =>
+          `After this payment ${n} ${n === 1 ? "installment" : "installments"} remain`,
+      },
+      approvalNote:
+        "Phantom asks for a fresh approval: the down payment signature does not authorize this installment.",
+      sign: "Approve & pay",
+      back: "Back",
+      mockNote: "Signature simulated in demo mode: Phantom won't ask you anything.",
+      errorTitle: "The installment couldn't be paid",
+      successTitle: (n: number) => `Installment ${n} paid`,
+      remainingLabel: (n: number) =>
+        `${n} ${n === 1 ? "installment" : "installments"} left to pay`,
+      balanceLabel: "Your devUSDC balance now",
+      done: "Done",
+      progress: {
+        title: "Your payment status",
+        aria: "Payment progress",
+        steps: {
+          preparing: {
+            t: "Preparing your payment",
+            d: "We're building the operation on your machine. Nothing was sent yet.",
+          },
+          awaiting_approval: {
+            t: "Approve in your wallet",
+            d: "Phantom shows the payment: review and approve it. It hasn't left your machine yet.",
+          },
+          sending: {
+            t: "Sending",
+            d: "The payment left with your signature towards devnet.",
+          },
+          confirming: {
+            t: "Confirming on devnet",
+            d: "Devnet is confirming the payment. The chain tells the truth, not a counter.",
+          },
+          syncing: {
+            t: "Almost there",
+            d: "Confirmed: reading your plan to update the calendar.",
+          },
+        },
       },
     },
     compareTitle: "The same purchase, in installments",

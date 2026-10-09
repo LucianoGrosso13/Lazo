@@ -13,7 +13,9 @@ import {
   type Guarantee,
   type Merchant,
   type Micro,
+  type ProtocolConfig,
   type Quote,
+  type UnixSeconds,
 } from "@/lib/cuotas";
 import { checkout } from "@/i18n/dictionaries/checkout";
 import { design } from "@/i18n/dictionaries/design";
@@ -28,10 +30,27 @@ import styles from "./checkout.module.css";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
+/** Vencimientos previstos de la revisión (unix): `count` cuotas separadas
+ * por `intervalDays` días según el reloj de la demo/cadena. El intervalo
+ * es obligatorio — sale de `ProtocolConfig.installmentIntervalDays`; sin
+ * config la UI omite fechas en vez de inventarlas. */
+export function previewDueDates(
+  now: UnixSeconds,
+  count: number,
+  secondsPerDay: number,
+  intervalDays: number,
+): UnixSeconds[] {
+  return Array.from(
+    { length: count },
+    (_, i) => now + (i + 1) * intervalDays * secondsPerDay,
+  );
+}
+
 export function ConfirmPanel({
   quote,
   merchant,
   clock,
+  config,
   guarantee,
   balance,
   flow,
@@ -43,6 +62,8 @@ export function ConfirmPanel({
   quote: Quote;
   merchant: Merchant | undefined;
   clock: DemoClock | undefined;
+  /** Config vigente: define el intervalo entre cuotas en modo real. */
+  config: ProtocolConfig | null | undefined;
   /** Fianza vigente del estudiante (null = sin fiador). */
   guarantee: Guarantee | null | undefined;
   /** Saldo devUSDC disponible (null = no se pudo determinar). */
@@ -66,11 +87,19 @@ export function ConfirmPanel({
     day: "numeric",
     month: "short",
   });
-  const dates = clock
-    ? quote.installments.map((_, i) =>
-        dateFmt.format(new Date((clock.now + (i + 1) * 30 * clock.secondsPerDay) * 1000)),
-      )
-    : [];
+  // El intervalo es el de la config vigente (real y mock lo exponen en
+  // `installmentIntervalDays`). Sin el dato no se inventa fecha: se omite
+  // la columna en vez de contradecir al plan recuperado.
+  const intervalDays = config?.installmentIntervalDays;
+  const dates =
+    clock && intervalDays != null
+      ? previewDueDates(
+          clock.now,
+          quote.installments.length,
+          clock.secondsPerDay,
+          intervalDays,
+        ).map((d) => dateFmt.format(new Date(d * 1000)))
+      : [];
   const settleDate =
     clock && quote.settlementDays > 0
       ? dateFmt.format(

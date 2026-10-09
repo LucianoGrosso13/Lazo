@@ -4,7 +4,8 @@
 // exacta onchain, la primera impaga destacada con días restantes, montos
 // exactos consultables (6 decimales) y el desplegable «qué pasa si me
 // atraso» alimentado por la config vigente — sin ejecutar ni prometer mora.
-// No hay CTA de pago: pagar la primera cuota es del ticket 02.
+// La acción sobre la próxima cuota (pago, ticket 02) entra por `nextAction`.
+import type { ReactNode } from "react";
 import {
   formatUsdc,
   type Installment,
@@ -59,6 +60,7 @@ export function PlanCalendar({
   config,
   now,
   secondsPerDay,
+  nextAction,
 }: {
   plan: Plan;
   /** Config vigente (parámetros de mora). Si falta, el desplegable no se muestra. */
@@ -67,6 +69,8 @@ export function PlanCalendar({
   now: UnixSeconds;
   /** Duración del día para "días restantes" (86.400 en real). */
   secondsPerDay: number;
+  /** Acción opcional sobre la próxima cuota (p. ej. el CTA de pago del ticket 02). */
+  nextAction?: ReactNode;
 }) {
   const t = useT(checkout).calendar;
   const { locale } = useLocale();
@@ -104,6 +108,9 @@ export function PlanCalendar({
                   ? t.dueToday
                   : t.overdueDays(-nextDays)}
             </p>
+            {nextAction ? (
+              <div className={styles.calNextCta}>{nextAction}</div>
+            ) : null}
           </div>
         </div>
       ) : null}

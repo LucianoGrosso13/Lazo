@@ -9,13 +9,15 @@ import {
   type ProtocolConfig,
   type UnixSeconds,
 } from "@/lib/cuotas";
+import { useState } from "react";
 import { checkout } from "@/i18n/dictionaries/checkout";
 import { useLocale, useT } from "@/i18n/locale";
 import { BigNumber } from "@/components/ui/big-number";
 import { Chip } from "@/components/ui/chip";
 import { ExplorerLink } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
-import { PlanCalendar, pendingAmount } from "./plan-calendar";
+import { PlanCalendar, pendingAmount, unpaidInstallments } from "./plan-calendar";
+import { usePayInstallment } from "./pay-installment";
 import styles from "./checkout.module.css";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -49,16 +51,29 @@ export function ConfirmSuccess({
   const t = useT(checkout).confirm.success;
   const { locale } = useLocale();
   const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
-  const received = plan ? plan.price - plan.merchantFee : 0;
+  // El plan mostrado se actualiza si se paga una cuota desde acá (ticket 02):
+  // la cuota queda `Paid`, la siguiente pasa a ser la próxima y el saldo
+  // pendiente baja — mismas fechas, mismo plan.
+  const [paidPlan, setPaidPlan] = useState<Plan | null>(null);
+  const shown = paidPlan ?? plan;
+  const pay = usePayInstallment({
+    plan: shown,
+    student: shown?.student ?? null,
+    onPaid: (p) => {
+      if (p) setPaidPlan(p);
+    },
+  });
+  const received = shown ? shown.price - shown.merchantFee : 0;
   // Cobro diferido: hoy entra el anticipo y el resto a `settlementDays`;
   // inmediato = todo al abrir (misma regla que `quote()`).
-  const settleDays = plan?.terms?.settlementDays ?? 0;
-  const advance = settleDays === 0 ? received : (plan?.downPayment ?? 0);
+  const settleDays = shown?.terms?.settlementDays ?? 0;
+  const advance = settleDays === 0 ? received : (shown?.downPayment ?? 0);
   const pendingMerchant = received - advance;
   // Interés firmado = lo que se repaga menos lo financiado (datos del plan).
-  const repaid = plan ? plan.installments.reduce((a, i) => a + i.amount, 0) : 0;
-  const interest = plan ? Math.max(0, repaid - plan.financed) : 0;
-  const owed = plan ? pendingAmount(plan) : 0;
+  const repaid = shown ? shown.installments.reduce((a, i) => a + i.amount, 0) : 0;
+  const interest = shown ? Math.max(0, repaid - shown.financed) : 0;
+  const owed = shown ? pendingAmount(shown) : 0;
+  const unpaid = shown ? unpaidInstallments(shown) : [];
 
   return (
     <div className={styles.success}>
@@ -132,16 +147,15 @@ export function ConfirmSuccess({
         {reconciled ? <Chip>{t.reconciled}</Chip> : null}
       </div>
 
-      {plan ? (
+      {shown ? (
         <div className={styles.successFacts}>
-          <span>{t.youPaid(fmt(plan.downPayment))}</span>
-          <span>{t.pendingFact(fmt(owed))}</span>
-          <span>
-            {t.installments(
-              plan.installments.length,
-              fmt(plan.installments[0]?.amount ?? 0),
-            )}
-          </span>
+          <span>{t.youPaid(fmt(shown.downPayment))}</span>
+          <span data-testid="pending-fact">{t.pendingFact(fmt(owed))}</span>
+          {unpaid.length ? (
+            <span>
+              {t.installments(unpaid.length, fmt(unpaid[0]?.amount ?? 0))}
+            </span>
+          ) : null}
           {interest > 0 ? <span>{t.interestFact(fmt(interest))}</span> : null}
           {pendingMerchant > 0 ? (
             <span>
@@ -151,22 +165,26 @@ export function ConfirmSuccess({
         </div>
       ) : null}
 
-      {plan ? (
-        <PlanCalendar
-          plan={plan}
-          config={config}
-          now={now}
-          secondsPerDay={secondsPerDay}
-        />
+      {shown ? (
+        <>
+          <PlanCalendar
+            plan={shown}
+            config={config}
+            now={now}
+            secondsPerDay={secondsPerDay}
+            nextAction={pay.cta}
+          />
+          {pay.panel}
+        </>
       ) : null}
 
       <div className={styles.successCtas}>
         <Link href="/panel" className={buttonClasses("primary")}>
           {t.ctaPanel}
         </Link>
-        {plan ? (
+        {shown ? (
           <Link
-            href={`/comercio/${plan.merchant}`}
+            href={`/comercio/${shown.merchant}`}
             className={buttonClasses("secondary")}
           >
             {t.ctaStore}

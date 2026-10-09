@@ -21,14 +21,20 @@ const PHASES: readonly TxPhase[] = [
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
+type ProgressCopy = (typeof checkout)["es"]["confirm"]["progress"];
+
 export function TxProgressView({
   phase,
   signature,
+  copy,
 }: {
   phase: TxPhase;
   signature?: string;
+  /** Textos alternativos (p. ej. el pago de cuota): por defecto los del plan. */
+  copy?: ProgressCopy;
 }) {
-  const t = useT(checkout).confirm.progress;
+  const fallback = useT(checkout).confirm.progress;
+  const t = copy ?? fallback;
   const idx = Math.max(0, PHASES.indexOf(phase));
   const current = t.steps[phase];
   return (

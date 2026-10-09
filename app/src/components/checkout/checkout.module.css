@@ -1146,6 +1146,14 @@
   color: var(--color-ink-2);
 }
 
+.calNextCta {
+  margin-top: 0.7rem;
+}
+
+.calNextCta button {
+  font-size: 0.82rem;
+}
+
 .calList {
   display: grid;
   margin: 0;
