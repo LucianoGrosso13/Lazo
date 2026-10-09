@@ -4,12 +4,16 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Codex
+**Status:** done · **Asignado:** Codex
 
 **Archivos propios:** `components/cuenta/pool.tsx`, `app/src/app/pool/page.tsx`, `i18n/dictionaries/pool-cuenta.ts`, carpeta nueva `components/pool-orb/`.
 
-- [ ] Orbe WebGL animado a 60 fps en desktop, sin errores de consola, que se pausa fuera de pantalla
-- [ ] El respaldo CSS se ve sin WebGL; con reduced-motion queda estático (e2e con `reducedMotion: 'reduce'`)
-- [ ] Función pura del estado del orbe con test de Vitest (0%, 50% y 100% de utilización)
-- [ ] Rendimiento con count-up; Gauge de utilización; historial plegable (e2e: 3 visibles → expandir); barras de referencia
-- [ ] `comercio-pool.spec.ts` en verde; capturas 390/1440 en `evidence/04-*` (incluido el respaldo)
+- [x] Orbe WebGL animado a 60 fps en desktop, sin errores de consola, que se pausa fuera de pantalla
+- [x] El respaldo CSS se ve sin WebGL; con reduced-motion queda estático (e2e con `reducedMotion: 'reduce'`)
+- [x] Función pura del estado del orbe con test de Vitest (0%, 50% y 100% de utilización)
+- [x] Rendimiento con count-up; Gauge de utilización; historial plegable (e2e: 3 visibles → expandir); barras de referencia
+- [x] `comercio-pool.spec.ts` en verde; capturas 390/1440 en `evidence/04-*` (incluido el respaldo)
+
+## Verificación de cierre
+
+Rama `rui/04-pool-orbe`. Typecheck, lint (sin errores; 2 warnings previos fuera de propiedad), 386 pruebas unitarias y build aprobados; 12 e2e existentes y 4 nuevos del orbe aprobados. Desktop con ANGLE Metal Apple M1: 60,002 fps. Se revisaron las seis capturas 390/1440, CSS, reduced-motion y reparto 50/50. Informe: `../evidence/04-validation.md`.
