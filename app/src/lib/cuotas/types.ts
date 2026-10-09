@@ -424,6 +424,49 @@ export interface TxOperationOptions {
 }
 
 /**
+ * Identidad de una operación firmada que quedó incierta (`uncertain`) o
+ * que la UI quiere verificar tras reconectar. La UI la arma con datos que
+ * YA conoce (args + fases emitidas): estudiante, plan y la firma original
+ * — jamás una firma nueva ni una reescritura. `pay_installment` exige el
+ * índice de la cuota que debía quedar paga (la primera impaga al firmar).
+ */
+export type OperationSnapshot =
+  | {
+      operation: "open_plan";
+      student: WalletAddress;
+      /** Firma original emitida en `sending`/`confirming`/`uncertain`. */
+      signature: string;
+    }
+  | {
+      operation: "pay_installment";
+      student: WalletAddress;
+      /** PDA del plan (`Plan.id` de `getPlans`). */
+      planId: string;
+      signature: string;
+      /** Índice 0-based de la cuota que la firma debía dejar `Paid`. */
+      expectedInstallmentIndex: number;
+    };
+
+/**
+ * Veredicto de `reconcileOperation` — siempre referido a la firma
+ * ORIGINAL del snapshot, nunca a una reemisión:
+ * - `confirmed`: la firma aterrizó y su evento corresponde a la operación
+ *   y a la identidad del snapshot. `plan` trae el estado actualizado;
+ *   `null` si la última cuota saldó y el programa cerró la cuenta (el
+ *   efecto quedó verificado por el evento igual).
+ * - `failed`: la firma falló onchain (`err` definitivo): NO hizo efecto;
+ *   es seguro reintentar armando una propuesta fresca.
+ * - `pending`: sin veredicto todavía (firma no encontrada, sin
+ *   confirmación, lectura incompleta o estado inconsistente). La
+ *   transacción puede aterrizar todavía: mantener el bloqueo y NO
+ *   reintentar — es exactamente la condición de `uncertain`.
+ */
+export type ReconcileOutcome =
+  | { status: "confirmed"; signature: string; plan: Plan | null }
+  | { status: "failed"; signature: string }
+  | { status: "pending"; signature: string };
+
+/**
  * Interfaz única hacia la cadena. La implementan el mock (memoria + localStorage,
  * reloj de demo) y la real (cliente Codama en `src/generated/`).
  */
@@ -465,6 +508,15 @@ export interface CuotasClient {
     planId: string,
     options?: TxOperationOptions,
   ): Promise<TxResult<Plan>>;
+  /**
+   * Reconcilia UNA operación firmada por su firma original + snapshot de
+   * identidad, sin reenviarla jamás (lectura solamente). Verifica la
+   * firma real antes de mirar estado: un plan que ya existía o una cuota
+   * ya paga NO prueban que esta firma aterrizó. Usarla tras `uncertain`,
+   * tras un cierre/reconexión de la app, o ante la duda de si la
+   * transacción llegó. Para esperar un veredicto usar `waitForOperation`.
+   */
+  reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome>;
   /** `keeper_register_guarantee` (lo firma el keeper; en el mock, directo). */
   registerGuarantee(args: RegisterGuaranteeArgs): Promise<TxResult<Guarantee>>;
   /** `keeper_revoke_guarantee`. */
@@ -492,6 +544,11 @@ export interface CuotasClient {
 export type RealErrorCode =
   /** Sin wallet conectada para firmar. La UI pide conectar Phantom. */
   | "wallet_required"
+  /** La wallet estaba conectada pero el USUARIO canceló/rechazó la firma
+   * (ej. cerró Phantom). Nada se firmó ni envió: es seguro reintentar.
+   * Distinto de `wallet_required` (no hay wallet) y de `review_rejected`
+   * (la app rechazó la revisión, antes de llegar a la wallet). */
+  | "user_rejected"
   /** La wallet conectada no es la autoridad requerida (admin/keeper/estudiante). */
   | "unauthorized"
   /** El RPC no es devnet (verificación por hash de génesis). */

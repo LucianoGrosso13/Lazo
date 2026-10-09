@@ -143,3 +143,85 @@ describe("insufficient_funds (fondos simulados)", () => {
     expect(plans[0].installments.every((i) => i.paidAt === undefined)).toBe(true);
   });
 });
+
+describe("reconcileOperation (espejo simulado)", () => {
+  it("open_plan: solo confirma la firma registrada, no la existencia del plan", async () => {
+    const { value: plan, signature } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    // Una firma que no es la de la compra → pending aunque el plan exista.
+    expect(
+      await c.reconcileOperation({
+        operation: "open_plan",
+        student: W,
+        signature: "firma-inventada-que-nunca-se-envio",
+      }),
+    ).toEqual({ status: "pending", signature: "firma-inventada-que-nunca-se-envio" });
+    // La firma original sí confirma y devuelve el plan.
+    expect(
+      await c.reconcileOperation({
+        operation: "open_plan",
+        student: W,
+        signature,
+      }),
+    ).toEqual({ status: "confirmed", signature, plan: expect.objectContaining({ id: plan.id }) });
+  });
+
+  it("pay_installment: exige firma + cuota + identidad correlacionados", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    const res = await c.payInstallment(W, plan.id);
+    // La firma de la cuota 0 confirma; con índice 1 (otra cuota) → pending.
+    expect(
+      await c.reconcileOperation({
+        operation: "pay_installment",
+        student: W,
+        planId: plan.id,
+        signature: res.signature,
+        expectedInstallmentIndex: 1,
+      }),
+    ).toMatchObject({ status: "pending" });
+    expect(
+      await c.reconcileOperation({
+        operation: "pay_installment",
+        student: W,
+        planId: plan.id,
+        signature: res.signature,
+        expectedInstallmentIndex: 0,
+      }),
+    ).toMatchObject({ status: "confirmed", signature: res.signature });
+    // Snapshot de otro plan → pending (identidad no correlacionada).
+    expect(
+      await c.reconcileOperation({
+        operation: "pay_installment",
+        student: W,
+        planId: "plan-que-no-existe",
+        signature: res.signature,
+        expectedInstallmentIndex: 0,
+      }),
+    ).toMatchObject({ status: "pending" });
+  });
+
+  it("cuota impaga con firma ajena → pending (jamás success por existencia)", async () => {
+    const { value: plan } = await c.openPlan({
+      student: W,
+      merchant: DEMO_MERCHANT,
+      price: toMicro(1000),
+    });
+    // La cuota 0 está impaga y la firma no existe en el estado.
+    expect(
+      await c.reconcileOperation({
+        operation: "pay_installment",
+        student: W,
+        planId: plan.id,
+        signature: "firma-fantasma",
+        expectedInstallmentIndex: 0,
+      }),
+    ).toMatchObject({ status: "pending" });
+  });
+});

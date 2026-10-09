@@ -108,6 +108,7 @@ import type {
   InstallmentStatus,
   Merchant,
   OpenPlanArgs,
+  OperationSnapshot,
   Plan,
   PlanStatus,
   PlanTerms,
@@ -117,6 +118,7 @@ import type {
   Quote,
   QuoteBlockReason,
   QuoteOptions,
+  ReconcileOutcome,
   Reputation,
   Sale,
   TierIndex,
@@ -708,7 +710,16 @@ export async function sendReviewedProposal(
     (m) => appendTransactionMessageInstructions(instructions.map((i) => i.ix), m),
   );
   const signed = await signTransactionMessageWithSigners(message).catch((e: unknown) => {
-    throw new CuotasError("wallet_required", `Firma cancelada o rechazada: ${rpcErr(e)}`);
+    const msg = rpcErr(e);
+    // Cancelación del usuario en la wallet (Phantom "User rejected"): la
+    // UI la distingue de "no hay wallet" y puede reintentar sin drama.
+    if (/user rejected|rejected the request|declined|denied|cancell?o?ed|4001/i.test(msg)) {
+      throw new CuotasError(
+        "user_rejected",
+        `Firma cancelada en la wallet: ${msg}. Nada se envió; podés reintentar.`,
+      );
+    }
+    throw new CuotasError("wallet_required", `No se pudo firmar con la wallet: ${msg}`);
   });
   // La firma se deriva localmente ANTES de enviar: si el envío se corta, la
   // UI ya conoce la firma para reconciliarla (es la misma que devuelve el RPC).
@@ -2259,6 +2270,88 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       return dedup(`pay_installment:${student}:${planId}`, () =>
         payInstallmentOnce(student, planId, options),
       );
+    },
+
+    // Veredicto de UNA firma ya emitida, sin reenviar. Primero el estado
+    // real de la firma; solo si aterrizó, el evento del propio tx prueba
+    // el efecto correlacionado a la identidad del snapshot (un plan que
+    // ya existía o una cuota ya paga NO prueban nada).
+    async reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome> {
+      const ctx = await readCtx(overrides);
+      const studentAddr = asAddress(snapshot.student, "estudiante");
+      const [planPda] = await findPlanPda(
+        { student: studentAddr },
+        { programAddress: ctx.env.programId },
+      );
+      // Snapshot que no corresponde a la identidad: jamás confirma.
+      if (snapshot.operation === "pay_installment" && snapshot.planId !== String(planPda)) {
+        return { status: "pending", signature: snapshot.signature };
+      }
+      const sig = snapshot.signature as Signature;
+      const statusRes = await ctx.rpc
+        .getSignatureStatuses([sig])
+        .send()
+        .catch(() => null);
+      const st = statusRes?.value?.[0];
+      if (st?.err) {
+        // La firma original falló onchain: no hizo efecto. Reintentar con
+        // una propuesta fresca es seguro (no hay duplicado).
+        return { status: "failed", signature: snapshot.signature };
+      }
+      if (
+        !st ||
+        (st.confirmationStatus !== "confirmed" && st.confirmationStatus !== "finalized")
+      ) {
+        return { status: "pending", signature: snapshot.signature };
+      }
+      // Confirmada: el efecto se prueba con el evento del PROPIO tx. Sin
+      // tx legible o sin evento correlacionado sigue incierto → pending.
+      const tx = await fetchParsedTx(ctx.rpc, snapshot.signature);
+      if (!tx || tx.meta?.err) {
+        return { status: "pending", signature: snapshot.signature };
+      }
+      const events = parseCuotasEventsFromLogs(tx.meta?.logMessages, ctx.env.programId);
+      if (snapshot.operation === "open_plan") {
+        const opened = events.some(
+          (p) =>
+            p.name === "PlanOpened" &&
+            String(p.event.plan) === String(planPda) &&
+            String(p.event.student) === String(studentAddr),
+        );
+        if (!opened) return { status: "pending", signature: snapshot.signature };
+        // La compra está probada; recuperar el plan actualizado. Si la
+        // lectura falla o aún no indexa → la UI sigue en `syncing`.
+        const plans = await readPlans(ctx, snapshot.student).catch(() => null);
+        const plan = plans?.find((p) => p.id === String(planPda)) ?? null;
+        if (!plan) return { status: "pending", signature: snapshot.signature };
+        return { status: "confirmed", signature: snapshot.signature, plan };
+      }
+      const paid = events.some(
+        (p) =>
+          p.name === "InstallmentPaid" &&
+          String(p.event.plan) === String(planPda) &&
+          String(p.event.student) === String(studentAddr) &&
+          Number(p.event.index) === snapshot.expectedInstallmentIndex,
+      );
+      if (!paid) return { status: "pending", signature: snapshot.signature };
+      const plans = await readPlans(ctx, snapshot.student).catch(() => null);
+      if (plans === null) {
+        // Lectura caída ≠ cuenta cerrada: sigue incierto, nunca success.
+        return { status: "pending", signature: snapshot.signature };
+      }
+      const plan = plans.find((p) => p.id === String(planPda)) ?? null;
+      if (plan) {
+        const inst = plan.installments[snapshot.expectedInstallmentIndex];
+        if (!inst || inst.status !== "Paid") {
+          // El evento prueba el pago pero la lectura todavía no lo
+          // refleja (lectura atrasada): sigue incierto, nunca success.
+          return { status: "pending", signature: snapshot.signature };
+        }
+        return { status: "confirmed", signature: snapshot.signature, plan };
+      }
+      // Última cuota: el programa cerró la cuenta al saldar. El evento ya
+      // verificó el efecto; `plan: null` y la UI refresca `getPlans`.
+      return { status: "confirmed", signature: snapshot.signature, plan: null };
     },
 
     // Puente keeper: solo la wallet keeper conectada registra garantías (el

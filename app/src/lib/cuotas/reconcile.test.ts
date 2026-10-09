@@ -1,8 +1,18 @@
 // Reconciliación post-incertidumbre (`CuotasError("uncertain")`):
 // sondear la cadena hasta verificar el efecto, jamás reenviar la tx.
 import { describe, expect, it } from "vitest";
-import { reconcileUntil, waitForOpenedPlan, waitForPlan } from "./reconcile";
-import type { CuotasClient, Plan } from "./types";
+import {
+  reconcileUntil,
+  waitForOpenedPlan,
+  waitForOperation,
+  waitForPlan,
+} from "./reconcile";
+import type {
+  CuotasClient,
+  OperationSnapshot,
+  Plan,
+  ReconcileOutcome,
+} from "./types";
 
 const TERMS: Plan["terms"] = {
   termsVersion: 1,
@@ -132,5 +142,55 @@ describe("waitForPlan", () => {
       sleep: async () => {},
     });
     expect(missing).toBeNull();
+  });
+});
+
+describe("waitForOperation (veredicto de UNA firma)", () => {
+  const snapshot: OperationSnapshot = {
+    operation: "open_plan",
+    student: "estudiante",
+    signature: "firma-original",
+  };
+  const pending: ReconcileOutcome = { status: "pending", signature: "firma-original" };
+
+  it("sondea reconcileOperation hasta un veredicto (confirmed/failed)", async () => {
+    const outcomes: ReconcileOutcome[] = [
+      pending,
+      pending,
+      { status: "confirmed", signature: "firma-original", plan: planFixture() },
+    ];
+    let i = 0;
+    const c: Pick<CuotasClient, "reconcileOperation"> = {
+      reconcileOperation: async () => outcomes[Math.min(i++, outcomes.length - 1)],
+    };
+    const res = await waitForOperation(c, snapshot, {
+      intervalMs: 1,
+      sleep: async () => {},
+    });
+    expect(res?.status).toBe("confirmed");
+    expect(i).toBe(3);
+  });
+
+  it("failed también es veredicto (seguro reintentar con propuesta fresca)", async () => {
+    const c: Pick<CuotasClient, "reconcileOperation"> = {
+      reconcileOperation: async () => ({ status: "failed", signature: "firma-original" }),
+    };
+    const res = await waitForOperation(c, snapshot, {
+      intervalMs: 1,
+      sleep: async () => {},
+    });
+    expect(res?.status).toBe("failed");
+  });
+
+  it("pending eterno → null dentro del plazo (mantener bloqueo, no reintentar)", async () => {
+    const c: Pick<CuotasClient, "reconcileOperation"> = {
+      reconcileOperation: async () => pending,
+    };
+    const res = await waitForOperation(c, snapshot, {
+      intervalMs: 1,
+      timeoutMs: 3,
+      sleep: async () => {},
+    });
+    expect(res).toBeNull();
   });
 });

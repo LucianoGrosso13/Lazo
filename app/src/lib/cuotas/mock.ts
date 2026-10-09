@@ -21,6 +21,7 @@ import type {
   DemoClock,
   Guarantee,
   Micro,
+  OperationSnapshot,
   Plan,
   PlanTerms,
   Pool,
@@ -28,6 +29,7 @@ import type {
   Quote,
   QuoteBlockReason,
   QuoteOptions,
+  ReconcileOutcome,
   Reputation,
   SettlementId,
   TxPhase,
@@ -934,6 +936,33 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
       emitProgress(progress, "confirming", inst.signature);
       emitProgress(progress, "syncing", inst.signature);
       return { value: toPublicPlan(plan), signature: inst.signature };
+    },
+
+    // Espejo del real: la firma registrada en el estado ES el comprobante
+    // simulado. Un plan/cuota con OTRA firma (previo o ajeno) no prueba
+    // esta operación — nunca declara éxito por "existe". El mock no tiene
+    // transacciones fallidas: una firma desconocida queda `pending`.
+    async reconcileOperation(snapshot: OperationSnapshot): Promise<ReconcileOutcome> {
+      refresh();
+      sync();
+      const plans = state.plans.filter((p) => p.student === snapshot.student);
+      if (snapshot.operation === "open_plan") {
+        const plan = plans.find((p) => p.signature === snapshot.signature);
+        return plan
+          ? { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) }
+          : { status: "pending", signature: snapshot.signature };
+      }
+      const plan = plans.find((p) => p.id === snapshot.planId);
+      if (!plan) return { status: "pending", signature: snapshot.signature };
+      const inst = plan.installments.find(
+        (i) =>
+          i.index === snapshot.expectedInstallmentIndex &&
+          i.signature === snapshot.signature &&
+          i.paidAt !== undefined,
+      );
+      return inst
+        ? { status: "confirmed", signature: snapshot.signature, plan: toPublicPlan(plan) }
+        : { status: "pending", signature: snapshot.signature };
     },
 
     async registerGuarantee(args): Promise<TxResult<Guarantee>> {

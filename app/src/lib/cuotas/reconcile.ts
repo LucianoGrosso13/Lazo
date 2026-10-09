@@ -1,8 +1,20 @@
-// Reconciliación tras `CuotasError("uncertain")`: lee la cadena hasta
-// verificar el efecto de una transacción que pudo haber aterrizado, SIN
-// reenviarla (un reenvío a ciegas puede duplicar el cargo). Los helpers
-// son de solo lectura: nunca firman ni envían nada.
-import type { CuotasClient, Plan, WalletAddress } from "./types";
+// Reconciliación tras `CuotasError("uncertain")`: verificar el efecto de
+// una transacción que pudo haber aterrizado, SIN reenviarla (un reenvío a
+// ciegas puede duplicar el cargo). Los helpers son de solo lectura:
+// nunca firman ni envían nada.
+//
+// IMPORTANTE: `waitForOpenedPlan`/`waitForPlan` son polling genérico de
+// estado — NO prueban que una firma aterrizó (un plan previo o una cuota
+// ya paga también los satisfacen). Para el veredicto de UNA operación
+// firmada usar `CuotasClient.reconcileOperation` (o `waitForOperation`),
+// que valida la firma ORIGINAL + snapshot de identidad.
+import type {
+  CuotasClient,
+  OperationSnapshot,
+  Plan,
+  ReconcileOutcome,
+  WalletAddress,
+} from "./types";
 
 export interface ReconcileOptions {
   /** Espera entre lecturas (default 2.000 ms). */
@@ -48,11 +60,28 @@ export async function reconcileUntil<T, R>(
 }
 
 /**
- * Tras un `uncertain` de `openPlan`: espera a que el plan del estudiante
- * aparezca activo (confirmado pero aún no indexado por la lectura). El
- * estudiante tiene un solo plan activo onchain; se filtra por identidad
- * para que el plan devuelto corresponda al snapshot del checkout.
- * `null` = no verificado dentro del plazo (revisar la firma en Explorer).
+ * Espera el veredicto de UNA operación firmada (la forma correcta de
+ * resolver un `uncertain`): sondea `reconcileOperation` hasta `confirmed`
+ * o `failed`. `null` = siguió `pending` dentro del plazo — mantener el
+ * bloqueo, jamás reintentar a ciegas.
+ */
+export function waitForOperation(
+  client: Pick<CuotasClient, "reconcileOperation">,
+  snapshot: OperationSnapshot,
+  options?: ReconcileOptions,
+): Promise<ReconcileOutcome | null> {
+  return reconcileUntil(
+    () => client.reconcileOperation(snapshot),
+    (outcome) => (outcome.status === "pending" ? null : outcome),
+    options,
+  );
+}
+
+/**
+ * Helper de LECTURA (polling de estado), no veredicto de una firma.
+ * Devuelve el primer plan activo del estudiante — que puede ser un plan
+ * PREEXISTENTE, no el de la operación en duda. NO usar como prueba de
+ * éxito tras `uncertain`: para eso está `reconcileOperation`/`waitForOperation`.
  */
 export function waitForOpenedPlan(
   client: Pick<CuotasClient, "getPlans">,
@@ -72,11 +101,12 @@ export function waitForOpenedPlan(
 }
 
 /**
- * Tras un `uncertain` de `payInstallment` (o cualquier escritura sobre un
- * plan): espera a que el plan `planId` vuelva a leerse. Si el plan se
- * saldó el programa cierra la cuenta y `getPlans` ya no lo trae: quien
- * reconcilia decide con `reconcileUntil` y su propio `done` si la
- * desaparición significa "saldado" para su flujo.
+ * Helper de LECTURA (polling de estado), no veredicto de una firma.
+ * Devuelve el plan `planId` cuando vuelve a leerse — no distingue si la
+ * cuota la pagó esta firma o ya estaba paga. NO usar como prueba de
+ * éxito tras `uncertain`: para eso está `reconcileOperation`/`waitForOperation`.
+ * Si el plan se saldó y cerró, `getPlans` ya no lo trae: quien espera el
+ * cierre lo resuelve con `reconcileUntil` y su propio `done`.
  */
 export function waitForPlan(
   client: Pick<CuotasClient, "getPlans">,
