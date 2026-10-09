@@ -57,6 +57,44 @@ function runOf(
 const flush = () => new Promise<void>((r) => setTimeout(r, 0));
 
 describe("createOpenPlanRunner", () => {
+  it.each(["success", "failure", "recheck"] as const)(
+    "un resultado viejo (%s) no borra la corrida de la nueva identidad",
+    async (oldResult) => {
+      const runner = createOpenPlanRunner({ minPostSendMs: 0 });
+      let finishOld!: () => void;
+      const oldPending = new Promise<void>((resolve) => { finishOld = resolve; });
+      const old = runOf(async () => {
+        await oldPending;
+        if (oldResult === "failure") throw new CuotasError("user_rejected");
+        return { value: plan, signature: "old" };
+      }, {
+        reconcile: async () => {
+          await oldPending;
+          return { status: "confirmed", plan, signature: "old" };
+        },
+      });
+      if (oldResult === "recheck") {
+        runner.restore(old, "old");
+        runner.recheck();
+      } else {
+        runner.start(old);
+      }
+      runner.reset();
+      let finishNew!: () => void;
+      const newPending = new Promise<void>((resolve) => { finishNew = resolve; });
+      runner.start(runOf(async () => {
+        await newPending;
+        return { value: plan, signature: "new" };
+      }));
+      finishOld();
+      await flush();
+      expect(runner.state()).toMatchObject({ kind: "running" });
+      finishNew();
+      await vi.waitFor(() => expect(runner.state()).toMatchObject({
+        kind: "success", signature: "new",
+      }));
+    },
+  );
   it("éxito: fases monótonas y ~2s de procesamiento post-envío", async () => {
     const clock = fakeClock();
     const runner = createOpenPlanRunner({

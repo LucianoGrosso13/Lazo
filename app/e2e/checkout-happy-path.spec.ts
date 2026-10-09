@@ -62,10 +62,11 @@ test("compra feliz: revisión → progreso → éxito con calendario y comproban
   await late.locator("summary").click();
   await expect(late).toContainText(/días de gracia|grace days/i);
   await expect(late).toContainText(/5%/);
-  // El calendario informa; pagar la cuota es ticket 02 (sin CTA falso).
+  // Ticket 02: solo la próxima cuota ofrece su revisión de pago.
   await expect(
     calendar.getByRole("button", { name: /pagar|pay/i }),
-  ).toHaveCount(0);
+  ).toHaveCount(1);
+  await expect(calendar.getByTestId("pay-installment-cta")).toBeEnabled();
 });
 
 test("saldo insuficiente bloquea la compra y muestra el faltante", async ({

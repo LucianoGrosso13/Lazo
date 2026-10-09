@@ -9,7 +9,7 @@ import {
   type ProtocolConfig,
   type UnixSeconds,
 } from "@/lib/cuotas";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { checkout } from "@/i18n/dictionaries/checkout";
 import { useLocale, useT } from "@/i18n/locale";
 import { BigNumber } from "@/components/ui/big-number";
@@ -74,6 +74,8 @@ export function ConfirmSuccess({
   const interest = shown ? Math.max(0, repaid - shown.financed) : 0;
   const owed = shown ? pendingAmount(shown) : 0;
   const unpaid = shown ? unpaidInstallments(shown) : [];
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus(); }, []);
 
   return (
     <div className={styles.success}>
@@ -132,7 +134,7 @@ export function ConfirmSuccess({
         </text>
       </svg>
 
-      <h2 className={styles.successTitle}>{t.title}</h2>
+      <h2 ref={headingRef} tabIndex={-1} className={styles.successTitle}>{t.title}</h2>
       <p className={styles.successLead}>
         {t.merchantPaidLead(merchantName)}{" "}
         <BigNumber amount={advance} size="lg" className={styles.savingsNum} />{" "}

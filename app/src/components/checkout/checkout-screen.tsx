@@ -334,13 +334,15 @@ export function CheckoutScreen({
   // Altura de expiración de la propuesta firmada (cuando el cliente la
   // emite): se propaga al snapshot de reconciliación y a lo persistido.
   const openExpiryRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    openExpiryRef.current = undefined;
+  }, [wallet]);
 
   // Si cambia la wallet, el flujo vuelve al desglose.
   const [prevWallet, setPrevWallet] = useState(wallet);
   if (prevWallet !== wallet) {
     setPrevWallet(wallet);
     runner.reset();
-    openExpiryRef.current = undefined;
     setStep("review");
   }
 

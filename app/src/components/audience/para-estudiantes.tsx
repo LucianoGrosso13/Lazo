@@ -204,7 +204,7 @@ function Ladder() {
             <p className="mt-1 text-sm leading-relaxed text-ink-2">
               {typeof r.body === "string"
                 ? r.body
-                : r.body(formatUsdc(config.minFinancedToCount, locale, 0), config.graceDays, config.guarantorChargeDay)}
+                : r.body(formatUsdc(config.minFinancedToCount, locale, 0), config.graceDays)}
             </p>
           </div>
         ))}

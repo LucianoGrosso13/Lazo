@@ -1444,7 +1444,7 @@ async function poolEventsFromHistory(
     }
   }
   events.sort((a, b) => a.slot - b.slot || (a.signature < b.signature ? -1 : 1));
-  return events.map(({ slot: _slot, ...e }) => e);
+  return events.map(({ slot, ...e }) => { void slot; return e; });
 }
 
 /**
@@ -1492,7 +1492,7 @@ async function salesFromHistory(
     }
   }
   sales.sort((a, b) => a.slot - b.slot || (a.signature < b.signature ? -1 : 1));
-  return sales.map(({ slot: _slot, ...e }) => e);
+  return sales.map(({ slot, ...e }) => { void slot; return e; });
 }
 
 async function activityFromHistory(
@@ -1586,7 +1586,7 @@ async function activityFromHistory(
   out.sort(
     (a, b) => a.slot - b.slot || ((a.signature ?? "") < (b.signature ?? "") ? -1 : 1),
   );
-  return out.map(({ slot: _slot, ...e }) => e);
+  return out.map(({ slot, ...e }) => { void slot; return e; });
 }
 
 /** Balance real de un token account devUSDC (0 si la cuenta no existe). */
@@ -2745,7 +2745,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       throw new CuotasError("option_unavailable", "Mostrador solo disponible en modo mock");
     },
 
-    async advanceDays(_days: number): Promise<DemoClock> {
+    async advanceDays(): Promise<DemoClock> {
       throw new CuotasError("demo_only");
     },
 
