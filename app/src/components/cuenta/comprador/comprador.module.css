@@ -1,0 +1,520 @@
+/* Cuenta del comprador (ticket 07): credencial de Tier, anillos de plan y
+   accesos. El acento del rol llega por data-role="buyer" (--accent*);
+   el color del nivel llega por --tier (tokens del espectro, nunca hex
+   sueltos en el componente). La luz se mueve, el vidrio no: las
+   animaciones son de entrada, finitas, y se apagan con reduced-motion. */
+
+/* ---------- Credencial de Tier ---------- */
+
+.card {
+  --tier: var(--color-violet);
+  --tier-next: var(--color-backlight);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: clamp(1.15rem, 3vw, 1.7rem);
+  background:
+    /* la floritura del nivel: la luz del escalón entra desde arriba */
+    radial-gradient(130% 160% at 88% -12%, color-mix(in srgb, var(--tier) 24%, transparent), transparent 56%),
+    radial-gradient(90% 100% at 4% 112%, color-mix(in srgb, var(--tier) 10%, transparent), transparent 62%),
+    linear-gradient(165deg, rgb(244 241 255 / 0.09), rgb(244 241 255 / 0.02) 42%, rgb(13 10 22 / 0.55)),
+    rgb(11 8 19 / 0.72);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.38),
+    inset 0 0 0 1px color-mix(in srgb, var(--tier) 24%, transparent),
+    inset 0 -1px 0 rgb(4 2 10 / 0.85),
+    0 24px 56px -22px rgb(0 0 0 / 0.85),
+    0 14px 44px -20px color-mix(in srgb, var(--tier) 60%, transparent);
+}
+
+.card[data-entered] {
+  animation: cardIn 0.7s var(--ease-beam) both;
+}
+
+/* Franja del nivel: el borde superior de la credencial toma el color del
+   Tier y lo abre hacia el del escalón siguiente, con una sola barrida de
+   luz al entrar. */
+.stripe {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--tier), var(--tier-next));
+}
+
+.stripe::after {
+  content: "";
+  position: absolute;
+  inset: -3px 0;
+  background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / 0.75) 50%, transparent 68%);
+  transform: translateX(-102%);
+}
+
+.card[data-entered] .stripe::after {
+  animation: sheen 1.15s var(--ease-beam) 0.2s both;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.issuer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: var(--text-measure--letter-spacing, 0.14em);
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.issuer img {
+  width: 1.4rem;
+  height: 1.4rem;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--tier) 65%, transparent));
+}
+
+.tierChip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.32rem 0.8rem;
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: var(--text-measure--letter-spacing, 0.14em);
+  text-transform: uppercase;
+  color: var(--color-beam);
+  background: color-mix(in srgb, var(--tier) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tier) 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.22),
+    0 0 16px -4px var(--tier);
+}
+
+.tierRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.85rem;
+  margin-top: clamp(0.9rem, 2vw, 1.3rem);
+}
+
+.tierNum {
+  font-family: var(--font-display);
+  font-size: clamp(2.3rem, 7vw, 3.4rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variation-settings: "wdth" 92, "opsz" 72;
+  color: var(--color-beam);
+}
+
+.tierName {
+  font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+  font-weight: 550;
+  color: color-mix(in srgb, var(--tier) 62%, var(--color-beam));
+}
+
+.tierScope {
+  flex-basis: 100%;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* Beneficios desbloqueados: anticipo y tope del escalón, cobertura del
+   garante — todo sale de `guaranteedTiers` de la config. */
+.benefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin: clamp(1rem, 2.4vw, 1.4rem) 0 0;
+  padding: 0.95rem 0 0;
+  border-top: 1px solid rgb(244 241 255 / 0.09);
+}
+
+.benefit {
+  min-width: 0;
+}
+
+.benefitKey {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: var(--text-measure--letter-spacing, 0.14em);
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.benefitVal {
+  margin-top: 0.3rem;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.05rem, 3vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-beam);
+  white-space: nowrap;
+}
+
+.benefitVal small {
+  font-size: 0.62em;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Progreso al próximo Tier ---------- */
+
+.next {
+  margin-top: clamp(1rem, 2.4vw, 1.4rem);
+  padding-top: 0.95rem;
+  border-top: 1px solid rgb(244 241 255 / 0.09);
+}
+
+.nextHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem 0.9rem;
+}
+
+.nextTitle {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: var(--text-measure--letter-spacing, 0.14em);
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.nextStep {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: var(--color-ink-2);
+  white-space: nowrap;
+}
+
+.nextStep b {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--tier) 62%, var(--color-beam));
+}
+
+.nextStep i {
+  font-style: normal;
+  margin-inline: 0.35rem;
+  color: var(--color-ink-ghost);
+}
+
+.nextStep b:last-child {
+  color: color-mix(in srgb, var(--tier-next) 62%, var(--color-beam));
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  margin-top: 0.75rem;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgb(244 241 255 / 0.07);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.55),
+    inset 0 0 0 1px rgb(244 241 255 / 0.05);
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  background: linear-gradient(90deg, var(--tier), var(--tier-next));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--tier) 55%, transparent);
+  transition: transform 0.6s var(--ease-beam);
+}
+
+.card[data-entered] .fill {
+  animation: fillIn 0.85s var(--ease-beam) 0.3s both;
+}
+
+.nextCaption {
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-ink-2);
+}
+
+.nextCaption strong {
+  font-weight: 600;
+  color: var(--color-beam);
+}
+
+/* Pie de credencial: el número de la cuenta como número de tarjeta. */
+.credNo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: clamp(1rem, 2.4vw, 1.4rem);
+  padding-top: 0.8rem;
+  border-top: 1px solid rgb(244 241 255 / 0.07);
+  font-family: var(--font-num);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-ghost);
+}
+
+.credNo b {
+  font-weight: 500;
+  color: var(--color-ink-3);
+}
+
+/* ---------- Plan con anillo de cuotas ---------- */
+
+.planTop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.ring {
+  position: relative;
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ringTrack {
+  fill: none;
+  stroke: rgb(244 241 255 / 0.1);
+  stroke-width: 5;
+}
+
+.ringArc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+
+.ring[data-entered] .ringArc {
+  animation: ringIn 0.9s var(--ease-beam) 0.1s both;
+}
+
+.ringText {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: var(--color-beam);
+}
+
+.ringText small {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  text-align: center;
+}
+
+.planInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.planTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+.planId {
+  font-family: var(--font-num);
+  font-size: 0.8rem;
+  color: var(--color-ink-ghost);
+}
+
+.planMeta {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* ---------- Accesos ---------- */
+
+.access {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .access {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.accessCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  min-height: 4.5rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--color-ink);
+  background:
+    linear-gradient(165deg, rgb(244 241 255 / 0.07), rgb(244 241 255 / 0.02) 45%, var(--accent-soft)),
+    rgb(12 9 20 / 0.55);
+  border: 1px solid var(--accent-border);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.16),
+    0 12px 30px -18px rgb(0 0 0 / 0.8);
+  transition:
+    transform 0.35s var(--ease-beam),
+    border-color 0.35s var(--ease-beam),
+    box-shadow 0.35s var(--ease-beam);
+}
+
+.accessCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgb(244 241 255 / 0.2),
+    0 16px 38px -16px rgb(0 0 0 / 0.85),
+    0 10px 32px -16px var(--accent-glow);
+}
+
+.accessCard:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 3px;
+}
+
+.accessCard:active {
+  transform: translateY(0);
+}
+
+.accessIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  box-shadow: inset 0 1px 0 rgb(244 241 255 / 0.16);
+}
+
+.accessBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.accessTitle {
+  display: block;
+  font-size: 0.975rem;
+  font-weight: 620;
+  color: var(--color-beam);
+}
+
+.accessHint {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-ink-2);
+}
+
+.accessArrow {
+  flex: none;
+  color: var(--accent-ink);
+  transition: transform 0.35s var(--ease-beam);
+}
+
+.accessCard:hover .accessArrow,
+.accessCard:focus-visible .accessArrow {
+  transform: translateX(3px);
+}
+
+/* ---------- Movimiento ---------- */
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(102%);
+  }
+}
+
+@keyframes fillIn {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(var(--p, 0));
+  }
+}
+
+@keyframes ringIn {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card[data-entered],
+  .card .stripe::after,
+  .card .fill,
+  .ring .ringArc {
+    animation: none !important;
+  }
+  .fill {
+    transition: none;
+  }
+  .accessCard,
+  .accessCard .accessArrow {
+    transition: none;
+  }
+  .accessCard:hover {
+    transform: none;
+  }
+}

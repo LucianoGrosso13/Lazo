@@ -102,6 +102,29 @@ export const cuentas = defineDict({
       coverageToBuy: "Cobertura para comprar hasta el tope",
       maxCoverage: "Cobertura máxima de la garantía",
       maxPurchase: "Tope de compra del garante",
+      tierCardLabel: "Credencial de comprador",
+      tierIssuer: "comprador",
+      tierAtMax: "Tier máximo",
+      tierMaxedBody:
+        "Desbloqueaste todos los beneficios: comprás sin anticipo y con el tope más alto del protocolo.",
+      benefitDown: "Anticipo",
+      benefitCap: "Tope de compra",
+      benefitCover: "Cubre el garante",
+      nextTierTitle: "Al próximo Tier",
+      progressNeed: (min: string) =>
+        `Te falta 1 plan saldado a tiempo de US$ ${min} o más.`,
+      progressInFlight: (paid: number, total: number) =>
+        `Tu plan en curso cuenta: llevás ${paid} de ${total} cuotas pagadas.`,
+      paidPlans: (n: number) =>
+        n === 1 ? "1 plan saldado" : `${n} planes saldados`,
+      accessTitle: "Accesos",
+      goPlans: "Ver planes",
+      goPlansHint: "Tus cuotas y su estado",
+      goMerchants: "Ver comercios",
+      goMerchantsHint: "Marketplace con cuotas",
+      paidRing: (paid: number, total: number) =>
+        `${paid} de ${total} cuotas pagadas`,
+      paidRingShort: "cuotas",
     },
     evidence: {
       simulated: "Simulada · modo demo",
@@ -187,7 +210,7 @@ export const cuentas = defineDict({
       pickWallet: "Or connect your wallet",
       personas: {
         "student-new": "No plans yet: ideal for the first purchase.",
-        "student-tier3": "Three paid plans, tier 3, capped guarantee.",
+        "student-tier3": "Three paid plans, Tier 4 · Full, capped guarantee.",
         merchant: "Gets paid instantly and watches sales.",
         admin: "Protocol config and pool view.",
         guarantor: "Enters by invitation, no wallet.",
@@ -212,6 +235,29 @@ export const cuentas = defineDict({
       coverageToBuy: "Coverage needed to buy up to the cap",
       maxCoverage: "Guarantee max coverage",
       maxPurchase: "Guarantor max purchase",
+      tierCardLabel: "Buyer credential",
+      tierIssuer: "buyer",
+      tierAtMax: "Max tier",
+      tierMaxedBody:
+        "You unlocked every benefit: zero down payment and the protocol's highest purchase cap.",
+      benefitDown: "Down payment",
+      benefitCap: "Purchase cap",
+      benefitCover: "Guarantor covers",
+      nextTierTitle: "Toward the next tier",
+      progressNeed: (min: string) =>
+        `You need 1 plan paid on time of US$ ${min} or more.`,
+      progressInFlight: (paid: number, total: number) =>
+        `Your active plan counts: ${paid} of ${total} installments paid.`,
+      paidPlans: (n: number) =>
+        n === 1 ? "1 plan paid in full" : `${n} plans paid in full`,
+      accessTitle: "Quick links",
+      goPlans: "See my plans",
+      goPlansHint: "Your installments and their state",
+      goMerchants: "Browse merchants",
+      goMerchantsHint: "Marketplace with installments",
+      paidRing: (paid: number, total: number) =>
+        `${paid} of ${total} installments paid`,
+      paidRingShort: "paid",
     },
     evidence: {
       simulated: "Simulated · demo mode",

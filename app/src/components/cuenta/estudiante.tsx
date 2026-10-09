@@ -1,7 +1,9 @@
 "use client";
 
-// Estudiante: cuenta propia (/app/estudiante, con rol student del contexto de
-// cuenta). Resumen de un vistazo → planes → detalles del fiador.
+// Comprador: cuenta propia (/app/estudiante, con rol student del contexto de
+// cuenta). La credencial de Tier encabeza (identidad del comprador con sus
+// beneficios y el progreso al próximo escalón), después accesos visuales,
+// el resumen de plata, los planes con anillo de cuotas y el garante.
 // Falla cerrado si el rol resuelto no es student.
 import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
@@ -12,11 +14,14 @@ import { useLocale, useT } from "@/i18n/locale";
 import { formatUsdc, type Micro } from "@/lib/cuotas";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { useAccount } from "./account-context";
+import { AccesosComprador } from "./comprador/accesos";
+import { PlanCardComprador } from "./comprador/plan-card";
+import { TierCard } from "./comprador/tier-card";
 import { DemoPersonaList } from "./demo-personas";
 import { ModeBadge } from "./evidencia";
 import { InviteGuarantor } from "./invitar-fiador";
-import { DetalleCuenta, PlanCard, ResumenCuenta } from "./mock-account";
-import { EstadoConsulta, shortAddr } from "./consulta";
+import { DetalleCuenta, ResumenCuenta } from "./mock-account";
+import { EstadoConsulta } from "./consulta";
 
 function Monto({ label, value, tone }: { label: string; value: Micro | null; tone?: "beam" }) {
   const { locale } = useLocale();
@@ -81,7 +86,11 @@ export function EstudianteCuenta() {
     const plans = plansQ.data ?? [];
     const guarantee = guaranteeQ.data;
     return (
-      <div className="max-w-3xl space-y-6" data-testid="estudiante-cuenta">
+      <div
+        className="max-w-3xl space-y-6"
+        data-testid="estudiante-cuenta"
+        data-role="buyer"
+      >
         <header>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-semibold tracking-tight text-beam sm:text-4xl">
@@ -90,14 +99,17 @@ export function EstudianteCuenta() {
             <ModeBadge />
           </div>
           <p className="mt-3 text-ink-2">{t.subtitle}</p>
-          <p className="mt-1 font-mono text-xs text-ink-ghost" title={account.address}>
-            {shortAddr(account.address)}
-          </p>
         </header>
+
+        {/* Credencial de Tier: el nivel con sus beneficios y qué falta para
+            el próximo. Es la identidad del comprador dentro del protocolo. */}
+        <TierCard student={account.address} plans={plansQ.data} />
+
+        <AccesosComprador />
 
         <ResumenCuenta student={account.address} />
 
-        <section aria-label={t.plansTitle} className="space-y-4">
+        <section id="planes" aria-label={t.plansTitle} className="scroll-mt-6 space-y-4">
           <h2 className="text-lg font-semibold text-beam">{t.plansTitle}</h2>
           {plansQ.data && plans.length === 0 && (
             <GlassPanel className="p-6">
@@ -111,7 +123,7 @@ export function EstudianteCuenta() {
             </GlassPanel>
           )}
           {plans.map((p) => (
-            <PlanCard key={p.id} plan={p} />
+            <PlanCardComprador key={p.id} plan={p} />
           ))}
         </section>
 
