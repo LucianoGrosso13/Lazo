@@ -84,6 +84,7 @@ export const landingSections = defineDict({
       pauseLabel: "Pausar la línea de mora",
       position: (i: number, n: number) => `Hito ${i} de ${n}`,
       day: (n: number) => `Día ${n}`,
+      days: (from: number, to: number) => `Días ${from}–${to}`,
       legendTitle: "Leyenda de la línea de mora",
       marks: {
         day0: {
@@ -314,6 +315,7 @@ export const landingSections = defineDict({
       pauseLabel: "Pause the late-payment timeline",
       position: (i: number, n: number) => `Milestone ${i} of ${n}`,
       day: (n: number) => `Day ${n}`,
+      days: (from: number, to: number) => `Days ${from}–${to}`,
       legendTitle: "Late-payment timeline legend",
       marks: {
         day0: {

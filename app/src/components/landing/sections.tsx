@@ -268,7 +268,7 @@ function Tiers() {
 
 const MARK_STEP_MS = 2500;
 
-type Mark = { day: number; kind: string; label: string; what: string; who: string };
+type Mark = { day: number; kind: string; label: string; what: string; who: string; dayLabel?: string };
 
 /**
  * Línea de mora que avanza sola: un hito cada MARK_STEP_MS mientras está en
@@ -308,7 +308,7 @@ function Guarantor() {
   const marks: Mark[] = [
     { day: 0, kind: "day0", label: t.marks.day0.label, what: t.marks.day0.what, who: t.marks.day0.who },
     { day: 0, kind: "due", label: t.marks.due.label, what: t.marks.due.what, who: t.marks.due.who },
-    { day: config.graceDays, kind: "grace", label: t.marks.grace.label(config.graceDays), what: t.marks.grace.what, who: t.marks.grace.who },
+    { day: 1, dayLabel: t.days(1, config.graceDays), kind: "grace", label: t.marks.grace.label(config.graceDays), what: t.marks.grace.what, who: t.marks.grace.who },
     { day: config.guarantorNoticeDay, kind: "notice", label: t.marks.notice.label(config.guarantorNoticeDay), what: t.marks.notice.what, who: t.marks.notice.who },
     { day: config.graceDays + 1, kind: "penalty", label: t.marks.penalty.label(config.graceDays + 1, penalty), what: t.marks.penalty.what(penalty), who: t.marks.penalty.who },
     { day: end, kind: "charge", label: t.marks.charge.label(end), what: t.marks.charge.what, who: t.marks.charge.who },
@@ -401,7 +401,7 @@ function MoraTimeline({ marks, end, graceDays }: { marks: Mark[]; end: number; g
               onClick={() => select(i)}
               onFocus={() => setIndex(i)}
             >
-              <span className={styles.markDay}>{t.day(m.day)}</span>
+              <span className={styles.markDay}>{m.dayLabel ?? t.day(m.day)}</span>
               <span className={styles.markLabel}>{m.label}</span>
               {i === index && running ? <span key={`dwell-${index}`} className={styles.markDwell} aria-hidden="true" /> : null}
             </button>
