@@ -1,7 +1,7 @@
 .bars { display: grid; gap: 1.25rem; list-style: none; padding: 0; margin: 0; }
 .barRow { min-width: 0; }
 .barHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-size: 1rem; }
-.barHeading strong { flex-shrink: 0; font-family: var(--font-num); font-size: 1.125rem; font-weight: 500; }
+.barHeading strong { display: inline-flex; align-items: center; gap: .4rem; flex-shrink: 0; font-family: var(--font-num); font-size: 1.125rem; font-weight: 500; }
 .barRow[data-winner] .barHeading strong { color: var(--accent-ink); }
 .track { height: 12px; margin-top: .6rem; background: var(--color-abyss-3); border-radius: 3px; overflow: clip; }
 .fill { height: 100%; background: var(--color-ash); transform-origin: left; border-radius: inherit; }

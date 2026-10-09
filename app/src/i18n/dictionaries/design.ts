@@ -12,7 +12,7 @@ export const design = defineDict({
       sampleNote: "Muestras del sistema de diseño con valores de la configuración; no representan actividad ni rendimiento.",
       loading: "Cargando configuración…",
       buyer: "Comprador", merchant: "Comercio", pool: "Pool e inversores",
-      chip: "Acento del rol", tier: "Tier", comparison: "Barras · anticipo por Tier",
+      preferred: "Menor anticipo", chip: "Acento del rol", tier: "Tier", comparison: "Barras · anticipo por Tier",
       bigNumber: "Número con count-up", limit: "Tope del primer Tier",
       gauge: "Medidor · cobertura del garante", stepsTitle: "Pasos con conexión",
       steps: [
@@ -133,7 +133,7 @@ export const design = defineDict({
       sampleNote: "Design system samples using configuration values; they do not represent activity or returns.",
       loading: "Loading configuration…",
       buyer: "Buyer", merchant: "Merchant", pool: "Pool and investors",
-      chip: "Role accent", tier: "Tier", comparison: "Bars · down payment by Tier",
+      preferred: "Lowest down payment", chip: "Role accent", tier: "Tier", comparison: "Bars · down payment by Tier",
       bigNumber: "Number with count-up", limit: "First Tier purchase limit",
       gauge: "Gauge · guarantor coverage", stepsTitle: "Connected steps",
       steps: [

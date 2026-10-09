@@ -11,6 +11,7 @@ export type ComparisonBar = {
   /** Preformatted value, including units; primitive never invents copy. */
   formattedValue: ReactNode;
   winner?: boolean;
+  winnerLabel?: string;
   note?: ReactNode;
 };
 export type ComparisonBarsProps = { items: readonly ComparisonBar[]; label: string; maxValue?: number; className?: string };
@@ -21,8 +22,8 @@ export function ComparisonBars({ items, label, maxValue, className = "" }: Compa
   const max = Math.max(0, maxValue ?? 0, ...items.map(item => Number.isFinite(item.value) ? item.value : 0));
   return <ol ref={ref} aria-label={label} className={`${styles.bars} ${className}`}>
     {items.map((item, i) => <li key={i} className={styles.barRow} data-winner={item.winner || undefined}>
-      <div className={styles.barHeading}><span>{item.label}</span><strong>{item.formattedValue}</strong></div>
-      <div className={styles.track} aria-hidden="true"><div className={styles.fill} data-entered={entered && !reduced || undefined} style={{ width: `${max > 0 ? Math.max(0, item.value) / max * 100 : 0}%` }} /></div>
+      <div className={styles.barHeading}><span>{item.label}</span><strong>{item.winner && <svg aria-hidden={!item.winnerLabel} aria-label={item.winnerLabel} role={item.winnerLabel ? "img" : undefined} viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 8 3 3 7-7" /></svg>}{item.formattedValue}</strong></div>
+      <div className={styles.track} aria-hidden="true"><div className={styles.fill} data-entered={entered && !reduced || undefined} style={{ width: `${max > 0 ? Math.max(0, Number.isFinite(item.value) ? item.value : 0) / max * 100 : 0}%` }} /></div>
       {item.note && <div className={styles.note}>{item.note}</div>}
     </li>)}
   </ol>;

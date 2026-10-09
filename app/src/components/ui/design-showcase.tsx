@@ -4,7 +4,7 @@ import { design } from "@/i18n/dictionaries/design";
 import { useLocale, useT } from "@/i18n/locale";
 import { useCuotasQuery } from "@/lib/use-cuotas";
 import { ComparisonBars, Gauge, CollapsibleHistory, AnimatedSteps, Accordion } from "./visual-primitives";
-import { BigNumber } from "./big-number";
+import { BigNumber } from "./count-up-number";
 
 /** Sample values are protocol settings, not claimed usage or traction. */
 export function DesignShowcase() {
@@ -25,7 +25,7 @@ export function DesignShowcase() {
       {roles.map((role, i) => <section key={role} data-role={role} aria-label={roleNames[i]} className="border-t border-accent pt-8">
         <div className="flex flex-wrap items-center justify-between gap-4"><h3 className="text-3xl text-accent">{roleNames[i]}</h3><span className="rounded-full border border-accent bg-accent-soft px-4 py-2 text-sm text-accent">{t.chip}</span></div>
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-          <div><h4 className="mb-5 text-lg font-medium">{t.comparison}</h4><ComparisonBars label={t.comparison} items={config.guaranteedTiers.map((item, index) => ({ label: `${t.tier} ${index + 1}`, value: item.downPaymentBps / 100, formattedValue: pct(item.downPaymentBps / 100), winner: index === config.guaranteedTiers.length - 1 }))} /></div>
+          <div><h4 className="mb-5 text-lg font-medium">{t.comparison}</h4><ComparisonBars label={t.comparison} items={config.guaranteedTiers.map((item, index) => ({ label: `${t.tier} ${index + 1}`, value: item.downPaymentBps / 100, formattedValue: pct(item.downPaymentBps / 100), winner: index === config.guaranteedTiers.length - 1, winnerLabel: t.preferred }))} /></div>
           <div className="flex min-w-0 flex-wrap items-center justify-around gap-8 bg-accent-soft p-6 rounded-xl">
             <div className="min-w-0"><h4 className="mb-3 text-base">{t.bigNumber}</h4><BigNumber amount={tier.maxPurchase} size="lg" /><p className="mt-3 text-sm text-ink-2">{t.limit}</p></div>
             <Gauge value={tier.guarantorCoverageBps / 100} label={t.gauge} valueLabel={pct(tier.guarantorCoverageBps / 100)} />

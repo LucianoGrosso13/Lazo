@@ -209,4 +209,5 @@ export function StatCard({
 // El wrapper data-role aplica el acento sin cambiar datos ni semántica.
 export { ComparisonBars, Gauge, CollapsibleHistory, AnimatedSteps, Accordion } from "@/components/ui/visual-primitives";
 export type { ComparisonBar, ComparisonBarsProps, GaugeProps, CollapsibleHistoryProps, AnimatedStep, AnimatedStepsProps, AccordionItem, AccordionProps } from "@/components/ui/visual-primitives";
-export { BigNumber } from "@/components/ui/big-number";
+export { BigNumber } from "@/components/ui/count-up-number";
+export type { BigNumberProps } from "@/components/ui/count-up-number";
