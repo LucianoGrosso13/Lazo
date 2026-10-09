@@ -781,3 +781,32 @@ button.chip {
     transition-delay: 0ms !important;
   }
 }
+
+/* Acento de audiencia. Aplicar data-role="buyer" | "merchant" | "pool"
+   (también "investor") a cualquier página/sección. Anidable: cada sección
+   redefine --accent, --accent-ink, --accent-soft, --accent-border y --accent-glow.
+   --accent-ink es la variante legible para texto/foco sobre el suelo oscuro. */
+:root, [data-role="buyer"] {
+  --accent: var(--color-violet);
+  --accent-ink: var(--color-backlight);
+  --accent-soft: color-mix(in srgb, var(--color-violet) 10%, var(--color-abyss));
+  --accent-border: color-mix(in srgb, var(--color-violet) 45%, transparent);
+  --accent-glow: color-mix(in srgb, var(--color-violet) 55%, transparent);
+}
+[data-role="merchant"] {
+  --accent: var(--color-cyan);
+  --accent-ink: var(--color-cyan);
+  --accent-soft: color-mix(in srgb, var(--color-cyan) 10%, var(--color-abyss));
+  --accent-border: color-mix(in srgb, var(--color-cyan) 45%, transparent);
+  --accent-glow: color-mix(in srgb, var(--color-cyan) 55%, transparent);
+}
+[data-role="pool"], [data-role="investor"] {
+  --accent: var(--color-green);
+  --accent-ink: var(--color-green);
+  --accent-soft: color-mix(in srgb, var(--color-green) 10%, var(--color-abyss));
+  --accent-border: color-mix(in srgb, var(--color-green) 45%, transparent);
+  --accent-glow: color-mix(in srgb, var(--color-green) 55%, transparent);
+}
+@utility text-accent { color: var(--accent-ink); }
+@utility bg-accent-soft { background: var(--accent-soft); }
+@utility border-accent { border-color: var(--accent-border); }
