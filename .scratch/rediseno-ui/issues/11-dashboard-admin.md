@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Devin
+**Status:** ready-for-agent · **Asignado:** Claude (Sonnet)
 
 **Archivos propios:** `components/cuenta/admin.tsx` (o archivos nuevos en `components/cuenta/admin/`), `i18n/dictionaries/admin-cuenta.ts`.
 

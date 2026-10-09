@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Devin
+**Status:** ready-for-agent · **Asignado:** Claude
 
 **Archivos propios:** `components/landing/sections.tsx`, `components/landing/landing.module.css`, `components/landing/split.ts`, `i18n/dictionaries/landing-sections.ts`.
 

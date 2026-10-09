@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Devin
+**Status:** ready-for-agent · **Asignado:** Gemini
 
 **Archivos propios:** `components/audience/para-inversores.tsx`, `i18n/dictionaries/para-inversores.ts`, `app/src/app/para-inversores/page.tsx`. `primitives.tsx` y `audience-common.ts` no se tocan (si hace falta algo, preguntale al coordinador).
 
