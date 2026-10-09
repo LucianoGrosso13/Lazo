@@ -9,7 +9,7 @@ Actualizado 2026-10-08 (segunda sesión). Rama `video-pitch`.
 - Luciano eligió la **placa normal**: se sacó la placa de drones y la frase repetida de `index.html`, que vuelve a durar 114 s (`s09b-drones.html` queda en el repo como alternativa, sin usar).
 - Panel del 45 % a pantalla completa 1 s más corto: sale a 19,7 s (antes 20,7 s); sigue tapando el empalme de 17,53 s.
 - Render sin música: `video-pitch/renders/lazo-pitch-v3-sin-musica.mp4` (fuera de git).
-- **Versión final elegida por Luciano: sin música** → `video-pitch/renders/lazo-pitch-final.mp4` (1:54, 1080p, placa normal; copia de la v3). Las tres camas (`scripts/build-music.py`) no le gustaron: muy fuertes y rápidas. La que más le gustó fue C (pulso), pero la quiere mucho más lenta y baja; queda como mejora opcional, no bloquea la entrega.
+- **Versión final elegida por Luciano: sin música** → `video-pitch/renders/lazo-pitch-final.mp4` (1:54, 1080p, placa normal; copia de la v3). Las tres camas (`scripts/build-music.py`) no le gustaron: muy fuertes y rápidas. La que más le gustó fue C (pulso), pero la quiere mucho más lenta y baja; queda como mejora opcional, no bloquea la entrega. Prueba con C a −22 dB bajo la voz (−12 dB en la placa), mezclada con ffmpeg sobre el final: `renders/lazo-pitch-final-musica-c-baja.mp4` (+ `-720p`).
 
 ### v2 (2026-10-09, tercera sesión)
 
