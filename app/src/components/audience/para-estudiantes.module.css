@@ -1,0 +1,100 @@
+/* Ritmo visual de /para-estudiantes (acento comprador vía data-role). */
+
+/* AnimatedSteps trae 3 columnas en md; acá son 4 pasos. */
+ol.steps4 { gap: 1rem; }
+@media (min-width: 1024px) {
+  ol.steps4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; }
+}
+
+/* Halo del acento detrás de bloques destacados */
+.halo { position: relative; isolation: isolate; }
+.halo::before {
+  content: "";
+  position: absolute;
+  inset: -12% 10% auto;
+  height: 70%;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, var(--accent-glow), transparent);
+  opacity: 0.35;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* Barra segmentada del plan: los tramos crecen en orden al entrar. */
+.segment {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+[data-entered] .segment {
+  animation: segmentGrow 700ms var(--ease-beam) var(--delay, 0ms) both;
+}
+@keyframes segmentGrow {
+  from { transform: scaleX(0); opacity: 0.2; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* Corchete del garante que se dibuja sobre las cuotas */
+.bracket { transform-origin: left; }
+[data-entered] .bracket {
+  animation: segmentGrow 900ms var(--ease-beam) 900ms both;
+}
+
+/* Aparición escalonada genérica */
+[data-entered] .rise {
+  animation: rise 600ms var(--ease-beam) var(--delay, 0ms) both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Línea de tiempo de mora */
+.timeline { position: relative; list-style: none; margin: 0; padding: 0; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.6875rem;
+  top: 1.9rem;
+  bottom: 0.75rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-border) 60%, var(--color-crack));
+  transform-origin: top;
+}
+.timeline[data-entered]::before {
+  animation: lineDraw 1400ms var(--ease-beam) both;
+}
+@keyframes lineDraw {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.dot {
+  position: absolute;
+  left: 0;
+  top: 1.15rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: var(--color-abyss);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 0 16px -2px var(--accent-glow);
+}
+.dotBad {
+  border-color: var(--color-crack);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-crack) 14%, var(--color-abyss)), 0 0 16px -2px color-mix(in srgb, var(--color-crack) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-entered] .segment,
+  [data-entered] .bracket,
+  [data-entered] .rise,
+  .timeline[data-entered]::before { animation: none; }
+}
+
+/* Entre 768 y 1023 px: 2×2, sin conector colgando al final de cada fila. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  ol.steps4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  ol.steps4 > li:nth-child(2n)::after,
+  ol.steps4 > li:nth-child(2n)::before { display: none; }
+}
