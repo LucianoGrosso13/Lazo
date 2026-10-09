@@ -18,6 +18,7 @@ import {
   fmtPct01,
   shortAddr,
 } from "@/components/cuenta/consulta";
+import { AdminOverview } from "@/components/cuenta/admin/admin-overview";
 import { EvidenceMark, ModeBadge } from "@/components/cuenta/evidencia";
 import { BigNumber } from "@/components/ui/big-number";
 import { Button } from "@/components/ui/button";
@@ -371,6 +372,9 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
         </div>
       </header>
 
+      {/* Resumen: KPIs, planes por estado y lo que requiere atención */}
+      <AdminOverview snapshot={s} daysAdvanced={clock.data?.daysAdvanced} />
+
       {/* Estado del protocolo: lectura + cambio con revisión */}
       <section data-testid="admin-estado" className="glass p-5 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -557,7 +561,7 @@ function AdminDashboard({ actor }: { actor: WalletAddress }) {
       </section>
 
       {/* Mora: línea del keeper según config + eventos reales del estado */}
-      <section data-testid="admin-mora" className="glass p-5 sm:p-6">
+      <section id="admin-mora" data-testid="admin-mora" className="glass scroll-mt-24 p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-beam">{t.moraTitle}</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{t.moraHint}</p>
         <ol className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -4,10 +4,12 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Claude (Sonnet)
+**Status:** done · **Asignado:** Claude (Sonnet)
 
 **Archivos propios:** `components/cuenta/admin.tsx` (o archivos nuevos en `components/cuenta/admin/`), `i18n/dictionaries/admin-cuenta.ts`.
 
-- [ ] 4 KPIs, el gráfico por estado y "Requiere atención" con datos del snapshot
-- [ ] Después de adelantar el reloj hasta la mora, los KPIs y el gráfico cambian (e2e)
-- [ ] `admin.spec.ts` en verde; capturas 390/1440 en `evidence/11-*`
+- [x] 4 KPIs, el gráfico por estado y "Requiere atención" con datos del snapshot
+- [x] Después de adelantar el reloj hasta la mora, los KPIs y el gráfico cambian (e2e)
+- [x] `admin.spec.ts` en verde; capturas 390/1440 en `evidence/11-*`
+
+**Notas:** el snapshot del admin no trae planes; el resumen los lee con `getPlans` de `@/lib/cuotas` para los compradores que figuran en su bitácora (`PlanOpened`). Evidencia: `evidence/11-*`.
