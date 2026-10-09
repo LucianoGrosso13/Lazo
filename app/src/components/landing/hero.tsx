@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { DEMO_MERCHANT, formatUsdc, toMicro, type TierIndex } from "@/lib/cuotas";
 import { productsByMerchant, type Product } from "@/lib/catalog";
 import { landingHero } from "@/i18n/dictionaries/landing-hero";

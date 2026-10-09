@@ -10,9 +10,9 @@ dir 0700 / files 0600); it is never committed or printed.
 ## What this does
 
 Devnet runs the old binary today (sha `8d05b07f`, 469,824 bytes — no credit
-lifecycle). The locally rebuilt artifact (`target/deploy/cuotas.so`, sha
-`049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda`,
-741,992 bytes; rebuilt locally with `cargo-build-sbf --arch v1` on 2026-10-07) adds 3/6-installment plans with mandatory guarantor coverage of principal + interest, configurable 3/6 plan options, four merchant settlement options, `PayoutSchedule` commitments, and permissionless `release_payout`, alongside `open_plan`, `pay_installment`, `crank_mark_late` and `keeper_register_recovery`. `admin_init_config` **cannot run against the old binary**: the
+lifecycle). The current locally rebuilt artifact (`target/deploy/cuotas.so`, sha
+`ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19`,
+668,592 bytes; rebuilt with `anchor build --arch v1 --ignore-keys` on 2026-10-09) adds 3/6-installment plans with mandatory guarantor coverage of principal + interest, configurable 3/6 plan options, four merchant settlement options, `PayoutSchedule` commitments, and permissionless `release_payout`, alongside `open_plan`, `pay_installment`, `crank_mark_late` and `keeper_register_recovery`. `admin_init_config` **cannot run against the old binary**: the
 `ConfigParams` layout changed, so init with the new client fails with
 `InvalidConfig 6010` (verified by dry-run simulation on 2026-10-06).
 Upgrade first, then init.
@@ -30,9 +30,9 @@ Upgrade first, then init.
 ## Funding estimate — refresh before approving any transaction
 
 The figures below are historical estimates for the earlier 668,592-byte
-artifact. The final integrated artifact is 741,992 bytes, so these amounts
+artifact. The freshly rebuilt artifact is 668,592 bytes, so these amounts
 are not a current funding quote. Re-query devnet rent and account balances
-before the upgrade. Do not use the historical top-up as approval to send.
+before the upgrade. The 2026-10-09 refresh in `../docs/demo-happy-path-readiness.md` records a 1.79904168 SOL shortfall before fees after closing the buffer; refresh again before execution. Do not use the historical top-up as approval to send.
 
 ### Historical math (observed ~5,081 lamports/byte rent-exempt)
 
@@ -70,7 +70,7 @@ second buffer (devnet congestion caused 3 retries last time).
 
 ```sh
 sha256sum programa/target/deploy/cuotas.so
-# must print 049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda
+# must print ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
 # if rebuilding this checkout: cd programa && NO_DNA=1 anchor build --arch v1 --ignore-keys
 
 solana program deploy programa/target/deploy/cuotas.so \
@@ -93,7 +93,7 @@ directly:
 ```sh
 solana program dump E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ /tmp/deployed-cuotas.so -u devnet
 sha256sum /tmp/deployed-cuotas.so
-# must equal 049fa4bda295cfd15a5bb1cd2086fd8ac9f8cf26eb5a9189b3afdb5a679f7fda
+# must equal ae370c733d8caa24630cfbcd291ae115ee9bb982cf31e48f037ebc1efbad9c19
 ```
 
 (`solana program show E6pB2UER… -u devnet` should report a refreshed deploy
@@ -124,7 +124,7 @@ cd app
 NEXT_PUBLIC_CUOTAS_PROGRAM_ID=E6pB2UER6PoXXQeuokWoVg4qd7WELMJxByhePcL6AQJQ \
 NEXT_PUBLIC_CUOTAS_USDC_MINT=8aLmRWDfWJSDUsF8a8BBqzfs4rJEZz2RbBminPVu9d9Y \
 npx tsx scripts/seed.ts --fee-payer BY6ZB2WD76wLLTNoWg2sM14RbXsgivcwkgLK4dZWMehf \
-  --seconds-per-day 1 \
+  --seconds-per-day 86400 \
   --merchant <TIENDA_ADDR> \
   --mint-to <ESTUDIANTE_ADDR>:2000 --mint-to BY6ZB2WD76wLLTNoWg2sM14RbXsgivcwkgLK4dZWMehf:10000 \
   --lp junior:3000 --lp senior:7000
@@ -138,10 +138,12 @@ Every proposal must simulate `ok: true`. Then send, approving each one:
 
 Notes:
 
-- `--seconds-per-day 1` compresses protocol days for the live demo (installment
-  due at +30 s, late mark at +36 s, guarantor charge at +45 s). `86400` is the
-  production value; it's a config field, changeable later via
-  `admin_update_config`.
+- The agreed purchase/first-installment take uses `--seconds-per-day 86400`
+  (normal 30/60/90-day dates; see `proyecto/12-demo-happy-path.md`, Q5).
+  `--seconds-per-day 1` is only for a separately prepared arrears demo
+  (installment due at +30 s, late mark at +36 s, guarantor charge at +45 s).
+  It must not be used for this recording. The value is a config field,
+  changeable later via an explicitly authorized `admin_update_config`.
 - `<TIENDA_ADDR>` should be a dedicated demo merchant wallet (any devnet
   address; its devUSDC ATA is created inline). Point
   `NEXT_PUBLIC_CUOTAS_MERCHANT` at it afterwards so the real checkout fails

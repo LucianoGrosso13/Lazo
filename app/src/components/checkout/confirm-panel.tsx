@@ -6,6 +6,7 @@
 // `uncertain` con reconciliación por firma original (nunca reenvío a
 // ciegas) y error verificable. El éxito vive en `ConfirmSuccess`.
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import {
   formatUsdc,
   getCuotas,
@@ -108,11 +109,13 @@ export function ConfirmPanel({
       : null;
 
   const busy = flow.kind === "running";
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus(); }, []);
 
   return (
     <GlassPanel className={styles.panel}>
       <div className={styles.panelHead}>
-        <h2 className={styles.panelTitle}>{t.title}</h2>
+        <h2 ref={headingRef} tabIndex={-1} className={styles.panelTitle}>{t.title}</h2>
         {mock ? <ReferenceTag>{d.chrome.simulated}</ReferenceTag> : null}
       </div>
 
