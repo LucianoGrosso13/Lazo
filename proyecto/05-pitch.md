@@ -163,10 +163,10 @@ Reglas para la grabación:
 
 Mismos datos que la sección "Quiénes somos" de la web (ticket 06):
 
-- **Luciano Grosso**, 22 · Product Owner.
-- **Ignacio Albarracín**, 22 · Full Stack Developer.
+- **Luciano Grosso**, 22 · Producto y desarrollo.
+- **Ignacio Albarracín**, 22 · Producto y desarrollo.
 - Los dos estudian Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), en Tucumán, Argentina; se reciben en diciembre de 2026. Son amigos desde hace años.
-- Aportes de cada uno al repo para el formulario: [A CONFIRMAR].
+- Ambos participan en las decisiones de producto y en el desarrollo. Luciano trabaja actualmente en Control Andina y le apasionan la inteligencia artificial y la mejora de procesos. Nacho va a revisar su biografía personal; el desglose de aportes al repo sigue pendiente.
 - Uso de IA (lo pide el listing): el equipo construyó con agentes de código (Claude Code como coordinador y workers Devin y Gemini en worktrees, ver `04-plan.md` § Estado) bajo su revisión. Declararlo tal cual.
 
 ## Preguntas difíciles y respuestas

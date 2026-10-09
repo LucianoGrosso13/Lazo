@@ -57,12 +57,12 @@ The "What runs on chain and what runs in the simulator" section on the home page
 
 ## Team
 
-- **Luciano Grosso** (22) — Product Owner.
-- **Ignacio Albarracín** (22) — Full Stack Developer.
+- **Luciano Grosso** (22) — Product & Development.
+- **Ignacio Albarracín** (22) — Product & Development.
 
 Both are Computer Engineering students at Universidad del Norte Santo Tomás de Aquino (UNSTA) in Tucumán, Argentina, graduating in December 2026, and long-time friends.
 
-Individual contributions: [A CONFIRMAR].
+Both contribute to product decisions and software development. Luciano currently works at Control Andina and is passionate about artificial intelligence and improving processes. Ignacio builds across the Solana program, the app and their integration. Ignacio’s personal bio and the detailed contribution breakdown are pending his review.
 
 **Use of AI:** we built Lazo with AI coding agents (Claude Code as coordinator, plus Devin and Gemini workers on isolated branches), with every change reviewed and merged by the team.
 

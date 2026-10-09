@@ -39,75 +39,46 @@
    Quiénes somos
    ========================================================================== */
 
-.problemPanel {
-  position: relative;
-  border-radius: 20px;
-  padding: clamp(1.35rem, 2.8vw, 1.85rem);
-  margin-bottom: clamp(1.5rem, 2.8vw, 2.25rem);
-  background:
-    linear-gradient(
-      165deg,
-      rgb(244 241 255 / 0.08),
-      rgb(244 241 255 / 0.02) 40%,
-      rgb(153 69 255 / 0.05)
-    ),
-    rgb(14 11 23 / 0.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow:
-    inset 0 1px 0 rgb(244 241 255 / 0.35),
-    inset 0 -1px 0 rgb(4 2 10 / 0.8),
-    0 18px 48px -16px rgb(0 0 0 / 0.7);
+.teamIntro {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(1.75rem, 4vw, 4rem);
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
 }
 
-.problemText {
-  font-size: clamp(1.05rem, 1.45vw, 1.25rem);
-  line-height: 1.5;
-  color: var(--color-ink);
-  font-weight: 500;
-  max-width: 58rem;
-  text-wrap: pretty;
+.teamIntro .sectionHead {
+  margin-bottom: 0;
 }
 
-.sharedBanner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1.25rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--color-hairline);
+.sharedStory {
+  padding-top: 0.35rem;
+  max-width: 36rem;
 }
 
 .sharedHeadline {
+  max-width: 26ch;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-beam);
+  text-wrap: balance;
+}
+
+.sharedEducation {
+  margin-top: 1rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+.sharedGraduation {
+  margin-top: 0.75rem;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: var(--color-ink-2);
-  max-width: 42rem;
-}
-
-.tagsRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.infoTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
-  font-family: var(--font-num);
-  font-size: var(--text-measure);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-ink-2);
-  background: rgb(244 241 255 / 0.05);
-  border: 1px solid var(--color-hairline);
-  white-space: nowrap;
+  color: var(--color-backlight);
 }
 
 /* Grilla del equipo */
@@ -119,6 +90,7 @@
 }
 
 @media (max-width: 768px) {
+  .teamIntro,
   .teamGrid {
     grid-template-columns: 1fr;
   }
@@ -129,7 +101,7 @@
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 1.5rem;
   border-radius: 20px;
   padding: clamp(1.5rem, 2.5vw, 2rem);
   background:
@@ -146,23 +118,12 @@
     inset 0 1px 0 rgb(244 241 255 / 0.32),
     inset 0 -1px 0 rgb(4 2 10 / 0.8),
     0 16px 40px -14px rgb(0 0 0 / 0.75);
-  transition:
-    transform 0.4s var(--ease-beam),
-    box-shadow 0.4s var(--ease-beam);
-}
-
-.memberCard:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 rgb(244 241 255 / 0.45),
-    inset 0 -1px 0 rgb(4 2 10 / 0.8),
-    0 22px 50px -14px rgb(0 0 0 / 0.85);
 }
 
 .memberHeader {
   display: flex;
-  align-items: center;
-  gap: 1.15rem;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .monogram {
@@ -202,29 +163,46 @@
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.25;
   color: var(--color-beam);
 }
 
 .memberAge {
-  font-family: var(--font-num);
   font-size: 0.8125rem;
-  color: var(--color-ink-3);
+  color: var(--color-ink-2);
 }
 
 .memberRole {
-  font-family: var(--font-num);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
   color: var(--color-cyan);
 }
 
-.memberInterest {
-  margin-top: 1.25rem;
-  font-size: 0.9375rem;
-  line-height: 1.55;
+.memberBio {
+  display: grid;
+  gap: 1rem;
+  max-width: 65ch;
+  font-size: 1rem;
+  line-height: 1.7;
   color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+@media (max-width: 400px) {
+  .memberHeader {
+    gap: 0.75rem;
+  }
+
+  .monogram {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.125rem;
+  }
+
+  .memberName {
+    font-size: 1.2rem;
+  }
 }
 
 /* ==========================================================================
@@ -392,7 +370,6 @@
 /* Respeto a prefers-reduced-motion */
 
 @media (prefers-reduced-motion: reduce) {
-  .memberCard,
   .stepCard,
   .stepLink,
   .stepLinkIcon {

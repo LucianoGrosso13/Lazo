@@ -6,25 +6,30 @@ export const landingEquipo = defineDict({
       title: "Quiénes somos",
       problem:
         "Lazo nace de algo que vivimos de cerca: estudiantes sin tarjeta ni historial que no acceden a cuotas, y una alternativa sin tarjeta que cuesta mucho más.",
-      sharedHeadline:
-        "Estudiantes de Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), se reciben en diciembre de 2026, amigos desde hace años.",
-      university: "UNSTA · Ingeniería en Informática",
-      graduation: "Diciembre de 2026",
-      friendship: "Amigos desde hace años",
+      sharedHeadline: "Amigos desde hace años. Hoy construimos Lazo juntos.",
+      education:
+        "Estudiamos Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), en Tucumán.",
+      graduation: "Próximos a recibirnos · Diciembre de 2026",
+      role: "Producto y desarrollo",
+      ageUnit: "años",
       members: [
         {
           name: "Luciano Grosso",
           age: 22,
-          role: "Product Owner",
-          interest: "Amante de la blockchain y de los productos financieros. Define qué construye Lazo, para quién y con qué reglas.",
+          bio: [
+            "Trabajo actualmente en Control Andina y estoy por recibirme de ingeniero en Informática. Me apasionan la inteligencia artificial y la mejora de procesos.",
+            "En Lazo participo tanto en las decisiones de producto como en el desarrollo: junto a Nacho, definimos qué construir y lo llevamos a la práctica.",
+          ],
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
         },
         {
           name: "Ignacio Albarracín",
           age: 22,
-          role: "Full Stack Developer",
-          interest: "Construye Lazo de punta a punta: el programa en Solana, la app y todo lo que los conecta.",
+          bio: [
+            "Construyo Lazo de punta a punta: el programa en Solana, la app y todo lo que los conecta.",
+            "También participo en las decisiones de producto junto a Luciano: qué problema resolver, cómo se usa Lazo y qué construimos para hacerlo posible.",
+          ],
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",
         },
@@ -78,25 +83,30 @@ export const landingEquipo = defineDict({
       title: "About us",
       problem:
         "Lazo comes from something we see up close: students without a credit card or credit history who can't buy in installments, and a no-card alternative that costs far more.",
-      sharedHeadline:
-        "Computer Engineering students at Universidad del Norte Santo Tomás de Aquino (UNSTA), graduating in December 2026, longtime friends.",
-      university: "UNSTA · Computer Engineering",
-      graduation: "December 2026",
-      friendship: "Friends for years",
+      sharedHeadline: "Longtime friends. Now building Lazo together.",
+      education:
+        "We study Computer Engineering at Universidad del Norte Santo Tomás de Aquino (UNSTA) in Tucumán, Argentina.",
+      graduation: "Graduating soon · December 2026",
+      role: "Product & development",
+      ageUnit: "years old",
       members: [
         {
           name: "Luciano Grosso",
           age: 22,
-          role: "Product Owner",
-          interest: "Blockchain enthusiast with a passion for financial products. Defines what Lazo builds, for whom and under which rules.",
+          bio: [
+            "I currently work at Control Andina and am about to graduate in Computer Engineering. I'm passionate about artificial intelligence and improving processes.",
+            "At Lazo, I contribute to both product decisions and development. Together with Nacho, we decide what to build and bring it to life.",
+          ],
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
         },
         {
           name: "Ignacio Albarracín",
           age: 22,
-          role: "Full Stack Developer",
-          interest: "Builds Lazo end to end: the Solana program, the app and everything that connects them.",
+          bio: [
+            "I build Lazo end to end: the Solana program, the app and everything that connects them.",
+            "I also make product decisions with Luciano: which problem to solve, how people use Lazo and what we build to make it possible.",
+          ],
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",
         },
