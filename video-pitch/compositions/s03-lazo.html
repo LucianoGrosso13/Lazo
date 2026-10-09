@@ -252,7 +252,8 @@
       typeIn("#lazo-word", 30.12, 0.07);
       tl.to("#lazo-mark", { scale: 1.04, duration: 1.6, ease: "none" }, 30.4 - S);
       tl.fromTo("#lazo-url", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 30.45 - S);
-      tl.to("#lazo-mark, #lazo-scrim, #lazo-url", { opacity: 0, duration: 0.3, ease: "power2.in" }, 31.95 - S);
+      tl.to("#lazo-mark, #lazo-scrim", { opacity: 0, duration: 0.3, ease: "power2.in" }, 31.95 - S);
+      tl.to("#lazo-url", { opacity: 0, duration: 0.3, ease: "power2.in" }, 35.0 - S);
 
       tl.fromTo("#ly-scrim", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 32.0 - S);
       tl.fromTo("#ly-people", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 32.1 - S);
