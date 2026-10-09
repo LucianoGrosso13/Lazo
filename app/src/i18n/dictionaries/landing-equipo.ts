@@ -10,15 +10,16 @@ export const landingEquipo = defineDict({
       education:
         "Estudiamos Ingeniería en Informática en la Universidad del Norte Santo Tomás de Aquino (UNSTA), en Tucumán.",
       graduation: "Próximos a recibirnos · Diciembre de 2026",
-      role: "Producto y desarrollo",
       ageUnit: "años",
       members: [
         {
           name: "Luciano Grosso",
           age: 22,
+          role: "Product Owner",
           bio: [
-            "Trabajo actualmente en Control Andina y estoy por recibirme de ingeniero en Informática. Me apasionan la inteligencia artificial y la mejora de procesos.",
-            "En Lazo participo tanto en las decisiones de producto como en el desarrollo: junto a Nacho, definimos qué construir y lo llevamos a la práctica.",
+            "Trabajo en Control Andina, donde llevo adelante toda la parte tecnológica de la compañía. Estoy por recibirme de ingeniero en Informática en la UNSTA, y me gusta conectar lo que aprendo con los desafíos del trabajo cotidiano.",
+            "Me apasionan la inteligencia artificial y la mejora de procesos: entender cómo se hacen las cosas, encontrar qué se puede simplificar y pensar soluciones que les hagan la vida más fácil a las personas.",
+            "En Lazo soy Product Owner y participo también en el desarrollo. Junto a Nacho, trabajamos tanto en el producto como en la tecnología: definimos el problema, pensamos la experiencia y construimos lo necesario para llevar la idea a la práctica.",
           ],
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
@@ -26,9 +27,10 @@ export const landingEquipo = defineDict({
         {
           name: "Ignacio Albarracín",
           age: 22,
+          role: "Full Stack Developer",
           bio: [
-            "Construyo Lazo de punta a punta: el programa en Solana, la app y todo lo que los conecta.",
-            "También participo en las decisiones de producto junto a Luciano: qué problema resolver, cómo se usa Lazo y qué construimos para hacerlo posible.",
+            "Soy estudiante de Ingeniería en Informática en la UNSTA, próximo a recibirme, y en Lazo soy Full Stack Developer. Trabajo en el desarrollo de punta a punta: desde el programa en Solana hasta la app y todo lo que los conecta.",
+            "También participo en la construcción del producto junto a Luciano. Los dos trabajamos en ambas áreas: pensamos qué problema resolver, cómo debería funcionar la experiencia y cómo convertir esas decisiones en una solución que se pueda usar.",
           ],
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",
@@ -87,15 +89,16 @@ export const landingEquipo = defineDict({
       education:
         "We study Computer Engineering at Universidad del Norte Santo Tomás de Aquino (UNSTA) in Tucumán, Argentina.",
       graduation: "Graduating soon · December 2026",
-      role: "Product & development",
       ageUnit: "years old",
       members: [
         {
           name: "Luciano Grosso",
           age: 22,
+          role: "Product Owner",
           bio: [
-            "I currently work at Control Andina and am about to graduate in Computer Engineering. I'm passionate about artificial intelligence and improving processes.",
-            "At Lazo, I contribute to both product decisions and development. Together with Nacho, we decide what to build and bring it to life.",
+            "I work at Control Andina, where I oversee the company's technology. I'm about to graduate in Computer Engineering at UNSTA, and I enjoy connecting what I learn with the challenges of everyday work.",
+            "I'm passionate about artificial intelligence and improving processes: understanding how things work, finding what can be simplified and developing ideas that make people's lives easier.",
+            "At Lazo, I'm the Product Owner and also contribute to development. Together with Nacho, I work across both product and technology: defining the problem, shaping the experience and building what we need to bring the idea to life.",
           ],
           initials: "LG",
           gradient: "linear-gradient(135deg, #9945ff, #00c2ff)",
@@ -103,9 +106,10 @@ export const landingEquipo = defineDict({
         {
           name: "Ignacio Albarracín",
           age: 22,
+          role: "Full Stack Developer",
           bio: [
-            "I build Lazo end to end: the Solana program, the app and everything that connects them.",
-            "I also make product decisions with Luciano: which problem to solve, how people use Lazo and what we build to make it possible.",
+            "I'm a Computer Engineering student at UNSTA, about to graduate, and Lazo's Full Stack Developer. I work on development end to end: from the Solana program to the app and everything that connects them.",
+            "I also help shape the product with Luciano. We both work across these two areas: deciding which problem to solve, how the experience should work and how to turn those decisions into a solution people can use.",
           ],
           initials: "IA",
           gradient: "linear-gradient(135deg, #00c2ff, #19fb9b)",

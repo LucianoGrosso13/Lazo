@@ -40,7 +40,7 @@ export function QuienesSomos() {
                   <h3 id={`member-${member.initials}`} className={styles.memberName}>{member.name}</h3>
                   <span className={styles.memberAge}>{member.age} {t.ageUnit}</span>
                 </div>
-                <p className={styles.memberRole}>{t.role}</p>
+                <p className={styles.memberRole}>{member.role}</p>
               </div>
             </div>
 
