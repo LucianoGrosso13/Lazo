@@ -1,100 +1,116 @@
 import { defineDict } from "../locale";
 
-// Página /para-comercios (ticket 10): cómo vende un comercio con Lazo, cuánto
-// cobra y cuándo (tramos y calendario), cómo opera en mostrador y online,
-// seguridad, y comparación con referencias públicas.
-// Ningún número de negocio vive acá: los montos y tasas salen de la config
-// del protocolo, de quote() y de payoutSchedule(); las cifras de terceros son
-// REFERENCE_FIGURES con etiqueta "referencia" y sin marcas de competidores.
+// Página /para-comercios (ticket 10, rediseño ticket 09): cómo vende un
+// comercio con Lazo — figura de cobros en el tiempo, pasos de una venta,
+// neto por plazo (quote()), comparativas con cifras de referencia, canales,
+// garantías y FAQ en acordeón. Ningún número de negocio vive acá: sale de
+// la config del protocolo, de quote() y de payoutSchedule(); las cifras de
+// terceros son REFERENCE_FIGURES con etiqueta "referencia" y sin marcas.
 export const paraComercios = defineDict({
   es: {
     ctaHeroMostrador: "Probar terminal de mostrador",
-    ctaPanel: "Ver el panel del comercio",
     ctaMarketplace: "Ver el marketplace",
 
-    propuestaTitle: "Vendé en cuotas a clientes que no tienen tarjeta",
-    propuestaIntro:
-      "El cliente paga un anticipo y el resto en cuotas; un familiar con tarjeta respalda el capital y los intereses por si no paga. Vos no perseguís a nadie: elegís cuándo cobrar y Lazo garantiza cada tramo del plan.",
-    cuotasValue: "{opciones}",
-    cuotasLabel: "cuotas para tu cliente",
-    cuotasNote:
-      "{tres} sin interés; {seis} con un interés total del {pct} sobre lo financiado, que paga el comprador.",
-    cuotasNoteBase: "{lista} cuotas sin interés.",
-    respaldoLabel: "del saldo financiado, respaldado",
-    respaldoNote:
-      "Cada venta lleva un garante con tarjeta de crédito que cubre el 100% pendiente (capital más interés).",
-    cobroValue: "vos elegís",
-    cobroLabel: "cuándo y cómo cobrar lo financiado",
-    cobroNote: "Hoy o en tramos a {dias} días: a más espera, menos comisión.",
-    cobroNoteHoy: "Hoy: cobro inmediato al confirmar la venta.",
+    figTitle: "Una venta de {precio}: cuándo entra cada cobro",
+    figAxisDias: "días desde la venta",
+    figHoy: "hoy",
+    figComision: "comisión {pct}",
+    figLaneHoy: "{plazo}: cobrás {neto} al confirmar la venta",
+    figLanePlazo: "{plazo}: {anticipo} al confirmar y {tramos}",
+    figTramo: "{monto} el día {dia}",
+    figLegendHoy: "al confirmar la venta",
+    figLegendTramo: "tramo garantizado por Lazo",
+    figCaption:
+      "Elegís el plazo por venta; cada tramo está garantizado en su fecha, aunque el comprador se atrase.",
+    figCargando: "Consultando plazos…",
+
+    pasosTitle: "De la orden al cobro",
+    pasos: [
+      {
+        title: "Generás la orden",
+        body: "En mostrador, un QR en pantalla desde la terminal; online, un link de checkout para compartir por WhatsApp, redes o tu tienda.",
+      },
+      {
+        title: "El comprador confirma en cuotas",
+        body: "Elige {cuotas} cuotas y confirma con su garante: un familiar con tarjeta que respalda el 100% del plan.",
+      },
+      {
+        title: "Cobrás en el plazo que elegiste",
+        body: "El anticipo entra al instante y lo financiado llega en tramos mensuales garantizados por Lazo en la cadena.",
+      },
+    ],
 
     cobroTitle: "Cuánto cobrás y cuándo",
     cobroIntro:
-      "La comisión aplica sobre lo financiado, no sobre el precio total. Cuanto más podés diferir el cobro, menor es la comisión. El anticipo se acredita al instante y la parte financiada se libera en tramos mensuales iguales.",
+      "La comisión aplica sobre lo financiado, no sobre el precio total. Cuanto más diferís el cobro, menor es la comisión — y cada tramo llega en su fecha aunque el comprador se atrase.",
+    netoGrandeLabel: "neto de una venta de {precio} cobrada hoy",
+    netoGrandeNote:
+      "Si esperás {dias} días te quedan {neto}: la comisión baja de {max} a {min} sobre lo financiado.",
     cobroEjemplo:
       "Ejemplo con una venta de {precio}: {anticipo} de anticipo y {financiado} financiados.",
     plazoHoy: "Hoy",
     plazoDias: "A {dias} días",
+    netoLabel: "Neto que cobrás",
     comisionLabel: "comisión ({pct} de lo financiado)",
-    netoLabel: "Neto total que cobrás",
-    cobroHoyLabel: "al confirmar la venta",
-    anticipoAlConfirmar: "Al confirmar:",
-    tramosGarantizados: "Tramos garantizados:",
-    cobroInmediatoTodo: "100% al confirmar (anticipo + saldo neto)",
-    tramoItem: "Día {dia}: {monto}",
-    tramosResumen: "{n} tramos mensuales de {monto}",
-    cobroBarraAria: "Cobrás {anticipo} al confirmar y {tramos} en tramos garantizados",
+    cobroInmediatoTodo: "Todo al confirmar: anticipo + saldo neto.",
+    tramosResumen: "{anticipo} al confirmar + {n} tramos de {monto}",
+    tramosResumenVarios: "{anticipo} al confirmar + {n} tramos ({montos})",
     cobroGarantia:
-      "El anticipo entra al instante al confirmar la venta. La parte financiada se libera en los tramos acordados: Lazo garantiza cada fecha en la cadena aunque el comprador se atrase.",
+      "Cada tramo queda comprometido en la cadena al confirmar la venta y Lazo garantiza su fecha, pague o no el comprador.",
     cobroSeis:
-      "En {seis} cuotas el interés ({pct} total) lo paga el comprador, no vos: tu comisión de comercio es exactamente la misma que en {tres} y solo depende del plazo de cobro elegido.",
+      "En {seis} cuotas el interés ({pct} total) lo paga el comprador, no vos: tu comisión solo depende del plazo de cobro elegido.",
     cobroCargando: "Consultando plazos y comisiones…",
     cobroErrorTitle: "No se pudieron leer los plazos",
     cobroErrorBody: "Falló la consulta al protocolo. Reintentá.",
     cobroReintentar: "Reintentar",
 
-    operarTitle: "Cómo se vende en el día a día",
-    operarMostradorTitle: "En mostrador: orden con código QR",
-    operarMostradorBody:
-      "Cargás el importe y el concepto desde la terminal de mostrador y se genera un QR en pantalla. El comprador lo escanea con la cámara de su celular, elige 3 o 6 cuotas y confirma con su garantía activa. La venta se acredita en tiempo real en tu pantalla.",
-    operarMostradorCta: "Abrir terminal de mostrador",
-    operarOnlineTitle: "Online: links de checkout y tienda",
-    operarOnlineBody:
-      "Generás enlaces directos de pago en cuotas para compartir por WhatsApp, redes o tu propia tienda web. El cliente entra al enlace, revisa las cuotas y confirma en segundos.",
-    operarOnlineCta: "Ver productos en el marketplace",
-    operarPanelTitle: "Tu panel: ventas, cobros y tramos",
-    operarPanelBody:
-      "En tu cuenta ves cada venta con su comprobante, lo cobrado al instante y el calendario de tramos pendientes con sus fechas de liberación. También configurás tu plazo de cobro predeterminado.",
-    operarPanelCta: "Ir al panel del comercio",
-
-    comparacionTitle: "Costo de financiamiento para el comprador",
-    comparacionIntro:
-      "Lazo ofrece {tres} cuotas sin interés y {seis} cuotas con {pct} de interés total. La competencia publica una CFTEA anual, que mide otro período; las cifras externas son referencias, no cotizaciones vigentes.",
-    comparacionLazo: "Costo total del plan Lazo",
-    comparacionLazoDetalle: "{tres} cuotas sin interés · {seis} cuotas con {pct} total",
-    comparacionCfteaTitle: "Costo de financiamiento para el cliente sin tarjeta",
-    comparacionCfteaDetalle:
-      "Crédito en cuotas sin tarjeta: CFTEA publicado del {min}% al {max}% (referencia).",
-    comparacionNote:
-      "Comparación orientativa con cifras de referencia: cada alternativa posee condiciones de elegibilidad, plazos e impuestos particulares.",
-
-    marketplaceTitle: "Aparecé donde te buscan los compradores",
-    marketplaceBody:
-      "El marketplace de Lazo conecta a compradores y garantes con comercios que ofrecen cuotas respaldadas. Los clientes descubren comercios por rubro y compran tanto en mostrador como online.",
-    marketplaceExampleNote:
-      "El directorio lista comercios y productos de ejemplo para mostrar la experiencia de compra y venta.",
-    marketplaceCta: "Explorar comercios en el marketplace",
+    cmpTitle: "Frente a otras formas de financiar",
+    cmpIntro:
+      "Dos números deciden si te conviene: la comisión que pagás vos y lo que paga tu cliente. Las cifras externas son referencias publicadas, no cotizaciones vigentes.",
+    cmpComercioTitle: "Tu comisión por venta",
+    cmpComercioLabel: "Comisión sobre lo financiado",
+    cmpClienteTitle: "Lo que paga tu cliente",
+    cmpClienteLabel: "Costo de financiamiento",
+    cmpLazoHoy: "Lazo · cobrás hoy",
+    cmpLazoPlazo: "Lazo · cobrás a {dias} días",
+    cmpPublico: "Programa público de cuotas",
+    cmpPublicoNote: "Comisión publicada ~{pct}; solo MiPyMEs certificadas y pago a ~10 días hábiles.",
+    cmpBilletera: "Billetera o marketplace",
+    cmpBilleteraNote: "Comisión publicada ~{pct} por cuotas sin interés.",
+    cmpLazoCuotas: "Lazo · {n} cuotas",
+    cmpCompetencia: "Crédito en cuotas sin tarjeta",
+    cmpCompetenciaNote: "CFTEA anual publicado: rango de {min} a {max}.",
+    cmpGanadorComercio: "la comisión más baja",
+    cmpGanadorCliente: "sin interés",
+    cmpNote:
+      "Comparación orientativa con cifras de referencia: cada alternativa tiene condiciones de elegibilidad, plazos e impuestos particulares. La CFTEA mide un año; el interés de Lazo es total del plan.",
+    cmpDiasNote:
+      "El anticipo entra el día de la venta en todos los plazos. Otras opciones de cuotas pagan recién desde los ~{dias} días hábiles (referencia).",
 
     riesgosTitle: "Seguridad, garantías y reglas claras",
     riesgoCompromisoTitle: "Compromiso registrado en la cadena",
     riesgoCompromisoBody:
-      "Al confirmarse cada venta se registra una cuenta pública en Solana con el calendario exacto de tramos a favor del comercio. Los fondos quedan comprometidos en el pool y se liberan automáticamente en su fecha: Lazo garantiza cada tramo aunque el comprador se atrase.",
-    riesgoFiadorTitle: "El respaldo del garante y la absorción de riesgo",
+      "Al confirmarse la venta se registra en Solana el calendario exacto de tramos a tu favor. Los fondos quedan comprometidos en el pool y se liberan solos en su fecha.",
+    riesgoFiadorTitle: "El respaldo del garante",
     riesgoFiadorBody:
-      "El garante cubre el 100% de lo que falta pagar (capital más interés). Que el garante deba es una obligación contractual; ante la posibilidad de que la tarjeta emisora rechace un débito en mora, ese riesgo operativo lo absorbe Lazo y nunca afecta los tramos pactados de tu comercio.",
+      "Un familiar con tarjeta cubre el 100% de lo que falte (capital más interés). Si el emisor rechaza un débito en mora, ese riesgo lo absorbe Lazo: tus tramos no se tocan.",
     riesgoLiquidezTitle: "Liquidez asegurada antes de cada compra",
     riesgoLiquidezBody:
-      "Para garantizar el cumplimiento de cada compromiso, el protocolo solo permite abrir compras si el pool cuenta con liquidez disponible suficiente para cubrir el desembolso inicial y todos los tramos diferidos futuros.",
+      "El protocolo solo permite abrir una venta si el pool tiene liquidez suficiente para cubrir el anticipo y todos los tramos futuros.",
+
+    destinosTitle: "Tres lugares para vender hoy",
+    destinosIntro:
+      "Mostrador, panel y marketplace: el circuito comercial completo ya se puede recorrer.",
+    operarMostradorTitle: "Terminal de mostrador",
+    operarMostradorBody:
+      "Cargás importe y concepto, se genera un QR y la venta se acredita en tiempo real en tu pantalla.",
+    operarPanelTitle: "Panel del comercio",
+    operarPanelBody:
+      "Cada venta con su comprobante, lo cobrado al instante y el calendario de tramos pendientes con sus fechas.",
+    operarMarketplaceTitle: "Marketplace de Lazo",
+    operarMarketplaceBody:
+      "Los compradores descubren comercios por rubro y compran en mostrador y online.",
+    ejemploTag: "de ejemplo",
 
     faqTitle: "Preguntas frecuentes",
     faq: [
@@ -136,92 +152,108 @@ export const paraComercios = defineDict({
   },
   en: {
     ctaHeroMostrador: "Try counter terminal",
-    ctaPanel: "View merchant panel",
     ctaMarketplace: "View marketplace",
 
-    propuestaTitle: "Sell in installments to customers with no card",
-    propuestaIntro:
-      "The customer pays a down payment and the rest in installments; a relative with a card backs both principal and interest if they don't pay. You chase nobody: you choose when to get paid and Lazo guarantees each tranche of the plan.",
-    cuotasValue: "{opciones}",
-    cuotasLabel: "installment plans for your customer",
-    cuotasNote:
-      "{tres} interest-free; {seis} with a {pct} total interest on the financed amount, paid by the buyer.",
-    cuotasNoteBase: "{lista} interest-free installments.",
-    respaldoLabel: "of the financed balance, backed",
-    respaldoNote:
-      "Every sale carries a card guarantor who backs 100% of the outstanding balance (principal plus interest).",
-    cobroValue: "you choose",
-    cobroLabel: "when and how to collect the financed amount",
-    cobroNote: "Today or in tranches at {dias} days: the longer you wait, the lower the fee.",
-    cobroNoteHoy: "Today: instant payout upon confirmation.",
+    figTitle: "A {precio} sale: when each payout lands",
+    figAxisDias: "days after the sale",
+    figHoy: "today",
+    figComision: "fee {pct}",
+    figLaneHoy: "{plazo}: you collect {neto} at checkout",
+    figLanePlazo: "{plazo}: {anticipo} at checkout plus {tramos}",
+    figTramo: "{monto} on day {dia}",
+    figLegendHoy: "at sale confirmation",
+    figLegendTramo: "tranche guaranteed by Lazo",
+    figCaption:
+      "You pick the term per sale; every tranche is guaranteed on its date, even if the buyer falls behind.",
+    figCargando: "Loading terms…",
+
+    pasosTitle: "From order to payout",
+    pasos: [
+      {
+        title: "You create the order",
+        body: "At the counter, an on-screen QR from the terminal; online, a checkout link to share via WhatsApp, social media, or your store.",
+      },
+      {
+        title: "The buyer confirms in installments",
+        body: "They pick {cuotas} installments and confirm with their guarantor: a relative with a card who backs 100% of the plan.",
+      },
+      {
+        title: "You get paid on your chosen term",
+        body: "The down payment lands instantly and the financed share arrives in monthly tranches guaranteed by Lazo onchain.",
+      },
+    ],
 
     cobroTitle: "How much you get paid, and when",
     cobroIntro:
-      "The fee applies to the financed amount, not the total price. The longer you can defer the payout, the lower the fee. The down payment is credited instantly and the financed part is released in guaranteed equal monthly tranches.",
+      "The fee applies to the financed amount, not the total price. The longer you defer the payout, the lower the fee — and every tranche lands on its date even if the buyer falls behind.",
+    netoGrandeLabel: "net from a {precio} sale collected today",
+    netoGrandeNote:
+      "Wait {dias} days and you keep {neto}: the fee drops from {max} to {min} of the financed amount.",
     cobroEjemplo:
       "Example with a {precio} sale: {anticipo} down payment and {financiado} financed.",
     plazoHoy: "Today",
     plazoDias: "In {dias} days",
-    comisionLabel: "fee ({pct} of financed amount)",
-    netoLabel: "Total net you collect",
-    cobroHoyLabel: "upon sale confirmation",
-    anticipoAlConfirmar: "At checkout:",
-    tramosGarantizados: "Guaranteed tranches:",
-    cobroInmediatoTodo: "100% at checkout (down payment + net balance)",
-    tramoItem: "Day {dia}: {monto}",
-    tramosResumen: "{n} monthly tranches of {monto}",
-    cobroBarraAria: "You collect {anticipo} at checkout and {tramos} in guaranteed tranches",
+    netoLabel: "Net you collect",
+    comisionLabel: "fee ({pct} of the financed amount)",
+    cobroInmediatoTodo: "Everything at checkout: down payment + net balance.",
+    tramosResumen: "{anticipo} at checkout + {n} tranches of {monto}",
+    tramosResumenVarios: "{anticipo} at checkout + {n} tranches ({montos})",
     cobroGarantia:
-      "The down payment lands instantly at checkout. The financed share is released in the agreed tranches: Lazo guarantees each date onchain even if the buyer falls behind.",
+      "Each tranche is committed onchain when the sale confirms and Lazo guarantees its date, whether the buyer pays or not.",
     cobroSeis:
-      "In {seis} installments the buyer pays the interest ({pct} total), not you: your merchant fee is exactly the same as in {tres} and only depends on the chosen payout schedule.",
+      "In {seis} installments the buyer pays the interest ({pct} total), not you: your fee only depends on the payout term you choose.",
     cobroCargando: "Loading terms and fees…",
     cobroErrorTitle: "Could not load terms",
     cobroErrorBody: "Protocol query failed. Retry.",
     cobroReintentar: "Retry",
 
-    operarTitle: "How selling works day to day",
-    operarMostradorTitle: "At the counter: QR order terminal",
-    operarMostradorBody:
-      "Enter the amount and description in your counter terminal to generate an on-screen QR. The buyer scans it with their phone camera, selects 3 or 6 installments, and confirms with their active guarantee. The sale updates in real time on your screen.",
-    operarMostradorCta: "Open counter terminal",
-    operarOnlineTitle: "Online: checkout links & store",
-    operarOnlineBody:
-      "Generate direct installment checkout links to share via WhatsApp, social media, or your web store. The customer opens the link, reviews the installments, and confirms in seconds.",
-    operarOnlineCta: "Browse products in marketplace",
-    operarPanelTitle: "Your dashboard: sales, payouts & tranches",
-    operarPanelBody:
-      "Track every sale with its receipt, immediately collected balance, and calendar of pending tranches with their release dates. You also set your default payout term.",
-    operarPanelCta: "Go to merchant panel",
-
-    comparacionTitle: "Financing cost for the buyer",
-    comparacionIntro:
-      "Lazo offers {tres} interest-free installments and {seis} installments with {pct} total interest. The competition publishes an annual CFTEA, which measures a different period; external figures are references, not live quotes.",
-    comparacionLazo: "Total cost of a Lazo plan",
-    comparacionLazoDetalle: "{tres} interest-free installments · {seis} installments at {pct} total",
-    comparacionCfteaTitle: "Financing cost for cardless customers",
-    comparacionCfteaDetalle:
-      "Cardless installment credit: published CFTEA from {min}% to {max}% (reference).",
-    comparacionNote:
-      "Guidance comparison with reference figures: each alternative has distinct eligibility rules, terms, and tax treatments.",
-
-    marketplaceTitle: "Show up where buyers shop",
-    marketplaceBody:
-      "The Lazo marketplace connects buyers and guarantors with merchants offering backed installments. Customers discover stores by category and shop both in-store and online.",
-    marketplaceExampleNote:
-      "The directory lists example merchants and products to show the buying and selling flow.",
-    marketplaceCta: "Explore merchants in marketplace",
+    cmpTitle: "Next to other ways of financing",
+    cmpIntro:
+      "Two numbers decide whether it works for you: the fee you pay and what your customer pays. External figures are published references, not live quotes.",
+    cmpComercioTitle: "Your fee per sale",
+    cmpComercioLabel: "Fee on the financed amount",
+    cmpClienteTitle: "What your customer pays",
+    cmpClienteLabel: "Financing cost",
+    cmpLazoHoy: "Lazo · you collect today",
+    cmpLazoPlazo: "Lazo · you collect in {dias} days",
+    cmpPublico: "Public installments program",
+    cmpPublicoNote: "Published fee ~{pct}; certified SMEs only, paid in ~10 business days.",
+    cmpBilletera: "Wallet or marketplace",
+    cmpBilleteraNote: "Published fee ~{pct} for interest-free installments.",
+    cmpLazoCuotas: "Lazo · {n} installments",
+    cmpCompetencia: "Cardless installment credit",
+    cmpCompetenciaNote: "Published annualized total cost: {min} to {max} range.",
+    cmpGanadorComercio: "lowest fee",
+    cmpGanadorCliente: "interest-free",
+    cmpNote:
+      "Guidance comparison with reference figures: each alternative has its own eligibility rules, terms, and taxes. CFTEA measures a full year; Lazo's interest is a plan total.",
+    cmpDiasNote:
+      "The down payment lands on sale day at every term. Other installment options pay starting ~{dias} business days later (reference).",
 
     riesgosTitle: "Security, guarantees and clear rules",
-    riesgoCompromisoTitle: "Onchain registered commitment",
+    riesgoCompromisoTitle: "Commitment registered onchain",
     riesgoCompromisoBody:
-      "When each sale is confirmed, a public account is registered on Solana with the exact tranche calendar for the merchant. Funds remain committed in the pool and release automatically on their due date: Lazo guarantees each tranche even if the buyer falls behind.",
-    riesgoFiadorTitle: "Guarantor backing & risk absorption",
+      "When the sale confirms, Solana records the exact tranche calendar in your favor. Funds stay committed in the pool and release on their own on each date.",
+    riesgoFiadorTitle: "Guarantor backing",
     riesgoFiadorBody:
-      "The guarantor covers 100% of the outstanding balance (principal plus interest). The guarantor's liability is a contractual obligation; should the issuing card decline a charge upon default, Lazo absorbs that operational risk and your agreed merchant tranches are never affected.",
-    riesgoLiquidezTitle: "Guaranteed liquidity before each purchase",
+      "A relative with a card covers 100% of what's left (principal plus interest). If the issuer declines a charge in arrears, Lazo absorbs that risk: your tranches are untouched.",
+    riesgoLiquidezTitle: "Liquidity secured before each purchase",
     riesgoLiquidezBody:
-      "To ensure every commitment is honored, the protocol only permits purchases if the pool holds sufficient liquidity to cover the immediate advance and all future committed tranches.",
+      "The protocol only opens a sale if the pool holds enough liquidity to cover the advance and every future tranche.",
+
+    destinosTitle: "Three places to sell today",
+    destinosIntro:
+      "Counter, dashboard and marketplace: the full commercial loop is ready to try.",
+    operarMostradorTitle: "Counter terminal",
+    operarMostradorBody:
+      "Enter amount and description, a QR is generated, and the sale settles in real time on your screen.",
+    operarPanelTitle: "Merchant dashboard",
+    operarPanelBody:
+      "Every sale with its receipt, what you collected instantly, and the calendar of pending tranches with their dates.",
+    operarMarketplaceTitle: "Lazo marketplace",
+    operarMarketplaceBody:
+      "Buyers discover stores by category and shop at the counter and online.",
+    ejemploTag: "example",
 
     faqTitle: "Frequently asked questions",
     faq: [

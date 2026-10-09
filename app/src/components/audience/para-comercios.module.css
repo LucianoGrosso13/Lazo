@@ -1,0 +1,283 @@
+/* /para-comercios — piezas propias de la página (ticket 09).
+   La figura del hero dibuja una venta partida en cobros a lo largo de
+   0–90 días: carril por plazo, punto lleno al confirmar y puntos huecos
+   para cada tramo garantizado. El acento es el del rol (cyan). */
+
+.figure {
+  /* borde del eje: los puntos del día 0 y del último quedan adentro */
+  --edge: 1rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background:
+    radial-gradient(120% 80% at 85% -10%, var(--accent-soft), transparent 60%),
+    linear-gradient(165deg, rgb(244 241 255 / 0.08), rgb(244 241 255 / 0.015) 38%, rgb(0 194 255 / 0.05)),
+    rgb(14 11 23 / 0.55);
+}
+@media (min-width: 640px) {
+  .figure { padding: 1.4rem 1.6rem 1.5rem; }
+}
+
+.figHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+.figTitle {
+  font-family: var(--font-num);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-2);
+}
+.figAxisTag {
+  font-family: var(--font-num);
+  font-size: var(--text-measure);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-ghost);
+}
+
+/* Los carriles y la regla comparten la misma grilla de 3 columnas para que
+   las marcas del eje caigan exactamente sobre la línea de cada plazo. */
+.laneGrid {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 5.9rem;
+  column-gap: 0.5rem;
+  align-items: center;
+}
+@media (min-width: 640px) {
+  .laneGrid { grid-template-columns: 4.4rem minmax(0, 1fr) 6.4rem; column-gap: 0.9rem; }
+}
+
+.ruler { margin-top: 1rem; }
+.rulerTrack { position: relative; height: 0.9rem; }
+.rulerTick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-num);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-3);
+  white-space: nowrap;
+}
+.rulerTick[data-edge="start"] { transform: none; }
+.rulerTick[data-edge="end"] { transform: translateX(-100%); }
+
+.lanes {
+  list-style: none;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  display: grid;
+  row-gap: 0.55rem;
+}
+.lane { min-width: 0; }
+.laneLabel {
+  font-family: var(--font-num);
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+.laneTrack { position: relative; height: 2.3rem; }
+.laneBeam {
+  position: absolute;
+  top: 50%;
+  left: var(--edge);
+  right: var(--edge);
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, var(--color-beam), var(--accent-border) 18%, var(--color-hairline) 60%);
+}
+.laneTrack::before,
+.laneTrack::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 0.45rem;
+  transform: translateY(-50%);
+  background: var(--color-hairline);
+}
+.laneTrack::before { left: var(--edge); }
+.laneTrack::after { right: var(--edge); }
+.laneMid {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 0.45rem;
+  transform: translate(-50%, -50%);
+  background: var(--color-hairline);
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+.dotNow {
+  background: var(--color-beam);
+  box-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 3px rgb(244 241 255 / 0.9),
+    inset 0 0 0 1px rgb(255 255 255 / 0.7);
+}
+.dotTramo {
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 9px var(--accent-glow);
+}
+
+.laneValue {
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--color-beam);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.laneAmount { display: block; white-space: nowrap; }
+.laneValue small {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.03em;
+  color: var(--color-ink-3);
+  text-transform: uppercase;
+}
+
+.figLegend {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  font-size: 0.75rem;
+  color: var(--color-ink-3);
+}
+.figLegend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.legendDot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none; }
+.legendNow { background: var(--color-beam); box-shadow: 0 0 6px var(--accent-glow); }
+.legendTramo { background: var(--accent-soft); border: 1.5px solid var(--accent); }
+.figCaption {
+  margin-top: 0.55rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* Entrada: los carriles caen en cascada y los puntos prenden después. */
+.figure[data-entered] .lane { animation: laneIn 560ms var(--ease-beam) var(--lane-delay, 0ms) both; }
+.figure[data-entered] .dot { animation: dotIn 480ms var(--ease-beam) calc(var(--lane-delay, 0ms) + 160ms) both; }
+@keyframes laneIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes dotIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Número de titular de la sección de cobro. */
+.netoBand {
+  display: grid;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem 1.6rem;
+  background:
+    radial-gradient(90% 120% at 12% -20%, var(--accent-soft), transparent 55%),
+    linear-gradient(165deg, rgb(244 241 255 / 0.08), rgb(244 241 255 / 0.015) 38%, rgb(0 194 255 / 0.04)),
+    rgb(14 11 23 / 0.55);
+}
+@media (min-width: 768px) {
+  .netoBand { grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: 2.5rem; padding: 1.8rem 1.9rem; }
+}
+.netoLabel { margin-top: 0.4rem; font-size: 0.9375rem; color: var(--color-ink-2); max-width: 34ch; }
+.netoNote { font-size: 0.875rem; line-height: 1.55; color: var(--color-ink-3); max-width: 40ch; }
+.netoNote strong { color: var(--color-beam); font-weight: 500; }
+
+/* Tarjetas de plazo: el tramo de luz bajo el neto marca hoy vs garantizado. */
+.plazoCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.1rem 1.2rem; }
+@media (min-width: 640px) { .plazoCard { padding: 1.15rem 1.25rem 1.3rem; } }
+.plazoHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.plazoName { font-family: var(--font-num); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+.plazoFee { font-family: var(--font-num); font-size: 0.6875rem; color: var(--color-ink-3); }
+.plazoNeto { font-family: var(--font-num); font-size: 1.6rem; line-height: 1.05; color: var(--color-beam); font-variant-numeric: tabular-nums; }
+.plazoNeto small { font-size: 0.62em; color: var(--color-ink-3); }
+.plazoSplit {
+  margin-top: 0.35rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  display: flex;
+  overflow: clip;
+  background: var(--color-abyss-3);
+}
+.plazoSplit > i { display: block; height: 100%; }
+.plazoSplit .hoy { background: linear-gradient(90deg, var(--color-beam), var(--accent)); }
+.plazoSplit .tramo { background: var(--accent-border); }
+.plazoDetalle { font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-3); }
+
+/* Riesgos: tarjetas con ícono dibujado, el acento las prende en hover/foco. */
+.riskCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.15rem 1.2rem 1.3rem;
+  transition: border-color 240ms var(--ease-beam), transform 240ms var(--ease-beam), box-shadow 240ms var(--ease-beam);
+  border: 1px solid transparent;
+}
+.riskCard:hover, .riskCard:focus-within {
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -18px var(--accent-glow);
+}
+.riskIcon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+}
+.riskIcon svg { width: 1.25rem; height: 1.25rem; }
+.riskTitle { font-weight: 600; color: var(--color-beam); font-size: 1rem; }
+.riskBody { font-size: 0.875rem; line-height: 1.55; color: var(--color-ink-2); }
+
+/* Destinos: filas-enlace con ícono, título, bajada y flecha. */
+.destRow {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: border-color 240ms var(--ease-beam), transform 240ms var(--ease-beam), box-shadow 240ms var(--ease-beam);
+}
+.destRow:hover, .destRow:focus-visible {
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -18px var(--accent-glow);
+}
+.destRow:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+.destTitle { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; font-weight: 600; color: var(--color-beam); font-size: 0.95rem; }
+.destBody { margin-top: 0.15rem; font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-3); }
+.destArrow { color: var(--accent-ink); transition: transform 240ms var(--ease-beam); }
+.destRow:hover .destArrow, .destRow:focus-visible .destArrow { transform: translateX(4px); }
+.destTag {
+  font-family: var(--font-num);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  border: 1px dashed rgb(154 147 187 / 0.5);
+  border-radius: 3px;
+  padding: 0.08rem 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figure[data-entered] .lane, .figure[data-entered] .dot { animation: none; }
+  .riskCard, .destRow, .destArrow { transition: none; }
+  .riskCard:hover, .destRow:hover { transform: none; }
+}
