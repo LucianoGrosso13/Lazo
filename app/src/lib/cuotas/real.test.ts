@@ -3404,9 +3404,86 @@ describe("openPlan/payInstallment: progreso, fondos y dedup", () => {
     });
     expect(p2).toBe(p1);
     // Replay inmediato de la última fase: no arranca ciego.
-    expect(eventsB).toEqual([{ phase: "confirming", signature: sig }]);
+    expect(eventsB).toEqual([{ phase: "confirming", signature: sig, lastValidBlockHeight: 1000 }]);
     confirmed = true;
     await p1;
     expect(eventsB.at(-1)?.phase).toBe("syncing");
+  });
+
+  // --- expiración: firma firmada pero jamás broadcast (blockhash vencido) ---
+
+  it("firma ausente + validez vencida (altura finalized > lastValidBlockHeight) → failed tras reconfirmar", async () => {
+    let statusCalls = 0;
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => {
+        statusCalls++;
+        return { value: [null] };
+      },
+      // getTransaction sin programar: tampoco está en el ledger.
+      getBlockHeight: () => 2000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "d".repeat(87),
+      lastValidBlockHeight: 1000,
+    });
+    expect(out).toEqual({ status: "failed", signature: "d".repeat(87) });
+    // Ausencia reconfirmada DESPUÉS de leer la altura: consulta + rechequeo.
+    expect(statusCalls).toBe(2);
+  });
+
+  it("firma ausente pero validez vigente (altura ≤ lastValidBlockHeight) → pending", async () => {
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [null] }),
+      getBlockHeight: () => 1000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "e".repeat(87),
+      lastValidBlockHeight: 1000,
+    });
+    expect(out).toEqual({ status: "pending", signature: "e".repeat(87) });
+  });
+
+  it("firma ausente sin dato de validez → pending (la ausencia nunca prueba fracaso)", async () => {
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => ({ value: [null] }),
+      getBlockHeight: () => 99_999,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    // "g"*87 no fue emitida por ningún send del archivo: el mapa de sesión
+    // tampoco la conoce → sin evidencia de validez, jamás `failed`.
+    const out = await c.reconcileOperation({
+      operation: "open_plan",
+      student: String(student),
+      signature: "g".repeat(87),
+    });
+    expect(out).toEqual({ status: "pending", signature: "g".repeat(87) });
+  });
+
+  it("firma ausente + validez vencida pero reconfirmación la encuentra → pending", async () => {
+    let statusCalls = 0;
+    const rpc = devnetRpc({
+      getSignatureStatuses: () => {
+        statusCalls++;
+        // El rechequeo (2.ª consulta) la ve procesada: el falso vacío no alcanza.
+        return { value: [statusCalls === 1 ? null : { confirmationStatus: "processed", err: null }] };
+      },
+      getBlockHeight: () => 2000,
+    });
+    const c = createRealCuotas({ env: ENV, transport: transportFor(rpc, mockSigner(student)) });
+    const out = await c.reconcileOperation({
+      operation: "pay_installment",
+      student: String(student),
+      planId: String((await pdas()).planPda),
+      signature: "f".repeat(87),
+      expectedInstallmentIndex: 0,
+      lastValidBlockHeight: 1000,
+    });
+    expect(out.status).toBe("pending");
   });
 });

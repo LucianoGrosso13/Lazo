@@ -572,17 +572,30 @@ function emitProgress(
   listener: TxProgressListener | undefined,
   phase: TxPhase,
   signature?: string,
+  lastValidBlockHeight?: number,
 ): void {
   if (!listener) return;
   try {
-    listener({ phase, signature });
+    listener({ phase, signature, lastValidBlockHeight });
   } catch {
     // El listener es observador: su error no puede abortar ni forzar reenvíos.
   }
 }
 
+/**
+ * Validez del blockhash de cada firma emitida por ESTE proceso: la firma
+ * se conoce antes de enviar, así que aunque el envío se corte, la misma
+ * sesión puede probar la expiración (firma ausente + altura superada =
+ * jamás aterrizará). Tras reload, la UI aporta el dato vía el snapshot.
+ */
+const lastValidHeightBySignature = new Map<string, number>();
+
 /** Espera confirmación (processed basta para la UI; finalized lo muestra Explorer). */
-async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<void> {
+async function confirmSignature(
+  rpc: RealRpc,
+  signature: Signature,
+  lastValidBlockHeight?: number,
+): Promise<void> {
   const deadline = Date.now() + 60_000;
   for (;;) {
     const res = await rpc
@@ -613,6 +626,7 @@ async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<voi
         "uncertain",
         `Sin confirmación en 60s; la transacción puede haberse procesado. Reconciliá la firma con reconcileOperation/waitForOperation (o ${explorerTxUrl(signature)}) antes de reintentar`,
         String(signature),
+        lastValidBlockHeight,
       );
     }
     await new Promise((r) => setTimeout(r, 1000));
@@ -725,7 +739,9 @@ export async function sendReviewedProposal(
   // La firma se deriva localmente ANTES de enviar: si el envío se corta, la
   // UI ya conoce la firma para reconciliarla (es la misma que devuelve el RPC).
   const signature = getSignatureFromTransaction(signed);
-  emitProgress(onProgress, "sending", String(signature));
+  const lvb = Number(proposal.lastValidBlockHeight);
+  lastValidHeightBySignature.set(String(signature), lvb);
+  emitProgress(onProgress, "sending", String(signature), lvb);
   const wire = getBase64EncodedWireTransaction(signed);
   const submitted = await rpc
     .sendTransaction(wire, { encoding: "base64", preflightCommitment: "confirmed" })
@@ -748,10 +764,14 @@ export async function sendReviewedProposal(
         "uncertain",
         `Sin respuesta del envío; la transacción puede haberse procesado. Reconciliá la firma con reconcileOperation/waitForOperation (o ${explorerTxUrl(String(signature))}) antes de reintentar`,
         String(signature),
+        lvb,
       );
     });
-  emitProgress(onProgress, "confirming", String(submitted));
-  await confirmSignature(rpc, submitted);
+  // La firma devuelta y la derivada son la misma en un RPC sano; registrar
+  // ambas cubre un transporte que devuelva otra forma de la misma firma.
+  lastValidHeightBySignature.set(String(submitted), lvb);
+  emitProgress(onProgress, "confirming", String(submitted), lvb);
+  await confirmSignature(rpc, submitted, lvb);
   return submitted.toString();
 }
 
@@ -1217,6 +1237,16 @@ async function fetchParsedTx(rpc: RealRpc, signature: string): Promise<ParsedTx 
     return tx as unknown as ParsedTx | null;
   } catch {
     // Red caída o método no soportado: la tx es ilegible, no inexistente.
+    return null;
+  }
+}
+
+/** Altura `finalized` del ledger; `null` si la lectura falla (nunca prueba de expiración). */
+async function fetchFinalizedHeight(rpc: RealRpc): Promise<number | null> {
+  try {
+    const h = await rpc.getBlockHeight({ commitment: "finalized" }).send();
+    return Number(h);
+  } catch {
     return null;
   }
 }
@@ -1765,7 +1795,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       if (listener) {
         running.listeners.add(listener);
         if (running.last) {
-          emitProgress(listener, running.last.phase, running.last.signature);
+          emitProgress(listener, running.last.phase, running.last.signature, running.last.lastValidBlockHeight);
         }
       }
       return running.promise as Promise<T>;
@@ -1774,7 +1804,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     if (listener) entry.listeners.add(listener);
     const onProgress: TxProgressListener = (p) => {
       entry.last = p;
-      for (const l of entry.listeners) emitProgress(l, p.phase, p.signature);
+      for (const l of entry.listeners) emitProgress(l, p.phase, p.signature, p.lastValidBlockHeight);
     };
     const promise = run(onProgress).then(
       (value) => {
@@ -1969,6 +1999,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "uncertain",
         `Confirmada ${explorerTxUrl(signature)} pero sin lectura del plan: ${rpcErr(e)}`,
         signature,
+        lastValidHeightBySignature.get(signature),
       );
     }
     if (!created) {
@@ -1976,6 +2007,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "uncertain",
         `El plan no aparece tras ${explorerTxUrl(signature)}; reconciliá con waitForOperation (snapshot + firma original)`,
         signature,
+        lastValidHeightBySignature.get(signature),
       );
     }
     const now = await chainNow(ctx.rpc).catch(() => Math.floor(Date.now() / 1000));
@@ -2092,6 +2124,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "uncertain",
         `Confirmada ${explorerTxUrl(signature)} pero sin lectura del plan: ${rpcErr(e)}`,
         signature,
+        lastValidHeightBySignature.get(signature),
       );
     }
     if (
@@ -2110,6 +2143,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "uncertain",
         `Confirmada ${explorerTxUrl(signature)} pero la cuota ${firstUnpaid + 1} aún figura impaga (réplica atrasada); reconciliá con waitForOperation`,
         signature,
+        lastValidHeightBySignature.get(signature),
       );
     }
     // Cuenta cerrada (saldada) o reabierta: la generación que recibió el
@@ -2135,6 +2169,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "uncertain",
         `Confirmada ${explorerTxUrl(signature)} pero no se pudo verificar el estado final del plan; reconciliá con waitForOperation (snapshot + firma original)`,
         signature,
+        lastValidHeightBySignature.get(signature),
       );
     }
     // Imagen verificada: la cuota pagó y la cuenta cerró (todo resuelto).
@@ -2372,6 +2407,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
           "uncertain",
           `La reputación no aparece tras ${explorerTxUrl(signature)}`,
           signature,
+          lastValidHeightBySignature.get(signature),
         );
       }
       notify();
@@ -2445,7 +2481,36 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       // ese ledger — si la devuelve, aterrizó; su `meta.err` manda sobre
       // el status (una réplica puede desactualizar el cache).
       const tx = await fetchParsedTx(ctx.rpc, snapshot.signature);
-      if (!tx) return finish({ status: "pending", signature: snapshot.signature });
+      if (!tx) {
+        // Ausente del status cache Y del ledger. Si la validez del
+        // blockhash ya venció — altura `finalized` estrictamente mayor —
+        // la red la rechazaría si llegara tarde: no aterrizó y jamás
+        // podrá. Antes de declarar `failed` se RE-CONSULTA la ausencia
+        // (una lectura atrasada no puede producir un falso veredicto).
+        const lvb =
+          snapshot.lastValidBlockHeight ??
+          lastValidHeightBySignature.get(snapshot.signature);
+        if (st == null && lvb !== undefined) {
+          const height = await fetchFinalizedHeight(ctx.rpc);
+          if (height !== null && height > lvb) {
+            try {
+              const [again, tx2] = await Promise.all([
+                ctx.rpc
+                  .getSignatureStatuses([sig], { searchTransactionHistory: true })
+                  .send()
+                  .catch(() => null),
+                fetchParsedTx(ctx.rpc, snapshot.signature),
+              ]);
+              if (!again?.value?.[0] && !tx2) {
+                return finish({ status: "failed", signature: snapshot.signature });
+              }
+            } catch {
+              // La reconfirmación falló: sin prueba, sigue incierto.
+            }
+          }
+        }
+        return finish({ status: "pending", signature: snapshot.signature });
+      }
       if (tx.meta?.err) {
         return finish({ status: "failed", signature: snapshot.signature });
       }
@@ -2606,6 +2671,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
           "uncertain",
           `La garantía no aparece tras ${explorerTxUrl(signature)}`,
           signature,
+          lastValidHeightBySignature.get(signature),
         );
       }
       notify();
@@ -2660,6 +2726,7 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
           "uncertain",
           `La garantía no aparece tras ${explorerTxUrl(signature)}`,
           signature,
+          lastValidHeightBySignature.get(signature),
         );
       }
       notify();

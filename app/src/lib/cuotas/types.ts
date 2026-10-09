@@ -409,6 +409,14 @@ export type TxPhase =
 export interface TxProgress {
   phase: TxPhase;
   signature?: string;
+  /**
+   * Altura hasta la que el blockhash firmado sigue siendo válido
+   * (`lastValidBlockHeight` de la propuesta). Presente desde `sending`:
+   * la UI la persiste con la firma — si la firma no aparece onchain y la
+   * altura finalized la supera, la transacción expiró sin aterrizar y
+   * jamás podrá hacerlo (veredicto `failed`, reintento seguro).
+   */
+  lastValidBlockHeight?: number;
 }
 
 export type TxProgressListener = (progress: TxProgress) => void;
@@ -436,6 +444,14 @@ export type OperationSnapshot =
       student: WalletAddress;
       /** Firma original emitida en `sending`/`confirming`/`uncertain`. */
       signature: string;
+      /**
+       * `lastValidBlockHeight` del `TxProgress`/`CuotasError` original
+       * (opcional, recomendado persistirlo junto a la firma). Si la firma
+       * no está ni en el status histórico ni en el ledger Y la altura
+       * finalized la supera, la transacción expiró sin aterrizar →
+       * `failed` definitivo; sin el campo, sigue `pending`.
+       */
+      lastValidBlockHeight?: number;
     }
   | {
       operation: "pay_installment";
@@ -443,6 +459,8 @@ export type OperationSnapshot =
       /** PDA del plan (`Plan.id` de `getPlans`). */
       planId: string;
       signature: string;
+      /** Mismo criterio que en `open_plan` (ver su doc). */
+      lastValidBlockHeight?: number;
       /** Índice 0-based de la cuota que la firma debía dejar `Paid`. */
       expectedInstallmentIndex: number;
       /**
@@ -601,6 +619,11 @@ export class CuotasError extends Error {
      * `uncertain` (y errores post-envío): permite reconciliar sin reenviar.
      */
     public readonly signature?: string,
+    /**
+     * `lastValidBlockHeight` del blockhash firmado: con la firma ausente
+     * onchain y la altura finalized superándola, la tx expiró para siempre.
+     */
+    public readonly lastValidBlockHeight?: number,
   ) {
     super(message ?? code);
     this.name = "CuotasError";

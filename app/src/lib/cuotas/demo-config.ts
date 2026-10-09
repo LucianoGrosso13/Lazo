@@ -15,6 +15,7 @@ export const DEMO_CONFIG: ProtocolConfig = {
   guarantorChargeDay: 15,
   secondsPerDay: 86_400,
   installmentsCount: 3,
+  installmentIntervalDays: 30,
   // Opciones de plan (decisión comercial de 10): 3 sin interés; 6 con 3%
   // total sobre lo financiado. La opción de 1 cuota se retiró: no existe y
   // pedirla devuelve `option_unavailable`.

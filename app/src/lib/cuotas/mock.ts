@@ -797,7 +797,9 @@ export function createMockCuotas(overrides: MockOverrides = {}): CuotasClient {
         installments: quote.installments.map((amount, index) => ({
           index,
           amount,
-          dueAt: at + (index + 1) * 30 * day,
+          dueAt:
+            at +
+            (index + 1) * (state.config.installmentIntervalDays ?? 30) * day,
           penalty: 0,
           status: "Upcoming",
         })),
