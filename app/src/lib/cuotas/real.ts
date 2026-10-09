@@ -107,6 +107,7 @@ import type {
   Installment,
   InstallmentStatus,
   Merchant,
+  OpenPlanArgs,
   Plan,
   PlanStatus,
   PlanTerms,
@@ -119,6 +120,9 @@ import type {
   Reputation,
   Sale,
   TierIndex,
+  TxOperationOptions,
+  TxPhase,
+  TxProgressListener,
   TxResult,
   UnixSeconds,
 } from "./types";
@@ -560,6 +564,20 @@ export async function proposeTransaction(
   return proposal;
 }
 
+/** Emite una fase de progreso; un listener que lanza nunca rompe la operación. */
+function emitProgress(
+  listener: TxProgressListener | undefined,
+  phase: TxPhase,
+  signature?: string,
+): void {
+  if (!listener) return;
+  try {
+    listener({ phase, signature });
+  } catch {
+    // El listener es observador: su error no puede abortar ni forzar reenvíos.
+  }
+}
+
 /** Espera confirmación (processed basta para la UI; finalized lo muestra Explorer). */
 async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<void> {
   const deadline = Date.now() + 60_000;
@@ -570,9 +588,12 @@ async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<voi
       .catch(() => null);
     const status = res?.value?.[0];
     if (status?.err) {
+      // La transacción ejecutó y falló: resultado definitivo (nada que
+      // reconciliar; reintentar arma una propuesta fresca, no un duplicado).
       throw new CuotasError(
         "unavailable",
         `La transacción falló onchain: ${JSON.stringify(status.err)} (${explorerTxUrl(signature)})`,
+        String(signature),
       );
     }
     if (
@@ -582,9 +603,13 @@ async function confirmSignature(rpc: RealRpc, signature: Signature): Promise<voi
       return;
     }
     if (Date.now() > deadline) {
+      // Sin veredicto: la transacción pudo haber aterrizado o no. Es
+      // `uncertain` y lleva la firma para que la UI reconcilie en vez de
+      // reenviar a ciegas.
       throw new CuotasError(
-        "unavailable",
-        `Sin confirmación en 60s; revisá ${explorerTxUrl(signature)} antes de reintentar`,
+        "uncertain",
+        `Sin confirmación en 60s; la transacción puede haberse procesado. Reconciliá el estado (o ${explorerTxUrl(signature)}) antes de reintentar`,
+        String(signature),
       );
     }
     await new Promise((r) => setTimeout(r, 1000));
@@ -644,6 +669,7 @@ export async function sendReviewedProposal(
   proposal: TxProposal,
   instructions: { ix: Instruction; name: string; summary: string }[],
   signer: TransactionSigner,
+  onProgress?: TxProgressListener,
 ): Promise<string> {
   if (!proposal.simulation.ok) {
     throw new CuotasError(
@@ -684,8 +710,12 @@ export async function sendReviewedProposal(
   const signed = await signTransactionMessageWithSigners(message).catch((e: unknown) => {
     throw new CuotasError("wallet_required", `Firma cancelada o rechazada: ${rpcErr(e)}`);
   });
+  // La firma se deriva localmente ANTES de enviar: si el envío se corta, la
+  // UI ya conoce la firma para reconciliarla (es la misma que devuelve el RPC).
+  const signature = getSignatureFromTransaction(signed);
+  emitProgress(onProgress, "sending", String(signature));
   const wire = getBase64EncodedWireTransaction(signed);
-  const signature = await rpc
+  const submitted = await rpc
     .sendTransaction(wire, { encoding: "base64", preflightCommitment: "confirmed" })
     .send()
     .catch((e: unknown) => {
@@ -696,11 +726,21 @@ export async function sendReviewedProposal(
           "El blockhash venció entre la revisión y el envío: reintentá (se arma una propuesta fresca)",
         );
       }
-      throw new CuotasError("unavailable", `Envío rechazado: ${msg}`);
+      if (/simulation failed|preflight|error processing instruction/i.test(msg)) {
+        // Rechazo del preflight: la transacción nunca llegó a la red.
+        throw new CuotasError("unavailable", `Envío rechazado (preflight): ${msg}`);
+      }
+      // El envío no dio respuesta: la transacción puede haber llegado igual.
+      // `uncertain` + firma → reconciliar, jamás reenviar a ciegas.
+      throw new CuotasError(
+        "uncertain",
+        `Sin respuesta del envío; la transacción puede haberse procesado. Reconciliá el estado (o ${explorerTxUrl(String(signature))}) antes de reintentar`,
+        String(signature),
+      );
     });
-  void getSignatureFromTransaction(signed);
-  await confirmSignature(rpc, signature);
-  return signature.toString();
+  emitProgress(onProgress, "confirming", String(submitted));
+  await confirmSignature(rpc, submitted);
+  return submitted.toString();
 }
 
 /**
@@ -715,10 +755,13 @@ export async function proposeAndSend(
   rpc: RealRpc,
   env: RealEnv,
   input: ProposalInput & { signer: TransactionSigner },
-  opts?: { reviewer?: Reviewer },
+  opts?: { reviewer?: Reviewer; onProgress?: TxProgressListener },
 ): Promise<{ signature: string; proposal: TxProposal }> {
   const proposal = await proposeTransaction(rpc, env, input);
   const reviewer = opts?.reviewer ?? defaultReviewer;
+  // Desde acá hasta `sending` la operación espera aprobación humana
+  // (revisión en la app + firma en la wallet).
+  emitProgress(opts?.onProgress, "awaiting_approval");
   let approved = false;
   try {
     approved = await reviewer(proposal);
@@ -732,7 +775,13 @@ export async function proposeAndSend(
       `${proposal.label}: revisión rechazada. No se firmó ni envió nada.`,
     );
   }
-  const signature = await sendReviewedProposal(rpc, proposal, input.instructions, input.signer);
+  const signature = await sendReviewedProposal(
+    rpc,
+    proposal,
+    input.instructions,
+    input.signer,
+    opts?.onProgress,
+  );
   return { signature, proposal };
 }
 
@@ -1031,6 +1080,8 @@ export function computeRealQuote(
   guarantee: Guarantee | null,
   hasActivePlan: boolean,
   options?: QuoteOptions,
+  /** Saldo devUSDC del estudiante; `undefined` no chequea fondos. */
+  funds?: Micro,
 ): Quote {
   // Sin reputación onchain, la cotización supone escalón 0: es lo que el
   // estudiante obtendría tras `student_init_reputation`. No afirma estado.
@@ -1074,6 +1125,11 @@ export function computeRealQuote(
   if (withGuarantee && guarantee) {
     if (price > guarantee.maxPurchase) reasons.push("exceeds_guarantor_max_purchase");
     if (terms.requiredCoverage > guarantee.coverageMax) reasons.push("exceeds_guarantee_coverage");
+  }
+  // Va última: si hay otro bloqueo (fiador, escalón, plan activo) es más
+  // accionable que "te falta saldo".
+  if (funds !== undefined && funds < terms.downPayment) {
+    reasons.push("insufficient_funds");
   }
 
   return {
@@ -1572,6 +1628,394 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     return mapped;
   }
 
+  async function readReputation(ctx: RealCtx, student: WalletAddress): Promise<Reputation> {
+    const studentAddr = asAddress(student, "estudiante");
+    const [pda] = await findReputationPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const data = await readProgramAccount(
+      ctx.rpc,
+      pda,
+      ctx.env.programId,
+      REPUTATION_DISCRIMINATOR,
+      getReputationDecoder(),
+      "Reputation",
+    );
+    if (!data) throw new CuotasError("not_found", `reputación de ${student}`);
+    return mapReputation(student, data);
+  }
+
+  async function readGuarantee(ctx: RealCtx, student: WalletAddress): Promise<Guarantee | null> {
+    const studentAddr = asAddress(student, "estudiante");
+    const [pda] = await findGuaranteePda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const data = await readProgramAccount(
+      ctx.rpc,
+      pda,
+      ctx.env.programId,
+      GUARANTEE_DISCRIMINATOR,
+      getGuaranteeDecoder(),
+      "Guarantee",
+    );
+    if (!data) return null;
+    return mapGuarantee(student, data);
+  }
+
+  async function readPlans(ctx: RealCtx, student: WalletAddress): Promise<Plan[]> {
+    const studentAddr = asAddress(student, "estudiante");
+    const [pda] = await findPlanPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const data = await readProgramAccount(
+      ctx.rpc,
+      pda,
+      ctx.env.programId,
+      PLAN_DISCRIMINATOR,
+      getPlanDecoder(),
+      "Plan",
+    );
+    // Un plan por estudiante (Q5) y cierre al saldar: existe o no existe.
+    if (!data) return [];
+    const config = await readConfig(ctx);
+    const now = await chainNow(ctx.rpc);
+    let signature = "";
+    try {
+      const history = await addressHistory(ctx.rpc, pda, 100);
+      const oldest = history.sort((a, b) => a.slot - b.slot)[0];
+      if (oldest) signature = oldest.signature;
+    } catch {
+      // Sin historial legible: firma vacía, plan real igual válido.
+    }
+    return [mapPlan(pda, data, config, now, signature)];
+  }
+
+  /**
+   * Una operación firmada por clave a la vez: si llega un segundo llamado
+   * idéntico (doble click, re-render) mientras el primero sigue en curso,
+   * devuelve LA MISMA promesa — misma transacción, cero envíos duplicados.
+   */
+  const inFlight = new Map<string, Promise<unknown>>();
+  const dedup = <T>(key: string, run: () => Promise<T>): Promise<T> => {
+    const running = inFlight.get(key);
+    if (running) return running as Promise<T>;
+    const p = run().finally(() => {
+      if (inFlight.get(key) === p) inFlight.delete(key);
+    });
+    inFlight.set(key, p);
+    return p;
+  };
+
+  async function openPlanOnce(args: OpenPlanArgs): Promise<TxResult<Plan>> {
+    const progress = args.onProgress;
+    emitProgress(progress, "preparing");
+    const ctx = await writeCtx(overrides);
+    const studentAddr = asAddress(args.student, "estudiante");
+    if (String(ctx.signer.address) !== String(studentAddr)) {
+      throw new CuotasError(
+        "wallet_required",
+        `Conectá la wallet del estudiante (${args.student}) para comprar`,
+      );
+    }
+    const config = await readConfig(ctx);
+    // Elegibilidad local primero: razones claras antes de simular. Sin
+    // cuenta Reputation no es un error: la primera compra la crea en la
+    // misma transacción (initReputation antes que open_plan, una firma).
+    let reputation: Reputation | null = null;
+    try {
+      reputation = await readReputation(ctx, args.student);
+    } catch (e) {
+      if (!(e instanceof CuotasError && e.code === "not_found")) throw e;
+    }
+    const guarantee = await readGuarantee(ctx, args.student);
+    const existing = await readPlans(ctx, args.student);
+    const quote = computeRealQuote(
+      config,
+      args.price,
+      args.student,
+      reputation,
+      guarantee,
+      existing.some((p) => p.status === "Active" || p.status === "Late"),
+      { installments: args.installments ?? 3, settlement: args.settlement ?? "immediate" },
+    );
+    if (!quote.eligible) {
+      throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
+    }
+    const merchantAddr = asAddress(args.merchant, "comercio");
+    const [merchantPda] = await findMerchantPda(
+      { merchantWallet: merchantAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const merchantAcct = await readProgramAccount(
+      ctx.rpc,
+      merchantPda,
+      ctx.env.programId,
+      MERCHANT_DISCRIMINATOR,
+      getMerchantDecoder(),
+      "Merchant",
+    );
+    if (!merchantAcct) throw new CuotasError("not_found", `comercio ${args.merchant}`);
+    if (!merchantAcct.active) {
+      throw new CuotasError("unavailable", `comercio ${args.merchant} inactivo`);
+    }
+    const studentAta = await findAta(studentAddr, ctx.env.usdcMint);
+    const balance = await tokenBalance(ctx.rpc, studentAta);
+    if (balance < quote.downPayment) {
+      throw new CuotasError(
+        "insufficient_funds",
+        `Saldo devUSDC insuficiente para el anticipo (tenés ${balance}, necesitás ${quote.downPayment})`,
+      );
+    }
+    const [configPda] = await findConfigPda({ programAddress: ctx.env.programId });
+    const [poolPda] = await findPoolPda(
+      { usdcMint: ctx.env.usdcMint },
+      { programAddress: ctx.env.programId },
+    );
+    const [vault] = await findVaultPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [lpJunior] = await findLpJuniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [lpSenior] = await findLpSeniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [reputationPda] = await findReputationPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const [guaranteePda] = await findGuaranteePda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const [planPda] = await findPlanPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const [payoutSchedulePda] = await findPayoutSchedulePda(
+      { plan: planPda },
+      { programAddress: ctx.env.programId },
+    );
+    const planOption = config.planOptions?.find((option) => option.installments === quote.installmentsCount);
+    const settlementIndex = config.settlementOptions?.findIndex((option) => option.id === quote.settlementId) ?? -1;
+    if (!planOption || settlementIndex < 0) {
+      throw new CuotasError("option_unavailable", "opción no configurada por el programa");
+    }
+    const ix = getOpenPlanInstruction({
+      student: ctx.signer,
+      config: configPda,
+      pool: poolPda,
+      vault,
+      usdcMint: ctx.env.usdcMint,
+      lpJuniorMint: lpJunior,
+      lpSeniorMint: lpSenior,
+      merchant: merchantPda,
+      merchantWallet: merchantAddr,
+      settlementAta: merchantAcct.settlementAta,
+      studentUsdcAta: studentAta,
+      reputation: reputationPda,
+      // Sin garantía registrada se pasa el ID del programa (convención de
+      // `open_plan.rs` para la cuenta opcional).
+      guarantee: guarantee ? guaranteePda : ctx.env.programId,
+      plan: planPda,
+      payoutSchedule: payoutSchedulePda,
+      price: args.price,
+      installments: planOption.installments,
+      settlement: settlementIndex,
+    });
+    // Primera compra sin Reputation on-chain: la misma transacción lleva
+    // student_init_reputation ANTES de open_plan. Anchor deserializa cada
+    // cuenta al ejecutar su instrucción, así que la segunda lee la
+    // reputación que la primera acaba de crear — una sola firma.
+    const instructions = [
+      ...(reputation
+        ? []
+        : [
+            {
+              ix: getStudentInitReputationInstruction({
+                student: ctx.signer,
+                config: configPda,
+                reputation: reputationPda,
+              }),
+              name: "StudentInitReputation",
+              summary: `Crear reputación (escalón 0) de ${args.student}`,
+            },
+          ]),
+      {
+        ix,
+        name: "OpenPlan",
+        summary: `Comprar por ${args.price} (anticipo ${quote.downPayment}, financia ${quote.financed})`,
+      },
+    ];
+    const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
+      label: "open_plan",
+      version: ctx.version,
+      feePayer: studentAddr,
+      signer: ctx.signer,
+      instructions,
+    }, { reviewer: overrides.reviewer, onProgress: progress });
+    // Confirmada: el plan tiene que existir. Si la lectura falla o la cuenta
+    // no aparece todavía, el resultado quedó incierto (NO reintentar: la
+    // compra pudo haber aterrizado; reconciliar con `waitForOpenedPlan`).
+    emitProgress(progress, "syncing", signature);
+    let created: GeneratedPlan | null;
+    try {
+      created = await readProgramAccount(
+        ctx.rpc,
+        planPda,
+        ctx.env.programId,
+        PLAN_DISCRIMINATOR,
+        getPlanDecoder(),
+        "Plan",
+      );
+    } catch (e) {
+      throw new CuotasError(
+        "uncertain",
+        `Confirmada ${explorerTxUrl(signature)} pero sin lectura del plan: ${rpcErr(e)}`,
+        signature,
+      );
+    }
+    if (!created) {
+      throw new CuotasError(
+        "uncertain",
+        `El plan no aparece tras ${explorerTxUrl(signature)}; reconciliá con waitForOpenedPlan`,
+        signature,
+      );
+    }
+    const now = await chainNow(ctx.rpc).catch(() => Math.floor(Date.now() / 1000));
+    notify();
+    return { value: mapPlan(planPda, created, config, now, signature), signature };
+  }
+
+  async function payInstallmentOnce(
+    student: WalletAddress,
+    planId: string,
+    options?: TxOperationOptions,
+  ): Promise<TxResult<Plan>> {
+    const progress = options?.onProgress;
+    emitProgress(progress, "preparing");
+    const ctx = await writeCtx(overrides);
+    const studentAddr = asAddress(student, "estudiante");
+    if (String(ctx.signer.address) !== String(studentAddr)) {
+      throw new CuotasError(
+        "wallet_required",
+        `Conectá la wallet del estudiante (${student}) para pagar`,
+      );
+    }
+    const [planPda] = await findPlanPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    if (planId !== String(planPda)) {
+      throw new CuotasError("not_found", `plan ${planId}`);
+    }
+    const config = await readConfig(ctx);
+    const plan = await readProgramAccount(
+      ctx.rpc,
+      planPda,
+      ctx.env.programId,
+      PLAN_DISCRIMINATOR,
+      getPlanDecoder(),
+      "Plan",
+    );
+    if (!plan) throw new CuotasError("not_found", `plan ${planId} (sin plan activo)`);
+    const firstUnpaid = plan.installments.findIndex((i) => !i.paid && !i.charged);
+    if (firstUnpaid < 0) throw new CuotasError("nothing_due", `plan ${planId} sin cuotas impagas`);
+    const now = await chainNow(ctx.rpc);
+    const preImage = mapPlan(planPda, plan, config, now, "");
+    const due = preImage.installments[firstUnpaid];
+    const studentAta = await findAta(studentAddr, ctx.env.usdcMint);
+    // Sin saldo para la cuota (+punitorio) la transacción fracasaría igual:
+    // se corta acá con una razón clara, antes de simular y firmar.
+    const balance = await tokenBalance(ctx.rpc, studentAta);
+    if (balance < due.amount + due.penalty) {
+      throw new CuotasError(
+        "insufficient_funds",
+        `Saldo devUSDC insuficiente para la cuota ${firstUnpaid + 1} (tenés ${balance}, necesitás ${due.amount + due.penalty})`,
+      );
+    }
+    const [configPda] = await findConfigPda({ programAddress: ctx.env.programId });
+    const [poolPda] = await findPoolPda(
+      { usdcMint: ctx.env.usdcMint },
+      { programAddress: ctx.env.programId },
+    );
+    const [vault] = await findVaultPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [lpJunior] = await findLpJuniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [lpSenior] = await findLpSeniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
+    const [reputationPda] = await findReputationPda(
+      { student: studentAddr },
+      { programAddress: ctx.env.programId },
+    );
+    const ix = getPayInstallmentInstruction({
+      student: ctx.signer,
+      config: configPda,
+      pool: poolPda,
+      vault,
+      usdcMint: ctx.env.usdcMint,
+      lpJuniorMint: lpJunior,
+      lpSeniorMint: lpSenior,
+      studentUsdcAta: studentAta,
+      reputation: reputationPda,
+      plan: planPda,
+      expectedInstallmentIndex: firstUnpaid,
+      expectedOpenedAt: plan.openedAt,
+      expectedGeneration: plan.generation,
+    });
+    const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
+      label: "pay_installment",
+      version: ctx.version,
+      feePayer: studentAddr,
+      signer: ctx.signer,
+      instructions: [
+        {
+          ix,
+          name: "PayInstallment",
+          summary: `Pagar cuota ${firstUnpaid + 1} (${due.amount + due.penalty})`,
+        },
+      ],
+    }, { reviewer: overrides.reviewer, onProgress: progress });
+    // Confirmada: releer el plan. Falla la lectura → `uncertain` (el pago
+    // pudo aterrizar; reconciliar con `waitForPlan`/`reconcileUntil`, no
+    // reenviar — el programa rechaza dobles pagos, pero a costa de otra tx).
+    emitProgress(progress, "syncing", signature);
+    let after: GeneratedPlan | null;
+    try {
+      after = await readProgramAccount(
+        ctx.rpc,
+        planPda,
+        ctx.env.programId,
+        PLAN_DISCRIMINATOR,
+        getPlanDecoder(),
+        "Plan",
+      );
+    } catch (e) {
+      throw new CuotasError(
+        "uncertain",
+        `Confirmada ${explorerTxUrl(signature)} pero sin lectura del plan: ${rpcErr(e)}`,
+        signature,
+      );
+    }
+    notify();
+    if (after) return { value: mapPlan(planPda, after, config, now, signature), signature };
+    // Se saldó y el programa cerró la cuenta: imagen verificada (todo
+    // resuelto + cierre). El punitorio exacto sale del evento InstallmentPaid.
+    let penalty = due.penalty;
+    try {
+      const tx = await fetchParsedTx(ctx.rpc, signature);
+      for (const p of parseCuotasEventsFromLogs(tx?.meta?.logMessages, ctx.env.programId)) {
+        if (p.name === "InstallmentPaid") penalty = safeMicro(p.event.penalty, "paid.penalty");
+      }
+    } catch {
+      // Sin evento legible: se conserva el punitorio pre-imagen.
+    }
+    const settled: Plan = {
+      ...preImage,
+      installments: preImage.installments.map((inst, idx) =>
+        idx === firstUnpaid ? { ...inst, penalty, status: "Paid" as const } : inst,
+      ),
+      status: "Settled",
+      signature,
+    };
+    return { value: settled, signature };
+  }
+
   return {
     mode: "real",
 
@@ -1586,85 +2030,43 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
     },
 
     async getReputation(student: WalletAddress): Promise<Reputation> {
-      const ctx = await readCtx(overrides);
-      const studentAddr = asAddress(student, "estudiante");
-      const [pda] = await findReputationPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const data = await readProgramAccount(
-        ctx.rpc,
-        pda,
-        ctx.env.programId,
-        REPUTATION_DISCRIMINATOR,
-        getReputationDecoder(),
-        "Reputation",
-      );
-      if (!data) throw new CuotasError("not_found", `reputación de ${student}`);
-      return mapReputation(student, data);
+      return readReputation(await readCtx(overrides), student);
     },
 
     async getGuarantee(student: WalletAddress): Promise<Guarantee | null> {
-      const ctx = await readCtx(overrides);
-      const studentAddr = asAddress(student, "estudiante");
-      const [pda] = await findGuaranteePda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const data = await readProgramAccount(
-        ctx.rpc,
-        pda,
-        ctx.env.programId,
-        GUARANTEE_DISCRIMINATOR,
-        getGuaranteeDecoder(),
-        "Guarantee",
-      );
-      if (!data) return null;
-      return mapGuarantee(student, data);
+      return readGuarantee(await readCtx(overrides), student);
     },
 
     async quote(price: Micro, student: WalletAddress, options?: QuoteOptions): Promise<Quote> {
-      const config = await readConfig(await readCtx(overrides));
+      const ctx = await readCtx(overrides);
+      const config = await readConfig(ctx);
       let reputation: Reputation | null = null;
       try {
-        reputation = await this.getReputation(student);
+        reputation = await readReputation(ctx, student);
       } catch (e) {
         if (!(e instanceof CuotasError && e.code === "not_found")) throw e;
       }
-      const guarantee = await this.getGuarantee(student);
-      const plans = await this.getPlans(student);
+      const guarantee = await readGuarantee(ctx, student);
+      const plans = await readPlans(ctx, student);
       const hasActivePlan = plans.some((p) => p.status === "Active" || p.status === "Late");
-      return computeRealQuote(config, price, student, reputation, guarantee, hasActivePlan, options);
+      // Saldo real del ATA devUSDC: bloquea con `insufficient_funds` si no
+      // alcanza para el anticipo (la UI muestra el faltante, no simula).
+      const studentAddr = asAddress(student, "estudiante");
+      const funds = await tokenBalance(ctx.rpc, await findAta(studentAddr, ctx.env.usdcMint));
+      return computeRealQuote(
+        config,
+        price,
+        student,
+        reputation,
+        guarantee,
+        hasActivePlan,
+        options,
+        funds,
+      );
     },
 
     async getPlans(student: WalletAddress): Promise<Plan[]> {
-      const ctx = await readCtx(overrides);
-      const studentAddr = asAddress(student, "estudiante");
-      const [pda] = await findPlanPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const data = await readProgramAccount(
-        ctx.rpc,
-        pda,
-        ctx.env.programId,
-        PLAN_DISCRIMINATOR,
-        getPlanDecoder(),
-        "Plan",
-      );
-      // Un plan por estudiante (Q5) y cierre al saldar: existe o no existe.
-      if (!data) return [];
-      const config = await readConfig(ctx);
-      const now = await chainNow(ctx.rpc);
-      let signature = "";
-      try {
-        const history = await addressHistory(ctx.rpc, pda, 100);
-        const oldest = history.sort((a, b) => a.slot - b.slot)[0];
-        if (oldest) signature = oldest.signature;
-      } catch {
-        // Sin historial legible: firma vacía, plan real igual válido.
-      }
-      return [mapPlan(pda, data, config, now, signature)];
+      return readPlans(await readCtx(overrides), student);
     },
 
     async setMerchantSettlement(): Promise<Merchant> {
@@ -1832,272 +2234,31 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
       );
       if (!created) {
         throw new CuotasError(
-          "unavailable",
+          "uncertain",
           `La reputación no aparece tras ${explorerTxUrl(signature)}`,
+          signature,
         );
       }
       notify();
       return { value: mapReputation(student, created), signature };
     },
 
-    async openPlan(args): Promise<TxResult<Plan>> {
-      const ctx = await writeCtx(overrides);
-      const studentAddr = asAddress(args.student, "estudiante");
-      if (String(ctx.signer.address) !== String(studentAddr)) {
-        throw new CuotasError(
-          "wallet_required",
-          `Conectá la wallet del estudiante (${args.student}) para comprar`,
-        );
-      }
-      const config = await readConfig(ctx);
-      // Elegibilidad local primero: razones claras antes de simular. Sin
-      // cuenta Reputation no es un error: la primera compra la crea en la
-      // misma transacción (initReputation antes que open_plan, una firma).
-      let reputation: Reputation | null = null;
-      try {
-        reputation = await this.getReputation(args.student);
-      } catch (e) {
-        if (!(e instanceof CuotasError && e.code === "not_found")) throw e;
-      }
-      const guarantee = await this.getGuarantee(args.student);
-      const existing = await this.getPlans(args.student);
-      const quote = computeRealQuote(
-        config,
-        args.price,
-        args.student,
-        reputation,
-        guarantee,
-        existing.some((p) => p.status === "Active" || p.status === "Late"),
-        { installments: args.installments ?? 3, settlement: args.settlement ?? "immediate" },
-      );
-      if (!quote.eligible) {
-        throw new CuotasError(quote.reasons[0], `openPlan: ${quote.reasons[0]}`);
-      }
-      const merchantAddr = asAddress(args.merchant, "comercio");
-      const [merchantPda] = await findMerchantPda(
-        { merchantWallet: merchantAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const merchantAcct = await readProgramAccount(
-        ctx.rpc,
-        merchantPda,
-        ctx.env.programId,
-        MERCHANT_DISCRIMINATOR,
-        getMerchantDecoder(),
-        "Merchant",
-      );
-      if (!merchantAcct) throw new CuotasError("not_found", `comercio ${args.merchant}`);
-      if (!merchantAcct.active) {
-        throw new CuotasError("unavailable", `comercio ${args.merchant} inactivo`);
-      }
-      const studentAta = await findAta(studentAddr, ctx.env.usdcMint);
-      const balance = await tokenBalance(ctx.rpc, studentAta);
-      if (balance < quote.downPayment) {
-        throw new CuotasError(
-          "unavailable",
-          `Saldo devUSDC insuficiente para el anticipo (tenés ${balance}, necesitás ${quote.downPayment})`,
-        );
-      }
-      const [configPda] = await findConfigPda({ programAddress: ctx.env.programId });
-      const [poolPda] = await findPoolPda(
-        { usdcMint: ctx.env.usdcMint },
-        { programAddress: ctx.env.programId },
-      );
-      const [vault] = await findVaultPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [lpJunior] = await findLpJuniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [lpSenior] = await findLpSeniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [reputationPda] = await findReputationPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const [guaranteePda] = await findGuaranteePda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const [planPda] = await findPlanPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const [payoutSchedulePda] = await findPayoutSchedulePda(
-        { plan: planPda },
-        { programAddress: ctx.env.programId },
-      );
-      const planOption = config.planOptions?.find((option) => option.installments === quote.installmentsCount);
-      const settlementIndex = config.settlementOptions?.findIndex((option) => option.id === quote.settlementId) ?? -1;
-      if (!planOption || settlementIndex < 0) {
-        throw new CuotasError("option_unavailable", "opción no configurada por el programa");
-      }
-      const ix = getOpenPlanInstruction({
-        student: ctx.signer,
-        config: configPda,
-        pool: poolPda,
-        vault,
-        usdcMint: ctx.env.usdcMint,
-        lpJuniorMint: lpJunior,
-        lpSeniorMint: lpSenior,
-        merchant: merchantPda,
-        merchantWallet: merchantAddr,
-        settlementAta: merchantAcct.settlementAta,
-        studentUsdcAta: studentAta,
-        reputation: reputationPda,
-        // Sin garantía registrada se pasa el ID del programa (convención de
-        // `open_plan.rs` para la cuenta opcional).
-        guarantee: guarantee ? guaranteePda : ctx.env.programId,
-        plan: planPda,
-        payoutSchedule: payoutSchedulePda,
-        price: args.price,
-        installments: planOption.installments,
-        settlement: settlementIndex,
-      });
-      // Primera compra sin Reputation on-chain: la misma transacción lleva
-      // student_init_reputation ANTES de open_plan. Anchor deserializa cada
-      // cuenta al ejecutar su instrucción, así que la segunda lee la
-      // reputación que la primera acaba de crear — una sola firma.
-      const instructions = [
-        ...(reputation
-          ? []
-          : [
-              {
-                ix: getStudentInitReputationInstruction({
-                  student: ctx.signer,
-                  config: configPda,
-                  reputation: reputationPda,
-                }),
-                name: "StudentInitReputation",
-                summary: `Crear reputación (escalón 0) de ${args.student}`,
-              },
-            ]),
-        {
-          ix,
-          name: "OpenPlan",
-          summary: `Comprar por ${args.price} (anticipo ${quote.downPayment}, financia ${quote.financed})`,
-        },
-      ];
-      const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
-        label: "open_plan",
-        version: ctx.version,
-        feePayer: studentAddr,
-        signer: ctx.signer,
-        instructions,
-      }, { reviewer: overrides.reviewer });
-      const created = await readProgramAccount(
-        ctx.rpc,
-        planPda,
-        ctx.env.programId,
-        PLAN_DISCRIMINATOR,
-        getPlanDecoder(),
-        "Plan",
-      );
-      if (!created) {
-        throw new CuotasError("unavailable", `El plan no aparece tras ${explorerTxUrl(signature)}`);
-      }
-      const now = await chainNow(ctx.rpc);
-      notify();
-      return { value: mapPlan(planPda, created, config, now, signature), signature };
+    openPlan(args): Promise<TxResult<Plan>> {
+      // Un solo intento en curso por estudiante: un segundo llamado
+      // concurrente comparte la misma transacción (no se envía dos veces).
+      // Sin `async` a propósito: devuelve LA promesa en curso (misma
+      // identidad), no una envoltura nueva.
+      return dedup(`open_plan:${args.student}`, () => openPlanOnce(args));
     },
 
-    async payInstallment(student: WalletAddress, planId: string): Promise<TxResult<Plan>> {
-      const ctx = await writeCtx(overrides);
-      const studentAddr = asAddress(student, "estudiante");
-      if (String(ctx.signer.address) !== String(studentAddr)) {
-        throw new CuotasError(
-          "wallet_required",
-          `Conectá la wallet del estudiante (${student}) para pagar`,
-        );
-      }
-      const [planPda] = await findPlanPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
+    payInstallment(
+      student: WalletAddress,
+      planId: string,
+      options?: TxOperationOptions,
+    ): Promise<TxResult<Plan>> {
+      return dedup(`pay_installment:${student}:${planId}`, () =>
+        payInstallmentOnce(student, planId, options),
       );
-      if (planId !== String(planPda)) {
-        throw new CuotasError("not_found", `plan ${planId}`);
-      }
-      const config = await readConfig(ctx);
-      const plan = await readProgramAccount(
-        ctx.rpc,
-        planPda,
-        ctx.env.programId,
-        PLAN_DISCRIMINATOR,
-        getPlanDecoder(),
-        "Plan",
-      );
-      if (!plan) throw new CuotasError("not_found", `plan ${planId} (sin plan activo)`);
-      const firstUnpaid = plan.installments.findIndex((i) => !i.paid && !i.charged);
-      if (firstUnpaid < 0) throw new CuotasError("nothing_due", `plan ${planId} sin cuotas impagas`);
-      const now = await chainNow(ctx.rpc);
-      const preImage = mapPlan(planPda, plan, config, now, "");
-      const [configPda] = await findConfigPda({ programAddress: ctx.env.programId });
-      const [poolPda] = await findPoolPda(
-        { usdcMint: ctx.env.usdcMint },
-        { programAddress: ctx.env.programId },
-      );
-      const [vault] = await findVaultPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [lpJunior] = await findLpJuniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [lpSenior] = await findLpSeniorMintPda({ pool: poolPda }, { programAddress: ctx.env.programId });
-      const [reputationPda] = await findReputationPda(
-        { student: studentAddr },
-        { programAddress: ctx.env.programId },
-      );
-      const studentAta = await findAta(studentAddr, ctx.env.usdcMint);
-      const ix = getPayInstallmentInstruction({
-        student: ctx.signer,
-        config: configPda,
-        pool: poolPda,
-        vault,
-        usdcMint: ctx.env.usdcMint,
-        lpJuniorMint: lpJunior,
-        lpSeniorMint: lpSenior,
-        studentUsdcAta: studentAta,
-        reputation: reputationPda,
-        plan: planPda,
-        expectedInstallmentIndex: firstUnpaid,
-        expectedOpenedAt: plan.openedAt,
-        expectedGeneration: plan.generation,
-      });
-      const due = preImage.installments[firstUnpaid];
-      const { signature } = await proposeAndSend(ctx.rpc, ctx.env, {
-        label: "pay_installment",
-        version: ctx.version,
-        feePayer: studentAddr,
-        signer: ctx.signer,
-        instructions: [
-          {
-            ix,
-            name: "PayInstallment",
-            summary: `Pagar cuota ${firstUnpaid + 1} (${due.amount + due.penalty})`,
-          },
-        ],
-      }, { reviewer: overrides.reviewer });
-      const after = await readProgramAccount(
-        ctx.rpc,
-        planPda,
-        ctx.env.programId,
-        PLAN_DISCRIMINATOR,
-        getPlanDecoder(),
-        "Plan",
-      );
-      notify();
-      if (after) return { value: mapPlan(planPda, after, config, now, signature), signature };
-      // Se saldó y el programa cerró la cuenta: imagen verificada (todo
-      // resuelto + cierre). El punitorio exacto sale del evento InstallmentPaid.
-      let penalty = due.penalty;
-      try {
-        const tx = await fetchParsedTx(ctx.rpc, signature);
-        for (const p of parseCuotasEventsFromLogs(tx?.meta?.logMessages, ctx.env.programId)) {
-          if (p.name === "InstallmentPaid") penalty = safeMicro(p.event.penalty, "paid.penalty");
-        }
-      } catch {
-        // Sin evento legible: se conserva el punitorio pre-imagen.
-      }
-      const settled: Plan = {
-        ...preImage,
-        installments: preImage.installments.map((inst, idx) =>
-          idx === firstUnpaid ? { ...inst, penalty, status: "Paid" as const } : inst,
-        ),
-        status: "Settled",
-        signature,
-      };
-      return { value: settled, signature };
     },
 
     // Puente keeper: solo la wallet keeper conectada registra garantías (el
@@ -2166,7 +2327,11 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "Guarantee",
       );
       if (!updated) {
-        throw new CuotasError("unavailable", `La garantía no aparece tras ${explorerTxUrl(signature)}`);
+        throw new CuotasError(
+          "uncertain",
+          `La garantía no aparece tras ${explorerTxUrl(signature)}`,
+          signature,
+        );
       }
       notify();
       return { value: mapGuarantee(args.student, updated), signature };
@@ -2215,7 +2380,11 @@ export function createRealCuotas(overrides: RealOverrides = {}): CuotasClient & 
         "Guarantee",
       );
       if (!updated) {
-        throw new CuotasError("unavailable", `La garantía no aparece tras ${explorerTxUrl(signature)}`);
+        throw new CuotasError(
+          "uncertain",
+          `La garantía no aparece tras ${explorerTxUrl(signature)}`,
+          signature,
+        );
       }
       notify();
       return { value: mapGuarantee(student, updated), signature };

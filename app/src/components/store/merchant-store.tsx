@@ -103,6 +103,9 @@ function badgeText(
       return t.reasons.has_active_plan;
     case "protocol_halted":
       return t.reasons.protocol_halted;
+    case "insufficient_funds":
+      // La razón llega del `quote()` (saldo devUSDC < anticipo): badge propio.
+      return t.reasons.insufficient_funds;
     case "option_unavailable":
     case "below_option_min":
     case "pool_liquidity":

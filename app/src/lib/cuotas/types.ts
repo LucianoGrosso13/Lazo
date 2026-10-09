@@ -140,6 +140,9 @@ export type QuoteBlockReason =
   | "blocked_after_default"
   | "has_active_plan"
   | "protocol_halted"
+  /** Saldo devUSDC del estudiante < anticipo requerido (o < cuota a pagar).
+   * La UI muestra el faltante y bloquea la compra antes de pedir firma. */
+  | "insufficient_funds"
   /** La opción de plan/cobro pedida no existe, está deshabilitada o no tiene
    * tarifa (el real la emite para todo lo que el programa no soporta). */
   | "option_unavailable";
@@ -352,7 +355,7 @@ export interface CreateCounterOrderArgs {
   description: string;
 }
 
-export interface OpenPlanArgs {
+export interface OpenPlanArgs extends TxOperationOptions {
   student: WalletAddress;
   merchant: WalletAddress;
   price: Micro;
@@ -382,6 +385,42 @@ export interface RegisterGuaranteeArgs {
 export interface TxResult<T> {
   value: T;
   signature: string;
+}
+
+/**
+ * Fase observable de una operación que requiere firma del usuario. El orden
+ * normal es `preparing → awaiting_approval → sending → confirming → syncing`;
+ * un error puede lanzarse en cualquier punto (las fases emitidas dicen hasta
+ * dónde llegó). La firma aparece desde `sending` en adelante.
+ */
+export type TxPhase =
+  /** Lecturas + simulación previa; la wallet todavía no ve nada. */
+  | "preparing"
+  /** Revisión + firma pendientes (Phantom abierto). */
+  | "awaiting_approval"
+  /** Firmada y enviándose a la red (`signature` presente). */
+  | "sending"
+  /** Enviada; esperando confirmación onchain (`signature` presente). */
+  | "confirming"
+  /** Confirmada; leyendo el estado resultante (`signature` presente). */
+  | "syncing";
+
+/** Evento de progreso; `signature` solo desde `sending` en adelante. */
+export interface TxProgress {
+  phase: TxPhase;
+  signature?: string;
+}
+
+export type TxProgressListener = (progress: TxProgress) => void;
+
+/**
+ * Opciones de operaciones firmadas: `onProgress` recibe cada fase en orden.
+ * El mock emite la misma secuencia al instante (queda declarado simulado);
+ * si el UI quiere un mínimo visible post-envío lo espacia por su cuenta.
+ * Un listener que lanza nunca rompe la operación.
+ */
+export interface TxOperationOptions {
+  onProgress?: TxProgressListener;
 }
 
 /**
@@ -421,7 +460,11 @@ export interface CuotasClient {
   /** `open_plan`: anticipo → comercio, pool → comercio (menos fee) y se crea el Plan. Si el estudiante todavía no tiene Reputation on-chain, la misma transacción la crea primero (`student_init_reputation` + `open_plan`, una firma). */
   openPlan(args: OpenPlanArgs): Promise<TxResult<Plan>>;
   /** `pay_installment`: paga la próxima cuota impaga (con punitorio si corresponde). */
-  payInstallment(student: WalletAddress, planId: string): Promise<TxResult<Plan>>;
+  payInstallment(
+    student: WalletAddress,
+    planId: string,
+    options?: TxOperationOptions,
+  ): Promise<TxResult<Plan>>;
   /** `keeper_register_guarantee` (lo firma el keeper; en el mock, directo). */
   registerGuarantee(args: RegisterGuaranteeArgs): Promise<TxResult<Guarantee>>;
   /** `keeper_revoke_guarantee`. */
@@ -459,6 +502,13 @@ export type RealErrorCode =
   | "review_rejected"
   /** La wallet no firma la versión de transacción pedida. */
   | "unsupported_version"
+  /**
+   * La transacción quedó firmada/enviada pero su resultado no se verificó:
+   * PUEDE haber aterrizado onchain. `CuotasError.signature` trae la firma.
+   * La UI NO reintenta a ciegas (riesgo de doble cargo): reconcilia con
+   * `waitForOpenedPlan`/`waitForPlan` (o el Explorer) hasta verificarla.
+   */
+  | "uncertain"
   /** Fallo de red, RPC o confirmación: reintentar. No inventa datos. */
   | "unavailable";
 
@@ -473,6 +523,11 @@ export class CuotasError extends Error {
       | "order_unavailable"
       | RealErrorCode,
     message?: string,
+    /**
+     * Firma de la transacción asociada al error. Solo presente en
+     * `uncertain` (y errores post-envío): permite reconciliar sin reenviar.
+     */
+    public readonly signature?: string,
   ) {
     super(message ?? code);
     this.name = "CuotasError";
