@@ -1,0 +1,61 @@
+.bars { display: grid; gap: 1.25rem; list-style: none; padding: 0; margin: 0; }
+.barRow { min-width: 0; }
+.barHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-size: 1rem; }
+.barHeading strong { display: inline-flex; align-items: center; gap: .4rem; flex-shrink: 0; font-family: var(--font-num); font-size: 1.125rem; font-weight: 500; }
+.barRow[data-winner] .barHeading strong { color: var(--accent-ink); }
+.track { height: 12px; margin-top: .6rem; background: var(--color-abyss-3); border-radius: 3px; overflow: clip; }
+.fill { height: 100%; background: var(--color-ash); transform-origin: left; border-radius: inherit; }
+.barRow[data-winner] .fill { background: var(--accent); box-shadow: inset 0 1px 0 var(--accent-ink); }
+.fill[data-entered] { animation: barReveal 700ms var(--ease-beam) both; }
+.note { color: var(--color-ink-2); font-size: .875rem; line-height: 1.55; margin: .5rem 0 0; }
+.gauge { text-align: center; }
+.gaugeFace { position: relative; width: min(100%, 280px); margin: 0 auto; }
+.gaugeSvg { display: block; width: 100%; fill: none; stroke-width: 12; stroke-linecap: round; }
+.gaugeTrack { stroke: var(--color-abyss-3); }
+.gaugeArc { stroke: var(--accent); }
+.gaugeArc[data-entered] { animation: gaugeReveal 900ms var(--ease-beam) both; }
+.gaugeValue { position: absolute; bottom: 10%; left: 0; width: 100%; font-family: var(--font-num); font-size: clamp(1.75rem, 5vw, 2.75rem); font-weight: 500; color: var(--accent-ink); }
+.gaugeLabel { font-size: 1rem; }
+.historyList { list-style: none; padding: 0; margin: 0; }
+.historyList > li { border-bottom: 1px solid var(--color-hairline); padding: .875rem 0; font-size: .875rem; line-height: 1.55; }
+.toggle, .accordionButton { min-height: 44px; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 1rem; cursor: pointer; text-align: left; font: inherit; background: transparent; color: var(--color-ink); border: 0; }
+.toggle { padding: .875rem 0; color: var(--accent-ink); font-size: .875rem; }
+.toggle:focus-visible, .accordionButton:focus-visible, .stepButton:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 4px; }
+.chevron { flex: none; transition: transform 180ms var(--ease-beam); }
+.chevron[data-expanded="true"] { transform: rotate(180deg); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.steps > li { position: relative; min-width: 0; }
+.steps > li:not(:last-child)::after { content: ""; position: absolute; width: 1px; height: 1rem; top: 100%; left: 2.25rem; background: var(--accent-border); transform-origin: top; transition: background 180ms; }
+.steps > li:hover::after, .steps > li:focus-within::after, .steps > li[data-selected]::after { background: var(--accent-ink); }
+.stepButton { width: 100%; min-height: 80px; display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border: 1px solid var(--accent-border); border-radius: .75rem; background: var(--accent-soft); color: var(--color-ink); text-align: left; cursor: pointer; transition: border-color 180ms, box-shadow 180ms, transform 180ms var(--ease-beam); }
+.stepButton:hover, .stepButton:focus-visible, li[data-selected] > .stepButton { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px -14px var(--accent-glow); }
+.stepNumber { flex: none; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; font-family: var(--font-num); color: var(--accent-ink); border: 1px solid var(--accent-border); border-radius: 50%; }
+.stepText { display: grid; gap: .4rem; }
+.stepText strong { font-size: 1rem; font-weight: 600; }
+.stepText > span { font-size: .875rem; line-height: 1.55; color: var(--color-ink-2); }
+.steps[data-entered] > li { animation: stepReveal 650ms var(--ease-beam) var(--step-delay) both; }
+.accordionRow { border-bottom: 1px solid var(--color-hairline); }
+.accordionButton { padding: 1rem 0; font-size: 1rem; }
+.accordionButton:hover, .accordionButton[aria-expanded="true"] { color: var(--accent-ink); }
+.answer { padding: 0 1.5rem 1rem 0; font-size: .875rem; line-height: 1.65; color: var(--color-ink-2); }
+@media (min-width: 768px) {
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+  .stepButton { height: 100%; flex-direction: column; }
+  .steps > li:not(:last-child)::after { top: 2.25rem; left: 100%; width: 1.5rem; height: 1px; transform-origin: left; }
+}
+@keyframes barReveal { from { transform: scaleX(.05); } to { transform: scaleX(1); } }
+@keyframes gaugeReveal { from { stroke-dasharray: 0 100; } }
+@keyframes stepReveal { from { transform: translateY(10px); filter: brightness(.85); } to { transform: translateY(0); filter: brightness(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .fill, .gaugeArc, .steps > li { animation: none !important; }
+  .stepButton, .chevron, .steps > li::after { transition: none; }
+  .stepButton:hover, .stepButton:focus-visible, li[data-selected] > .stepButton { transform: none; }
+}
+/* The connecting light is drawn only toward the next step. */
+.steps > li:not(:last-child)::before { content: ""; position: absolute; z-index: 1; width: 1px; height: 1rem; top: 100%; left: 2.25rem; background: var(--accent-ink); transform: scaleY(0); transform-origin: top; transition: transform 350ms var(--ease-beam); }
+.steps > li:hover::before, .steps > li:focus-within::before, .steps > li[data-selected]::before { transform: scaleY(1); }
+@media (min-width: 768px) {
+  .steps > li:not(:last-child)::before { top: 2.25rem; left: 100%; width: 1.5rem; height: 1px; transform: scaleX(0); transform-origin: left; }
+  .steps > li:hover::before, .steps > li:focus-within::before, .steps > li[data-selected]::before { transform: scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) { .steps > li::before { transition: none; } }

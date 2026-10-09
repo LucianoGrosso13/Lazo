@@ -6,6 +6,27 @@ import { defineDict } from "../locale";
  */
 export const design = defineDict({
   es: {
+    primitives: {
+      title: "Un acento para cada rol",
+      intro: "La misma pieza cambia de acento según quién la usa: violeta para compradores, cyan para comercios y verde para el pool.",
+      sampleNote: "Muestras del sistema de diseño con valores de la configuración; no representan actividad ni rendimiento.",
+      loading: "Cargando configuración…",
+      buyer: "Comprador", merchant: "Comercio", pool: "Pool e inversores",
+      preferred: "Menor anticipo", chip: "Acento del rol", tier: "Tier", comparison: "Barras · anticipo por Tier",
+      bigNumber: "Número con count-up", limit: "Tope del primer Tier",
+      gauge: "Medidor · cobertura del garante", stepsTitle: "Pasos con conexión",
+      steps: [
+        { title: "Elegí", body: "Compará las opciones y revisá las condiciones." },
+        { title: "Revisá", body: "Leé el total, las cuotas y las fechas antes de continuar." },
+        { title: "Confirmá", body: "Avanzá cuando entiendas qué estás aceptando." },
+      ],
+      history: "Historial plegable · reglas por Tier", expand: "Ver todas", collapse: "Ver menos", downPayment: "Anticipo",
+      accordion: "Preguntas en acordeón",
+      faq: [
+        { q: "¿Cómo se aplica el color?", a: "Cada página o sección elige su rol; todas las piezas heredan el mismo acento." },
+        { q: "¿Se puede reducir el movimiento?", a: "Sí. Las piezas respetan la preferencia del dispositivo y muestran los datos completos sin animaciones." },
+      ],
+    },
     chrome: {
       menuOpen: "Abrir menú",
       menuClose: "Cerrar menú",
@@ -106,6 +127,27 @@ export const design = defineDict({
     },
   },
   en: {
+    primitives: {
+      title: "An accent for each role",
+      intro: "The same component changes accent with its audience: violet for buyers, cyan for merchants and green for the pool.",
+      sampleNote: "Design system samples using configuration values; they do not represent activity or returns.",
+      loading: "Loading configuration…",
+      buyer: "Buyer", merchant: "Merchant", pool: "Pool and investors",
+      preferred: "Lowest down payment", chip: "Role accent", tier: "Tier", comparison: "Bars · down payment by Tier",
+      bigNumber: "Number with count-up", limit: "First Tier purchase limit",
+      gauge: "Gauge · guarantor coverage", stepsTitle: "Connected steps",
+      steps: [
+        { title: "Choose", body: "Compare options and review the terms." },
+        { title: "Review", body: "Read the total, installments and dates before continuing." },
+        { title: "Confirm", body: "Continue once you understand what you are accepting." },
+      ],
+      history: "Collapsible history · Tier rules", expand: "View all", collapse: "View less", downPayment: "Down payment",
+      accordion: "Accordion questions",
+      faq: [
+        { q: "How is the color applied?", a: "Each page or section selects its role; every component inherits the same accent." },
+        { q: "Can motion be reduced?", a: "Yes. Components respect the device preference and show complete data without animations." },
+      ],
+    },
     chrome: {
       menuOpen: "Open menu",
       menuClose: "Close menu",
