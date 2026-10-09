@@ -7,7 +7,12 @@
 import type { OperationSnapshot, WalletAddress } from "@/lib/cuotas";
 
 type PaySnapshot = Extract<OperationSnapshot, { operation: "pay_installment" }>;
-export type PendingPayOp = PaySnapshot;
+// `lastValidBlockHeight` (opcional, del contrato cliente) viaja con el
+// snapshot: solo la reconciliación declara expirada la firma — altura
+// finalized superada + ausencia al reverificar, nunca por tiempo de reloj.
+export type PendingPayOp = PaySnapshot & {
+  lastValidBlockHeight?: number;
+};
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -47,6 +52,10 @@ export function loadPendingPay(
         expectedInstallmentIndex: parsed.expectedInstallmentIndex,
         expectedOpenedAt: parsed.expectedOpenedAt,
         expectedGeneration: parsed.expectedGeneration,
+        lastValidBlockHeight:
+          typeof parsed.lastValidBlockHeight === "number"
+            ? parsed.lastValidBlockHeight
+            : undefined,
       };
     }
     return null;

@@ -39,7 +39,14 @@ const POST_SEND: ReadonlySet<TxPhase> = new Set([
 
 export type OpenFlowState =
   | { kind: "idle" }
-  | { kind: "running"; phase: TxPhase; signature?: string }
+  | {
+      kind: "running";
+      phase: TxPhase;
+      signature?: string;
+      /** Última altura válida de la propuesta, cuando el cliente la emite:
+       * metadata de expiración que se persiste con la firma pendiente. */
+      lastValidBlockHeight?: number;
+    }
   | {
       kind: "success";
       /** `null` solo en el borde `confirmed` sin cuenta legible: el
@@ -55,8 +62,15 @@ export type OpenFlowState =
   /** La firma falló onchain (veredicto `failed` de la reconciliación):
    * definitivo, seguro reintentar con una propuesta fresca. */
   | { kind: "failed_onchain"; signature: string }
-  /** Envío posiblemente aterrizado: `checked` = ya se intentó reconciliar. */
-  | { kind: "uncertain"; signature?: string; checked: boolean };
+  /** Envío posiblemente aterrizado: `checked` = ya se intentó reconciliar.
+   * `lastValidBlockHeight` acompaña la firma persistida: la expiración solo
+   * se declara con la altura finalized superada + ausencia al reverificar. */
+  | {
+      kind: "uncertain";
+      signature?: string;
+      checked: boolean;
+      lastValidBlockHeight?: number;
+    };
 
 export interface OpenPlanRun {
   /** La operación en sí: recibe el listener de progreso y resuelve con la
@@ -86,7 +100,7 @@ export interface OpenPlanRunner {
   recheck(): void;
   /** Restaura un `uncertain` persistido (reload/navegación): la firma
    * guardada vuelve a ser la operación corriente para reconciliar. */
-  restore(run: OpenPlanRun, signature: string): void;
+  restore(run: OpenPlanRun, signature: string, lastValidBlockHeight?: number): void;
   /** Vuelve a `idle`; resultados tardíos de la corrida se descartan.
    * NO usar para abandonar un `uncertain` de la MISMA wallet (habilitaría
    * un reenvío a ciegas): solo cuando cambia la identidad — la operación
@@ -130,15 +144,24 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
       set({ kind: "running", phase: "preparing" });
       let postSendAt: number | undefined;
       let signature: string | undefined;
+      let lastValidBlockHeight: number | undefined;
 
       const onProgress = (p: TxProgress) => {
         if (gen !== my || state.kind !== "running") return;
         if (ORDER.indexOf(p.phase) < ORDER.indexOf(state.phase)) return;
         if (p.signature) signature = p.signature;
+        if (p.lastValidBlockHeight !== undefined) {
+          lastValidBlockHeight = p.lastValidBlockHeight;
+        }
         if (postSendAt === undefined && POST_SEND.has(p.phase)) {
           postSendAt = deps.now();
         }
-        set({ kind: "running", phase: p.phase, signature });
+        set({
+          kind: "running",
+          phase: p.phase,
+          signature,
+          lastValidBlockHeight,
+        });
       };
 
       void (async () => {
@@ -154,7 +177,12 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
           // `syncing` (la lectura ya volvió: es solo la ventana legible).
           const base = postSendAt ?? deps.now();
           const remaining = deps.minPostSendMs - (deps.now() - base);
-          set({ kind: "running", phase: "syncing", signature: sig });
+          set({
+            kind: "running",
+            phase: "syncing",
+            signature: sig,
+            lastValidBlockHeight,
+          });
           if (remaining > 0) await deps.sleep(remaining);
           if (stale(my, run)) {
             set({ kind: "idle" });
@@ -179,6 +207,8 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
               kind: "uncertain",
               signature: err.signature ?? signature,
               checked: false,
+              lastValidBlockHeight:
+                err.lastValidBlockHeight ?? lastValidBlockHeight,
             });
           } else {
             set({ kind: "failed", error: err });
@@ -190,9 +220,15 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
       if (state.kind !== "uncertain" || !current?.reconcile) return;
       const run = current;
       const signature = state.signature;
+      const lastValidBlockHeight = state.lastValidBlockHeight;
       gen += 1;
       const my = gen;
-      set({ kind: "running", phase: "syncing", signature });
+      set({
+        kind: "running",
+        phase: "syncing",
+        signature,
+        lastValidBlockHeight,
+      });
       void (async () => {
         const out = await run.reconcile!(signature).catch(() => null);
         if (stale(my, run)) {
@@ -210,15 +246,20 @@ export function createOpenPlanRunner(partial?: Partial<Deps>): OpenPlanRunner {
         } else if (out?.status === "failed") {
           set({ kind: "failed_onchain", signature: out.signature });
         } else {
-          set({ kind: "uncertain", signature, checked: true });
+          set({
+            kind: "uncertain",
+            signature,
+            checked: true,
+            lastValidBlockHeight,
+          });
         }
       })();
     },
-    restore(run, signature) {
+    restore(run, signature, lastValidBlockHeight) {
       if (state.kind !== "idle") return;
       gen += 1;
       current = run;
-      set({ kind: "uncertain", signature, checked: false });
+      set({ kind: "uncertain", signature, checked: false, lastValidBlockHeight });
     },
     reset() {
       gen += 1;

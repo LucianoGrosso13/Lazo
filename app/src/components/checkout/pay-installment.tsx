@@ -87,6 +87,9 @@ export function usePayInstallment({
   const expectedRef = useRef<{ index: number; openedAt?: UnixSeconds } | null>(
     null,
   );
+  // Altura de expiración de la propuesta firmada (cuando el cliente la
+  // emite): se propaga al snapshot de reconciliación y a lo persistido.
+  const payExpiryRef = useRef<number | undefined>(undefined);
 
   // Identidad que firma: snapshot por render; un cambio descarta resultados
   // tardíos (nunca se aplica a otra cuenta).
@@ -104,7 +107,11 @@ export function usePayInstallment({
   // plan avanzó entre la firma y la verificación.
   const buildRun = (
     payer: WalletAddress,
-    expected: { index: number; openedAt?: UnixSeconds },
+    expected: {
+      index: number;
+      openedAt?: UnixSeconds;
+      lastValidBlockHeight?: number;
+    },
   ): OpenPlanRun => ({
     call: (onProgress) =>
       getCuotas().payInstallment(payer, plan!.id, { onProgress }),
@@ -120,6 +127,8 @@ export function usePayInstallment({
               signature,
               expectedInstallmentIndex: expected.index,
               expectedOpenedAt: expected.openedAt,
+              lastValidBlockHeight:
+                payExpiryRef.current ?? expected.lastValidBlockHeight,
             },
             // Verificación manual acotada: `null` = sigue incierta.
             { intervalMs: 1_500, timeoutMs: 8_000 },
@@ -137,6 +146,7 @@ export function usePayInstallment({
           signature: sig,
           expectedInstallmentIndex: expected.index,
           expectedOpenedAt: expected.openedAt,
+          lastValidBlockHeight: payExpiryRef.current,
         }
       : null;
   };
@@ -147,6 +157,9 @@ export function usePayInstallment({
     if (!student || !plan || typeof window === "undefined") return;
     const s = window.sessionStorage;
     if ((flow.kind === "running" || flow.kind === "uncertain") && flow.signature) {
+      if (flow.lastValidBlockHeight !== undefined) {
+        payExpiryRef.current = flow.lastValidBlockHeight;
+      }
       const op = buildSnapshot(flow.signature);
       if (op) savePendingPay(s, op);
     } else if (flow.kind === "success" || flow.kind === "failed_onchain") {
@@ -168,12 +181,15 @@ export function usePayInstallment({
         index: op.expectedInstallmentIndex,
         openedAt: op.expectedOpenedAt,
       };
+      payExpiryRef.current = op.lastValidBlockHeight;
       runner.restore(
         buildRun(student, {
           index: op.expectedInstallmentIndex,
           openedAt: op.expectedOpenedAt,
+          lastValidBlockHeight: op.lastValidBlockHeight,
         }),
         op.signature,
+        op.lastValidBlockHeight,
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,6 +226,9 @@ export function usePayInstallment({
     if (!student || !plan || !nextUp) return;
     restoredIdxRef.current = null;
     expectedRef.current = { index: nextUp.index, openedAt: plan.openedAt };
+    // Firma nueva: la altura vieja (de otra operación o de un restore
+    // fallido) no se arrastra — el cliente emitirá la de ESTA propuesta.
+    payExpiryRef.current = undefined;
     setPaidIdx(nextUp.index);
     // El runner ignora el arranque si hay una corrida viva o un `uncertain`:
     // doble clic y reintento a ciegas no producen otro pago. La cuota queda
@@ -249,6 +268,7 @@ export function usePayInstallment({
             setPaidIdx(null);
             restoredIdxRef.current = null;
             expectedRef.current = null;
+            payExpiryRef.current = undefined;
           }
           setOpen(false);
         }}

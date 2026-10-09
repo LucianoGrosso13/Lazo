@@ -331,11 +331,16 @@ export function CheckoutScreen({
     walletRef.current = wallet;
   }, [wallet]);
 
+  // Altura de expiración de la propuesta firmada (cuando el cliente la
+  // emite): se propaga al snapshot de reconciliación y a lo persistido.
+  const openExpiryRef = useRef<number | undefined>(undefined);
+
   // Si cambia la wallet, el flujo vuelve al desglose.
   const [prevWallet, setPrevWallet] = useState(wallet);
   if (prevWallet !== wallet) {
     setPrevWallet(wallet);
     runner.reset();
+    openExpiryRef.current = undefined;
     setStep("review");
   }
 
@@ -359,7 +364,12 @@ export function CheckoutScreen({
       signature
         ? waitForOperation(
             getCuotas(),
-            { operation: "open_plan", student, signature },
+            {
+              operation: "open_plan",
+              student,
+              signature,
+              lastValidBlockHeight: openExpiryRef.current,
+            },
             // Verificación manual acotada: algunas lecturas por si la tx
             // aterrizó tarde; `null` = sigue incierta, NO se reenvía.
             { intervalMs: 1_500, timeoutMs: 8_000 },
@@ -369,6 +379,9 @@ export function CheckoutScreen({
 
   const sign = () => {
     if (!wallet) return;
+    // Firma nueva: la altura vieja (de otra operación o de un restore
+    // fallido) no se arrastra — el cliente emitirá la de ESTA propuesta.
+    openExpiryRef.current = undefined;
     // El runner ignora el arranque si hay una corrida viva o un `uncertain`:
     // doble clic y reintento a ciegas no producen otra transacción.
     runner.start(buildRun(wallet));
@@ -381,7 +394,10 @@ export function CheckoutScreen({
     if (!wallet || typeof window === "undefined") return;
     const s = window.sessionStorage;
     if ((flow.kind === "running" || flow.kind === "uncertain") && flow.signature) {
-      savePendingOpen(s, wallet, flow.signature);
+      if (flow.lastValidBlockHeight !== undefined) {
+        openExpiryRef.current = flow.lastValidBlockHeight;
+      }
+      savePendingOpen(s, wallet, flow.signature, flow.lastValidBlockHeight);
     } else if (flow.kind === "success" || flow.kind === "failed_onchain") {
       clearPendingOpen(s, wallet);
     }
@@ -394,7 +410,14 @@ export function CheckoutScreen({
       return;
     }
     const pending = loadPendingOpen(window.sessionStorage, wallet);
-    if (pending) runner.restore(buildRun(wallet), pending.signature);
+    if (pending) {
+      openExpiryRef.current = pending.lastValidBlockHeight;
+      runner.restore(
+        buildRun(wallet),
+        pending.signature,
+        pending.lastValidBlockHeight,
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, flow.kind, runner]);
 

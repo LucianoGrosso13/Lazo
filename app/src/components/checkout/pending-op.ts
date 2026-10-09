@@ -9,6 +9,10 @@ export interface PendingOpenOp {
   operation: "open_plan";
   student: WalletAddress;
   signature: string;
+  /** Altura de expiración de la propuesta firmada, cuando el cliente la
+   * emitió: la reconciliación solo declara expirada con altura finalized
+   * superada + ausencia al reverificar; sin ella queda como incierta. */
+  lastValidBlockHeight?: number;
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -19,11 +23,17 @@ export function savePendingOpen(
   storage: Store,
   student: WalletAddress,
   signature: string,
+  lastValidBlockHeight?: number,
 ): void {
   try {
     storage.setItem(
       key(student),
-      JSON.stringify({ operation: "open_plan", student, signature }),
+      JSON.stringify({
+        operation: "open_plan",
+        student,
+        signature,
+        lastValidBlockHeight,
+      }),
     );
   } catch {
     // Storage lleno/bloqueado: la reconciliación manual queda igual.
@@ -48,6 +58,10 @@ export function loadPendingOpen(
         operation: "open_plan",
         student,
         signature: parsed.signature,
+        lastValidBlockHeight:
+          typeof parsed.lastValidBlockHeight === "number"
+            ? parsed.lastValidBlockHeight
+            : undefined,
       };
     }
     return null;
