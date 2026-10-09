@@ -9,7 +9,7 @@ export const paraEstudiantes = defineDict({
   es: {
     hero: {
       eyebrow: "Compradores y garantes",
-      title: "Cuotas para estudiar, con el respaldo de tu familia",
+      title: "Comprá en cuotas, con el respaldo de un garante",
       lede: "Lazo te deja comprar en cuotas en comercios adheridos y pagar con dólares digitales (USDC), aunque no tengas tarjeta de crédito. Un familiar actúa como garante obligatorio: respalda lo que falta pagar de capital e interés, con un tope acordado, y solo paga si vos no pagás.",
 
       ctaMerchants: "Ver comercios",
@@ -224,7 +224,7 @@ export const paraEstudiantes = defineDict({
   en: {
     hero: {
       eyebrow: "Buyers and guarantors",
-      title: "Installments for your studies, backed by your family",
+      title: "Buy in installments, backed by a guarantor",
       lede: "Lazo lets you buy in installments at participating merchants and pay with digital dollars (USDC), even without a credit card. A family member acts as mandatory guarantor: they cover the outstanding financed amount and interest up to an agreed cap, and only pay if you don't.",
 
       ctaMerchants: "Browse merchants",
