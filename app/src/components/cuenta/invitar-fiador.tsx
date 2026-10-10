@@ -20,7 +20,7 @@ import { guarantorPath } from "@/lib/roles";
 export function InviteGuarantor({ student }: { student: string }) {
   const t = useT(invitacionCuenta);
   const [copied, setCopied] = useState(false);
-  // El modo lo fija el cliente de cuentas (NEXT_PUBLIC_CUOTAS_MODE), la misma
+  // El modo lo fija el cliente de cuentas activo (`cuotas/mode.ts`), la misma
   // fuente que decide si createInvitation va al backend o al store local.
   const mode = getAccountCuotas().mode;
 
