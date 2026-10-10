@@ -1,0 +1,19 @@
+/* Flujo de fondos del pool: el esquema respira. El orbe gira en el centro y
+   un pulso de luz recorre cada tramo en el orden en que se mueve la plata:
+   entra el capital, sale el adelanto al comercio, vuelven las cuotas. */
+.flow { max-width: 24rem; margin: 0 auto; }
+.orb { width: 9.5rem; max-width: 100%; }
+.rail { opacity: .5; }
+.pulse { stroke-dasharray: 18 100; stroke-dashoffset: 18; stroke-linecap: round; animation: travel 5.4s cubic-bezier(.45, 0, .2, 1) infinite; }
+.pulse[data-leg="2"] { animation-delay: 1.5s; }
+.pulse[data-leg="3"] { animation-delay: 3s; }
+.node { animation: arrive 5.4s ease-out infinite; }
+.node[data-leg="2"] { animation-delay: 1.5s; }
+.node[data-leg="3"] { animation-delay: 3s; }
+@keyframes travel { 0% { stroke-dashoffset: 18; } 34%, 100% { stroke-dashoffset: -100; } }
+@keyframes arrive { 0%, 24% { text-shadow: 0 0 0 transparent; } 32% { text-shadow: 0 0 16px currentColor; } 56%, 100% { text-shadow: 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) {
+  .pulse { display: none; }
+  .rail { opacity: 1; }
+  .node { animation: none; }
+}

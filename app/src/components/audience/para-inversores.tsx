@@ -9,6 +9,8 @@ import Link from "next/link";
 import { Consulta } from "@/components/cuenta/consulta";
 import { REFERENCE_FIGURES } from "@/lib/cuotas/reference-figures";
 import { useProtocolConfig } from "@/components/landing/use-config";
+import { PoolOrb } from "@/components/pool-orb";
+import { poolToOrbState, type OrbState } from "@/components/pool-orb/state";
 import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
@@ -40,6 +42,7 @@ import {
   ComparisonBars,
   Gauge,
 } from "./primitives";
+import styles from "./para-inversores.module.css";
 
 /** Precio de ejemplo para calcular D8 desde la configuración del protocolo. */
 const EXAMPLE_PRICE = toMicro(1000);
@@ -56,38 +59,47 @@ const exampleTerms = (config: ProtocolConfig, installments?: 3 | 6) =>
 const numFmt = (locale: "es" | "en", opts: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(locale === "es" ? "es-AR" : "en-US", opts);
 
-/** El capital entra al pool, adelanta compras y vuelve con cada cuota. */
-function HeroIllustration({ t }: { t: (typeof paraInversores)["es"]["heroGraphic"] }) {
+/** Orbe del esquema mientras el pool no cargó: es dibujo, no un dato. */
+const ORB_ILUSTRATIVO: OrbState = { disponibleRatio: 1, prestadoRatio: 0, intensidad: 0.6 };
+
+/** El capital entra al pool, adelanta compras y vuelve con cada cuota. El orbe
+ *  es el mismo de /pool: muestra el reparto real cuando el pool ya cargó. */
+function HeroIllustration({ t, pool }: { t: (typeof paraInversores)["es"]["heroGraphic"]; pool?: Pool }) {
+  const orb = pool ? poolToOrbState(pool) : ORB_ILUSTRATIVO;
   return (
     <figure className="min-w-0 rounded-2xl border border-accent bg-accent-soft p-5 sm:p-7" role="img" aria-label={t.title}>
       <figcaption className="flex flex-wrap items-center justify-between gap-3 border-b border-accent pb-4 text-sm">
         <span className="font-medium text-accent">{t.title}</span>
         <span className="text-ink-2">{t.badge}</span>
       </figcaption>
-      <div className="pt-5 text-center">
-        <p className="font-semibold text-beam">{t.inversores}</p>
-        <p className="mt-1 text-sm text-ink-2">{t.inversoresDesc}</p>
-      </div>
-      <svg aria-hidden="true" viewBox="0 0 24 38" className="mx-auto h-10 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 0v32m-5-5 5 5 5-5" />
-      </svg>
-      <div className="flex items-center justify-center gap-4 py-2">
-        <svg aria-hidden="true" viewBox="0 0 100 100" className="h-24 w-24 flex-none" fill="none" stroke="var(--accent-ink)" strokeWidth="1">
-          <path d="m50 4 42 24v46L50 98 8 74V28Z" fill="var(--accent-soft)" />
-          <path d="m50 4 0 46 42-22Z" fill="var(--color-green)" fillOpacity=".2" />
-          <path d="m50 50 42-22v46L50 98Z" fill="var(--color-cyan)" fillOpacity=".15" />
-          <path d="M50 4v46L8 28m42 22v48M8 74l42-24 42 24" />
-          <path d="M50 34 64 42v16L50 66 36 58V42Z" fill="var(--accent)" stroke="none" />
+      <div className={styles.flow}>
+        <div className="pt-5 text-center">
+          <p className="font-semibold text-beam">{t.inversores}</p>
+          <p className="mt-1 text-sm text-ink-2">{t.inversoresDesc}</p>
+        </div>
+        <svg aria-hidden="true" viewBox="0 0 24 40" className="mx-auto mt-2 h-10 w-6" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+          <path className={styles.rail} d="M12 0v36" />
+          <path className={styles.pulse} data-leg="1" pathLength="100" strokeWidth="2.5" d="M12 0v36" />
+          <path d="m7 31 5 5 5-5" />
         </svg>
-        <p className="max-w-40 text-2xl font-semibold leading-tight text-accent">{t.poolCore}</p>
-      </div>
-      <svg aria-hidden="true" viewBox="0 0 300 42" className="h-10 w-full" fill="none" strokeWidth="1.5">
-        <path d="M150 0v13H55v24m-5-5 5 5 5-5" stroke="var(--color-cyan)" />
-        <path d="M245 37V13h-80V0m75 5 5-5 5 5" stroke="var(--color-backlight)" />
-      </svg>
-      <div className="grid grid-cols-2 gap-4 text-center text-sm">
-        <div><p className="font-semibold text-cyan">{t.comercios}</p><p className="mt-1 text-ink-2">{t.comerciosDesc}</p></div>
-        <div><p className="font-semibold text-backlight">{t.compradores}</p><p className="mt-1 text-ink-2">{t.compradoresDesc}</p></div>
+        <PoolOrb state={orb} className={`${styles.orb} -my-2`} />
+        <p className={`${styles.node} text-center text-xl font-semibold leading-tight text-accent`} data-leg="1">{t.poolCore}</p>
+        <svg aria-hidden="true" viewBox="0 0 300 44" className="mt-3 h-auto w-full" fill="none" strokeWidth="1.5">
+          <g stroke="var(--color-cyan)">
+            <path className={styles.rail} d="M143 0v14H75v26" />
+            <path className={styles.pulse} data-leg="2" pathLength="100" strokeWidth="2.5" d="M143 0v14H75v26" />
+            <path d="m70 35 5 5 5-5" />
+          </g>
+          <g stroke="var(--color-backlight)">
+            <path className={styles.rail} d="M225 44V14h-68V2" />
+            <path className={styles.pulse} data-leg="3" pathLength="100" strokeWidth="2.5" d="M225 44V14h-68V2" />
+            <path d="m152 7 5-5 5 5" />
+          </g>
+        </svg>
+        <div className="mt-2 grid grid-cols-2 gap-4 text-center text-sm">
+          <div><p className={`${styles.node} font-semibold text-cyan`} data-leg="2">{t.comercios}</p><p className="mt-1 text-ink-2">{t.comerciosDesc}</p></div>
+          <div><p className="font-semibold text-backlight">{t.compradores}</p><p className="mt-1 text-ink-2">{t.compradoresDesc}</p></div>
+        </div>
       </div>
       <div className="mt-6 grid grid-cols-2 gap-4 border-t border-accent pt-4 text-sm">
         <div><p className="font-medium text-accent">{t.senior}</p><p className="mt-1 text-ink-2">{t.seniorDesc}</p></div>
@@ -286,7 +298,7 @@ export function ParaInversores() {
           </Link>
         </div>
         </header>
-        <HeroIllustration t={t.heroGraphic} />
+        <HeroIllustration t={t.heroGraphic} pool={poolQ.data} />
       </div>
 
       {/* De dónde sale el rendimiento: pool, tramos y datos en vivo */}

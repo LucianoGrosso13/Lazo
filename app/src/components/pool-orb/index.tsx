@@ -8,7 +8,7 @@ import styles from "./pool-orb.module.css";
 
 /** Decorative renderer. Its exact asset shares are always readable in the
  * adjacent legend, so neither canvas nor animation is needed to read data. */
-export function PoolOrb({ state }: { state: OrbState }) {
+export function PoolOrb({ state, className = "" }: { state: OrbState; className?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
@@ -82,7 +82,7 @@ export function PoolOrb({ state }: { state: OrbState }) {
     };
   }, [reduced, disponibleRatio, prestadoRatio, intensidad]);
 
-  return <div ref={host} aria-hidden="true" data-testid="pool-orb" data-renderer="css" className={styles.orb} style={{ "--available-angle": `${disponibleRatio * 360}deg`, "--orb-energy": intensidad } as CSSProperties}>
+  return <div ref={host} aria-hidden="true" data-testid="pool-orb" data-renderer="css" className={`${styles.orb} ${className}`} style={{ "--available-angle": `${disponibleRatio * 360}deg`, "--orb-energy": intensidad } as CSSProperties}>
     <div data-testid="pool-orb-fallback" className={styles.fallback}>
       <div className={styles.glass}>
         <div className={styles.haze} />
