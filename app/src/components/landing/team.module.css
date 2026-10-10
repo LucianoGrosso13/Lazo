@@ -295,6 +295,8 @@
 
 .stepLink {
   align-self: flex-start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;

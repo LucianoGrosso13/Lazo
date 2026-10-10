@@ -6,7 +6,6 @@ import { expect, test } from "@playwright/test";
 import { DEMO_STUDENT_NEW } from "../src/lib/cuotas/accounts-types";
 
 const DEMO_KEY = "lazo.cuenta.demo.v1";
-const TIER3 = "LazoEstudianteEscalon3111111111111111111111";
 
 async function comoPersona(page: import("@playwright/test").Page, id: string) {
   await page.addInitScript(
