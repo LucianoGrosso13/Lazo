@@ -4,11 +4,11 @@
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent · **Asignado:** Devin
+**Status:** done · **Asignado:** Devin
 
 **Archivos propios:** `components/audience/para-comercios.tsx`, `i18n/dictionaries/para-comercios.ts`, `app/src/app/para-comercios/page.tsx`. `primitives.tsx` y `audience-common.ts` no se tocan (si hace falta algo, preguntale al coordinador).
 
-- [ ] Al menos 4 tipos de bloque distintos y ningún tramo de más de 2 secciones de texto seguidas
-- [ ] Acento de rol aplicado; FAQ en acordeón accesible
-- [ ] Sin scroll horizontal a 390 px; reduced-motion OK
-- [ ] e2e de la página (`responsive.spec.ts` y los que la cubran) en verde; capturas 390/1440 en `evidence/09-*`
+- [x] Al menos 4 tipos de bloque distintos y ningún tramo de más de 2 secciones de texto seguidas
+- [x] Acento de rol aplicado; FAQ en acordeón accesible
+- [x] Sin scroll horizontal a 390 px; reduced-motion OK
+- [x] e2e de la página (`responsive.spec.ts` y los que la cubran) en verde; capturas 390/1440 en `evidence/09-*`

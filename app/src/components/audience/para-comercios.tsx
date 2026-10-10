@@ -1,16 +1,19 @@
 "use client";
 
-// Contenido de /para-comercios (ticket 10): propuesta, cuánto cobra y cuándo
-// (tabla por plazo desde `settlementOptionsOf` + `quote()`), cómo opera,
-// comparación con referencias, marketplace, riesgos y FAQ. Ningún número de
-// negocio está hardcodeado: sale de la config del protocolo y de la
-// cotización; las cifras de terceros son REFERENCE_FIGURES con la etiqueta
+// Contenido de /para-comercios (ticket 10, rediseño ticket 09): hero con la
+// figura de cobros en el tiempo (un carril por plazo sobre el eje 0–90 días),
+// pasos con AnimatedSteps, neto grande con count-up + tarjetas por plazo,
+// comparativas con ComparisonBars, garantías con íconos, destinos, FAQ en
+// Accordion y cierre con el aviso de devnet. Acento cyan (data-role merchant).
+// Ningún número de negocio está hardcodeado: sale de la config del protocolo
+// y de quote(); las cifras de terceros son REFERENCE_FIGURES con la etiqueta
 // "referencia" y sin marcas.
 import Link from "next/link";
 import { EstadoConsulta } from "@/components/cuenta/consulta";
 import { useProtocolConfig } from "@/components/landing/use-config";
 import { ReferenceTag } from "@/components/ui/badges";
 import { buttonClasses } from "@/components/ui/button";
+import { useInView } from "@/components/ui/use-in-view";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { paraComercios } from "@/i18n/dictionaries/para-comercios";
 import { useLocale, useT } from "@/i18n/locale";
@@ -28,13 +31,17 @@ import {
   type SettlementOption,
 } from "@/lib/cuotas";
 import { useCuotasQuery } from "@/lib/use-cuotas";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import {
+  Accordion,
+  AnimatedSteps,
   AudienceHero,
   AudienceSection,
+  BigNumber,
   Callout,
-  Faq,
-  StatCard,
+  ComparisonBars,
 } from "./primitives";
+import styles from "./para-comercios.module.css";
 
 type Locale = "es" | "en";
 type Dict = (typeof paraComercios)["es"];
@@ -51,7 +58,7 @@ const fmtPct = (pct: number, locale: Locale) =>
     maximumFractionDigits: 2,
   }).format(pct)}%`;
 
-/** "30, 60 o 90" / "30, 60 or 90" según el idioma. */
+/** "3 o 6" / "3 or 6" según el idioma. */
 const joinNums = (nums: number[], locale: Locale) => {
   if (nums.length <= 1) return String(nums[0] ?? "");
   return `${nums.slice(0, -1).join(", ")} ${locale === "es" ? "o" : "or"} ${
@@ -63,126 +70,234 @@ const joinNums = (nums: number[], locale: Locale) => {
 const plazoLabel = (option: SettlementOption, t: Dict) =>
   option.days === 0 ? t.plazoHoy : t.plazoDias.replace("{dias}", String(option.days));
 
+/** Posición sobre la línea de un carril: el día 0 y el último quedan adentro. */
+const ejePos = (dia: number, maxDia: number) =>
+  `calc(var(--edge) + (100% - var(--edge) * 2) * ${maxDia > 0 ? dia / maxDia : 0})`;
+
 interface CobroRow {
   option: SettlementOption;
   quote: Quote | null;
 }
 
-/** El reparto del neto: anticipo hoy y cada tramo garantizado en su fecha. */
-function BandaCobro({
-  quote,
-  option,
+interface Punto {
+  dia: number;
+  amount: Micro;
+  /** Punto lleno (entra al confirmar); hueco = tramo garantizado. */
+  hoy: boolean;
+}
+
+/** Los puntos de un carril: anticipo al confirmar + cada tramo en su fecha. */
+function puntosDe({ option, quote }: CobroRow, secondsPerDay: number): Punto[] {
+  if (!quote) return [];
+  if (option.days === 0)
+    return [{ dia: 0, amount: quote.merchantReceives, hoy: true }];
+  return [
+    { dia: 0, amount: quote.merchantAdvance, hoy: true },
+    ...payoutSchedule(quote.merchantPending, option, 0, secondsPerDay).map((tr) => ({
+      dia: tr.releaseAt / secondsPerDay,
+      amount: tr.amount,
+      hoy: false,
+    })),
+  ];
+}
+
+/**
+ * Figura del hero: una venta partida en cobros a lo largo de 0–90 días.
+ * Cada carril es un plazo de cobro con sus puntos (tamaño ∝ monto) y el neto.
+ */
+function CobroFigura({
+  rows,
+  price,
   t,
   locale,
+  secondsPerDay,
 }: {
-  quote: Quote;
-  option: SettlementOption;
+  rows: CobroRow[];
+  price: Micro;
   t: Dict;
   locale: Locale;
+  secondsPerDay: number;
 }) {
-  const total = quote.merchantReceives;
-  if (total <= 0) return null;
-  const hoy = quote.merchantAdvance;
-  const fecha = quote.merchantPending;
-  const schedule = payoutSchedule(fecha, option, 0);
+  const { ref, entered } = useInView<HTMLElement>();
+  const reduced = useReducedMotion();
+  const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
+  const maxDia = Math.max(1, ...rows.map((r) => r.option.days));
+  const marcas = [...new Set(rows.map((r) => r.option.days))].sort((a, b) => a - b);
+  const puntosPorFila = rows.map((r) => puntosDe(r, secondsPerDay));
+  const maxPunto = Math.max(1, ...puntosPorFila.flat().map((p) => p.amount));
+
   return (
-    <div className="mt-auto">
-      <div
-        className="flex h-2.5 w-full overflow-hidden rounded-full bg-beam/8"
-        role="img"
-        aria-label={t.cobroBarraAria
-          .replace("{anticipo}", formatUsdc(hoy, locale))
-          .replace("{tramos}", schedule.map((tramo) => formatUsdc(tramo.amount, locale)).join(", "))}
-      >
-        <div
-          className="h-full bg-gradient-to-r from-cyan to-green"
-          style={{ width: `${(hoy / total) * 100}%` }}
-        />
-        {fecha > 0 ? <div className="h-full bg-violet/70" style={{ width: `${(fecha / total) * 100}%` }} /> : null}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="size-2 flex-none rounded-full bg-green" />
-          <span className="font-num tabular-nums">{formatUsdc(hoy, locale)}</span>
-          {t.cobroHoyLabel}
+    <figure
+      ref={ref}
+      className={`glass ${styles.figure}`}
+      data-entered={entered && !reduced || undefined}
+    >
+      <figcaption className={styles.figHead}>
+        <span className={styles.figTitle}>
+          {t.figTitle.replace("{precio}", `US$ ${fmt(price, 0)}`)}
         </span>
-        {schedule.length > 0 ? (
-          <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
-            <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 flex-none rounded-full bg-violet" />{t.tramosGarantizados}</span>
-            {schedule.map((tramo) => (
-              <span key={tramo.index} className="font-num tabular-nums">
-                {t.tramoItem.replace("{dia}", String(tramo.releaseAt / 86_400)).replace("{monto}", formatUsdc(tramo.amount, locale))}
-              </span>
-            ))}
-          </span>
-        ) : <span>{t.cobroInmediatoTodo}</span>}
+        <span className={styles.figAxisTag}>{t.figAxisDias}</span>
+      </figcaption>
+
+      {/* Regla del eje: las marcas del día caen sobre la línea de cada carril. */}
+      <div className={`${styles.laneGrid} ${styles.ruler}`} aria-hidden="true">
+        <span />
+        <div className={styles.rulerTrack}>
+          {marcas.map((dia) => (
+            <span
+              key={dia}
+              className={styles.rulerTick}
+              data-edge={dia === 0 ? "start" : dia === maxDia ? "end" : undefined}
+              style={{ left: ejePos(dia, maxDia) }}
+            >
+              {dia === 0 ? t.figHoy : dia}
+            </span>
+          ))}
+        </div>
+        <span />
       </div>
-    </div>
+
+      <ul className={styles.lanes}>
+        {rows.map((row, i) => {
+          const { option, quote } = row;
+          const puntos = puntosPorFila[i];
+          const aria = quote
+            ? option.days === 0
+              ? t.figLaneHoy
+                  .replace("{plazo}", plazoLabel(option, t))
+                  .replace("{neto}", `US$ ${fmt(quote.merchantReceives)}`)
+              : t.figLanePlazo
+                  .replace("{plazo}", plazoLabel(option, t))
+                  .replace("{anticipo}", `US$ ${fmt(quote.merchantAdvance)}`)
+                  .replace(
+                    "{tramos}",
+                    puntos
+                      .filter((p) => !p.hoy)
+                      .map((p) =>
+                        t.figTramo
+                          .replace("{monto}", `US$ ${fmt(p.amount)}`)
+                          .replace("{dia}", String(p.dia)),
+                      )
+                      .join(", "),
+                  )
+            : plazoLabel(option, t);
+          return (
+            <li
+              key={option.id}
+              className={`${styles.laneGrid} ${styles.lane}`}
+              style={{ ["--lane-delay" as string]: `${i * 90}ms` }}
+            >
+              <span className={styles.laneLabel}>{plazoLabel(option, t)}</span>
+              <span className={styles.laneTrack} aria-hidden="true">
+                <span className={styles.laneBeam} />
+                {marcas
+                  .filter((d) => d > 0)
+                  .map((d) => (
+                    <span key={d} className={styles.laneMid} style={{ left: ejePos(d, maxDia) }} />
+                  ))}
+                {puntos.map((p, j) => {
+                  const lado = 10 + 18 * Math.sqrt(p.amount / maxPunto);
+                  return (
+                    <span
+                      key={j}
+                      className={`${styles.dot} ${p.hoy ? styles.dotNow : styles.dotTramo}`}
+                      style={{ left: ejePos(p.dia, maxDia), width: lado, height: lado }}
+                    />
+                  );
+                })}
+              </span>
+              <span className={styles.laneValue}>
+                <span className={styles.laneAmount}>
+                  {quote ? `US$ ${fmt(quote.merchantReceives)}` : "—"}
+                </span>
+                {option.feeBps !== null ? (
+                  <small>{t.figComision.replace("{pct}", fmtBps(option.feeBps, locale))}</small>
+                ) : null}
+              </span>
+              <span className="sr-only">{aria}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className={styles.figLegend} aria-hidden="true">
+        <span>
+          <i className={`${styles.legendDot} ${styles.legendNow}`} />
+          {t.figLegendHoy}
+        </span>
+        <span>
+          <i className={`${styles.legendDot} ${styles.legendTramo}`} />
+          {t.figLegendTramo}
+        </span>
+      </p>
+      <p className={styles.figCaption}>{t.figCaption}</p>
+    </figure>
   );
 }
 
-/** Una línea de comparación: Lazo en espectro, las alternativas en gris. */
-function FilaComparacion({
-  nombre,
-  detalle,
-  referencia,
-  valorPct,
-  rangoMin,
-  maxPct,
-  espectro,
-}: {
-  nombre: string;
-  detalle: string;
-  referencia?: boolean;
-  /** % para la barra y el número de la derecha. */
-  valorPct: number;
-  /** Si hay rango (Lazo por plazo), el extremo inferior. */
-  rangoMin?: number;
-  maxPct: number;
-  espectro?: boolean;
-}) {
-  return (
-    <li>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-sm font-medium text-ink">
-          {nombre}
-          {referencia ? (
-            <>
-              {" "}
-              <ReferenceTag />
-            </>
-          ) : null}
-        </p>
-        <p className="font-num text-sm tabular-nums text-beam">{detalle}</p>
-      </div>
-      <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-beam/8">
-        {espectro && rangoMin !== undefined ? (
-          <div
-            className="absolute inset-y-0 rounded-full bg-gradient-to-r from-violet via-cyan to-green"
-            style={{
-              left: `${(rangoMin / maxPct) * 100}%`,
-              width: `${((valorPct - rangoMin) / maxPct) * 100}%`,
-            }}
-          />
-        ) : (
-          <div
-            className={`h-full rounded-full ${
-              espectro ? "bg-gradient-to-r from-violet via-cyan to-green" : "bg-ash/50"
-            }`}
-            style={{ width: `${Math.min((valorPct / maxPct) * 100, 100)}%` }}
-          />
-        )}
-      </div>
-    </li>
-  );
-}
+/** Íconos dibujados, un solo trazo y peso, tintados con el acento del rol. */
+const ICON = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  "aria-hidden": true,
+} as const;
+
+const IconQr = () => (
+  <svg {...ICON}>
+    <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.4" />
+    <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.4" />
+    <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.4" />
+    <path d="M14 14.2h.01M17.3 14.2h.01M20.4 14.2h.01M14 17.4h.01M14 20.4h.01M17.3 17.4h.01M20.4 17.4h.01M17.3 20.4h.01M20.4 20.4h.01" />
+  </svg>
+);
+const IconPanel = () => (
+  <svg {...ICON}>
+    <rect x="3.5" y="4" width="17" height="16" rx="2.5" />
+    <path d="M8.5 15.5v-3M12 15.5V8.5M15.5 15.5v-5" />
+  </svg>
+);
+const IconTienda = () => (
+  <svg {...ICON}>
+    <path d="M4.8 9.6 6.2 4.8h11.6l1.4 4.8" />
+    <path d="M4.8 9.6v8.9a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V9.6" />
+    <path d="M4.8 9.6c0 1.3 1.05 2.4 2.4 2.4s2.4-1.1 2.4-2.4c0 1.3 1.05 2.4 2.4 2.4s2.4-1.1 2.4-2.4c0 1.3 1.05 2.4 2.4 2.4s2.4-1.1 2.4-2.4" />
+    <path d="M9.8 19.5v-5h4.4v5" />
+  </svg>
+);
+const IconRegistro = () => (
+  <svg {...ICON}>
+    <rect x="4.5" y="3.5" width="15" height="17" rx="2.2" />
+    <path d="M8.2 8.2h7.6M8.2 12h7.6M8.2 15.8h4.6" />
+  </svg>
+);
+const IconEscudo = () => (
+  <svg {...ICON}>
+    <path d="M12 3.2 19 5.8v5.1c0 4.5-2.9 7.8-7 9.3-4.1-1.5-7-4.8-7-9.3V5.8z" />
+    <path d="m8.8 11.6 2.2 2.2 4.2-4.4" />
+  </svg>
+);
+const IconGota = () => (
+  <svg {...ICON}>
+    <path d="M12 3.6c3.1 3.6 5.8 6.6 5.8 9.7a5.8 5.8 0 1 1-11.6 0c0-3.1 2.7-6.1 5.8-9.7z" />
+    <path d="M9.2 13.6a2.9 2.9 0 0 0 2.2 3.5" />
+  </svg>
+);
+const IconFlecha = ({ className = "" }: { className?: string }) => (
+  <svg {...ICON} viewBox="0 0 20 20" className={className} width="18" height="18">
+    <path d="M4 10h11M11 5l5 5-5 5" />
+  </svg>
+);
 
 export function ParaComercios() {
   const common = useT(audienceCommon);
   const t = useT(paraComercios);
   const { locale } = useLocale();
   const config = useProtocolConfig();
-  const fmt = (m: Micro) => formatUsdc(m, locale);
+  const fmt = (m: Micro, d = 2) => formatUsdc(m, locale, d);
 
   // La tabla de cobro: cada plazo habilitado cotiza el mismo ejemplo
   // (tope del escalón 0) con `quote()`, así el neto es el real del cliente.
@@ -207,68 +322,83 @@ export function ParaComercios() {
   const settlements = config
     ? settlementOptionsOf(config).filter(settlementAvailable)
     : [];
-  const coberturaBps = config?.guaranteedTiers[0].guarantorCoverageBps;
 
-  const cuotasValue = planes.map((o) => o.installments).join(locale === "es" ? " o " : " or ");
-  const cuotasNote = planConInteres
-    ? t.cuotasNote
-        .replace("{tres}", joinNums(planesSinInteres.map((o) => o.installments), locale))
-        .replace("{seis}", String(planConInteres.installments))
-        .replace("{pct}", fmtBps(planConInteres.interestTotalBps, locale))
-    : t.cuotasNoteBase.replace("{lista}", cuotasValue);
-  const cobroNote =
-    settlements.filter((o) => o.days > 0).length > 0
-      ? t.cobroNote.replace(
-          "{dias}",
-          joinNums(
-            settlements.filter((o) => o.days > 0).map((o) => o.days),
-            locale,
-          ),
-        )
-      : t.cobroNoteHoy;
+  const cuotasValue = planes
+    .map((o) => o.installments)
+    .join(locale === "es" ? " o " : " or ");
 
-  const ejemplo = cobroQ.data?.rows[0]?.quote ?? null;
-  const feeBpsInmediato =
+  // La figura se dibuja apenas hay config; los puntos llegan con la cotización.
+  const figRows: CobroRow[] | null =
+    cobroQ.data?.rows ??
+    (config ? settlements.map((option) => ({ option, quote: null })) : null);
+  const figPrice = cobroQ.data?.price ?? config?.guaranteedTiers[0].maxPurchase ?? 0;
+
+  const rows = cobroQ.data?.rows ?? [];
+  const inmediato = rows.find((r) => r.option.days === 0) ?? null;
+  const diferidos = rows.filter((r) => r.option.days > 0);
+  const mejor = diferidos.reduce<CobroRow | null>(
+    (acc, r) =>
+      acc === null || (r.option.feeBps ?? Infinity) < (acc.option.feeBps ?? Infinity)
+        ? r
+        : acc,
+    null,
+  );
+  const feeHoyBps =
     settlements.find((o) => o.id === "immediate")?.feeBps ?? config?.feeBps ?? null;
-  const pctInmediato = feeBpsInmediato !== null ? fmtBps(feeBpsInmediato, locale) : "…";
+  const pctInmediato = feeHoyBps !== null ? fmtBps(feeHoyBps, locale) : "…";
 
   const cftea = REFERENCE_FIGURES.mercadoPagoCfteaPct;
-  const maxRef = cftea.max;
-  const interesCliente = planConInteres ? planConInteres.interestTotalBps / 100 : 0;
+  const refs = REFERENCE_FIGURES;
 
   return (
-    <div className="page-shell py-12 sm:py-16">
-      <AudienceHero
-        eyebrow={common.pages.comercios.eyebrow}
-        title={common.pages.comercios.title}
-        lede={common.pages.comercios.lede}
-      >
-        <Link href="/app/comercio/mostrador" className={buttonClasses("primary")}>
-          {t.ctaHeroMostrador}
-        </Link>
-        <Link href="/comercio" className={buttonClasses("secondary")}>
-          {t.ctaMarketplace}
-        </Link>
-      </AudienceHero>
+    <div className="page-shell py-12 sm:py-16" data-role="merchant">
+      {/* Hero: propuesta + figura de cobros en el tiempo */}
+      <div className="grid items-center gap-9 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,30rem)] lg:gap-12">
+        <AudienceHero
+          eyebrow={common.pages.comercios.eyebrow}
+          title={common.pages.comercios.title}
+          lede={common.pages.comercios.lede}
+        >
+          <Link href="/app/comercio/mostrador" className={buttonClasses("primary")}>
+            {t.ctaHeroMostrador}
+          </Link>
+          <Link href="/comercio" className={buttonClasses("secondary")}>
+            {t.ctaMarketplace}
+          </Link>
+        </AudienceHero>
 
-      {/* Propuesta */}
-      <AudienceSection title={t.propuestaTitle} intro={t.propuestaIntro}>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard
-            value={planes.length ? cuotasValue : "…"}
-            label={t.cuotasLabel}
-            note={planes.length ? cuotasNote : undefined}
+        {figRows === null ? (
+          <div className="glass animate-pulse px-5 py-6" role="status" aria-busy="true">
+            <p className="text-sm text-ink-3">{t.figCargando}</p>
+            <div className="mt-5 space-y-3.5">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-8 rounded bg-beam/8" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <CobroFigura
+            rows={figRows}
+            price={figPrice}
+            t={t}
+            locale={locale}
+            secondsPerDay={config?.secondsPerDay ?? 86_400}
           />
-          <StatCard
-            value={coberturaBps !== undefined ? fmtBps(coberturaBps, locale) : "…"}
-            label={t.respaldoLabel}
-            note={t.respaldoNote}
-          />
-          <StatCard value={t.cobroValue} label={t.cobroLabel} note={cobroNote} />
-        </div>
+        )}
+      </div>
+
+      {/* Pasos de una venta */}
+      <AudienceSection title={t.pasosTitle}>
+        <AnimatedSteps
+          label={t.pasosTitle}
+          steps={t.pasos.map((p) => ({
+            title: p.title,
+            body: p.body.replace("{cuotas}", cuotasValue || "…"),
+          }))}
+        />
       </AudienceSection>
 
-      {/* Cuánto cobrás y cuándo */}
+      {/* Cuánto cobrás: número grande + detalle por plazo */}
       <AudienceSection title={t.cobroTitle} intro={t.cobroIntro}>
         {cobroQ.error ? (
           <EstadoConsulta
@@ -294,48 +424,94 @@ export function ParaComercios() {
           </div>
         ) : (
           <>
-            {ejemplo ? (
-              <p className="mb-4 font-num text-sm text-ink-2">
-                {t.cobroEjemplo
-                  .replace("{precio}", fmt(cobroQ.data.price))
-                  .replace("{anticipo}", fmt(ejemplo.downPayment))
-                  .replace("{financiado}", fmt(ejemplo.financed))}
-              </p>
-            ) : null}
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {cobroQ.data.rows.map(({ option, quote }) => (
-                <li key={option.id} className="glass flex flex-col gap-2 p-4 sm:p-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-beam">{plazoLabel(option, t)}</p>
-                  </div>
-                  {quote ? (
-                    <>
-                      <p className="font-num text-2xl tabular-nums text-beam sm:text-3xl">
-                        {fmt(quote.merchantReceives)}
-                        <span className="ml-1.5 text-xs font-normal text-ink-ghost">
-                          {t.netoLabel.toLowerCase()}
-                        </span>
-                      </p>
-                      <p className="text-sm leading-relaxed text-ink-3">
-                        {t.comisionLabel.replace("{pct}", fmtBps(option.feeBps ?? 0, locale))}
-                        {" · "}
-                        <span className="font-num tabular-nums text-ink-2">
-                          {fmt(quote.merchantFee)}
-                        </span>
-                      </p>
-                      <BandaCobro quote={quote} option={option} t={t} locale={locale} />
-                    </>
-                  ) : (
-                    <p className="font-num text-2xl text-ink-ghost">—</p>
-                  )}
-                </li>
-              ))}
+            <div className={`glass ${styles.netoBand}`}>
+              <div>
+                <BigNumber
+                  amount={inmediato?.quote?.merchantReceives ?? 0}
+                  currency="US$"
+                  size="display"
+                />
+                <p className={styles.netoLabel}>
+                  {t.netoGrandeLabel.replace("{precio}", `US$ ${fmt(cobroQ.data.price, 0)}`)}
+                </p>
+              </div>
+              {mejor?.quote ? (
+                <p className={styles.netoNote}>
+                  {t.netoGrandeNote
+                    .replace("{dias}", String(mejor.option.days))
+                    .replace("{neto}", `US$ ${fmt(mejor.quote.merchantReceives)}`)
+                    .replace("{max}", fmtBps(feeHoyBps ?? 0, locale))
+                    .replace("{min}", fmtBps(mejor.option.feeBps ?? 0, locale))}
+                </p>
+              ) : null}
+            </div>
+
+            <p className="mt-6 font-num text-sm text-ink-2">
+              {inmediato?.quote
+                ? t.cobroEjemplo
+                    .replace("{precio}", `US$ ${fmt(cobroQ.data.price, 0)}`)
+                    .replace("{anticipo}", `US$ ${fmt(inmediato.quote.downPayment)}`)
+                    .replace("{financiado}", `US$ ${fmt(inmediato.quote.financed)}`)
+                : null}
+            </p>
+
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {rows.map(({ option, quote }) => {
+                const tramos = quote
+                  ? payoutSchedule(quote.merchantPending, option, 0, config?.secondsPerDay ?? 86_400)
+                  : [];
+                const iguales =
+                  tramos.length > 0 && tramos.every((tr) => tr.amount === tramos[0].amount);
+                const detalle = !quote
+                  ? "—"
+                  : option.days === 0
+                    ? t.cobroInmediatoTodo
+                    : iguales
+                      ? t.tramosResumen
+                          .replace("{anticipo}", `US$ ${fmt(quote.merchantAdvance)}`)
+                          .replace("{n}", String(tramos.length))
+                          .replace("{monto}", `US$ ${fmt(tramos[0].amount)}`)
+                      : t.tramosResumenVarios
+                          .replace("{anticipo}", `US$ ${fmt(quote.merchantAdvance)}`)
+                          .replace("{n}", String(tramos.length))
+                          .replace("{montos}", tramos.map((tr) => `US$ ${fmt(tr.amount)}`).join(", "));
+                const hoyPct = quote && quote.merchantReceives > 0
+                  ? (quote.merchantAdvance / quote.merchantReceives) * 100
+                  : 0;
+                return (
+                  <li key={option.id} className={`glass ${styles.plazoCard}`}>
+                    <div className={styles.plazoHead}>
+                      <p className={styles.plazoName}>{plazoLabel(option, t)}</p>
+                      {option.feeBps !== null ? (
+                        <p className={styles.plazoFee}>
+                          {t.figComision.replace("{pct}", fmtBps(option.feeBps, locale))}
+                        </p>
+                      ) : null}
+                    </div>
+                    {quote ? (
+                      <>
+                        <p className={styles.plazoNeto}>
+                          US$ {fmt(quote.merchantReceives)} <small>{t.netoLabel.toLowerCase()}</small>
+                        </p>
+                        <div className={styles.plazoSplit} aria-hidden="true">
+                          <i className={styles.hoy} style={{ width: `${hoyPct}%` }} />
+                          <i className={styles.tramo} style={{ width: `${100 - hoyPct}%` }} />
+                        </div>
+                        <p className={styles.plazoDetalle}>{detalle}</p>
+                      </>
+                    ) : (
+                      <p className={styles.plazoNeto}>—</p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">{t.cobroGarantia}</p>
             {planConInteres ? (
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
                 {t.cobroSeis
                   .replace("{seis}", String(planConInteres.installments))
+                  .replace("{pct}", fmtBps(planConInteres.interestTotalBps, locale))
                   .replace(
                     "{tres}",
                     joinNums(
@@ -349,91 +525,178 @@ export function ParaComercios() {
         )}
       </AudienceSection>
 
-      {/* Cómo se opera */}
-      <AudienceSection title={t.operarTitle}>
-        <div className="grid gap-3 sm:grid-cols-3">
+      {/* Comparativas: comisión del comercio y costo para el cliente */}
+      <AudienceSection title={t.cmpTitle} intro={t.cmpIntro}>
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="glass p-4 sm:p-5">
-            <p className="font-medium text-beam">{t.operarOnlineTitle}</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarOnlineBody}</p>
-            <Link href="/comercio" className={`${buttonClasses("secondary")} mt-4`}>{t.operarOnlineCta}</Link>
-          </div>
-          <div className="glass p-4 sm:p-5">
-            <p className="flex flex-wrap items-center gap-2 font-medium text-beam">
-              {t.operarMostradorTitle}
+            <h3 className="text-base font-medium text-beam">{t.cmpComercioTitle}</h3>
+            <ComparisonBars
+              className="mt-5"
+              label={t.cmpComercioLabel}
+              items={[
+                {
+                  label: t.cmpLazoHoy,
+                  value: (feeHoyBps ?? 0) / 100,
+                  formattedValue: feeHoyBps !== null ? fmtBps(feeHoyBps, locale) : "…",
+                  winner: !mejor,
+                  winnerLabel: !mejor ? t.cmpGanadorComercio : undefined,
+                },
+                ...(mejor
+                  ? [
+                      {
+                        label: t.cmpLazoPlazo.replace("{dias}", String(mejor.option.days)),
+                        value: (mejor.option.feeBps ?? 0) / 100,
+                        formattedValue: fmtBps(mejor.option.feeBps ?? 0, locale),
+                        winner: true,
+                        winnerLabel: t.cmpGanadorComercio,
+                      },
+                    ]
+                  : []),
+                {
+                  label: (
+                    <>
+                      {t.cmpPublico} <ReferenceTag />
+                    </>
+                  ),
+                  value: refs.cuotaMipymeMerchantPct,
+                  formattedValue: fmtPct(refs.cuotaMipymeMerchantPct, locale),
+                  note: t.cmpPublicoNote.replace(
+                    "{pct}",
+                    fmtPct(refs.cuotaMipymeMerchantPct, locale),
+                  ),
+                },
+                {
+                  label: (
+                    <>
+                      {t.cmpBilletera} <ReferenceTag />
+                    </>
+                  ),
+                  value: refs.mercadoPagoMerchantPct,
+                  formattedValue: fmtPct(refs.mercadoPagoMerchantPct, locale),
+                  note: t.cmpBilleteraNote.replace(
+                    "{pct}",
+                    fmtPct(refs.mercadoPagoMerchantPct, locale),
+                  ),
+                },
+              ]}
+            />
+            <p className="mt-5 text-sm leading-relaxed text-ink-3">
+              {t.cmpDiasNote.replace(
+                "{dias}",
+                String(refs.gocuotasSettlementBusinessDays),
+              )}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarMostradorBody}</p>
-            <Link href="/app/comercio/mostrador" className={`${buttonClasses("primary")} mt-4`}>{t.operarMostradorCta}</Link>
           </div>
+
           <div className="glass p-4 sm:p-5">
-            <p className="font-medium text-beam">{t.operarPanelTitle}</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-2">{t.operarPanelBody}</p>
-            <Link href="/app/comercio" className={`${buttonClasses("secondary")} mt-4`}>{t.operarPanelCta}</Link>
+            <h3 className="text-base font-medium text-beam">{t.cmpClienteTitle}</h3>
+            <ComparisonBars
+              className="mt-5"
+              label={t.cmpClienteLabel}
+              items={[
+                {
+                  label: t.cmpLazoCuotas.replace(
+                    "{n}",
+                    joinNums(
+                      planesSinInteres.map((o) => o.installments),
+                      locale,
+                    ),
+                  ),
+                  value: 0,
+                  formattedValue: "0%",
+                  winner: true,
+                  winnerLabel: t.cmpGanadorCliente,
+                },
+                ...(planConInteres
+                  ? [
+                      {
+                        label: t.cmpLazoCuotas.replace("{n}", String(planConInteres.installments)),
+                        value: planConInteres.interestTotalBps / 100,
+                        formattedValue: fmtBps(planConInteres.interestTotalBps, locale),
+                      },
+                    ]
+                  : []),
+                {
+                  label: (
+                    <>
+                      {t.cmpCompetencia} <ReferenceTag />
+                    </>
+                  ),
+                  value: cftea.max,
+                  formattedValue: fmtPct(cftea.max, locale),
+                  note: t.cmpCompetenciaNote
+                    .replace("{min}", fmtPct(cftea.min, locale))
+                    .replace("{max}", fmtPct(cftea.max, locale)),
+                },
+              ]}
+            />
           </div>
         </div>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-ghost">{t.cmpNote}</p>
       </AudienceSection>
 
-      {/* Frente a otras formas de vender en cuotas */}
-      <AudienceSection title={t.comparacionTitle} intro={t.comparacionIntro
-        .replace("{tres}", joinNums(planesSinInteres.map((o) => o.installments), locale))
-        .replace("{seis}", planConInteres ? String(planConInteres.installments) : "")
-        .replace("{pct}", fmtBps(planConInteres?.interestTotalBps ?? 0, locale))}>
-        <div className="glass p-4 sm:p-5">
-          <ul className="space-y-5">
-            <FilaComparacion
-              nombre={t.comparacionLazo}
-              detalle={t.comparacionLazoDetalle
-                .replace("{tres}", String(planesSinInteres.map((o) => o.installments).join("/")))
-                .replace("{seis}", planConInteres ? String(planConInteres.installments) : "")
-                .replace("{pct}", fmtBps(planConInteres?.interestTotalBps ?? 0, locale))}
-              valorPct={interesCliente}
-              maxPct={maxRef}
-              espectro
-            />
-            <FilaComparacion
-              nombre={t.comparacionCfteaTitle}
-              detalle={t.comparacionCfteaDetalle.replace("{min}", fmtPct(cftea.min, locale)).replace("{max}", fmtPct(cftea.max, locale))}
-              valorPct={cftea.max}
-              rangoMin={cftea.min}
-              maxPct={maxRef}
-              referencia
-            />
-          </ul>
-          <p className="mt-2 text-sm leading-relaxed text-ink-ghost">{t.comparacionNote}</p>
-        </div>
-      </AudienceSection>
-
-      {/* Marketplace */}
-      <AudienceSection title={t.marketplaceTitle} intro={t.marketplaceBody}>
-        <div className="flex flex-col items-start gap-4">
-          <p className="max-w-2xl text-sm leading-relaxed text-ink-2">{t.marketplaceExampleNote}</p>
-          <Link href="/comercio" className={buttonClasses("secondary")}>
-            {t.marketplaceCta}
-          </Link>
-        </div>
-      </AudienceSection>
-
-      {/* Riesgos */}
+      {/* Garantías: compromiso onchain, garante y liquidez */}
       <AudienceSection title={t.riesgosTitle}>
-        <ul>
+        <ul className="grid gap-3 sm:grid-cols-3">
           {[
-            { title: t.riesgoCompromisoTitle, body: t.riesgoCompromisoBody },
-            { title: t.riesgoFiadorTitle, body: t.riesgoFiadorBody },
-            { title: t.riesgoLiquidezTitle, body: t.riesgoLiquidezBody },
+            { icon: <IconRegistro />, title: t.riesgoCompromisoTitle, body: t.riesgoCompromisoBody },
+            { icon: <IconEscudo />, title: t.riesgoFiadorTitle, body: t.riesgoFiadorBody },
+            { icon: <IconGota />, title: t.riesgoLiquidezTitle, body: t.riesgoLiquidezBody },
           ].map((item) => (
-            <li
-              key={item.title}
-              className="border-t border-hairline py-5 first:border-t-0 first:pt-0 last:pb-0"
-            >
-              <h3 className="font-medium text-beam">{item.title}</h3>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-2">{item.body}</p>
+            <li key={item.title} className={`glass ${styles.riskCard}`}>
+              <span className={styles.riskIcon}>{item.icon}</span>
+              <h3 className={styles.riskTitle}>{item.title}</h3>
+              <p className={styles.riskBody}>{item.body}</p>
             </li>
           ))}
         </ul>
       </AudienceSection>
 
-      {/* FAQ */}
+      {/* Destinos: dónde se vende ya */}
+      <AudienceSection title={t.destinosTitle} intro={t.destinosIntro}>
+        <ul className="grid gap-3">
+          {[
+            {
+              href: "/app/comercio/mostrador",
+              icon: <IconQr />,
+              title: t.operarMostradorTitle,
+              body: t.operarMostradorBody,
+            },
+            {
+              href: "/app/comercio",
+              icon: <IconPanel />,
+              title: t.operarPanelTitle,
+              body: t.operarPanelBody,
+            },
+            {
+              href: "/comercio",
+              icon: <IconTienda />,
+              title: t.operarMarketplaceTitle,
+              body: t.operarMarketplaceBody,
+              tag: t.ejemploTag,
+            },
+          ].map((row) => (
+            <li key={row.href}>
+              <Link href={row.href} className={`glass ${styles.destRow}`}>
+                <span className={styles.riskIcon}>{row.icon}</span>
+                <span className="min-w-0">
+                  <span className={styles.destTitle}>
+                    {row.title}
+                    {row.tag ? <span className={styles.destTag}>{row.tag}</span> : null}
+                  </span>
+                  <span className={styles.destBody}>{row.body}</span>
+                </span>
+                <IconFlecha className={styles.destArrow} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </AudienceSection>
+
+      {/* FAQ en acordeón accesible */}
       <AudienceSection title={t.faqTitle}>
-        <Faq
+        <Accordion
+          label={t.faqTitle}
           items={t.faq.map((item) => ({
             q: item.q,
             a: item.a.replace("{pctEj}", pctInmediato),
@@ -446,7 +709,7 @@ export function ParaComercios() {
         <div className="flex flex-col items-start gap-5">
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/app/comercio/mostrador" className={buttonClasses("primary")}>
-              {t.operarMostradorCta}
+              {t.ctaHeroMostrador}
             </Link>
             <Link href="/comercio" className={buttonClasses("secondary")}>
               {t.ctaMarketplace}
