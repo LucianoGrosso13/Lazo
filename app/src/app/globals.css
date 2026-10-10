@@ -690,6 +690,31 @@ button.chip {
     inset 0 1px 3px rgb(0 0 0 / 0.6),
     inset 0 -0.5px 0 rgb(244 241 255 / 0.08);
 }
+/* En teléfono, una pista con muchas opciones no envuelve (un óvalo de tres
+   filas recorta sus chips): queda en una fila que se desliza, y el borde
+   derecho se desvanece para avisar que sigue. */
+@media (max-width: 639px) {
+  .segtrack-slide {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-right: 2rem;
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  }
+  .segtrack-slide[data-scrolled="true"] {
+    mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2.5rem), transparent);
+  }
+  .segtrack-slide::-webkit-scrollbar {
+    display: none;
+  }
+  .segtrack-slide > .chip {
+    flex: none;
+    scroll-snap-align: center;
+  }
+}
 
 /* Etiqueta "referencia": cifras de terceros, declaradas */
 .ref-tag {
