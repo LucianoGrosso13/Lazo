@@ -119,7 +119,7 @@ Calendario (hora Argentina):
 
 ## Estado
 
-> Estado vigente: cierre producto-final del 2026-10-07 (sección de abajo y `handoff-cierre-producto-final.md`). Antecedente del 2026-10-06 (rama `t-demo-devnet`); detalle y bloqueos de cadena: `proyecto/handoff-demo-devnet.md` § "Estado real".
+> Estado vigente: tanda "rediseño UI" del 2026-10-09 (sección de abajo y `handoff-rediseno-ui.md`). Antecedente: cierre producto-final del 2026-10-07 (sección de abajo y `handoff-cierre-producto-final.md`). Antecedente del 2026-10-06 (rama `t-demo-devnet`); detalle y bloqueos de cadena: `proyecto/handoff-demo-devnet.md` § "Estado real".
 >
 > **Análisis de viabilidad para inversores/tribunales (6/10):** `proyecto/06-viabilidad/` — modelo financiero reproducible, investor paper EN, flujos de caja, memo legal y `04-cambios-rentabilidad.md` con las reglas de negocio a ajustar (esquema de precios, split de fee, cobertura por escalón, invariantes del pool).
 >
@@ -154,6 +154,16 @@ Calendario (hora Argentina):
 - [ ] T3.4 UX
 - [ ] T3.5 Seguridad
 - [ ] TF.1-3 Entrega
+
+### Tanda "rediseño UI" (2026-10-09) — cerrada
+
+Spec `.scratch/rediseno-ui/spec.md`, 12 tickets en `.scratch/rediseno-ui/issues/` (todos `done`), integrados en `t4-rediseno-ui` y publicados en `main` + Vercel. Run Orca `run_2a9c38eea2bd`; workers Codex (03, 04, 10), Devin (02, 05, 07, 09), Claude Opus (06, 08), Claude Sonnet (11) y el coordinador (01, 12). Gemini se quedó sin cuota a mitad del 08 y el 10: los terminaron Claude y Codex.
+
+- Vocabulario: en la web se dice **comprador** y **garante** (antes estudiante y fiador); rutas y código sin cambios. Menú: "Compradores y garantes".
+- Cada rol ve lo suyo: el comprador no ve montos ni plazos de cobro del comercio; el garante no ve los adelantos al comercio.
+- Sin rótulos "Datos simulados" ni "Mock" en cuentas. Se conservan la sección "Qué corre en la cadena y qué en el simulador" y el aviso de devnet.
+- Visual: acentos por rol (violeta comprador, cyan comercio, verde pool) y primitivas compartidas (barras, count-up, medidor, historial plegable, pasos animados, acordeón); pool con orbe WebGL basado en datos; landing con mora automática y costos en barras; panel del comercio con garantizado por cobrar; cuenta del comprador con credencial de Tier; dashboard del admin; tres páginas "Cómo funciona" rediseñadas.
+- Verificación: typecheck y lint sin errores, 398 tests Vitest, build y **87 e2e en verde (1 omitido: modo real)** contra el build de producción; sin texto viejo ni overflow a 390 px en 14 rutas × 4 personas. Detalle en `proyecto/handoff-rediseno-ui.md`.
 
 ### Tanda "web completa" (2026-10-07) — cerrada
 
