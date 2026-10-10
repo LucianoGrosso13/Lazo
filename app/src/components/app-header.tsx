@@ -9,6 +9,8 @@ import { common } from "@/i18n/dictionaries/common";
 import { design } from "@/i18n/dictionaries/design";
 import { audienceCommon } from "@/i18n/dictionaries/audience-common";
 import { useLocale, useT } from "@/i18n/locale";
+import { useCuotasMode } from "@/app/providers";
+import { DevnetBadge } from "@/components/ui/badges";
 import { ChipButton, SegmentedControl } from "@/components/ui/chip";
 import { WalletButton } from "./wallet-button";
 
@@ -43,6 +45,28 @@ function LocaleSwitch() {
       options={[
         { value: "en", label: "EN" },
         { value: "es", label: "ES" },
+      ]}
+    />
+  );
+}
+
+/**
+ * Switch demo/devnet: solo aparece si el despliegue habilita el modo real
+ * (`isRealAvailable`). Cambiar persiste la elección y recarga la app; el
+ * servidor y la hidratación siempre arrancan en el modo default.
+ */
+function ModeSwitch() {
+  const t = useT(common);
+  const { mode, switchMode } = useCuotasMode();
+  return (
+    <SegmentedControl
+      label={t.modeSwitch.label}
+      value={mode}
+      onChange={switchMode}
+      className="flex-nowrap"
+      options={[
+        { value: "mock", label: t.modeSwitch.demo },
+        { value: "real", label: t.modeSwitch.devnet },
       ]}
     />
   );
@@ -259,6 +283,7 @@ export function AppHeader() {
   const d = useT(design);
   const a = useT(audienceCommon);
   const pathname = usePathname();
+  const { mode, realAvailable } = useCuotasMode();
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
@@ -330,6 +355,18 @@ export function AppHeader() {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            {realAvailable ? (
+              <>
+                {mode === "real" ? (
+                  <span className="hidden sm:block">
+                    <DevnetBadge live />
+                  </span>
+                ) : null}
+                <span className="hidden sm:block">
+                  <ModeSwitch />
+                </span>
+              </>
+            ) : null}
             <span className="hidden sm:block">
               <LocaleSwitch />
             </span>
@@ -416,6 +453,12 @@ export function AppHeader() {
               <LocaleSwitch />
               <WalletButton />
             </div>
+            {realAvailable ? (
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <ModeSwitch />
+                {mode === "real" ? <DevnetBadge live /> : null}
+              </div>
+            ) : null}
           </motion.div>
         ) : null}
       </AnimatePresence>

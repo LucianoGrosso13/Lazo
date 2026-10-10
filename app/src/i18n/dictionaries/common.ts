@@ -18,6 +18,14 @@ export const common = defineDict({
     },
     devnet: "Demo · devnet previsto",
     devnetHint: "Corre sobre Solana devnet, la red de prueba: los fondos no tienen valor monetario.",
+    devnetLive: "Devnet · plata de prueba",
+    devnetLiveHint:
+      "Modo real sobre Solana devnet: las transacciones se firman de verdad en la red de prueba; los fondos no tienen valor monetario.",
+    modeSwitch: {
+      label: "Modo demo o devnet",
+      demo: "Demo",
+      devnet: "Devnet",
+    },
     wallet: {
       connect: "Conectar wallet",
       connectWith: "Conectar con",
@@ -44,6 +52,14 @@ export const common = defineDict({
     },
     devnet: "Demo · devnet planned",
     devnetHint: "Runs on Solana devnet, the test network: funds have no monetary value.",
+    devnetLive: "Devnet · test funds",
+    devnetLiveHint:
+      "Real mode on Solana devnet: transactions are signed for real on the test network; funds have no monetary value.",
+    modeSwitch: {
+      label: "Demo or devnet mode",
+      demo: "Demo",
+      devnet: "Devnet",
+    },
     wallet: {
       connect: "Connect wallet",
       connectWith: "Connect with",

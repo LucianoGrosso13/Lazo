@@ -8,9 +8,10 @@ import { useT } from "@/i18n/locale";
 
 /**
  * Badge devnet siempre visible: corre en la red de prueba de Solana, la
- * plata es de mentira. El tooltip explica qué es devnet.
+ * plata es de mentira. El tooltip explica qué es devnet. Con `live` declara
+ * el modo real (transacciones firmadas de verdad en devnet), no la demo.
  */
-export function DevnetBadge({ className = "" }: { className?: string }) {
+export function DevnetBadge({ className = "", live = false }: { className?: string; live?: boolean }) {
   const t = useT(common);
   const d = useT(design);
   const tipId = useId();
@@ -22,10 +23,10 @@ export function DevnetBadge({ className = "" }: { className?: string }) {
           className="inline-block h-1.5 w-1.5 rounded-full bg-violet shadow-[0_0_6px_var(--color-violet)]"
         />
         <span className="sm:hidden">{d.chrome.devnetShort}</span>
-        <span className="hidden sm:inline">{t.devnet}</span>
+        <span className="hidden sm:inline">{live ? t.devnetLive : t.devnet}</span>
       </span>
       <span role="tooltip" id={tipId} className="tip-panel glass glass-deep font-sans">
-        {t.devnetHint}
+        {live ? t.devnetLiveHint : t.devnetHint}
       </span>
     </span>
   );
